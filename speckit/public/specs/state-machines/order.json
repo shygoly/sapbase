@@ -1,0 +1,76 @@
+{
+  "id": "order-state-machine",
+  "initial": "draft",
+  "states": {
+    "draft": {
+      "name": "draft",
+      "type": "initial",
+      "meta": {
+        "label": "Draft",
+        "description": "Order is being prepared"
+      }
+    },
+    "pending": {
+      "name": "pending",
+      "meta": {
+        "label": "Pending",
+        "description": "Order is pending approval"
+      }
+    },
+    "approved": {
+      "name": "approved",
+      "meta": {
+        "label": "Approved",
+        "description": "Order has been approved"
+      }
+    },
+    "rejected": {
+      "name": "rejected",
+      "type": "final",
+      "meta": {
+        "label": "Rejected",
+        "description": "Order has been rejected"
+      }
+    },
+    "completed": {
+      "name": "completed",
+      "type": "final",
+      "meta": {
+        "label": "Completed",
+        "description": "Order is completed"
+      }
+    }
+  },
+  "transitions": [
+    {
+      "from": "draft",
+      "to": "pending",
+      "event": "submit",
+      "meta": { "label": "Submit for Approval" }
+    },
+    {
+      "from": "pending",
+      "to": "approved",
+      "event": "approve",
+      "meta": { "label": "Approve" }
+    },
+    {
+      "from": "pending",
+      "to": "rejected",
+      "event": "reject",
+      "meta": { "label": "Reject" }
+    },
+    {
+      "from": "approved",
+      "to": "completed",
+      "event": "complete",
+      "meta": { "label": "Complete" }
+    },
+    {
+      "from": "draft",
+      "to": "draft",
+      "event": "edit",
+      "meta": { "label": "Edit" }
+    }
+  ]
+}

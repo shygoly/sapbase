@@ -1,0 +1,12 @@
+{
+  "path": "users/:id/edit",
+  "view": "user-form",
+  "label": "Edit User",
+  "metadata": {
+    "title": "Edit User",
+    "description": "Update user information",
+    "breadcrumb": true
+  },
+  "permissions": ["user.edit"],
+  "version": "1.0.0"
+}

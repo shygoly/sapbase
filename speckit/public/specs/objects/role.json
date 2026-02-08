@@ -1,0 +1,68 @@
+{
+  "name": "role",
+  "label": "Role",
+  "description": "Role management object",
+  "version": "1.0.0",
+  "fields": [
+    {
+      "name": "id",
+      "label": "ID",
+      "type": "text",
+      "readonly": true,
+      "hidden": true
+    },
+    {
+      "name": "name",
+      "label": "Role Name",
+      "type": "text",
+      "required": true,
+      "placeholder": "Enter role name",
+      "validation": [
+        {
+          "type": "required",
+          "message": "Role name is required"
+        }
+      ]
+    },
+    {
+      "name": "description",
+      "label": "Description",
+      "type": "textarea",
+      "placeholder": "Enter role description"
+    },
+    {
+      "name": "permissions",
+      "label": "Permissions",
+      "type": "textarea",
+      "placeholder": "Enter permissions (comma-separated)"
+    },
+    {
+      "name": "status",
+      "label": "Status",
+      "type": "select",
+      "default": "active",
+      "options": [
+        { "label": "Active", "value": "active" },
+        { "label": "Inactive", "value": "inactive" }
+      ]
+    },
+    {
+      "name": "createdAt",
+      "label": "Created At",
+      "type": "datetime",
+      "readonly": true
+    },
+    {
+      "name": "updatedAt",
+      "label": "Updated At",
+      "type": "datetime",
+      "readonly": true
+    }
+  ],
+  "permissions": {
+    "view": ["role.list"],
+    "create": ["role.create"],
+    "edit": ["role.edit"],
+    "delete": ["role.delete"]
+  }
+}

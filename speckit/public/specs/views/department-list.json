@@ -1,0 +1,27 @@
+{
+  "name": "department-list",
+  "type": "list",
+  "object": "department",
+  "label": "Department List",
+  "description": "Display list of departments",
+  "version": "1.0.0",
+  "layout": {
+    "type": "grid",
+    "fields": ["name", "description", "status", "createdAt"]
+  },
+  "actions": [
+    {
+      "name": "create",
+      "label": "Create Department",
+      "type": "primary",
+      "permissions": ["department.create"]
+    }
+  ],
+  "permissions": [
+    {
+      "field": "*",
+      "action": "view",
+      "permissions": ["department.list"]
+    }
+  ]
+}

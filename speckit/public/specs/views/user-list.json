@@ -1,0 +1,33 @@
+{
+  "name": "user-list",
+  "type": "list",
+  "object": "user",
+  "label": "User List",
+  "description": "Display list of users",
+  "version": "1.0.0",
+  "layout": {
+    "type": "grid",
+    "fields": ["name", "email", "role", "status", "createdAt"]
+  },
+  "actions": [
+    {
+      "name": "create",
+      "label": "Create User",
+      "type": "primary",
+      "permissions": ["user.create"]
+    },
+    {
+      "name": "export",
+      "label": "Export",
+      "type": "secondary",
+      "permissions": ["user.list"]
+    }
+  ],
+  "permissions": [
+    {
+      "field": "*",
+      "action": "view",
+      "permissions": ["user.list"]
+    }
+  ]
+}

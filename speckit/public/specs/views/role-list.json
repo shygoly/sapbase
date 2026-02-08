@@ -1,0 +1,27 @@
+{
+  "name": "role-list",
+  "type": "list",
+  "object": "role",
+  "label": "Role List",
+  "description": "Display list of roles",
+  "version": "1.0.0",
+  "layout": {
+    "type": "grid",
+    "fields": ["name", "description", "status", "createdAt"]
+  },
+  "actions": [
+    {
+      "name": "create",
+      "label": "Create Role",
+      "type": "primary",
+      "permissions": ["role.create"]
+    }
+  ],
+  "permissions": [
+    {
+      "field": "*",
+      "action": "view",
+      "permissions": ["role.list"]
+    }
+  ]
+}

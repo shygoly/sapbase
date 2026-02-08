@@ -1,6 +1,22 @@
 {
+  "name": "everythingclaude",
+  "version": "1.0.0",
+  "description": "Speckit ERP - Monorepo with Frontend and Backend",
+  "private": true,
+  "workspaces": [
+    "speckit",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace speckit\" \"npm run start:dev --workspace backend\"",
+    "dev:frontend": "npm run dev --workspace speckit",
+    "dev:backend": "npm run start:dev --workspace backend",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "globals": "^17.1.0",
     "markdownlint-cli": "^0.47.0"

@@ -1,0 +1,13 @@
+{
+  "path": "departments",
+  "view": "department-list",
+  "label": "Departments",
+  "metadata": {
+    "title": "Department Management",
+    "description": "Manage system departments",
+    "icon": "Building",
+    "breadcrumb": true
+  },
+  "permissions": ["department.list"],
+  "version": "1.0.0"
+}

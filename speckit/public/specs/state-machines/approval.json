@@ -1,0 +1,69 @@
+{
+  "id": "approval-state-machine",
+  "initial": "pending",
+  "states": {
+    "pending": {
+      "name": "pending",
+      "type": "initial",
+      "meta": {
+        "label": "Pending",
+        "description": "Awaiting approval"
+      }
+    },
+    "approved": {
+      "name": "approved",
+      "type": "final",
+      "meta": {
+        "label": "Approved",
+        "description": "Request approved"
+      }
+    },
+    "rejected": {
+      "name": "rejected",
+      "type": "final",
+      "meta": {
+        "label": "Rejected",
+        "description": "Request rejected"
+      }
+    },
+    "escalated": {
+      "name": "escalated",
+      "meta": {
+        "label": "Escalated",
+        "description": "Request escalated to higher authority"
+      }
+    }
+  },
+  "transitions": [
+    {
+      "from": "pending",
+      "to": "approved",
+      "event": "approve",
+      "meta": { "label": "Approve" }
+    },
+    {
+      "from": "pending",
+      "to": "rejected",
+      "event": "reject",
+      "meta": { "label": "Reject" }
+    },
+    {
+      "from": "pending",
+      "to": "escalated",
+      "event": "escalate",
+      "meta": { "label": "Escalate" }
+    },
+    {
+      "from": "escalated",
+      "to": "approved",
+      "event": "approve",
+      "meta": { "label": "Approve" }
+    },
+    {
+      "from": "escalated",
+      "to": "rejected",
+      "event": "reject",
+      "meta": { "label": "Reject" }
+    }
+  ]
+}

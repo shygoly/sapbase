@@ -1,0 +1,69 @@
+{
+  "name": "department",
+  "label": "Department",
+  "description": "Department management object",
+  "version": "1.0.0",
+  "fields": [
+    {
+      "name": "id",
+      "label": "ID",
+      "type": "text",
+      "readonly": true,
+      "hidden": true
+    },
+    {
+      "name": "name",
+      "label": "Department Name",
+      "type": "text",
+      "required": true,
+      "placeholder": "Enter department name",
+      "validation": [
+        {
+          "type": "required",
+          "message": "Department name is required"
+        }
+      ]
+    },
+    {
+      "name": "description",
+      "label": "Description",
+      "type": "textarea",
+      "placeholder": "Enter department description"
+    },
+    {
+      "name": "managerId",
+      "label": "Manager",
+      "type": "relation",
+      "relationObject": "user",
+      "relationField": "name"
+    },
+    {
+      "name": "status",
+      "label": "Status",
+      "type": "select",
+      "default": "active",
+      "options": [
+        { "label": "Active", "value": "active" },
+        { "label": "Inactive", "value": "inactive" }
+      ]
+    },
+    {
+      "name": "createdAt",
+      "label": "Created At",
+      "type": "datetime",
+      "readonly": true
+    },
+    {
+      "name": "updatedAt",
+      "label": "Updated At",
+      "type": "datetime",
+      "readonly": true
+    }
+  ],
+  "permissions": {
+    "view": ["department.list"],
+    "create": ["department.create"],
+    "edit": ["department.edit"],
+    "delete": ["department.delete"]
+  }
+}

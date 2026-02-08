@@ -1,0 +1,13 @@
+{
+  "path": "roles",
+  "view": "role-list",
+  "label": "Roles",
+  "metadata": {
+    "title": "Role Management",
+    "description": "Manage system roles and permissions",
+    "icon": "Shield",
+    "breadcrumb": true
+  },
+  "permissions": ["role.list"],
+  "version": "1.0.0"
+}
