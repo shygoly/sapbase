@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { SchemaForm } from '@/components/schema-form'
 import { SchemaList } from '@/components/schema-list'
+import { BatchOperations } from '@/components/batch-operations'
 import { schemaResolver } from '@/core/schema/resolver'
 import { schemaRegistry } from '@/core/schema/registry'
 import { apiService } from '@/lib/api-service'
+import { exportService } from '@/core/export/service'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -37,6 +39,7 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<Record<string, any> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<Record<string, any> | null>(null)
+  const [selectedUsers, setSelectedUsers] = useState<Record<string, any>[]>([])
 
   useEffect(() => {
     const loadData = async () => {
@@ -102,6 +105,31 @@ export default function UsersPage() {
     }
   }
 
+  const handleBatchDelete = async () => {
+    try {
+      await Promise.all(selectedUsers.map(u => apiService.deleteUser(u.id)))
+      setUsers(users.filter(u => !selectedUsers.find(su => su.id === u.id)))
+      setSelectedUsers([])
+    } catch (err) {
+      console.error('Failed to delete users:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete users')
+    }
+  }
+
+  const handleBatchExport = async () => {
+    try {
+      const dataToExport = selectedUsers.length > 0 ? selectedUsers : users
+      exportService.exportToCSV(
+        dataToExport,
+        ['id', 'name', 'email', 'role', 'status'] as const,
+        { filename: 'users' }
+      )
+    } catch (err) {
+      console.error('Failed to export users:', err)
+      setError(err instanceof Error ? err.message : 'Failed to export users')
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -146,6 +174,15 @@ export default function UsersPage() {
       {!showForm ? (
         <div className="space-y-4">
           <Button onClick={handleCreateUser}>Create User</Button>
+
+          <BatchOperations
+            selectedCount={selectedUsers.length}
+            onDelete={selectedUsers.length > 0 ? handleBatchDelete : undefined}
+            onExport={handleBatchExport}
+            onClearSelection={() => setSelectedUsers([])}
+            isLoading={isLoading}
+          />
+
           {objectSchema && (
             <SchemaList
               schema={objectSchema}
@@ -202,4 +239,3 @@ export default function UsersPage() {
     </div>
   )
 }
-
