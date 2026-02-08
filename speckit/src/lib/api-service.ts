@@ -47,7 +47,13 @@ export class ApiService {
     }
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      try {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `API Error: ${response.status}`)
+      } catch (e) {
+        if (e instanceof Error) throw e
+        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      }
     }
 
     // Handle 204 No Content
@@ -59,88 +65,88 @@ export class ApiService {
   }
 
   // Users endpoints
-  async getUsers(): Promise<any[]> {
-    return this.request('/users')
+  async getUsers<T = any>(): Promise<T[]> {
+    return this.request<T[]>('/users')
   }
 
-  async getUser(id: string): Promise<any> {
-    return this.request(`/users/${id}`)
+  async getUser<T = any>(id: string): Promise<T> {
+    return this.request<T>(`/users/${id}`)
   }
 
-  async createUser(data: any): Promise<any> {
-    return this.request('/users', {
+  async createUser<T = any, D = any>(data: D): Promise<T> {
+    return this.request<T>('/users', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   }
 
-  async updateUser(id: string, data: any): Promise<any> {
-    return this.request(`/users/${id}`, {
+  async updateUser<T = any, D = any>(id: string, data: D): Promise<T> {
+    return this.request<T>(`/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
   }
 
   async deleteUser(id: string): Promise<void> {
-    return this.request(`/users/${id}`, {
+    return this.request<void>(`/users/${id}`, {
       method: 'DELETE',
     })
   }
 
   // Departments endpoints
-  async getDepartments(): Promise<any[]> {
-    return this.request('/departments')
+  async getDepartments<T = any>(): Promise<T[]> {
+    return this.request<T[]>('/departments')
   }
 
-  async getDepartment(id: string): Promise<any> {
-    return this.request(`/departments/${id}`)
+  async getDepartment<T = any>(id: string): Promise<T> {
+    return this.request<T>(`/departments/${id}`)
   }
 
-  async createDepartment(data: any): Promise<any> {
-    return this.request('/departments', {
+  async createDepartment<T = any, D = any>(data: D): Promise<T> {
+    return this.request<T>('/departments', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   }
 
-  async updateDepartment(id: string, data: any): Promise<any> {
-    return this.request(`/departments/${id}`, {
+  async updateDepartment<T = any, D = any>(id: string, data: D): Promise<T> {
+    return this.request<T>(`/departments/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
   }
 
   async deleteDepartment(id: string): Promise<void> {
-    return this.request(`/departments/${id}`, {
+    return this.request<void>(`/departments/${id}`, {
       method: 'DELETE',
     })
   }
 
   // Roles endpoints
-  async getRoles(): Promise<any[]> {
-    return this.request('/roles')
+  async getRoles<T = any>(): Promise<T[]> {
+    return this.request<T[]>('/roles')
   }
 
-  async getRole(id: string): Promise<any> {
-    return this.request(`/roles/${id}`)
+  async getRole<T = any>(id: string): Promise<T> {
+    return this.request<T>(`/roles/${id}`)
   }
 
-  async createRole(data: any): Promise<any> {
-    return this.request('/roles', {
+  async createRole<T = any, D = any>(data: D): Promise<T> {
+    return this.request<T>('/roles', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   }
 
-  async updateRole(id: string, data: any): Promise<any> {
-    return this.request(`/roles/${id}`, {
+  async updateRole<T = any, D = any>(id: string, data: D): Promise<T> {
+    return this.request<T>(`/roles/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
   }
 
   async deleteRole(id: string): Promise<void> {
-    return this.request(`/roles/${id}`, {
+    return this.request<void>(`/roles/${id}`, {
       method: 'DELETE',
     })
   }

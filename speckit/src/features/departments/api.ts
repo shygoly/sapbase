@@ -6,7 +6,8 @@ export interface Department {
   id: string
   name: string
   description?: string
-  parentId?: string
+  managerId?: string
+  status: 'active' | 'inactive'
   createdAt: Date
   updatedAt: Date
 }
@@ -14,13 +15,13 @@ export interface Department {
 export interface CreateDepartmentInput {
   name: string
   description?: string
-  parentId?: string
+  managerId?: string
 }
 
 export interface UpdateDepartmentInput {
   name?: string
   description?: string
-  parentId?: string
+  managerId?: string
 }
 
 export const departmentApi = {

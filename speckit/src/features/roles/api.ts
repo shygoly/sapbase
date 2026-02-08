@@ -7,13 +7,14 @@ export interface Role {
   name: string
   permissions: string[]
   description?: string
+  status: 'active' | 'inactive'
   createdAt: Date
   updatedAt: Date
 }
 
 export interface CreateRoleInput {
   name: string
-  permissions: string[]
+  permissions?: string[]
   description?: string
 }
 

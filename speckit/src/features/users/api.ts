@@ -8,7 +8,7 @@ export interface User {
   email: string
   role: string
   department?: string
-  status: 'active' | 'inactive'
+  status: 'active' | 'inactive' | 'suspended'
   createdAt: Date
   updatedAt: Date
 }
@@ -16,7 +16,8 @@ export interface User {
 export interface CreateUserInput {
   name: string
   email: string
-  role: string
+  password: string
+  role?: string
   department?: string
 }
 
@@ -25,7 +26,7 @@ export interface UpdateUserInput {
   email?: string
   role?: string
   department?: string
-  status?: 'active' | 'inactive'
+  status?: 'active' | 'inactive' | 'suspended'
 }
 
 export const userApi = {

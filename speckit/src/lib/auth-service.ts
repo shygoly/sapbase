@@ -10,6 +10,7 @@ export interface LoginResponse {
     name: string
     email: string
     role: string
+    permissions: string[]
   }
 }
 
@@ -18,6 +19,7 @@ export interface AuthUser {
   name: string
   email: string
   role: string
+  permissions: string[]
 }
 
 export class AuthService {
