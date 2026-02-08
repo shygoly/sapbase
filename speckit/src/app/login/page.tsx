@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -20,6 +21,8 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
+  const router = useRouter()
+
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -49,10 +52,21 @@ export default function LoginPage() {
       console.log('Login attempt:', data)
 
       setSuccess(true)
-      // 实际应用中应该重定向到仪表板
+
+      // Redirect:
+      // - allow overriding via ?redirect=/path or ?next=/path
+      // - default to a reasonable "dashboard" page
+      let raw = ''
+      if (typeof window !== 'undefined') {
+        const sp = new URLSearchParams(window.location.search)
+        raw = sp.get('redirect') || sp.get('next') || ''
+      }
+      const redirectTo =
+        raw.startsWith('/') && !raw.startsWith('//') ? raw : '/admin/users'
+
       setTimeout(() => {
-        window.location.href = '/'
-      }, 1000)
+        router.replace(redirectTo)
+      }, 400)
     } catch (err) {
       setError('登录失败，请检查邮箱和密码')
     } finally {

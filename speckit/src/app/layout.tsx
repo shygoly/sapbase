@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { RootProviders } from '@/components/root-providers'
+import { AuthProvider } from '@/components/auth-provider'
+import { MenuProvider } from '@/core/menu/context'
 
 export const metadata: Metadata = {
   title: 'Speckit ERP Frontend Runtime',
@@ -14,9 +17,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="min-h-screen bg-gray-50">
-          {children}
-        </div>
+        <RootProviders>
+          <AuthProvider>
+            <MenuProvider>
+              <div className="min-h-screen bg-gray-50">
+                {children}
+              </div>
+            </MenuProvider>
+          </AuthProvider>
+        </RootProviders>
       </body>
     </html>
   )

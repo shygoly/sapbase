@@ -163,6 +163,27 @@ export class ApiService {
       method: 'DELETE',
     })
   }
+
+  // Audit Logs endpoints
+  async getAuditLogs<T = any>(): Promise<T[]> {
+    return this.request<T[]>('/audit-logs')
+  }
+
+  async getAuditLog<T = any>(id: string): Promise<T> {
+    return this.request<T>(`/audit-logs/${id}`)
+  }
+
+  // Settings endpoints
+  async getSettings<T = any>(): Promise<T> {
+    return this.request<T>('/settings')
+  }
+
+  async updateSettings<T = any, D = any>(data: D): Promise<T> {
+    return this.request<T>('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
 }
 
 export const apiService = new ApiService()

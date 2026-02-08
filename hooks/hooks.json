@@ -89,6 +89,18 @@
         "description": "Log PR URL and provide review command after PR creation"
       },
       {
+        "matcher": "tool == \"Bash\" && tool_input.command matches \"(next dev|npm run dev|pnpm( run)? dev|yarn dev|bun( run)? dev|tmux.*dev)\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/check-next-static-css.js\"",
+            "async": true,
+            "timeout": 30
+          }
+        ],
+        "description": "After starting Next dev, check /_next/static css/chunks for 404 and uncompiled Tailwind"
+      },
+      {
         "matcher": "tool == \"Bash\" && tool_input.command matches \"(npm run build|pnpm build|yarn build)\"",
         "hooks": [
           {
