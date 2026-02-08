@@ -10,9 +10,24 @@ import { Button } from '@/components/ui/button'
 import type { MenuItem } from '@/core/menu/config'
 
 export function Sidebar() {
-  const { menu, expandedItems, toggleExpanded } = useMenu()
+  const { menu, expandedItems, toggleExpanded, isLoading } = useMenu()
   const { hasPermission } = usePermission()
   const { t } = useTranslation()
+
+  if (isLoading) {
+    return (
+      <aside className="w-64 border-r bg-background p-4">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Speckit</h1>
+        </div>
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-10 bg-muted rounded animate-pulse" />
+          ))}
+        </div>
+      </aside>
+    )
+  }
 
   const renderMenuItem = (item: MenuItem, level: number = 0) => {
     const hasAccess = !item.permissions || item.permissions.some((p) => hasPermission(p))

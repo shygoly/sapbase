@@ -8,12 +8,14 @@ import { RolesModule } from './roles/roles.module'
 import { AuditLogsModule } from './audit-logs/audit-logs.module'
 import { SettingsModule } from './settings/settings.module'
 import { PermissionsModule } from './permissions/permissions.module'
+import { MenuModule } from './menu/menu.module'
 import { User } from './users/user.entity'
 import { Department } from './departments/department.entity'
 import { Role } from './roles/role.entity'
 import { AuditLog } from './audit-logs/audit-log.entity'
 import { Setting } from './settings/setting.entity'
 import { Permission } from './permissions/permission.entity'
+import { MenuItem } from './menu/menu.entity'
 
 @Module({
   imports: [
@@ -28,7 +30,7 @@ import { Permission } from './permissions/permission.entity'
       username: process.env.DB_USERNAME || 'mac',
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'sapbasic',
-      entities: [User, Department, Role, AuditLog, Setting, Permission],
+      entities: [User, Department, Role, AuditLog, Setting, Permission, MenuItem],
       synchronize: true,
       logging: process.env.NODE_ENV === 'development',
     }),
@@ -39,6 +41,7 @@ import { Permission } from './permissions/permission.entity'
     AuditLogsModule,
     SettingsModule,
     PermissionsModule,
+    MenuModule,
   ],
   controllers: [],
   providers: [],

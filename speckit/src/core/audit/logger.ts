@@ -80,14 +80,21 @@ export class AuditLogger {
 
   private async sendToBackend(entry: Omit<AuditLogEntry, 'timestamp'>): Promise<void> {
     try {
-      await fetch('/api/audit-logs', {
+      const response = await fetch('/api/audit-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...entry,
+          action: entry.action,
+          resource: entry.resource,
+          actor: entry.userId || 'system',
+          status: entry.status,
           timestamp: new Date(),
         }),
       })
+
+      if (!response.ok) {
+        console.error('Failed to send audit log:', response.statusText)
+      }
     } catch (error) {
       console.error('Failed to send audit log:', error)
     }
