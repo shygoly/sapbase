@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { SchemaForm } from '@/components/schema-form'
 import { SchemaList } from '@/components/schema-list'
+import { BatchOperations } from '@/components/batch-operations'
 import { schemaResolver } from '@/core/schema/resolver'
 import { schemaRegistry } from '@/core/schema/registry'
 import { apiService } from '@/lib/api-service'
+import { exportService } from '@/core/export/service'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -42,6 +44,7 @@ export default function DepartmentsPage() {
   const [editingDept, setEditingDept] = useState<Record<string, any> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<Record<string, any> | null>(null)
+  const [selectedDepts, setSelectedDepts] = useState<Record<string, any>[]>([])
 
   useEffect(() => {
     const loadData = async () => {
@@ -107,6 +110,31 @@ export default function DepartmentsPage() {
     }
   }
 
+  const handleBatchDelete = async () => {
+    try {
+      await Promise.all(selectedDepts.map(d => apiService.deleteDepartment(d.id)))
+      setDepartments(departments.filter(d => !selectedDepts.find(sd => sd.id === d.id)))
+      setSelectedDepts([])
+    } catch (err) {
+      console.error('Failed to delete departments:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete departments')
+    }
+  }
+
+  const handleBatchExport = async () => {
+    try {
+      const dataToExport = selectedDepts.length > 0 ? selectedDepts : departments
+      exportService.exportToCSV(
+        dataToExport,
+        ['id', 'name', 'description'] as const,
+        { filename: 'departments' }
+      )
+    } catch (err) {
+      console.error('Failed to export departments:', err)
+      setError(err instanceof Error ? err.message : 'Failed to export departments')
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -151,6 +179,15 @@ export default function DepartmentsPage() {
       {!showForm ? (
         <div className="space-y-4">
           <Button onClick={handleCreateDept}>Create Department</Button>
+
+          <BatchOperations
+            selectedCount={selectedDepts.length}
+            onDelete={selectedDepts.length > 0 ? handleBatchDelete : undefined}
+            onExport={handleBatchExport}
+            onClearSelection={() => setSelectedDepts([])}
+            isLoading={isLoading}
+          />
+
           {objectSchema && (
             <SchemaList
               schema={objectSchema}

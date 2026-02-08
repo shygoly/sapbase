@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { SchemaForm } from '@/components/schema-form'
 import { SchemaList } from '@/components/schema-list'
+import { BatchOperations } from '@/components/batch-operations'
 import { schemaResolver } from '@/core/schema/resolver'
 import { schemaRegistry } from '@/core/schema/registry'
 import { apiService } from '@/lib/api-service'
+import { exportService } from '@/core/export/service'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -42,6 +44,7 @@ export default function RolesPage() {
   const [editingRole, setEditingRole] = useState<Record<string, any> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<Record<string, any> | null>(null)
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, any>[]>([])
 
   useEffect(() => {
     const loadData = async () => {
@@ -107,6 +110,31 @@ export default function RolesPage() {
     }
   }
 
+  const handleBatchDelete = async () => {
+    try {
+      await Promise.all(selectedRoles.map(r => apiService.deleteRole(r.id)))
+      setRoles(roles.filter(r => !selectedRoles.find(sr => sr.id === r.id)))
+      setSelectedRoles([])
+    } catch (err) {
+      console.error('Failed to delete roles:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete roles')
+    }
+  }
+
+  const handleBatchExport = async () => {
+    try {
+      const dataToExport = selectedRoles.length > 0 ? selectedRoles : roles
+      exportService.exportToCSV(
+        dataToExport,
+        ['id', 'name', 'description'] as const,
+        { filename: 'roles' }
+      )
+    } catch (err) {
+      console.error('Failed to export roles:', err)
+      setError(err instanceof Error ? err.message : 'Failed to export roles')
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -151,6 +179,15 @@ export default function RolesPage() {
       {!showForm ? (
         <div className="space-y-4">
           <Button onClick={handleCreateRole}>Create Role</Button>
+
+          <BatchOperations
+            selectedCount={selectedRoles.length}
+            onDelete={selectedRoles.length > 0 ? handleBatchDelete : undefined}
+            onExport={handleBatchExport}
+            onClearSelection={() => setSelectedRoles([])}
+            isLoading={isLoading}
+          />
+
           {objectSchema && (
             <SchemaList
               schema={objectSchema}
