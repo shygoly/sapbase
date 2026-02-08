@@ -8,6 +8,7 @@ export interface SystemSettings {
   dateFormat: string
   timeFormat: string
   pageSize: number
+  fontSize: number
   enableNotifications: boolean
 }
 
@@ -21,6 +22,7 @@ export const settingsApi = {
       dateFormat: 'MM/DD/YYYY',
       timeFormat: '24h',
       pageSize: 20,
+      fontSize: 14,
       enableNotifications: true,
     }
   },

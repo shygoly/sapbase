@@ -5,6 +5,7 @@ import { settingsApi, type SystemSettings } from '../api'
 import { Button } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
 
 export function SystemSettingsForm() {
   const [settings, setSettings] = useState<SystemSettings | null>(null)
@@ -79,6 +80,22 @@ export function SystemSettingsForm() {
           className="w-full border rounded px-3 py-2 mt-2"
         />
       </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-base font-medium">Font Size</Label>
+          <span className="text-sm text-muted-foreground">{settings.fontSize || 14}px</span>
+        </div>
+        <Slider
+          value={[settings.fontSize || 14]}
+          onValueChange={(value) => setSettings({ ...settings, fontSize: value[0] })}
+          min={12}
+          max={20}
+          step={1}
+          className="w-full"
+        />
+      </div>
+
       <Button onClick={handleSave}>Save Settings</Button>
     </div>
   )
