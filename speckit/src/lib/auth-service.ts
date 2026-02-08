@@ -1,26 +1,9 @@
 // Frontend authentication service
 
+import { LoginResponse, AuthUser } from '@speckit/shared-schemas'
+
 const AUTH_TOKEN_KEY = 'auth_token'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-
-export interface LoginResponse {
-  access_token: string
-  user: {
-    id: string
-    name: string
-    email: string
-    role: string
-    permissions: string[]
-  }
-}
-
-export interface AuthUser {
-  id: string
-  name: string
-  email: string
-  role: string
-  permissions: string[]
-}
 
 export class AuthService {
   private baseUrl: string
@@ -104,3 +87,6 @@ export class AuthService {
 }
 
 export const authService = new AuthService()
+
+// Re-export types from shared-schemas
+export type { LoginResponse, AuthUser }

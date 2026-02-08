@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm'
+import { UserStatus } from '@speckit/shared-schemas'
 
 @Entity('users')
 export class User {
@@ -17,7 +18,7 @@ export class User {
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   passwordHash: string
 
   @Column({ type: 'varchar', length: 255, default: 'user' })
@@ -26,8 +27,8 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   department: string
 
-  @Column({ type: 'varchar', length: 50, default: 'active' })
-  status: 'active' | 'inactive' | 'suspended'
+  @Column({ type: 'varchar', length: 50, default: UserStatus.ACTIVE })
+  status: UserStatus
 
   @Column({ type: 'simple-array', default: '' })
   permissions: string[]

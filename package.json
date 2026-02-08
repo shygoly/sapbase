@@ -4,6 +4,7 @@
   "description": "Speckit ERP - Monorepo with Frontend and Backend",
   "private": true,
   "workspaces": [
+    "shared-schemas",
     "speckit",
     "backend"
   ],

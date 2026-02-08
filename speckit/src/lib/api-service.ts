@@ -1,6 +1,7 @@
 // API service for communicating with NestJS backend
 
 import { authService } from './auth-service'
+import { User, Department, Role } from '@speckit/shared-schemas'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
@@ -77,22 +78,22 @@ export class ApiService {
   }
 
   // Users endpoints
-  async getUsers<T = any>(): Promise<T[]> {
+  async getUsers<T = User>(): Promise<T[]> {
     return this.request<T[]>('/users')
   }
 
-  async getUser<T = any>(id: string): Promise<T> {
+  async getUser<T = User>(id: string): Promise<T> {
     return this.request<T>(`/users/${id}`)
   }
 
-  async createUser<T = any, D = any>(data: D): Promise<T> {
+  async createUser<T = User, D = any>(data: D): Promise<T> {
     return this.request<T>('/users', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   }
 
-  async updateUser<T = any, D = any>(id: string, data: D): Promise<T> {
+  async updateUser<T = User, D = any>(id: string, data: D): Promise<T> {
     return this.request<T>(`/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -106,22 +107,22 @@ export class ApiService {
   }
 
   // Departments endpoints
-  async getDepartments<T = any>(): Promise<T[]> {
+  async getDepartments<T = Department>(): Promise<T[]> {
     return this.request<T[]>('/departments')
   }
 
-  async getDepartment<T = any>(id: string): Promise<T> {
+  async getDepartment<T = Department>(id: string): Promise<T> {
     return this.request<T>(`/departments/${id}`)
   }
 
-  async createDepartment<T = any, D = any>(data: D): Promise<T> {
+  async createDepartment<T = Department, D = any>(data: D): Promise<T> {
     return this.request<T>('/departments', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   }
 
-  async updateDepartment<T = any, D = any>(id: string, data: D): Promise<T> {
+  async updateDepartment<T = Department, D = any>(id: string, data: D): Promise<T> {
     return this.request<T>(`/departments/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -135,22 +136,22 @@ export class ApiService {
   }
 
   // Roles endpoints
-  async getRoles<T = any>(): Promise<T[]> {
+  async getRoles<T = Role>(): Promise<T[]> {
     return this.request<T[]>('/roles')
   }
 
-  async getRole<T = any>(id: string): Promise<T> {
+  async getRole<T = Role>(id: string): Promise<T> {
     return this.request<T>(`/roles/${id}`)
   }
 
-  async createRole<T = any, D = any>(data: D): Promise<T> {
+  async createRole<T = Role, D = any>(data: D): Promise<T> {
     return this.request<T>('/roles', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   }
 
-  async updateRole<T = any, D = any>(id: string, data: D): Promise<T> {
+  async updateRole<T = Role, D = any>(id: string, data: D): Promise<T> {
     return this.request<T>(`/roles/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -165,4 +166,3 @@ export class ApiService {
 }
 
 export const apiService = new ApiService()
-

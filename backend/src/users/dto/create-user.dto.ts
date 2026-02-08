@@ -1,4 +1,5 @@
 import { IsString, IsEmail, IsOptional, IsEnum, MinLength } from 'class-validator'
+import { UserStatus } from '@speckit/shared-schemas'
 
 export class CreateUserDto {
   @IsString()
@@ -20,6 +21,6 @@ export class CreateUserDto {
   department?: string
 
   @IsOptional()
-  @IsEnum(['active', 'inactive', 'suspended'])
-  status?: 'active' | 'inactive' | 'suspended'
+  @IsEnum(UserStatus)
+  status?: UserStatus
 }
