@@ -17,10 +17,22 @@ export class ApiService {
     this.baseUrl = baseUrl
   }
 
+  private ensureAuthenticated(): void {
+    const token = authService.getToken()
+    if (!token) {
+      throw new Error('Not authenticated. Please login first.')
+    }
+  }
+
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    requireAuth: boolean = true
   ): Promise<T> {
+    if (requireAuth) {
+      this.ensureAuthenticated()
+    }
+
     const url = `${this.baseUrl}${endpoint}`
     const token = authService.getToken()
 

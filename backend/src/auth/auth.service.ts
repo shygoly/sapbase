@@ -31,7 +31,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
-      permissions: [], // TODO: Load from database
+      permissions: user.permissions || [],
     }
 
     return {
@@ -41,7 +41,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
-        permissions: [],
+        permissions: user.permissions || [],
       },
     }
   }

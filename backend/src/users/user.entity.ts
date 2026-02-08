@@ -29,6 +29,9 @@ export class User {
   @Column({ type: 'varchar', length: 50, default: 'active' })
   status: 'active' | 'inactive' | 'suspended'
 
+  @Column({ type: 'simple-array', default: '' })
+  permissions: string[]
+
   @CreateDateColumn()
   createdAt: Date
 
