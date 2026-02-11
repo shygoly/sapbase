@@ -1,0 +1,18 @@
+[   29252ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/users?page=1&pageSize=10:0
+[   29253ms] [ERROR] AxiosError: Request failed with status code 404
+    at settle (webpack-internal:///(app-pages-browser)/../node_modules/axios/lib/core/settle.js:24:12)
+    at XMLHttpRequest.onloadend (webpack-internal:///(app-pages-browser)/../node_modules/axios/lib/adapters/xhr.js:73:66)
+    at Axios.request (webpack-internal:///(app-pages-browser)/../node_modules/axios/lib/core/Axios.js:59:41)
+    at async Object.findAll (webpack-internal:///(app-pages-browser)/./src/lib/api/users.api.ts:15:26)
+    at async fetchUsers (webpack-internal:///(app-pages-browser)/./src/app/admin/users/page.tsx:64:28) @ webpack-internal:///(app-pages-browser)/../node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   29272ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/users?page=1&pageSize=10:0
+[   29273ms] [ERROR] AxiosError: Request failed with status code 404
+    at settle (webpack-internal:///(app-pages-browser)/../node_modules/axios/lib/core/settle.js:24:12)
+    at XMLHttpRequest.onloadend (webpack-internal:///(app-pages-browser)/../node_modules/axios/lib/adapters/xhr.js:73:66)
+    at Axios.request (webpack-internal:///(app-pages-browser)/../node_modules/axios/lib/core/Axios.js:59:41)
+    at async Object.findAll (webpack-internal:///(app-pages-browser)/./src/lib/api/users.api.ts:15:26)
+    at async fetchUsers (webpack-internal:///(app-pages-browser)/./src/app/admin/users/page.tsx:64:28) @ webpack-internal:///(app-pages-browser)/../node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   30187ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/menu:0
+[   30250ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/menu:0
+[   35282ms] [WARNING] The resource http://localhost:3000/_next/static/css/app/layout.css?v=1770824136992 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/admin/users:0
+[   35283ms] [WARNING] The resource http://localhost:3000/_next/static/css/app/layout.css?v=1770824136852 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/admin/users:0

@@ -11,17 +11,20 @@ export const authApi = {
    * Login with email and password
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await httpClient.post<LoginResponse>('/api/auth/login', credentials)
+    const response = await httpClient.post<any>('/api/auth/login', credentials)
+
+    // Unwrap the response (backend returns { code, message, data: { access_token, user } })
+    const loginData = response.data.data || response.data
 
     // Store token and user
-    if (response.data.access_token) {
-      apiClient.setAuthToken(response.data.access_token)
+    if (loginData.access_token) {
+      apiClient.setAuthToken(loginData.access_token)
       if (typeof window !== 'undefined') {
-        localStorage.setItem('user', JSON.stringify(response.data.user))
+        localStorage.setItem('user', JSON.stringify(loginData.user))
       }
     }
 
-    return response.data
+    return loginData
   },
 
   /**
