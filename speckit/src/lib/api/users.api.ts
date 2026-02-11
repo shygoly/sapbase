@@ -30,7 +30,7 @@ export const usersApi = {
    * Get all users with pagination and search
    */
   async findAll(page: number = 1, pageSize: number = 10, search?: string) {
-    const response = await httpClient.get<PaginatedResponse<User>>('/users', {
+    const response = await httpClient.get<PaginatedResponse<User>>('/api/users', {
       params: {
         page,
         pageSize,
@@ -44,7 +44,7 @@ export const usersApi = {
    * Get a specific user by ID
    */
   async findOne(id: string): Promise<User> {
-    const response = await httpClient.get<User>(`/users/${id}`)
+    const response = await httpClient.get<User>(`/api/users/${id}`)
     return response.data
   },
 
@@ -52,7 +52,7 @@ export const usersApi = {
    * Create a new user
    */
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const response = await httpClient.$1<$2>('/api$3sers', createUserDto)
+    const response = await httpClient.post<User>('/api/users', createUserDto)
     return response.data
   },
 
@@ -60,7 +60,7 @@ export const usersApi = {
    * Update a user
    */
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const response = await httpClient.put<User>(`/users/${id}`, updateUserDto)
+    const response = await httpClient.put<User>(`/api/users/${id}`, updateUserDto)
     return response.data
   },
 
@@ -68,6 +68,6 @@ export const usersApi = {
    * Delete a user
    */
   async delete(id: string): Promise<void> {
-    await httpClient.delete(`/users/${id}`)
+    await httpClient.delete(`/api/users/${id}`)
   },
 }
