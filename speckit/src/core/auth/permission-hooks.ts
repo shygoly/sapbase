@@ -1,54 +1,48 @@
-'use client'
+/**
+ * Permission Hooks
+ * Custom hooks for permission checking
+ */
 
-import { useAuth } from './context'
-import { PermissionGuard, RoutePermissionConfig } from './permission-guard'
+import { usePermissionStore } from '@/core/store'
 
-export function usePermissionGuard() {
-  const { user } = useAuth()
-
-  const guard = new PermissionGuard({
-    user: user as any,
-    organizationId: user?.organizationId,
-  })
-
-  return guard
+/**
+ * usePermission - Check if user has a specific permission
+ */
+export function usePermission(permission: string): boolean {
+  const { hasPermission } = usePermissionStore()
+  return hasPermission(permission)
 }
 
-export function useCanAccess(permission: string | string[]): boolean {
-  const guard = usePermissionGuard()
-
-  if (Array.isArray(permission)) {
-    return guard.hasAny(permission)
-  }
-
-  return guard.has(permission)
+/**
+ * useCanPerform - Check if user can perform an action on a resource
+ * @param resource - Resource name (e.g., 'users', 'roles')
+ * @param action - Action name (e.g., 'create', 'read', 'update', 'delete')
+ */
+export function useCanPerform(resource: string, action: string): boolean {
+  const { canPerformAction } = usePermissionStore()
+  return canPerformAction(resource, action)
 }
 
-export function useCanAccessRoute(config: RoutePermissionConfig): boolean {
-  const guard = usePermissionGuard()
-  return guard.canAccessRoute(config)
+/**
+ * useUserPermissions - Get all user permissions
+ */
+export function useUserPermissions(): string[] {
+  const { permissions } = usePermissionStore()
+  return permissions
 }
 
-export function useCanPerformOperation(resource: string, action: string): boolean {
-  const guard = usePermissionGuard()
-  return guard.canPerformOperation(resource, action)
+/**
+ * useHasAnyPermission - Check if user has any of the given permissions
+ */
+export function useHasAnyPermission(permissions: string[]): boolean {
+  const { hasAnyPermission } = usePermissionStore()
+  return hasAnyPermission(permissions)
 }
 
-export function useCanPerformBatchOperation(
-  resource: string,
-  action: string,
-  count: number
-): boolean {
-  const guard = usePermissionGuard()
-  return guard.canPerformBatchOperation(resource, action, count)
-}
-
-export function useHasRole(role: string | string[]): boolean {
-  const guard = usePermissionGuard()
-
-  if (Array.isArray(role)) {
-    return guard.hasAnyRole(role)
-  }
-
-  return guard.hasRole(role)
+/**
+ * useHasAllPermissions - Check if user has all of the given permissions
+ */
+export function useHasAllPermissions(permissions: string[]): boolean {
+  const { hasAllPermissions } = usePermissionStore()
+  return hasAllPermissions(permissions)
 }

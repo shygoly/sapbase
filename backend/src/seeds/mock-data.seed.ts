@@ -83,19 +83,6 @@ async function seedDatabase() {
     await userRepository.save(users)
     console.log(`Created ${users.length} users`)
 
-    // Create admin user
-    const adminHashedPassword = await bcrypt.hash('password123', 10)
-    const adminUser = userRepository.create({
-      email: 'admin@example.com',
-      passwordHash: adminHashedPassword,
-      name: 'Admin User',
-      role: roles[0].name, // Admin role
-      department: departments[0].name,
-      status: UserStatus.ACTIVE,
-    })
-    await userRepository.save(adminUser)
-    console.log('Created admin user: admin@example.com')
-
     // Seed Permissions (50 permissions)
     const permissionRepository = AppDataSource.getRepository(Permission)
     const permissionNames = [
@@ -164,11 +151,36 @@ async function seedDatabase() {
     // Assign permissions to roles
     for (let i = 0; i < roles.length; i++) {
       const role = roles[i]
-      const permissionCount = Math.floor((permissions.length / roles.length) * (i + 1))
+      let permissionCount
+      
+      // Admin role gets all permissions
+      if (role.name === 'Admin') {
+        permissionCount = permissions.length
+      } else {
+        permissionCount = Math.floor((permissions.length / roles.length) * (i + 1))
+      }
+      
       role.permissions = permissions.slice(0, permissionCount).map(p => p.name)
       await roleRepository.save(role)
     }
     console.log('Assigned permissions to roles')
+
+    // Create admin user with all permissions from Admin role
+    const adminRole = roles.find(r => r.name === 'Admin')
+    if (adminRole) {
+      const adminHashedPassword = await bcrypt.hash('password123', 10)
+      const adminUser = userRepository.create({
+        email: 'admin@example.com',
+        passwordHash: adminHashedPassword,
+        name: 'Admin User',
+        role: adminRole.name,
+        department: departments[0].name,
+        status: UserStatus.ACTIVE,
+        permissions: adminRole.permissions, // Copy all permissions from Admin role
+      })
+      await userRepository.save(adminUser)
+      console.log('Created admin user: admin@example.com with all permissions')
+    }
 
     // Seed Settings (50 settings, one per user)
     const settingRepository = AppDataSource.getRepository(Setting)

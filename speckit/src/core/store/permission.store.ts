@@ -1,86 +1,88 @@
+/**
+ * Permission Store - Zustand
+ * Manages user permissions and role-based access control
+ */
+
 import { create } from 'zustand'
+import { Permission, PermissionString } from '@/lib/api/types'
+import { permissionsApi } from '@/lib/api/permissions.api'
 
-export interface PermissionCacheEntry {
-  permission: string
-  allowed: boolean
-  timestamp: number
-  ttl: number // milliseconds
-}
-
-export interface PermissionStoreState {
-  cache: Map<string, PermissionCacheEntry>
+interface PermissionState {
+  permissions: string[]
+  allPermissions: Permission[]
+  isLoading: boolean
+  error: string | null
 
   // Actions
-  checkPermission: (permission: string) => boolean | null
-  setPermission: (permission: string, allowed: boolean, ttl?: number) => void
-  setPermissions: (permissions: Record<string, boolean>, ttl?: number) => void
-  clearCache: () => void
-  clearExpiredCache: () => void
-  isExpired: (entry: PermissionCacheEntry) => boolean
+  setPermissions: (permissions: string[]) => void
+  setAllPermissions: (permissions: Permission[]) => void
+  setLoading: (loading: boolean) => void
+  setError: (error: string | null) => void
+  hasPermission: (permission: string) => boolean
+  hasAnyPermission: (permissions: string[]) => boolean
+  hasAllPermissions: (permissions: string[]) => boolean
+  canPerformAction: (resource: string, action: string) => boolean
+  fetchAllPermissions: () => Promise<void>
+  clearPermissions: () => void
 }
 
-const DEFAULT_TTL = 5 * 60 * 1000 // 5 minutes
+export const usePermissionStore = create<PermissionState>((set, get) => ({
+  permissions: [],
+  allPermissions: [],
+  isLoading: false,
+  error: null,
 
-export const usePermissionStore = create<PermissionStoreState>((set, get) => ({
-  cache: new Map(),
+  setPermissions: (permissions) => set({ permissions }),
 
-  checkPermission: (permission) => {
-    const state = get()
-    const entry = state.cache.get(permission)
+  setAllPermissions: (allPermissions) => set({ allPermissions }),
 
-    if (!entry) return null
+  setLoading: (isLoading) => set({ isLoading }),
 
-    if (state.isExpired(entry)) {
-      state.clearCache()
-      return null
-    }
+  setError: (error) => set({ error }),
 
-    return entry.allowed
+  hasPermission: (permission: string) => {
+    const { permissions } = get()
+    return permissions.includes(permission)
   },
 
-  setPermission: (permission, allowed, ttl = DEFAULT_TTL) =>
-    set((state) => {
-      const newCache = new Map(state.cache)
-      newCache.set(permission, {
-        permission,
-        allowed,
-        timestamp: Date.now(),
-        ttl,
-      })
-      return { cache: newCache }
-    }),
+  hasAnyPermission: (permissionList: string[]) => {
+    const { permissions } = get()
+    return permissionList.some((p) => permissions.includes(p))
+  },
 
-  setPermissions: (permissions, ttl = DEFAULT_TTL) =>
-    set((state) => {
-      const newCache = new Map(state.cache)
-      Object.entries(permissions).forEach(([permission, allowed]) => {
-        newCache.set(permission, {
-          permission,
-          allowed,
-          timestamp: Date.now(),
-          ttl,
-        })
-      })
-      return { cache: newCache }
-    }),
+  hasAllPermissions: (permissionList: string[]) => {
+    const { permissions } = get()
+    return permissionList.every((p) => permissions.includes(p))
+  },
 
-  clearCache: () =>
+  canPerformAction: (resource: string, action: string) => {
+    const { permissions } = get()
+    const permissionString: PermissionString = `${resource}:${action}` as PermissionString
+    return permissions.includes(permissionString)
+  },
+
+  fetchAllPermissions: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const permissions = await permissionsApi.findAll()
+      set({
+        allPermissions: permissions,
+        isLoading: false,
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch permissions'
+      set({
+        error: message,
+        isLoading: false,
+      })
+    }
+  },
+
+  clearPermissions: () => {
     set({
-      cache: new Map(),
-    }),
-
-  clearExpiredCache: () =>
-    set((state) => {
-      const newCache = new Map(state.cache)
-      Array.from(newCache.entries()).forEach(([key, entry]) => {
-        if (state.isExpired(entry)) {
-          newCache.delete(key)
-        }
-      })
-      return { cache: newCache }
-    }),
-
-  isExpired: (entry) => {
-    return Date.now() - entry.timestamp > entry.ttl
+      permissions: [],
+      allPermissions: [],
+      error: null,
+    })
   },
 }))

@@ -1,0 +1,202 @@
+// API service for communicating with NestJS backend
+
+import { authService } from './auth-service'
+import { User, Department, Role } from '@speckit/shared-schemas'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
+export interface ApiResponse<T> {
+  data: T
+  status: number
+  message?: string
+}
+
+type BackendEnvelope<T> = {
+  code: number
+  message: string
+  data: T
+  timestamp?: string
+  path?: string
+}
+
+export class ApiService {
+  private baseUrl: string
+
+  constructor(baseUrl: string = API_BASE_URL) {
+    this.baseUrl = baseUrl
+  }
+
+  private ensureAuthenticated(): void {
+    const token = authService.getToken()
+    if (!token) {
+      throw new Error('Not authenticated. Please login first.')
+    }
+  }
+
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    requireAuth: boolean = true
+  ): Promise<T> {
+    if (requireAuth) {
+      this.ensureAuthenticated()
+    }
+
+    const url = `${this.baseUrl}${endpoint}`
+    const token = authService.getToken()
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (options.headers) {
+      Object.assign(headers, options.headers)
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
+    const response = await fetch(url, {
+      headers,
+      ...options,
+    })
+
+    if (response.status === 401) {
+      authService.clearToken()
+      throw new Error('Unauthorized')
+    }
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `API Error: ${response.status}`)
+      } catch (e) {
+        if (e instanceof Error) throw e
+        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      }
+    }
+
+    // Handle 204 No Content
+    if (response.status === 204) {
+      return null as T
+    }
+
+    const json = await response.json()
+    // Backend wraps responses as { code, message, data, ... }
+    if (json && typeof json === 'object' && 'data' in json && 'code' in json) {
+      return (json as BackendEnvelope<T>).data
+    }
+    return json as T
+  }
+
+  // Users endpoints
+  async getUsers<T = User>(): Promise<T[]> {
+    return this.request<T[]>('/users')
+  }
+
+  async getUser<T = User>(id: string): Promise<T> {
+    return this.request<T>(`/users/${id}`)
+  }
+
+  async createUser<T = User, D = any>(data: D): Promise<T> {
+    return this.request<T>('/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateUser<T = User, D = any>(id: string, data: D): Promise<T> {
+    return this.request<T>(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    return this.request<void>(`/users/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Departments endpoints
+  async getDepartments<T = Department>(): Promise<T[]> {
+    return this.request<T[]>('/departments')
+  }
+
+  async getDepartment<T = Department>(id: string): Promise<T> {
+    return this.request<T>(`/departments/${id}`)
+  }
+
+  async createDepartment<T = Department, D = any>(data: D): Promise<T> {
+    return this.request<T>('/departments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateDepartment<T = Department, D = any>(id: string, data: D): Promise<T> {
+    return this.request<T>(`/departments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteDepartment(id: string): Promise<void> {
+    return this.request<void>(`/departments/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Roles endpoints
+  async getRoles<T = Role>(): Promise<T[]> {
+    return this.request<T[]>('/roles')
+  }
+
+  async getRole<T = Role>(id: string): Promise<T> {
+    return this.request<T>(`/roles/${id}`)
+  }
+
+  async createRole<T = Role, D = any>(data: D): Promise<T> {
+    return this.request<T>('/roles', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateRole<T = Role, D = any>(id: string, data: D): Promise<T> {
+    return this.request<T>(`/roles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteRole(id: string): Promise<void> {
+    return this.request<void>(`/roles/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Audit Logs endpoints
+  async getAuditLogs<T = any>(): Promise<T[]> {
+    return this.request<T[]>('/audit-logs')
+  }
+
+  async getAuditLog<T = any>(id: string): Promise<T> {
+    return this.request<T>(`/audit-logs/${id}`)
+  }
+
+  // Settings endpoints
+  async getSettings<T = any>(): Promise<T> {
+    return this.request<T>('/settings')
+  }
+
+  async updateSettings<T = any, D = any>(data: D): Promise<T> {
+    return this.request<T>('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+}
+
+export const apiService = new ApiService()

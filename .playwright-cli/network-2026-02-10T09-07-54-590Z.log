@@ -1,0 +1,39 @@
+[GET] http://localhost:3000/login => [500] Internal Server Error
+[GET] http://localhost:3000/_next/static/development/_devMiddlewareManifest.json => [200] OK
+[POST] http://localhost:3000/__nextjs_original-stack-frames => [200] OK
+[GET] http://localhost:3000/_next/static/css/app/layout.css?v=1770714405417 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/main-app.js?v=1770714405417 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app-pages-internals.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/login/page.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/global-error.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/layout.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/css/app/layout.css?v=1770714405417 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/main-app.js?v=1770714405417 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app-pages-internals.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/login/page.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/global-error.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/layout.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/css/app/layout.css?v=1770714414977 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/main-app.js?v=1770714414977 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app-pages-internals.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/login/page.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/global-error.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/layout.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/css/app/layout.css?v=1770714414977 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/main-app.js?v=1770714414977 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app-pages-internals.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/login/page.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/global-error.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/layout.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/css/app/layout.css?v=1770714437648 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/main-app.js?v=1770714437648 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app-pages-internals.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/login/page.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/global-error.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/layout.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/css/app/layout.css?v=1770714437648 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/main-app.js?v=1770714437648 => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app-pages-internals.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/login/page.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/global-error.js => [404] Not Found
+[GET] http://localhost:3000/_next/static/chunks/app/layout.js => [404] Not Found

@@ -1,32 +1,36 @@
-import type { Metadata } from 'next'
-import './globals.css'
-import { RootProviders } from '@/components/root-providers'
-import { AuthProvider } from '@/components/auth-provider'
-import { MenuProvider } from '@/core/menu/context'
+import '../styles/globals.css';
+import { cookies } from 'next/headers';
 
-export const metadata: Metadata = {
-  title: 'Speckit ERP Frontend Runtime',
-  description: 'Business-Agnostic Enterprise ERP Frontend Runtime'
-}
+import { DEFAULT_THEME } from '@/components/themes/theme.config';
+import { fontVariables } from '@/components/themes/font.config';
+import { AppProviders } from './providers';
 
-export default function RootLayout({
+export const metadata = {
+  title: 'Speckit ERP',
+  description: 'Speckit ERP dashboard'
+};
+
+export default async function RootLayout({
   children
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const activeTheme = cookieStore.get('active_theme')?.value ?? DEFAULT_THEME;
+
   return (
-    <html lang="en">
-      <body>
-        <RootProviders>
-          <AuthProvider>
-            <MenuProvider>
-              <div className="min-h-screen bg-gray-50">
-                {children}
-              </div>
-            </MenuProvider>
-          </AuthProvider>
-        </RootProviders>
+    <html lang='en' suppressHydrationWarning>
+      <head>
+        <meta name='theme-color' content='hsl(var(--background))' />
+        <meta
+          name='theme-color'
+          content='hsl(var(--background))'
+          media='(prefers-color-scheme: dark)'
+        />
+      </head>
+      <body className={fontVariables}>
+        <AppProviders activeTheme={activeTheme}>{children}</AppProviders>
       </body>
     </html>
-  )
+  );
 }

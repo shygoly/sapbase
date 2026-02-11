@@ -1,0 +1,84 @@
+[    9563ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/login:0
+[   10562ms] Error: Objects are not valid as a React child (found: object with keys {$$typeof, type, key, ref, props, _owner, _store}). If you meant to render a collection of children, use an array instead.
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6822:17)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5820:11)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at finishFunctionComponent (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5443:13)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5889:11)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:7253:18)
+    at renderChildrenArray (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:7022:11)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6789:13)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6007:13)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at finishFunctionComponent (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5443:13)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5889:11)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at finishFunctionComponent (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5443:13)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5889:11)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+[   33230ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/css/app/layout.css?v=1770714405417:0
+[   33244ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/main-app.js?v=1770714405417:0
+[   33244ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app-pages-internals.js:0
+[   33245ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/login/page.js:0
+[   33254ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/global-error.js:0
+[   33256ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/layout.js:0
+[   42403ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/css/app/layout.css?v=1770714414977:0
+[   42409ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/main-app.js?v=1770714414977:0
+[   42413ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app-pages-internals.js:0
+[   42418ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/login/page.js:0
+[   42427ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/global-error.js:0
+[   42429ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/layout.js:0
+[   65181ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/css/app/layout.css?v=1770714437648:0
+[   65189ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/main-app.js?v=1770714437648:0
+[   65192ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app-pages-internals.js:0
+[   65200ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/login/page.js:0
+[   65212ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/global-error.js:0
+[   65215ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/layout.js:0
+[  109145ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/src/core/store:0
+[  112171ms] [WARNING] The resource http://localhost:3000/_next/static/media/33417c49c7529ced-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112171ms] [WARNING] The resource http://localhost:3000/_next/static/media/3703c28dcda155b1-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112171ms] [WARNING] The resource http://localhost:3000/_next/static/media/4cf2300e9c8272f7-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112171ms] [WARNING] The resource http://localhost:3000/_next/static/media/ec14413c594b3356-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112171ms] [WARNING] The resource http://localhost:3000/_next/static/media/26d0ba92e140f0dc-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112171ms] [WARNING] The resource http://localhost:3000/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112172ms] [WARNING] The resource http://localhost:3000/_next/static/media/806de4d605d3ad01-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112172ms] [WARNING] The resource http://localhost:3000/_next/static/media/93f479601ee12b01-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112172ms] [WARNING] The resource http://localhost:3000/_next/static/media/e4af272ccee01ff0-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112172ms] [WARNING] The resource http://localhost:3000/_next/static/media/fc727f226c737876-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112172ms] [WARNING] The resource http://localhost:3000/_next/static/css/app/layout.css?v=1770714481767 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112172ms] [WARNING] The resource http://localhost:3000/_next/static/media/3be83a346553616c-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0
+[  112172ms] [WARNING] The resource http://localhost:3000/_next/static/media/13971731025ec697-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/login?:0

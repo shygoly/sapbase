@@ -1,0 +1,20 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - img [ref=e7]
+    - heading "Welcome Back" [level=1] [ref=e10]
+    - paragraph [ref=e11]: Sign in to your account to continue
+  - generic [ref=e12]:
+    - generic [ref=e13]:
+      - text: Email Address
+      - textbox "Email Address" [ref=e14]:
+        - /placeholder: admin@example.com
+    - generic [ref=e15]:
+      - text: Password
+      - textbox "Password" [ref=e16]:
+        - /placeholder: ••••••••
+    - button "Sign In" [ref=e17]
+  - generic [ref=e18]:
+    - paragraph [ref=e19]: "Demo Credentials:"
+    - paragraph [ref=e20]: "Email: admin@example.com"
+    - paragraph [ref=e21]: "Password: password123"
+  - paragraph [ref=e22]: ERP Frontend Runtime v1.0

@@ -1,0 +1,70 @@
+Total messages: 18 (Errors: 14, Warnings: 0)
+
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/login:0
+[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(pages-dir-browser)/../node_modules/react-dom/cjs/react-dom-client.development.js:28004
+Error: Objects are not valid as a React child (found: object with keys {$$typeof, type, key, ref, props, _owner, _store}). If you meant to render a collection of children, use an array instead.
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6822:17)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5820:11)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at finishFunctionComponent (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5443:13)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5889:11)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:7253:18)
+    at renderChildrenArray (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:7022:11)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6789:13)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6007:13)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at finishFunctionComponent (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5443:13)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5889:11)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at finishFunctionComponent (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5443:13)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:5889:11)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+    at renderNodeDestructive (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6715:11)
+    at renderElement (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6401:15)
+    at retryNode (file:///Users/mac/Sync/project/sapbase/node_modules/react-dom/cjs/react-dom-server.edge.development.js:6765:31)
+[LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/../node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/css/app/layout.css?v=1770714405417:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/main-app.js?v=1770714405417:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app-pages-internals.js:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/login/page.js:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/global-error.js:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/layout.js:0
+[VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3000/login:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/css/app/layout.css?v=1770714414977:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/main-app.js?v=1770714414977:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app-pages-internals.js:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/login/page.js:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/global-error.js:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/app/layout.js:0
+[VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3000/login?:0

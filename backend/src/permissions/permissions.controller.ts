@@ -1,12 +1,9 @@
-import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Put, Body, Param } from '@nestjs/common'
 import { PermissionsService } from './permissions.service'
 import { Permission } from './permission.entity'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { RolesGuard } from '../auth/roles.guard'
-import { Roles } from '../auth/roles.decorator'
+import { Auth } from '../common/decorators/auth.decorator'
 
 @Controller('permissions')
-@UseGuards(JwtAuthGuard)
 export class PermissionsController {
   constructor(private permissionsService: PermissionsService) {}
 
@@ -21,15 +18,13 @@ export class PermissionsController {
   }
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @Auth('admin')
   async create(@Body() body: { name: string; description?: string }): Promise<Permission> {
     return this.permissionsService.create(body.name, body.description)
   }
 
   @Put(':id')
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @Auth('admin')
   async update(
     @Param('id') id: string,
     @Body() body: { name?: string; description?: string },

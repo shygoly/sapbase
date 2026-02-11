@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Role } from './role.entity'
 import { CreateRoleDto } from './dto/create-role.dto'
 import { UpdateRoleDto } from './dto/update-role.dto'
+import { BaseCrudHelper } from '../common'
 
 @Injectable()
 export class RolesService {
@@ -24,25 +25,14 @@ export class RolesService {
   }
 
   async findOne(id: string): Promise<Role> {
-    const role = await this.rolesRepository.findOne({
-      where: { id },
-    })
-
-    if (!role) {
-      throw new NotFoundException(`Role with ID ${id} not found`)
-    }
-
-    return role
+    return BaseCrudHelper.findOneOrFail(this.rolesRepository, id, 'Role')
   }
 
   async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Role> {
-    await this.findOne(id)
-    await this.rolesRepository.update(id, updateRoleDto)
-    return this.findOne(id)
+    return BaseCrudHelper.updateById(this.rolesRepository, id, updateRoleDto, 'Role')
   }
 
   async remove(id: string): Promise<void> {
-    const role = await this.findOne(id)
-    await this.rolesRepository.remove(role)
+    return BaseCrudHelper.removeById(this.rolesRepository, id, 'Role')
   }
 }

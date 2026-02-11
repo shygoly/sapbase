@@ -1,35 +1,56 @@
-import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Body,
+  Request,
+} from '@nestjs/common'
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { SettingsService } from './settings.service'
-import { Setting } from './setting.entity'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { Auth } from '../common/decorators/auth.decorator'
+import { CreateSettingDto, UpdateSettingDto, SettingResponseDto } from './dto'
+import { ApiResponseDto } from '../common'
 
+@ApiTags('Settings')
+@ApiBearerAuth()
 @Controller('settings')
-@UseGuards(JwtAuthGuard)
 export class SettingsController {
   constructor(private settingsService: SettingsService) {}
 
   @Get()
-  async findAll(): Promise<Setting[]> {
-    return this.settingsService.findAll()
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<Setting> {
-    return this.settingsService.findOne(id)
+  @Auth()
+  @ApiOperation({ summary: 'Get current user settings' })
+  @ApiResponse({ status: 200, description: 'Settings retrieved successfully' })
+  async findByUserId(@Request() req: any) {
+    const userId = req.user.id
+    const settings = await this.settingsService.findByUserId(userId)
+    return ApiResponseDto.success(settings, 'Settings retrieved successfully')
   }
 
   @Post()
+  @Auth()
+  @ApiOperation({ summary: 'Create or initialize user settings' })
+  @ApiResponse({ status: 201, description: 'Settings created successfully' })
   async create(
-    @Body() body: { key: string; value: string; description?: string },
-  ): Promise<Setting> {
-    return this.settingsService.create(body.key, body.value, body.description)
+    @Request() req: any,
+    @Body() createSettingDto: CreateSettingDto,
+  ) {
+    const userId = req.user.id
+    const settings = await this.settingsService.create(userId, createSettingDto)
+    return ApiResponseDto.created(settings, 'Settings created successfully')
   }
 
-  @Put(':id')
+  @Put()
+  @Auth()
+  @ApiOperation({ summary: 'Update current user settings' })
+  @ApiResponse({ status: 200, description: 'Settings updated successfully' })
   async update(
-    @Param('id') id: string,
-    @Body() body: { value: string },
-  ): Promise<Setting> {
-    return this.settingsService.update(id, body.value)
+    @Request() req: any,
+    @Body() updateSettingDto: UpdateSettingDto,
+  ) {
+    const userId = req.user.id
+    const settings = await this.settingsService.update(userId, updateSettingDto)
+    return ApiResponseDto.success(settings, 'Settings updated successfully')
   }
 }

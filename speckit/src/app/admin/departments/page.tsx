@@ -1,248 +1,120 @@
+/**
+ * Departments Management Page
+ * Runtime-First architecture: Schema-first with PageRuntime wrapper
+ */
+
 'use client'
 
-import { useState, useEffect } from 'react'
-import { SchemaForm } from '@/components/schema-form'
-import { SchemaList } from '@/components/schema-list'
-import { BatchOperations } from '@/components/batch-operations'
-import { schemaResolver } from '@/core/schema/resolver'
-import { schemaRegistry } from '@/core/schema/registry'
-import { apiService } from '@/lib/api-service'
-import { exportService } from '@/core/export/service'
+import React, { useState, useEffect } from 'react'
+import { departmentsApi } from '@/lib/api'
+import { Department } from '@/lib/api/types'
+import { useNotification } from '@/core/ui/ui-hooks'
+import { PermissionGuard } from '@/core/auth/permission-guard'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import type { ObjectSchema, ResolvedPageSchema } from '@/core/schema/types'
+import { Plus } from 'lucide-react'
+import { DepartmentsList } from './components/departments-list'
+import { CreateDepartmentDialog } from './components/create-department-dialog'
+import { TableSkeleton } from '@/components/loading-skeleton'
+import { PageRuntime, type PageModel } from '@/components/runtime'
+import { CollectionRuntime, type CollectionModel } from '@/components/runtime'
+
+// PageModel schema
+const DepartmentsPageModel: PageModel = {
+  id: 'departments-page',
+  title: 'Departments Management',
+  description: 'Manage organizational departments',
+  permissions: ['departments:read'],
+}
+
+// CollectionModel schema
+const DepartmentsCollectionModel: CollectionModel = {
+  id: 'departments-collection',
+  name: 'Departments',
+  permissions: ['departments:read'],
+}
 
 export default function DepartmentsPage() {
-  const [pageSchema, setPageSchema] = useState<ResolvedPageSchema | null>(null)
-  const [objectSchema, setObjectSchema] = useState<ObjectSchema | null>(null)
-  const [departments, setDepartments] = useState<Record<string, any>[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editingDept, setEditingDept] = useState<Record<string, any> | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<Record<string, any> | null>(null)
-  const [selectedDepts, setSelectedDepts] = useState<Record<string, any>[]>([])
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(10)
+  const [total, setTotal] = useState(0)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const notification = useNotification()
+
+  // Fetch departments
+  const fetchDepartments = async () => {
+    setIsLoading(true)
+    try {
+      const result = await departmentsApi.findAll(page, pageSize)
+      setDepartments(result.data)
+      setTotal(result.total)
+    } catch (error) {
+      notification.error('Failed to load departments')
+      console.error(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setError(null)
-        const resolved = await schemaResolver.resolvePage('departments')
-        setPageSchema(resolved)
-        const objSchema = schemaRegistry.getObject('department')
-        if (objSchema) setObjectSchema(objSchema)
-        const data = await apiService.getDepartments()
-        setDepartments(data)
-      } catch (err) {
-        console.error('Failed to load data:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load data')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    loadData()
-  }, [])
+    fetchDepartments()
+  }, [page, pageSize])
 
-  const handleCreateDept = () => {
-    setEditingDept(null)
-    setShowForm(true)
+  const handleCreateDepartment = async () => {
+    setShowCreateDialog(false)
+    setPage(1)
+    await fetchDepartments()
+    notification.success('Department created successfully')
   }
 
-  const handleEditDept = (dept: Record<string, any>) => {
-    setEditingDept(dept)
-    setShowForm(true)
-  }
+  const handleDeleteDepartment = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this department?')) return
 
-  const handleDeleteDept = (dept: Record<string, any>) => {
-    setDeleteConfirm(dept)
-  }
-
-  const handleConfirmDelete = async () => {
-    if (!deleteConfirm) return
     try {
-      await apiService.deleteDepartment(deleteConfirm.id)
-      setDepartments(departments.filter(d => d.id !== deleteConfirm.id))
-      setDeleteConfirm(null)
-    } catch (err) {
-      console.error('Failed to delete department:', err)
-      setError(err instanceof Error ? err.message : 'Failed to delete department')
+      await departmentsApi.delete(id)
+      notification.success('Department deleted successfully')
+      await fetchDepartments()
+    } catch (error) {
+      notification.error('Failed to delete department')
     }
   }
 
-  const handleSubmitForm = async (data: Record<string, any>) => {
-    try {
-      let result: Record<string, any>
-      if (editingDept) {
-        result = await apiService.updateDepartment(editingDept.id, data)
-        setDepartments(departments.map(d => (d.id === result.id ? result : d)))
-      } else {
-        result = await apiService.createDepartment(data)
-        setDepartments([...departments, result])
-      }
-      setShowForm(false)
-      setEditingDept(null)
-    } catch (err) {
-      console.error('Failed to save department:', err)
-      setError(err instanceof Error ? err.message : 'Failed to save department')
-    }
-  }
-
-  const handleBatchDelete = async () => {
-    try {
-      await Promise.all(selectedDepts.map(d => apiService.deleteDepartment(d.id)))
-      setDepartments(departments.filter(d => !selectedDepts.find(sd => sd.id === d.id)))
-      setSelectedDepts([])
-    } catch (err) {
-      console.error('Failed to delete departments:', err)
-      setError(err instanceof Error ? err.message : 'Failed to delete departments')
-    }
-  }
-
-  const handleBatchExport = async () => {
-    try {
-      const dataToExport = selectedDepts.length > 0 ? selectedDepts : departments
-      exportService.exportToCSV(
-        dataToExport,
-        ['id', 'name', 'description'] as const,
-        { filename: 'departments' }
-      )
-    } catch (err) {
-      console.error('Failed to export departments:', err)
-      setError(err instanceof Error ? err.message : 'Failed to export departments')
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="p-6">
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            Loading...
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  const pageHeaderAction = (
+    <PermissionGuard permission="departments:create">
+      <Button onClick={() => setShowCreateDialog(true)}>
+        <Plus className="mr-2 h-4 w-4" />
+        Create Department
+      </Button>
+    </PermissionGuard>
+  )
 
   return (
-    <div className="p-6 space-y-6">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/admin">Admin Center</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Departments</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div>
-        <h1 className="text-3xl font-bold">
-          {pageSchema?.metadata?.title || 'Departments'}
-        </h1>
-        <p className="text-muted-foreground">
-          {pageSchema?.metadata?.description}
-        </p>
-      </div>
-
-      {error && (
-        <Card className="border-destructive bg-destructive/10">
-          <CardContent className="p-4 text-destructive">{error}</CardContent>
-        </Card>
-      )}
-
-      {!showForm ? (
-        <div className="space-y-4">
-          <Button onClick={handleCreateDept}>Create Department</Button>
-
-          <BatchOperations
-            selectedCount={selectedDepts.length}
-            onDelete={selectedDepts.length > 0 ? handleBatchDelete : undefined}
-            onExport={handleBatchExport}
-            onClearSelection={() => setSelectedDepts([])}
-            isLoading={isLoading}
-          />
-
-          {objectSchema && (
-            <SchemaList
-              schema={objectSchema}
-              data={departments}
-              onEdit={handleEditDept}
-              onDelete={handleDeleteDept}
-              isLoading={isLoading}
+    <PageRuntime model={DepartmentsPageModel} isLoading={isLoading} pageHeaderAction={pageHeaderAction}>
+      <div className="space-y-6">
+        {/* Departments Table */}
+        <CollectionRuntime model={DepartmentsCollectionModel} isLoading={isLoading}>
+          {isLoading ? (
+            <TableSkeleton />
+          ) : (
+            <DepartmentsList
+              departments={departments}
+              total={total}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onDelete={handleDeleteDepartment}
             />
           )}
-        </div>
-      ) : (
-        <Card className="max-w-2xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle>
-              {editingDept ? 'Edit Department' : 'Create Department'}
-            </CardTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                setShowForm(false)
-                setEditingDept(null)
-              }}
-            >
-              ✕
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {objectSchema && (
-              <SchemaForm
-                schema={objectSchema}
-                initialData={editingDept || {}}
-                onSubmit={handleSubmitForm}
-              />
-            )}
-          </CardContent>
-        </Card>
-      )}
+        </CollectionRuntime>
 
-      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Department</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {deleteConfirm?.name}? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        {/* Create Department Dialog */}
+        <CreateDepartmentDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onSuccess={handleCreateDepartment}
+        />
+      </div>
+    </PageRuntime>
   )
 }

@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import * as bcrypt from 'bcrypt'
 import { User } from './user.entity'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
+import { BaseCrudHelper, PaginatedResult } from '../common'
 
 @Injectable()
 export class UsersService {
@@ -22,24 +23,41 @@ export class UsersService {
     return this.usersRepository.save(user)
   }
 
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.find({
-      order: {
-        createdAt: 'DESC',
-      },
-    })
+  async findAll(
+    page: number = 1,
+    pageSize: number = 10,
+    search?: string,
+  ): Promise<PaginatedResult<User>> {
+    const skip = (page - 1) * pageSize
+
+    let query = this.usersRepository.createQueryBuilder('user')
+
+    if (search) {
+      query = query.where(
+        'user.email ILIKE :search OR user.name ILIKE :search',
+        { search: `%${search}%` },
+      )
+    }
+
+    const total = await query.getCount()
+
+    const data = await query
+      .orderBy('user.createdAt', 'DESC')
+      .skip(skip)
+      .take(pageSize)
+      .getMany()
+
+    return {
+      data,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    }
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.usersRepository.findOne({
-      where: { id },
-    })
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`)
-    }
-
-    return user
+    return BaseCrudHelper.findOneOrFail(this.usersRepository, id, 'User')
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -49,14 +67,10 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    await this.findOne(id) // Check if user exists
-
-    await this.usersRepository.update(id, updateUserDto)
-    return this.findOne(id)
+    return BaseCrudHelper.updateById(this.usersRepository, id, updateUserDto, 'User')
   }
 
   async remove(id: string): Promise<void> {
-    const user = await this.findOne(id)
-    await this.usersRepository.remove(user)
+    return BaseCrudHelper.removeById(this.usersRepository, id, 'User')
   }
 }

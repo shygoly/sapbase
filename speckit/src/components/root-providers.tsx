@@ -1,30 +1,39 @@
+/**
+ * Root Providers Component
+ * Wraps the entire app with necessary providers
+ */
+
 'use client'
 
-import { ReactNode } from 'react'
-import { I18nProvider } from '@/core/i18n/context'
-import { ThemeProvider } from '@/core/theme/context'
-import { ErrorProvider } from '@/core/error/context'
-import { NotificationProvider } from '@/core/notification/context'
-import { ErrorBoundary } from '@/components/error-boundary'
-import { NotificationContainer } from '@/components/notification-container'
+import React, { useEffect } from 'react'
+import { useAuthStore, usePermissionStore, useMenuStore } from '@/core/store'
 
 interface RootProvidersProps {
-  children: ReactNode
+  children: React.ReactNode
 }
 
 export function RootProviders({ children }: RootProvidersProps) {
+  const { initializeAuth, user } = useAuthStore()
+  const { setPermissions, fetchAllPermissions } = usePermissionStore()
+  const { fetchFilteredMenu } = useMenuStore()
+
+  // Initialize auth on app load
+  useEffect(() => {
+    initializeAuth()
+  }, [initializeAuth])
+
+  // Load permissions and menu when user changes
+  useEffect(() => {
+    if (user && user.permissions) {
+      setPermissions(user.permissions)
+      fetchAllPermissions()
+      fetchFilteredMenu(user.permissions)
+    }
+  }, [user, setPermissions, fetchAllPermissions, fetchFilteredMenu])
+
   return (
-    <ErrorBoundary>
-      <ErrorProvider>
-        <ThemeProvider>
-          <I18nProvider>
-            <NotificationProvider>
-              {children}
-              <NotificationContainer />
-            </NotificationProvider>
-          </I18nProvider>
-        </ThemeProvider>
-      </ErrorProvider>
-    </ErrorBoundary>
+    <>
+      {children}
+    </>
   )
 }

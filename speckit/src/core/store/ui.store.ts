@@ -1,148 +1,78 @@
+/**
+ * UI Store - Zustand
+ * Manages global UI state (modals, notifications, theme, etc.)
+ */
+
 import { create } from 'zustand'
 
-export interface UIState {
-  modals: Record<string, boolean>
-  sidebars: Record<string, boolean>
-  loadingStates: Record<string, boolean>
-  notifications: Array<{
-    id: string
-    type: 'success' | 'error' | 'warning' | 'info'
-    message: string
-    timestamp: number
-  }>
-  theme: 'light' | 'dark'
-  sidebarCollapsed: boolean
+export interface Notification {
+  id: string
+  type: 'success' | 'error' | 'warning' | 'info'
+  message: string
+  duration?: number
 }
 
-export interface UIStoreState {
-  ui: UIState
+interface UIState {
+  sidebarOpen: boolean
+  theme: 'light' | 'dark'
+  notifications: Notification[]
 
-  // Modal actions
-  openModal: (modalId: string) => void
-  closeModal: (modalId: string) => void
-  toggleModal: (modalId: string) => void
-  isModalOpen: (modalId: string) => boolean
-
-  // Sidebar actions
-  openSidebar: (sidebarId: string) => void
-  closeSidebar: (sidebarId: string) => void
-  toggleSidebar: (sidebarId: string) => void
-  toggleMainSidebar: () => void
-
-  // Loading actions
-  setLoading: (key: string, loading: boolean) => void
-  isLoading: (key: string) => boolean
-
-  // Theme actions
+  // Actions
+  toggleSidebar: () => void
+  setSidebarOpen: (open: boolean) => void
   setTheme: (theme: 'light' | 'dark') => void
-
-  // Notification actions
-  addNotification: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void
+  addNotification: (notification: Omit<Notification, 'id'>) => void
   removeNotification: (id: string) => void
   clearNotifications: () => void
-
-  // Reset
-  reset: () => void
 }
 
-const initialUIState: UIState = {
-  modals: {},
-  sidebars: {},
-  loadingStates: {},
-  notifications: [],
+export const useUIStore = create<UIState>((set, get) => ({
+  sidebarOpen: true,
   theme: 'light',
-  sidebarCollapsed: false,
-}
+  notifications: [],
 
-export const useUIStore = create<UIStoreState>((set, get) => ({
-  ui: initialUIState,
+  toggleSidebar: () => {
+    set((state) => ({ sidebarOpen: !state.sidebarOpen }))
+  },
 
-  openModal: (modalId) =>
+  setSidebarOpen: (open) => {
+    set({ sidebarOpen: open })
+  },
+
+  setTheme: (theme) => {
+    set({ theme })
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', theme)
+    }
+  },
+
+  addNotification: (notification) => {
+    const id = `${Date.now()}-${Math.random()}`
+    const newNotification: Notification = {
+      ...notification,
+      id,
+    }
+
     set((state) => ({
-      ui: { ...state.ui, modals: { ...state.ui.modals, [modalId]: true } },
-    })),
+      notifications: [...state.notifications, newNotification],
+    }))
 
-  closeModal: (modalId) =>
+    // Auto-remove notification after duration
+    if (notification.duration !== 0) {
+      const duration = notification.duration || 3000
+      setTimeout(() => {
+        get().removeNotification(id)
+      }, duration)
+    }
+  },
+
+  removeNotification: (id) => {
     set((state) => ({
-      ui: { ...state.ui, modals: { ...state.ui.modals, [modalId]: false } },
-    })),
+      notifications: state.notifications.filter((n) => n.id !== id),
+    }))
+  },
 
-  toggleModal: (modalId) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        modals: { ...state.ui.modals, [modalId]: !state.ui.modals[modalId] },
-      },
-    })),
-
-  isModalOpen: (modalId) => get().ui.modals[modalId] || false,
-
-  openSidebar: (sidebarId) =>
-    set((state) => ({
-      ui: { ...state.ui, sidebars: { ...state.ui.sidebars, [sidebarId]: true } },
-    })),
-
-  closeSidebar: (sidebarId) =>
-    set((state) => ({
-      ui: { ...state.ui, sidebars: { ...state.ui.sidebars, [sidebarId]: false } },
-    })),
-
-  toggleSidebar: (sidebarId) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        sidebars: { ...state.ui.sidebars, [sidebarId]: !state.ui.sidebars[sidebarId] },
-      },
-    })),
-
-  toggleMainSidebar: () =>
-    set((state) => ({
-      ui: { ...state.ui, sidebarCollapsed: !state.ui.sidebarCollapsed },
-    })),
-
-  setLoading: (key, loading) =>
-    set((state) => ({
-      ui: { ...state.ui, loadingStates: { ...state.ui.loadingStates, [key]: loading } },
-    })),
-
-  isLoading: (key) => get().ui.loadingStates[key] || false,
-
-  setTheme: (theme) =>
-    set((state) => ({
-      ui: { ...state.ui, theme },
-    })),
-
-  addNotification: (type, message) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        notifications: [
-          ...state.ui.notifications,
-          {
-            id: `${Date.now()}-${Math.random()}`,
-            type,
-            message,
-            timestamp: Date.now(),
-          },
-        ],
-      },
-    })),
-
-  removeNotification: (id) =>
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        notifications: state.ui.notifications.filter((n) => n.id !== id),
-      },
-    })),
-
-  clearNotifications: () =>
-    set((state) => ({
-      ui: { ...state.ui, notifications: [] },
-    })),
-
-  reset: () =>
-    set({
-      ui: initialUIState,
-    }),
+  clearNotifications: () => {
+    set({ notifications: [] })
+  },
 }))

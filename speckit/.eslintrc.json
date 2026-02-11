@@ -1,0 +1,19 @@
+{
+  "extends": "next/core-web-vitals",
+  "plugins": ["@typescript-eslint"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "warn",
+    "import/no-unresolved": "off",
+    "import/named": "off",
+    "no-console": "warn",
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["src/app/**/page.tsx", "src/features/**/page.tsx"],
+      "rules": {
+        "no-console": ["warn", { "allow": ["error"] }]
+      }
+    }
+  ]
+}

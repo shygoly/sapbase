@@ -1,0 +1,67 @@
+- generic:
+  - generic [active]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - navigation [ref=e25]:
+            - button "previous" [disabled] [ref=e26]:
+              - img "previous" [ref=e27]
+            - generic [ref=e29]:
+              - generic [ref=e30]: 1/
+              - text: "1"
+            - button "next" [disabled] [ref=e31]:
+              - img "next" [ref=e32]
+          - img
+        - generic [ref=e34]:
+          - link "Next.js 15.5.12 (outdated) Webpack" [ref=e35] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e36]
+            - generic "An outdated version detected (latest is 16.1.6), upgrade is highly recommended!" [ref=e38]: Next.js 15.5.12 (outdated)
+            - generic [ref=e39]: Webpack
+          - img
+      - generic [ref=e40]:
+        - dialog "Runtime Error" [ref=e41]:
+          - generic [ref=e44]:
+            - generic [ref=e45]:
+              - generic [ref=e46]:
+                - generic [ref=e48]: Runtime Error
+                - generic [ref=e49]:
+                  - button "Copy Error Info" [ref=e50] [cursor=pointer]:
+                    - img [ref=e51]
+                  - button "No related documentation found" [disabled] [ref=e53]:
+                    - img [ref=e54]
+                  - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e56] [cursor=pointer]:
+                    - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+                    - img [ref=e57]
+              - paragraph [ref=e66]: "Objects are not valid as a React child (found: object with keys {$$typeof, type, key, ref, props, _owner, _store}). If you meant to render a collection of children, use an array instead."
+            - generic [ref=e69]:
+              - paragraph [ref=e70]:
+                - text: Call Stack
+                - generic [ref=e71]: "50"
+              - button "Show 50 ignore-listed frame(s)" [ref=e72] [cursor=pointer]:
+                - text: Show 50 ignore-listed frame(s)
+                - img [ref=e73]
+          - generic [ref=e75]:
+            - generic [ref=e76]: "1"
+            - generic [ref=e77]: "2"
+        - contentinfo [ref=e78]:
+          - region "Error feedback" [ref=e79]:
+            - paragraph [ref=e80]:
+              - link "Was this helpful?" [ref=e81] [cursor=pointer]:
+                - /url: https://nextjs.org/telemetry#error-feedback
+            - button "Mark as helpful" [ref=e82] [cursor=pointer]:
+              - img [ref=e83]
+            - button "Mark as not helpful" [ref=e86] [cursor=pointer]:
+              - img [ref=e87]
+    - generic [ref=e5] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e6]:
+        - img [ref=e7]
+      - generic [ref=e10]:
+        - button "Open issues overlay" [ref=e11]:
+          - generic [ref=e12]:
+            - generic [ref=e13]: "0"
+            - generic [ref=e14]: "1"
+          - generic [ref=e15]: Issue
+        - button "Collapse issues badge" [ref=e16]:
+          - img [ref=e17]
+  - alert [ref=e19]

@@ -1,0 +1,71 @@
+@import 'tailwindcss';
+
+/* @import 'tw-animate-css'; */ /* optional: install tw-animate-css if needed */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* Semantic colors - defaults, overridden by ThemeProvider at runtime */
+  --color-background: #ffffff;
+  --color-foreground: #0a0a0a;
+  --color-primary: #0066cc;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #6b7280;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #e5e7eb;
+  --color-muted-foreground: #6b7280;
+  --color-accent: #f59e0b;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #dc2626;
+  --color-border: #e5e7eb;
+  --color-input: #f3f4f6;
+  --color-ring: #0066cc;
+  --color-card: #f5f5f5;
+  --color-card-foreground: #0a0a0a;
+}
+
+@import './theme.css';
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* View Transition Wave Effect */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  /* Ensure the outgoing view (old theme) is beneath */
+  z-index: 0;
+}
+
+::view-transition-new(root) {
+  /* Ensure the incoming view (new theme) is always on top */
+  z-index: 1;
+}
+
+@keyframes reveal {
+  from {
+    /* Use CSS variables for the origin, defaulting to center if not set */
+    clip-path: circle(0% at var(--x, 50%) var(--y, 50%));
+    opacity: 0.7;
+  }
+  to {
+    /* Use CSS variables for the origin, defaulting to center if not set */
+    clip-path: circle(150% at var(--x, 50%) var(--y, 50%));
+    opacity: 1;
+  }
+}
+
+::view-transition-new(root) {
+  /* Apply the reveal animation */
+  animation: reveal 0.4s ease-in-out forwards;
+}

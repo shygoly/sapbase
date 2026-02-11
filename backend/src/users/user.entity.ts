@@ -1,17 +1,9 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm'
+import { Entity, Column } from 'typeorm'
 import { UserStatus } from '@speckit/shared-schemas'
+import { BaseEntity } from '../common/entities/base.entity'
 
 @Entity('users')
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
+export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   name: string
 
@@ -32,10 +24,4 @@ export class User {
 
   @Column({ type: 'simple-array', default: '' })
   permissions: string[]
-
-  @CreateDateColumn()
-  createdAt: Date
-
-  @UpdateDateColumn()
-  updatedAt: Date
 }

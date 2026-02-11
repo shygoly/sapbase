@@ -1,19 +1,9 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm'
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm'
 import { User } from '../users/user.entity'
+import { BaseEntity } from '../common/entities/base.entity'
 
 @Entity('departments')
-export class Department {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
+export class Department extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   name: string
 
@@ -29,10 +19,4 @@ export class Department {
 
   @Column({ type: 'varchar', length: 50, default: 'active' })
   status: 'active' | 'inactive'
-
-  @CreateDateColumn()
-  createdAt: Date
-
-  @UpdateDateColumn()
-  updatedAt: Date
 }

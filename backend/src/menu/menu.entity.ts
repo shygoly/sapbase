@@ -1,18 +1,8 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  OneToMany,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm'
+import { Entity, Column, ManyToOne, OneToMany } from 'typeorm'
+import { BaseEntity } from '../common/entities/base.entity'
 
 @Entity('menu_items')
-export class MenuItem {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
+export class MenuItem extends BaseEntity {
   @Column()
   label: string
 
@@ -36,10 +26,4 @@ export class MenuItem {
 
   @OneToMany(() => MenuItem, (item) => item.parent)
   children: MenuItem[]
-
-  @CreateDateColumn()
-  createdAt: Date
-
-  @UpdateDateColumn()
-  updatedAt: Date
 }

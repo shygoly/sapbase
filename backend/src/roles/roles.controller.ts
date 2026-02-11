@@ -8,23 +8,19 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
-  UseGuards,
 } from '@nestjs/common'
 import { RolesService } from './roles.service'
 import { CreateRoleDto } from './dto/create-role.dto'
 import { UpdateRoleDto } from './dto/update-role.dto'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { Roles } from '../auth/roles.decorator'
-import { RolesGuard } from '../auth/roles.guard'
+import { Auth } from '../common/decorators/auth.decorator'
 import { Role } from './role.entity'
 
 @Controller('roles')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Post()
-  @Roles('admin')
+  @Auth('admin')
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createRoleDto: CreateRoleDto): Promise<Role> {
     return this.rolesService.create(createRoleDto)
@@ -41,7 +37,7 @@ export class RolesController {
   }
 
   @Put(':id')
-  @Roles('admin')
+  @Auth('admin')
   async update(
     @Param('id') id: string,
     @Body() updateRoleDto: UpdateRoleDto,
@@ -50,7 +46,7 @@ export class RolesController {
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Auth('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string): Promise<void> {
     return this.rolesService.remove(id)
