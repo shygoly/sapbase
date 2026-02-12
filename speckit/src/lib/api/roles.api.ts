@@ -11,7 +11,7 @@ export const rolesApi = {
    * Get all roles
    */
   async findAll(): Promise<Role[]> {
-    const response = await httpClient.$1<$2>('/api$3oles')
+    const response = await httpClient.get<Role[]>('/api/roles')
     return response.data
   },
 
@@ -19,7 +19,7 @@ export const rolesApi = {
    * Get a specific role by ID
    */
   async findOne(id: string): Promise<Role> {
-    const response = await httpClient.get<Role>(`/roles/${id}`)
+    const response = await httpClient.get<Role>(`/api/roles/${id}`)
     return response.data
   },
 
@@ -27,7 +27,7 @@ export const rolesApi = {
    * Create a new role
    */
   async create(createRoleDto: CreateRoleInput): Promise<Role> {
-    const response = await httpClient.$1<$2>('/api$3oles', createRoleDto)
+    const response = await httpClient.post<Role>('/api/roles', createRoleDto)
     return response.data
   },
 
@@ -35,7 +35,7 @@ export const rolesApi = {
    * Update a role
    */
   async update(id: string, updateRoleDto: UpdateRoleInput): Promise<Role> {
-    const response = await httpClient.put<Role>(`/roles/${id}`, updateRoleDto)
+    const response = await httpClient.put<Role>(`/api/roles/${id}`, updateRoleDto)
     return response.data
   },
 
@@ -43,6 +43,6 @@ export const rolesApi = {
    * Delete a role
    */
   async delete(id: string): Promise<void> {
-    await httpClient.delete(`/roles/${id}`)
+    await httpClient.delete(`/api/roles/${id}`)
   },
 }

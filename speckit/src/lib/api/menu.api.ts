@@ -23,7 +23,7 @@ export const menuApi = {
    * Get all menu items
    */
   async findAll(): Promise<MenuItem[]> {
-    const response = await httpClient.$1<$2>('/api$3enu')
+    const response = await httpClient.get<MenuItem[]>('/api/menu')
     return response.data
   },
 
@@ -31,7 +31,7 @@ export const menuApi = {
    * Get single menu item
    */
   async findOne(id: string): Promise<MenuItem> {
-    const response = await httpClient.get<MenuItem>(`/menu/${id}`)
+    const response = await httpClient.get<MenuItem>(`/api/menu/${id}`)
     return response.data
   },
 
@@ -39,7 +39,7 @@ export const menuApi = {
    * Get menu items filtered by user permissions
    */
   async findByPermissions(permissions: string[]): Promise<MenuItem[]> {
-    const response = await httpClient.$1<$2>('/api$3enu/filtered', {
+    const response = await httpClient.post<MenuItem[]>('/api/menu/filtered', {
       permissions,
     })
     return response.data
@@ -49,7 +49,7 @@ export const menuApi = {
    * Create a new menu item
    */
   async create(dto: CreateMenuItemDto): Promise<MenuItem> {
-    const response = await httpClient.$1<$2>('/api$3enu', dto)
+    const response = await httpClient.post<MenuItem>('/api/menu', dto)
     return response.data
   },
 
@@ -57,7 +57,7 @@ export const menuApi = {
    * Update menu item
    */
   async update(id: string, dto: UpdateMenuItemDto): Promise<MenuItem> {
-    const response = await httpClient.patch<MenuItem>(`/menu/${id}`, dto)
+    const response = await httpClient.patch<MenuItem>(`/api/menu/${id}`, dto)
     return response.data
   },
 
@@ -65,14 +65,14 @@ export const menuApi = {
    * Delete menu item
    */
   async delete(id: string): Promise<void> {
-    await httpClient.delete(`/menu/${id}`)
+    await httpClient.delete(`/api/menu/${id}`)
   },
 
   /**
    * Reorder menu items
    */
   async reorder(items: { id: string; order: number }[]): Promise<MenuItem[]> {
-    const response = await httpClient.$1<$2>('/api$3enu/reorder', { items })
+    const response = await httpClient.post<MenuItem[]>('/api/menu/reorder', { items })
     return response.data
   },
 }
