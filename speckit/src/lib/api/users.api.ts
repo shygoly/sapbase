@@ -30,14 +30,15 @@ export const usersApi = {
    * Get all users with pagination and search
    */
   async findAll(page: number = 1, pageSize: number = 10, search?: string) {
-    const response = await httpClient.get<PaginatedResponse<User>>('/api/users', {
+    const response = await httpClient.get<any>('/api/users', {
       params: {
         page,
         pageSize,
         ...(search && { search }),
       },
     })
-    return response.data
+    // Unwrap the response (backend returns { code, message, data: { data, total, ... } })
+    return response.data.data || response.data
   },
 
   /**
