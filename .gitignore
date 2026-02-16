@@ -30,3 +30,16 @@ examples/sessions/*.tmp
 
 # Local drafts
 marketing/
+
+# Cursor IDE
+.cursor/
+
+# Playwright
+.playwright-cli/
+.playwright-mcp/
+*.log
+
+# Temporary files
+*.png
+!**/public/**/*.png
+!**/src/**/*.png
