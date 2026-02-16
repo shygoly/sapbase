@@ -1,0 +1,13 @@
+{
+  "path": "users",
+  "view": "user-list",
+  "label": "Users",
+  "metadata": {
+    "title": "User Management",
+    "description": "Manage system users",
+    "icon": "Users",
+    "breadcrumb": true
+  },
+  "permissions": ["user.list"],
+  "version": "1.0.0"
+}

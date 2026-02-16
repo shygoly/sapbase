@@ -1,0 +1,37 @@
+{
+  "name": "user-form",
+  "type": "form",
+  "object": "user",
+  "label": "User Form",
+  "description": "Form for creating/editing users",
+  "version": "1.0.0",
+  "layout": {
+    "type": "grid",
+    "columns": 2,
+    "fields": ["name", "email", "role", "department", "status"]
+  },
+  "actions": [
+    {
+      "name": "save",
+      "label": "Save",
+      "type": "primary"
+    },
+    {
+      "name": "cancel",
+      "label": "Cancel",
+      "type": "secondary"
+    }
+  ],
+  "permissions": [
+    {
+      "field": "*",
+      "action": "view",
+      "permissions": ["user.view"]
+    },
+    {
+      "field": "*",
+      "action": "edit",
+      "permissions": ["user.edit"]
+    }
+  ]
+}

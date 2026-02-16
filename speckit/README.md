@@ -73,6 +73,8 @@ _If you are looking for a Tanstack start dashboard template, here is the [repo](
 
 - 🧠 Feature-based folder structure for scalable projects
 
+- 📋 **Schema-Driven Generation** - AI-driven page, form, and view generation from JSON schemas (see [Schema System Documentation](./docs/schema-system.md))
+
 - ⚙️ Ready for **SaaS dashboards**, internal tools, and client admin panels
 
 ## Use Cases
