@@ -35,9 +35,10 @@ marketing/
 .cursor/
 
 # Playwright
-.playwright-cli/
-.playwright-mcp/
-*.log
+**/.playwright-cli/
+**/.playwright-mcp/
+**/*.log
+!**/package-lock.json
 
 # Temporary files
 *.png
