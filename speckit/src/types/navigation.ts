@@ -4,7 +4,8 @@ export interface UnifiedMenuItem {
   path?: string
   icon?: string
   permissions?: string[]
-  visible: boolean
+  visible?: boolean // Optional, defaults to true
+  disabled?: boolean // Optional, defaults to false
   order: number
   children?: UnifiedMenuItem[]
   isActive?: boolean

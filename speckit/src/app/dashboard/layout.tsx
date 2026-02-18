@@ -28,7 +28,7 @@ export default function DashboardLayout({
     <KBar>
       <SidebarProvider defaultOpen={defaultOpen}>
         <InfobarProvider defaultOpen={false}>
-          <UnifiedSidebar source="static" />
+          <UnifiedSidebar source="api" />
           <SidebarInset>
             <Header />
             {/* page main content */}

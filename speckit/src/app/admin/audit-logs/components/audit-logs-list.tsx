@@ -104,21 +104,21 @@ export function AuditLogsList({
             ) : (
               logs.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell className="font-medium">{log.userId}</TableCell>
+                  <TableCell className="font-medium">{log.actor}</TableCell>
                   <TableCell>
                     <Badge className={getActionColor(log.action)}>
                       {log.action}
                     </Badge>
                   </TableCell>
-                  <TableCell>{log.resourceType}</TableCell>
-                  <TableCell className="font-mono text-sm">{log.resourceId}</TableCell>
+                  <TableCell>{log.resource}</TableCell>
+                  <TableCell className="font-mono text-sm">{log.resourceId || '-'}</TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(log.status)}>
                       {log.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-gray-600">
-                    {format(new Date(log.createdAt), 'MMM dd, yyyy HH:mm:ss')}
+                    {format(new Date(log.timestamp || log.createdAt), 'MMM dd, yyyy HH:mm:ss')}
                   </TableCell>
                 </TableRow>
               ))

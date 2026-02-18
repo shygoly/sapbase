@@ -1,0 +1,13 @@
+{
+  "path": "/crm/orders/:id/edit",
+  "view": "order-form",
+  "label": "编辑订单",
+  "metadata": {
+    "title": "编辑订单",
+    "description": "编辑订单信息",
+    "icon": "Edit",
+    "breadcrumb": true
+  },
+  "permissions": ["admin", "sales"],
+  "version": "1.0"
+}

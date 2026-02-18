@@ -75,6 +75,8 @@ _If you are looking for a Tanstack start dashboard template, here is the [repo](
 
 - 📋 **Schema-Driven Generation** - AI-driven page, form, and view generation from JSON schemas (see [Schema System Documentation](./docs/schema-system.md))
 
+- 🔧 **Patch DSL System** - Declarative, validated, versioned schema modifications without code changes. Enables AI-safe system evolution with hot-reloading and rollback capabilities (see [Patch DSL Documentation](./docs/patch-dsl.md))
+
 - ⚙️ Ready for **SaaS dashboards**, internal tools, and client admin panels
 
 ## Use Cases

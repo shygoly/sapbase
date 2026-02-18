@@ -19,14 +19,14 @@ const AuditLogsPageModel: PageModel = {
   id: 'audit-logs-page',
   title: 'Audit Logs',
   description: 'View system activity and user actions',
-  permissions: ['audit_logs:read'],
+  permissions: ['audit-logs:read'], // Use hyphen to match backend permission name
 }
 
 // CollectionModel schema
 const AuditLogsCollectionModel: CollectionModel = {
   id: 'audit-logs-collection',
   name: 'Audit Logs',
-  permissions: ['audit_logs:read'],
+  permissions: ['audit-logs:read'], // Use hyphen to match backend permission name
 }
 
 export default function AuditLogsPage() {
@@ -47,11 +47,15 @@ export default function AuditLogsPage() {
         action: action as AuditAction | undefined,
         resourceType: resourceType || undefined,
       })
-      setLogs(result.data)
-      setTotal(result.total)
+      console.log('Audit logs API response:', result)
+      setLogs(result.data || [])
+      setTotal(result.total || 0)
+      if (!result.data || result.data.length === 0) {
+        console.log('No audit logs found. Total:', result.total)
+      }
     } catch (error) {
       notification.error('Failed to load audit logs')
-      console.error(error)
+      console.error('Error fetching audit logs:', error)
     } finally {
       setIsLoading(false)
     }

@@ -1,5 +1,4 @@
 import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Heading } from '../ui/heading';
 import type { InfobarContent } from '@/components/ui/infobar';
 
@@ -53,22 +52,8 @@ export default function PageContainer({
 
   const content = isloading ? <PageSkeleton /> : children;
 
-  return scrollable ? (
-    <ScrollArea className='h-[calc(100dvh-52px)]'>
-      <div className='flex flex-1 flex-col p-4 md:px-6'>
-        <div className='mb-4 flex items-start justify-between'>
-          <Heading
-            title={pageTitle ?? ''}
-            description={pageDescription ?? ''}
-            infoContent={infoContent}
-          />
-          {pageHeaderAction && <div>{pageHeaderAction}</div>}
-        </div>
-        {content}
-      </div>
-    </ScrollArea>
-  ) : (
-    <div className='flex flex-1 flex-col p-4 md:px-6'>
+  return (
+    <div className='flex flex-1 flex-col overflow-auto p-4 md:px-6'>
       <div className='mb-4 flex items-start justify-between'>
         <Heading
           title={pageTitle ?? ''}

@@ -6,11 +6,13 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter'
 import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true, // Enable raw body for Stripe webhooks
+  })
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3050',
     credentials: true,
   })
 
@@ -58,7 +60,7 @@ async function bootstrap() {
     },
   })
 
-  const port = process.env.PORT || 3001
+  const port = process.env.PORT || 3051
   await app.listen(port)
   console.log(`Application is running on: http://localhost:${port}`)
   console.log(`API Documentation: http://localhost:${port}/api/docs`)

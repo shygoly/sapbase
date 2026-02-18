@@ -23,42 +23,47 @@ export const menuApi = {
    * Get all menu items
    */
   async findAll(): Promise<MenuItem[]> {
-    const response = await httpClient.get<MenuItem[]>('/api/menu')
-    return response.data
+    const response = await httpClient.get<any>('/api/menu')
+    // Unwrap the response (backend returns { code, message, data: MenuItem[] })
+    return response.data.data || response.data
   },
 
   /**
    * Get single menu item
    */
   async findOne(id: string): Promise<MenuItem> {
-    const response = await httpClient.get<MenuItem>(`/api/menu/${id}`)
-    return response.data
+    const response = await httpClient.get<any>(`/api/menu/${id}`)
+    // Unwrap the response (backend returns { code, message, data: MenuItem })
+    return response.data.data || response.data
   },
 
   /**
    * Get menu items filtered by user permissions
    */
   async findByPermissions(permissions: string[]): Promise<MenuItem[]> {
-    const response = await httpClient.post<MenuItem[]>('/api/menu/filtered', {
+    const response = await httpClient.post<any>('/api/menu/filtered', {
       permissions,
     })
-    return response.data
+    // Unwrap the response (backend returns { code, message, data: MenuItem[] })
+    return response.data.data || response.data
   },
 
   /**
    * Create a new menu item
    */
   async create(dto: CreateMenuItemDto): Promise<MenuItem> {
-    const response = await httpClient.post<MenuItem>('/api/menu', dto)
-    return response.data
+    const response = await httpClient.post<any>('/api/menu', dto)
+    // Unwrap the response (backend returns { code, message, data: MenuItem })
+    return response.data.data || response.data
   },
 
   /**
    * Update menu item
    */
   async update(id: string, dto: UpdateMenuItemDto): Promise<MenuItem> {
-    const response = await httpClient.patch<MenuItem>(`/api/menu/${id}`, dto)
-    return response.data
+    const response = await httpClient.patch<any>(`/api/menu/${id}`, dto)
+    // Unwrap the response (backend returns { code, message, data: MenuItem })
+    return response.data.data || response.data
   },
 
   /**
@@ -72,7 +77,8 @@ export const menuApi = {
    * Reorder menu items
    */
   async reorder(items: { id: string; order: number }[]): Promise<MenuItem[]> {
-    const response = await httpClient.post<MenuItem[]>('/api/menu/reorder', { items })
-    return response.data
+    const response = await httpClient.post<any>('/api/menu/reorder', { items })
+    // Unwrap the response (backend returns { code, message, data: MenuItem[] })
+    return response.data.data || response.data
   },
 }

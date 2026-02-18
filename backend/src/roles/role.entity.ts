@@ -1,9 +1,11 @@
-import { Entity, Column } from 'typeorm'
-import { BaseEntity } from '../common/entities/base.entity'
+import { Entity, Column, Index } from 'typeorm'
+import { TenantAwareEntity } from '../common/entities/tenant-aware.entity'
 
 @Entity('roles')
-export class Role extends BaseEntity {
-  @Column({ type: 'varchar', length: 255, unique: true })
+@Index('idx_role_organization', ['organizationId'])
+@Index('idx_role_organization_name', ['organizationId', 'name'], { unique: true })
+export class Role extends TenantAwareEntity {
+  @Column({ type: 'varchar', length: 255 })
   name: string
 
   @Column({ type: 'text', nullable: true })

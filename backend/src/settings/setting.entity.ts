@@ -1,10 +1,11 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm'
 import { User } from '../users/user.entity'
-import { BaseEntity } from '../common/entities/base.entity'
+import { TenantAwareEntity } from '../common/entities/tenant-aware.entity'
 
 @Entity('settings')
 @Index('idx_setting_user_id', ['userId'])
-export class Setting extends BaseEntity {
+@Index('idx_setting_organization', ['organizationId'])
+export class Setting extends TenantAwareEntity {
   @Column({ type: 'uuid' })
   userId: string
 

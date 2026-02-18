@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "patchId": "550e8400-e29b-41d4-a716-446655440002",
+  "timestamp": "2026-02-16T10:10:00.000Z",
+  "actor": "ai",
+  "scope": "page",
+  "operation": "add",
+  "target": {
+    "type": "field",
+    "identifier": "UserList"
+  },
+  "payload": {
+    "field": {
+      "name": "department",
+      "label": "Department",
+      "component": "TextColumn",
+      "sortable": true,
+      "filterable": true,
+      "width": 150,
+      "align": "left"
+    }
+  },
+  "description": "Add department column to UserList page"
+}

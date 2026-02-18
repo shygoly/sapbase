@@ -1,0 +1,33 @@
+{
+  "name": "transaction-list",
+  "type": "list",
+  "object": "FinancialTransaction",
+  "label": "资金往来列表",
+  "description": "Financial transaction list view",
+  "layout": {
+    "type": "grid",
+    "fields": ["transactionNumber", "customer", "order", "type", "amount", "paymentMethod", "date", "status"]
+  },
+  "permissions": [],
+  "actions": [
+    {
+      "name": "create",
+      "label": "新建交易",
+      "type": "primary",
+      "permissions": ["admin", "accountant"]
+    },
+    {
+      "name": "edit",
+      "label": "编辑",
+      "type": "secondary",
+      "permissions": ["admin", "accountant"]
+    },
+    {
+      "name": "delete",
+      "label": "删除",
+      "type": "danger",
+      "permissions": ["admin"]
+    }
+  ],
+  "version": "1.0"
+}

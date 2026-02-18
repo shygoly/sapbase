@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "patchId": "550e8400-e29b-41d4-a716-446655440000",
+  "timestamp": "2026-02-16T10:00:00.000Z",
+  "actor": "ai",
+  "scope": "object",
+  "operation": "add",
+  "target": {
+    "type": "field",
+    "identifier": "User"
+  },
+  "payload": {
+    "field": {
+      "name": "lastLogin",
+      "label": "Last Login",
+      "type": "datetime",
+      "required": false,
+      "readonly": true,
+      "description": "Timestamp of user's last login"
+    }
+  },
+  "description": "Add lastLogin field to User object schema"
+}

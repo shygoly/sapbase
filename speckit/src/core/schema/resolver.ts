@@ -100,18 +100,30 @@ export class SchemaResolver {
 
   /**
    * Load page schema
+   * @param identifier - Can be a path (e.g., '/crm/customers') or filename (e.g., 'customers')
    */
-  async loadPageSchema(path: string): Promise<PageSchema | null> {
-    if (this.pageCache.has(path)) {
-      return this.pageCache.get(path)!
+  async loadPageSchema(identifier: string): Promise<PageSchema | null> {
+    // Extract filename from path if it's a full path
+    let filename = identifier
+    if (identifier.startsWith('/')) {
+      // Extract the last segment from path (e.g., '/crm/customers' -> 'customers')
+      filename = identifier.split('/').filter(Boolean).pop() || identifier
+    }
+
+    if (this.pageCache.has(filename)) {
+      return this.pageCache.get(filename)!
     }
 
     try {
-      const response = await fetch(`/specs/pages/${path}.json`)
+      const response = await fetch(`/specs/pages/${filename}.json`)
       if (!response.ok) return null
 
       const schema = (await response.json()) as PageSchema
-      this.pageCache.set(path, schema)
+      this.pageCache.set(filename, schema)
+      // Also cache by path if it's different
+      if (schema.path && schema.path !== filename) {
+        this.pageCache.set(schema.path, schema)
+      }
       return schema
     } catch {
       return null

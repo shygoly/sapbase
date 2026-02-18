@@ -47,8 +47,8 @@ export default function DepartmentsPage() {
     setIsLoading(true)
     try {
       const result = await departmentsApi.findAll(page, pageSize)
-      setDepartments(result.data)
-      setTotal(result.total)
+      setDepartments(result.data || [])
+      setTotal(result.total || 0)
     } catch (error) {
       notification.error('Failed to load departments')
       console.error(error)

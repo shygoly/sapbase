@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace speckit\" \"npm run start:dev --workspace backend\"",
+    "dev:all": "concurrently -n \"frontend,backend\" -c \"cyan,magenta\" \"npm run dev --workspace speckit\" \"npm run start:dev --workspace backend\"",
     "dev:frontend": "npm run dev --workspace speckit",
     "dev:backend": "npm run start:dev --workspace backend",
     "build": "npm run build --workspaces",

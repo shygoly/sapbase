@@ -45,6 +45,9 @@ function MenuItemIcon({ icon }: { icon?: string }) {
     analytics: '📉',
     user: '👤',
     lock: '🔒',
+    shopping: '🛒',
+    dollar: '💰',
+    workflow: '🔄',
   }
 
   return <span className="mr-2">{iconMap[icon] || '•'}</span>
@@ -63,21 +66,26 @@ function MenuItemComponent({
   const hasChildren = item.children && item.children.length > 0
   const isActive = item.path === pathname
 
+  // For nested items (level > 0), use SidebarMenuSubItem instead of SidebarMenuItem
+  const MenuItemWrapper = level > 0 ? SidebarMenuSubItem : SidebarMenuItem
+  const MenuButton = level > 0 ? SidebarMenuSubButton : SidebarMenuButton
+
   if (hasChildren) {
     return (
       <Collapsible open={isOpen} onOpenChange={setIsOpen} key={item.id}>
-        <SidebarMenuItem>
+        <MenuItemWrapper>
           <CollapsibleTrigger asChild>
-            <SidebarMenuButton
+            <MenuButton
               className={`${isActive ? 'bg-accent text-accent-foreground' : ''}`}
+              isActive={isActive}
             >
               <MenuItemIcon icon={item.icon} />
               <span>{item.label}</span>
               <ChevronRight className="ml-auto h-4 w-4 transition-transform" />
-            </SidebarMenuButton>
+            </MenuButton>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="ml-4 space-y-1">
+            <SidebarMenuSub>
               {item.children?.map((child) => (
                 <MenuItemComponent
                   key={child.id}
@@ -86,17 +94,17 @@ function MenuItemComponent({
                   level={level + 1}
                 />
               ))}
-            </div>
+            </SidebarMenuSub>
           </CollapsibleContent>
-        </SidebarMenuItem>
+        </MenuItemWrapper>
       </Collapsible>
     )
   }
 
   if (item.path) {
     return (
-      <SidebarMenuItem key={item.id}>
-        <SidebarMenuButton
+      <MenuItemWrapper key={item.id}>
+        <MenuButton
           asChild
           isActive={isActive}
           className={`${isActive ? 'bg-accent text-accent-foreground' : ''}`}
@@ -105,8 +113,8 @@ function MenuItemComponent({
             <MenuItemIcon icon={item.icon} />
             <span>{item.label}</span>
           </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+        </MenuButton>
+      </MenuItemWrapper>
     )
   }
 
@@ -175,7 +183,7 @@ export function UnifiedSidebar({
               <div className="text-xs text-muted-foreground truncate">{user.email}</div>
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             <Button
               variant="ghost"
               size="sm"

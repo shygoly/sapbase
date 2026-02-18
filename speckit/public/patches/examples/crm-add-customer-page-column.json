@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "patchId": "crm-004-add-website-column",
+  "timestamp": "2026-02-16T12:15:00.000Z",
+  "actor": "ai",
+  "scope": "page",
+  "operation": "add",
+  "target": {
+    "type": "field",
+    "identifier": "customer-list"
+  },
+  "payload": {
+    "field": {
+      "name": "website",
+      "label": "网站",
+      "component": "TextColumn",
+      "sortable": true,
+      "filterable": false,
+      "width": 200,
+      "align": "left"
+    }
+  },
+  "description": "在客户列表页面添加 website 列",
+  "securityLevel": "L1",
+  "dependsOn": ["crm-001-add-website-field"]
+}

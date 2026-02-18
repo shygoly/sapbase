@@ -174,6 +174,7 @@ export interface MenuItem extends BaseAuditEntity {
   icon?: string
   permissions?: string[]
   visible: boolean
+  disabled?: boolean
   order: number
   parent?: MenuItem
   children?: MenuItem[]
@@ -182,25 +183,24 @@ export interface MenuItem extends BaseAuditEntity {
 // ============ Audit Log ============
 
 export interface AuditLog extends BaseEntity {
-  userId: string
+  actor: string // Backend uses 'actor' instead of 'userId'
   action: AuditAction
-  resourceType: string
-  resourceId: string
+  resource: string // Backend uses 'resource' instead of 'resourceType'
+  resourceId?: string
+  status: 'success' | 'failure' | 'pending'
   changes?: Record<string, any>
-  ipAddress?: string
-  userAgent?: string
-  status: 'success' | 'failure'
-  errorMessage?: string
+  metadata?: Record<string, any>
+  timestamp: Date // Backend uses 'timestamp' instead of 'createdAt'
 }
 
 export interface AuditLogFilter {
-  userId?: string
+  actor?: string // Backend uses 'actor' instead of 'userId'
   action?: AuditAction
-  resourceType?: string
+  resourceType?: string // Frontend uses 'resourceType', but backend expects 'resource'
   resourceId?: string
-  startDate?: Date
-  endDate?: Date
-  status?: 'success' | 'failure'
+  startDate?: string
+  endDate?: string
+  status?: 'success' | 'failure' | 'pending'
 }
 
 // ============ Settings ============

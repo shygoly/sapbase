@@ -13,6 +13,7 @@ import { RolesService } from './roles.service'
 import { CreateRoleDto } from './dto/create-role.dto'
 import { UpdateRoleDto } from './dto/update-role.dto'
 import { Auth } from '../common/decorators/auth.decorator'
+import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import { Role } from './role.entity'
 
 @Controller('roles')
@@ -22,18 +23,18 @@ export class RolesController {
   @Post()
   @Auth('admin')
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createRoleDto: CreateRoleDto): Promise<Role> {
-    return this.rolesService.create(createRoleDto)
+  async create(@Body() createRoleDto: CreateRoleDto, @OrganizationId() organizationId: string): Promise<Role> {
+    return this.rolesService.create(createRoleDto, organizationId)
   }
 
   @Get()
-  async findAll(): Promise<Role[]> {
-    return this.rolesService.findAll()
+  async findAll(@OrganizationId() organizationId: string): Promise<Role[]> {
+    return this.rolesService.findAll(organizationId)
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<Role> {
-    return this.rolesService.findOne(id)
+  async findOne(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<Role> {
+    return this.rolesService.findOne(id, organizationId)
   }
 
   @Put(':id')
@@ -41,14 +42,15 @@ export class RolesController {
   async update(
     @Param('id') id: string,
     @Body() updateRoleDto: UpdateRoleDto,
+    @OrganizationId() organizationId: string,
   ): Promise<Role> {
-    return this.rolesService.update(id, updateRoleDto)
+    return this.rolesService.update(id, updateRoleDto, organizationId)
   }
 
   @Delete(':id')
   @Auth('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string): Promise<void> {
-    return this.rolesService.remove(id)
+  async remove(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<void> {
+    return this.rolesService.remove(id, organizationId)
   }
 }

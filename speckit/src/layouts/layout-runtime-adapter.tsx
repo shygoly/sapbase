@@ -56,6 +56,11 @@ export function LayoutRuntimeAdapter({
   const { isAuthenticated, isLoading } = useRequireAuth();
   const { hasPermission, hasAllPermissions, hasAnyPermission } = usePermissionStore();
   const router = useRouter();
+  
+  // Add debug logging
+  React.useEffect(() => {
+    console.log('LayoutRuntimeAdapter - Auth state:', { isAuthenticated, isLoading })
+  }, [isAuthenticated, isLoading])
 
   // Check permissions if required
   const hasAccess = React.useMemo(() => {

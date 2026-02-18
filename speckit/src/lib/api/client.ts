@@ -30,12 +30,17 @@ class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request interceptor - add token to headers
+    // Request interceptor - add token and organization ID to headers
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         const token = this.getToken()
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
+        }
+        // Add organization ID header if available
+        const orgId = this.getOrganizationId()
+        if (orgId) {
+          config.headers['X-Organization-Id'] = orgId
         }
         return config
       },
@@ -65,10 +70,18 @@ class ApiClient {
           this.isRefreshing = true
           originalRequest._retry = true
 
-          // Clear auth and redirect to login
+          // Clear auth
           this.clearAuth()
+          
+          // Only redirect if not already on login page and not during initial auth check
           if (typeof window !== 'undefined') {
-            window.location.href = '/login'
+            const currentPath = window.location.pathname
+            if (currentPath !== '/login' && !currentPath.startsWith('/login')) {
+              // Use a small delay to allow auth store to update first
+              setTimeout(() => {
+                window.location.href = '/login'
+              }, 100)
+            }
           }
 
           return Promise.reject(error)
@@ -100,7 +113,20 @@ class ApiClient {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(USER_KEY)
+      localStorage.removeItem('currentOrganizationId')
+      localStorage.removeItem('organizations')
     }
+  }
+
+  public setOrganizationId(organizationId: string): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('currentOrganizationId', organizationId)
+    }
+  }
+
+  public getOrganizationId(): string | null {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('currentOrganizationId')
   }
 
   // Public methods

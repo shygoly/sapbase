@@ -1,0 +1,13 @@
+{
+  "path": "/crm/customers/new",
+  "view": "customer-form",
+  "label": "新建客户",
+  "metadata": {
+    "title": "新建客户",
+    "description": "创建新客户",
+    "icon": "UserPlus",
+    "breadcrumb": true
+  },
+  "permissions": ["admin", "sales"],
+  "version": "1.0"
+}

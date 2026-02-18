@@ -10,13 +10,37 @@ import { SettingsModule } from './settings/settings.module'
 import { PermissionsModule } from './permissions/permissions.module'
 import { MenuModule } from './menu/menu.module'
 import { HealthModule } from './health/health.module'
+import { AIModelsModule } from './ai-models/ai-models.module'
+import { AIModulesModule } from './ai-modules/ai-modules.module'
+import { ModuleRegistryModule } from './module-registry/module-registry.module'
+import { SystemModule } from './system/system.module'
+import { OrganizationsModule } from './organizations/organizations.module'
+import { CacheModule } from './cache/cache.module'
+import { WorkflowsModule } from './workflows/workflows.module'
 import { User } from './users/user.entity'
+import { Organization } from './organizations/organization.entity'
+import { OrganizationMember } from './organizations/organization-member.entity'
+import { Invitation } from './organizations/invitation.entity'
+import { OrganizationActivity } from './organizations/organization-activity.entity'
 import { Department } from './departments/department.entity'
 import { Role } from './roles/role.entity'
 import { AuditLog } from './audit-logs/audit-log.entity'
 import { Setting } from './settings/setting.entity'
 import { Permission } from './permissions/permission.entity'
 import { MenuItem } from './menu/menu.entity'
+import { AIModel } from './ai-models/ai-model.entity'
+import { AIModule } from './ai-modules/ai-module.entity'
+import { AIModuleTest } from './ai-modules/ai-module-test.entity'
+import { AIModuleReview } from './ai-modules/ai-module-review.entity'
+import { AIModuleDefinition } from './ai-modules/ai-module-definition.entity'
+import { ModuleRegistry } from './module-registry/module-registry.entity'
+import { ModuleRelationship } from './module-registry/module-relationship.entity'
+import { ModuleCapability } from './module-registry/module-capability.entity'
+import { ModuleStatistics } from './module-registry/module-statistics.entity'
+import { ModuleConfiguration } from './module-registry/module-configuration.entity'
+import { WorkflowDefinition } from './workflows/workflow-definition.entity'
+import { WorkflowInstance } from './workflows/workflow-instance.entity'
+import { WorkflowHistory } from './workflows/workflow-history.entity'
 import { LoggerMiddleware } from './common/middleware/logger.middleware'
 
 @Module({
@@ -25,6 +49,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware'
       isGlobal: true,
       envFilePath: '.env',
     }),
+    CacheModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST || 'localhost',
@@ -32,7 +57,32 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware'
       username: process.env.DB_USERNAME || 'mac',
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'sapbasic',
-      entities: [User, Department, Role, AuditLog, Setting, Permission, MenuItem],
+      entities: [
+        User,
+        Organization,
+        OrganizationMember,
+        Invitation,
+        OrganizationActivity,
+        Department,
+        Role,
+        AuditLog,
+        Setting,
+        Permission,
+        MenuItem,
+        AIModel,
+        AIModule,
+        AIModuleTest,
+        AIModuleReview,
+        AIModuleDefinition,
+        ModuleRegistry,
+        ModuleRelationship,
+        ModuleCapability,
+        ModuleStatistics,
+        ModuleConfiguration,
+        WorkflowDefinition,
+        WorkflowInstance,
+        WorkflowHistory,
+      ],
       synchronize: true,
       logging: process.env.NODE_ENV === 'development',
     }),
@@ -45,6 +95,12 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware'
     PermissionsModule,
     MenuModule,
     HealthModule,
+    AIModelsModule,
+    AIModulesModule,
+    ModuleRegistryModule,
+    SystemModule,
+    OrganizationsModule,
+    WorkflowsModule,
   ],
   controllers: [],
   providers: [],

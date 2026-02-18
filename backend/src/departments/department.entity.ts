@@ -1,9 +1,11 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm'
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm'
 import { User } from '../users/user.entity'
-import { BaseEntity } from '../common/entities/base.entity'
+import { TenantAwareEntity } from '../common/entities/tenant-aware.entity'
+import { Organization } from '../organizations/organization.entity'
 
 @Entity('departments')
-export class Department extends BaseEntity {
+@Index('idx_department_organization', ['organizationId'])
+export class Department extends TenantAwareEntity {
   @Column({ type: 'varchar', length: 255 })
   name: string
 
