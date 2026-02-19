@@ -81,7 +81,6 @@ export function PageRuntime({
 }: PageRuntimeProps) {
   // Validate model
   if (!model.id || !model.title) {
-    console.error('PageRuntime: Invalid page model. Must have id and title.');
     return (
       <div className="p-4 text-red-600">
         Invalid page model. Check console for details.

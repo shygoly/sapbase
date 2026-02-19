@@ -1,0 +1,111 @@
+{
+  "common": {
+    "appName": "Speckit ERP",
+    "welcome": "¡Bienvenido, {{name}}!",
+    "appDescription": "Panel de control de Speckit ERP",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "update": "Actualizar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "actions": "Acciones",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "submit": "Enviar",
+    "reset": "Restablecer",
+    "close": "Cerrar",
+    "open": "Abrir",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "signIn": "Iniciar sesión",
+    "signUp": "Registrarse",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "rememberMe": "Recordarme",
+    "invalidCredentials": "Correo electrónico o contraseña inválidos",
+    "loginSuccess": "Inicio de sesión exitoso",
+    "loginFailed": "Error al iniciar sesión"
+  },
+  "navigation": {
+    "dashboard": "Panel de control",
+    "overview": "Resumen",
+    "users": "Usuarios",
+    "organizations": "Organizaciones",
+    "settings": "Configuración",
+    "admin": "Administración",
+    "workflows": "Flujos de trabajo",
+    "aiModules": "Módulos de IA",
+    "moduleRegistry": "Registro de módulos",
+    "auditLogs": "Registros de auditoría"
+  },
+  "organizations": {
+    "title": "Organizaciones",
+    "create": "Crear organización",
+    "name": "Nombre de la organización",
+    "slug": "Slug",
+    "members": "Miembros",
+    "invitations": "Invitaciones",
+    "settings": "Configuración de la organización",
+    "memberAdded": "Miembro agregado exitosamente",
+    "memberRemoved": "Miembro eliminado exitosamente",
+    "invitationSent": "Invitación enviada exitosamente"
+  },
+  "users": {
+    "title": "Usuarios",
+    "create": "Crear usuario",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "role": "Rol",
+    "status": "Estado",
+    "lastLogin": "Último inicio de sesión",
+    "createdAt": "Fecha de creación"
+  },
+  "workflows": {
+    "title": "Flujos de trabajo",
+    "create": "Crear flujo de trabajo",
+    "name": "Nombre del flujo de trabajo",
+    "description": "Descripción",
+    "status": "Estado",
+    "instances": "Instancias",
+    "definition": "Definición"
+  },
+  "aiModules": {
+    "title": "Módulos de IA",
+    "create": "Crear módulo de IA",
+    "develop": "Desarrollar",
+    "test": "Probar",
+    "publish": "Publicar",
+    "name": "Nombre del módulo",
+    "description": "Descripción",
+    "status": "Estado",
+    "version": "Versión"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "noNotifications": "No hay notificaciones",
+    "markAllRead": "Marcar todas como leídas",
+    "unread": "no leídas"
+  },
+  "errors": {
+    "generic": "Ocurrió un error",
+    "notFound": "Página no encontrada",
+    "unauthorized": "No autorizado",
+    "forbidden": "Acceso prohibido",
+    "serverError": "Error del servidor",
+    "networkError": "Error de red",
+    "validationError": "Error de validación"
+  }
+}

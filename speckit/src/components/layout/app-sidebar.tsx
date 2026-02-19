@@ -9,7 +9,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
@@ -28,9 +27,9 @@ import {
   SidebarMenuSubItem,
   SidebarRail
 } from '@/components/ui/sidebar';
-import { UserAvatarProfile } from '@/components/user-avatar-profile';
-import { navItems } from '@/config/nav-config';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { navItems } from '@/config/nav-config'
+import { useLocalePrefix } from '@/hooks/use-locale'
+import { useMediaQuery } from '@/hooks/use-media-query'
 import { useFilteredNavItems } from '@/hooks/use-nav';
 import {
   IconBell,
@@ -47,10 +46,11 @@ import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
 
 export default function AppSidebar() {
-  const pathname = usePathname();
-  const { isOpen } = useMediaQuery();
-  const router = useRouter();
-  const filteredItems = useFilteredNavItems(navItems);
+  const pathname = usePathname()
+  const prefix = useLocalePrefix()
+  const { isOpen } = useMediaQuery()
+  const router = useRouter()
+  const filteredItems = useFilteredNavItems(navItems)
 
   React.useEffect(() => {
     // Side effects based on sidebar state changes
@@ -78,7 +78,7 @@ export default function AppSidebar() {
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
                         tooltip={item.title}
-                        isActive={pathname === item.url}
+                        isActive={pathname === prefix(item.url)}
                       >
                         {item.icon && <Icon />}
                         <span>{item.title}</span>
@@ -91,9 +91,9 @@ export default function AppSidebar() {
                           <SidebarMenuSubItem key={subItem.title}>
                             <SidebarMenuSubButton
                               asChild
-                              isActive={pathname === subItem.url}
+                              isActive={pathname === prefix(subItem.url)}
                             >
-                              <Link href={subItem.url}>
+                              <Link href={prefix(subItem.url)}>
                                 <span>{subItem.title}</span>
                               </Link>
                             </SidebarMenuSubButton>
@@ -108,9 +108,9 @@ export default function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     tooltip={item.title}
-                    isActive={pathname === item.url}
+                    isActive={pathname === prefix(item.url)}
                   >
-                    <Link href={item.url}>
+                    <Link href={prefix(item.url)}>
                       <Icon />
                       <span>{item.title}</span>
                     </Link>
@@ -141,13 +141,13 @@ export default function AppSidebar() {
               >
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => router.push('/dashboard/profile')}
+                    onClick={() => router.push(prefix('/dashboard/profile'))}
                   >
                     <IconUserCircle className='mr-2 h-4 w-4' />
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => router.push('/dashboard/billing')}
+                    onClick={() => router.push(prefix('/dashboard/billing'))}
                   >
                     <IconCreditCard className='mr-2 h-4 w-4' />
                     Billing

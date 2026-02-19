@@ -10,20 +10,20 @@ export class PermissionsService {
     private permissionsRepository: Repository<Permission>,
   ) {}
 
-  async create(name: string, description?: string): Promise<Permission> {
-    const permission = this.permissionsRepository.create({ name, description })
+  async create(name: string, organizationId: string, description?: string): Promise<Permission> {
+    const permission = this.permissionsRepository.create({ name, organizationId, description })
     return this.permissionsRepository.save(permission)
   }
 
-  async findAll(): Promise<Permission[]> {
+  async findAll(organizationId: string): Promise<Permission[]> {
     return this.permissionsRepository.find({
-      where: { status: 'active' },
+      where: { organizationId, status: 'active' },
     })
   }
 
-  async findOne(id: string): Promise<Permission> {
+  async findOne(id: string, organizationId: string): Promise<Permission> {
     const permission = await this.permissionsRepository.findOne({
-      where: { id },
+      where: { id, organizationId },
     })
 
     if (!permission) {
@@ -33,15 +33,15 @@ export class PermissionsService {
     return permission
   }
 
-  async findByName(name: string): Promise<Permission | null> {
+  async findByName(name: string, organizationId: string): Promise<Permission | null> {
     return this.permissionsRepository.findOne({
-      where: { name },
+      where: { name, organizationId },
     })
   }
 
-  async update(id: string, name?: string, description?: string): Promise<Permission> {
-    await this.findOne(id)
-    await this.permissionsRepository.update(id, { name, description })
-    return this.findOne(id)
+  async update(id: string, organizationId: string, name?: string, description?: string): Promise<Permission> {
+    await this.findOne(id, organizationId)
+    await this.permissionsRepository.update({ id, organizationId }, { name, description })
+    return this.findOne(id, organizationId)
   }
 }

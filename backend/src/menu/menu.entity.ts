@@ -1,8 +1,9 @@
-import { Entity, Column, ManyToOne, OneToMany } from 'typeorm'
-import { BaseEntity } from '../common/entities/base.entity'
+import { Entity, Column, ManyToOne, OneToMany, Index } from 'typeorm'
+import { TenantAwareEntity } from '../common/entities/tenant-aware.entity'
 
 @Entity('menu_items')
-export class MenuItem extends BaseEntity {
+@Index('idx_menu_organization', ['organizationId'])
+export class MenuItem extends TenantAwareEntity {
   @Column()
   label: string
 
@@ -17,6 +18,9 @@ export class MenuItem extends BaseEntity {
 
   @Column({ default: true })
   visible: boolean
+
+  @Column({ default: false })
+  disabled: boolean
 
   @Column({ default: 0 })
   order: number

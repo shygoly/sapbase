@@ -1,8 +1,6 @@
 'use client';
 
 import { IconTrendingUp } from '@tabler/icons-react';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-
 import {
   Card,
   CardContent,
@@ -11,12 +9,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent
-} from '@/components/ui/chart';
+import { ChartConfig } from '@/components/ui/chart';
 
 const chartData = [
   { month: 'January', desktop: 186, mobile: 80 },
@@ -42,6 +35,8 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function AreaGraph() {
+  void chartData
+  void chartConfig
   return (
     <Card className='@container/card'>
       <CardHeader>

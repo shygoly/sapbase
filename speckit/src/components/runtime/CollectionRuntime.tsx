@@ -68,9 +68,9 @@ export function CollectionRuntime({
   children,
   isLoading = false,
 }: CollectionRuntimeProps) {
+  void isLoading
   // Validate model
   if (!model.id || !model.name) {
-    console.error('CollectionRuntime: Invalid collection model. Must have id and name.');
     return (
       <div className="p-4 text-red-600">
         Invalid collection model. Check console for details.

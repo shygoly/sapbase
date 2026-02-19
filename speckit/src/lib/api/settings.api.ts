@@ -11,7 +11,7 @@ export const settingsApi = {
    * Get current user settings
    */
   async findByUserId(): Promise<Setting[]> {
-    const response = await httpClient.$1<$2>('/api$3ettings')
+    const response = await httpClient.get<Setting[]>('/api/settings')
     return response.data
   },
 
@@ -19,7 +19,7 @@ export const settingsApi = {
    * Create or initialize user settings
    */
   async create(createSettingDto: CreateSettingInput): Promise<Setting> {
-    const response = await httpClient.$1<$2>('/api$3ettings', createSettingDto)
+    const response = await httpClient.post<Setting>('/api/settings', createSettingDto)
     return response.data
   },
 
@@ -27,7 +27,7 @@ export const settingsApi = {
    * Update user settings
    */
   async update(updateSettingDto: UpdateSettingInput): Promise<Setting> {
-    const response = await httpClient.$1<$2>('/api$3ettings', updateSettingDto)
+    const response = await httpClient.put<Setting>('/api/settings', updateSettingDto)
     return response.data
   },
 }

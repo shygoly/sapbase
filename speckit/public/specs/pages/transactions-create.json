@@ -1,0 +1,13 @@
+{
+  "path": "/crm/transactions/new",
+  "view": "transaction-form",
+  "label": "新建交易",
+  "metadata": {
+    "title": "新建交易",
+    "description": "创建新资金交易",
+    "icon": "Plus",
+    "breadcrumb": true
+  },
+  "permissions": ["admin", "accountant"],
+  "version": "1.0"
+}

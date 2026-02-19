@@ -1,0 +1,111 @@
+{
+  "common": {
+    "appName": "Speckit ERP",
+    "welcome": "Welcome, {{name}}!",
+    "appDescription": "Speckit ERP dashboard",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "reset": "Reset",
+    "close": "Close",
+    "open": "Open",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember Me",
+    "invalidCredentials": "Invalid email or password",
+    "loginSuccess": "Login successful",
+    "loginFailed": "Login failed"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "overview": "Overview",
+    "users": "Users",
+    "organizations": "Organizations",
+    "settings": "Settings",
+    "admin": "Admin",
+    "workflows": "Workflows",
+    "aiModules": "AI Modules",
+    "moduleRegistry": "Module Registry",
+    "auditLogs": "Audit Logs"
+  },
+  "organizations": {
+    "title": "Organizations",
+    "create": "Create Organization",
+    "name": "Organization Name",
+    "slug": "Slug",
+    "members": "Members",
+    "invitations": "Invitations",
+    "settings": "Organization Settings",
+    "memberAdded": "Member added successfully",
+    "memberRemoved": "Member removed successfully",
+    "invitationSent": "Invitation sent successfully"
+  },
+  "users": {
+    "title": "Users",
+    "create": "Create User",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "status": "Status",
+    "lastLogin": "Last Login",
+    "createdAt": "Created At"
+  },
+  "workflows": {
+    "title": "Workflows",
+    "create": "Create Workflow",
+    "name": "Workflow Name",
+    "description": "Description",
+    "status": "Status",
+    "instances": "Instances",
+    "definition": "Definition"
+  },
+  "aiModules": {
+    "title": "AI Modules",
+    "create": "Create AI Module",
+    "develop": "Develop",
+    "test": "Test",
+    "publish": "Publish",
+    "name": "Module Name",
+    "description": "Description",
+    "status": "Status",
+    "version": "Version"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "noNotifications": "No notifications",
+    "markAllRead": "Mark all as read",
+    "unread": "unread"
+  },
+  "errors": {
+    "generic": "An error occurred",
+    "notFound": "Page not found",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Access forbidden",
+    "serverError": "Server error",
+    "networkError": "Network error",
+    "validationError": "Validation error"
+  }
+}

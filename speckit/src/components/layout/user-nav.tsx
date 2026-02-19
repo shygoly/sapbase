@@ -1,5 +1,6 @@
-'use client';
-import { Button } from '@/components/ui/button';
+'use client'
+
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,12 +8,14 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { useRouter } from 'next/navigation';
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useLocalePrefix } from '@/hooks/use-locale'
+import { useRouter } from 'next/navigation'
 
 export function UserNav() {
-  const router = useRouter();
+  const router = useRouter()
+  const prefix = useLocalePrefix()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -35,7 +38,7 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
+          <DropdownMenuItem onClick={() => router.push(prefix('/dashboard/profile'))}>
             Profile
           </DropdownMenuItem>
           <DropdownMenuItem>Billing</DropdownMenuItem>

@@ -45,9 +45,16 @@ export function useRequireAuth() {
   const { isAuthenticated, isLoading } = useAuthStore()
   const router = useRouter()
 
+  // Redirect if not authenticated after loading completes
   useEffect(() => {
+    // Only redirect if we've finished loading and user is not authenticated
+    // This prevents redirecting during the initial auth check
     if (!isLoading && !isAuthenticated) {
-      router.push('/login')
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
+      // Don't redirect if already on login page
+      if (currentPath !== '/login' && !currentPath.startsWith('/login')) {
+        router.push('/login')
+      }
     }
   }, [isAuthenticated, isLoading, router])
 

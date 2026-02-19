@@ -1,0 +1,11 @@
+// Patch DSL System - Main exports
+export * from './types'
+export { PatchValidator } from './validator'
+export { PatchExecutor } from './executor'
+export { VersionControl } from './version-control'
+export { HotReloader } from './hot-reload'
+export { AuditLogger } from './audit-logger'
+export { PatchManager } from './patch-manager'
+export { PatchGateway, PatchHelpers } from './gateway'
+export { PatchStorage, ClientPatchStorage } from './storage'
+export { useHotReload, usePatchApplication, usePatchDryRun } from './hooks'

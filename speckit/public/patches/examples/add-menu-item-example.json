@@ -1,0 +1,22 @@
+{
+  "version": "1.0",
+  "patchId": "550e8400-e29b-41d4-a716-446655440004",
+  "timestamp": "2026-02-16T10:20:00.000Z",
+  "actor": "human",
+  "scope": "menu",
+  "operation": "add",
+  "target": {
+    "type": "menu",
+    "identifier": "main"
+  },
+  "payload": {
+    "item": {
+      "label": "Reports",
+      "path": "/reports",
+      "icon": "BarChart",
+      "order": 5,
+      "permissions": ["admin", "manager"]
+    }
+  },
+  "description": "Add Reports menu item to main navigation"
+}

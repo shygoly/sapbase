@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Department } from './department.entity'
@@ -13,18 +13,23 @@ export class DepartmentsService {
     private departmentsRepository: Repository<Department>,
   ) {}
 
-  async create(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
-    const department = this.departmentsRepository.create(createDepartmentDto)
+  async create(createDepartmentDto: CreateDepartmentDto, organizationId: string): Promise<Department> {
+    const department = this.departmentsRepository.create({
+      ...createDepartmentDto,
+      organizationId,
+    })
     return this.departmentsRepository.save(department)
   }
 
   async findAll(
+    organizationId: string,
     page: number = 1,
     pageSize: number = 10,
   ): Promise<PaginatedResult<Department>> {
     const skip = (page - 1) * pageSize
 
     const [data, total] = await this.departmentsRepository.findAndCount({
+      where: { organizationId },
       relations: ['manager'],
       order: { createdAt: 'DESC' },
       skip,
@@ -40,15 +45,24 @@ export class DepartmentsService {
     }
   }
 
-  async findOne(id: string): Promise<Department> {
-    return BaseCrudHelper.findOneOrFail(this.departmentsRepository, id, 'Department')
+  async findOne(id: string, organizationId: string): Promise<Department> {
+    const department = await this.departmentsRepository.findOne({
+      where: { id, organizationId },
+    })
+    if (!department) {
+      throw new NotFoundException('Department not found')
+    }
+    return department
   }
 
-  async update(id: string, updateDepartmentDto: UpdateDepartmentDto): Promise<Department> {
-    return BaseCrudHelper.updateById(this.departmentsRepository, id, updateDepartmentDto, 'Department')
+  async update(id: string, updateDepartmentDto: UpdateDepartmentDto, organizationId: string): Promise<Department> {
+    const department = await this.findOne(id, organizationId)
+    Object.assign(department, updateDepartmentDto)
+    return this.departmentsRepository.save(department)
   }
 
-  async remove(id: string): Promise<void> {
-    return BaseCrudHelper.removeById(this.departmentsRepository, id, 'Department')
+  async remove(id: string, organizationId: string): Promise<void> {
+    const department = await this.findOne(id, organizationId)
+    await this.departmentsRepository.remove(department)
   }
 }

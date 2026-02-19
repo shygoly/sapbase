@@ -1,23 +1,26 @@
 import '../styles/globals.css';
-import { cookies } from 'next/headers';
 
-import { DEFAULT_THEME } from '@/components/themes/theme.config';
 import { fontVariables } from '@/components/themes/font.config';
-import { AppProviders } from './providers';
 
 export const metadata = {
   title: 'Speckit ERP',
-  description: 'Speckit ERP dashboard'
+  description: 'Speckit ERP dashboard',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3050'),
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+  },
+  other: {
+    'dns-prefetch': 'on',
+  },
 };
 
-export default async function RootLayout({
+export const revalidate = 3600;
+export default function RootLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const activeTheme = cookieStore.get('active_theme')?.value ?? DEFAULT_THEME;
-
   return (
     <html lang='en' suppressHydrationWarning>
       <head>
@@ -27,9 +30,12 @@ export default async function RootLayout({
           content='hsl(var(--background))'
           media='(prefers-color-scheme: dark)'
         />
+        {/* DNS prefetch for external resources */}
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
       </head>
       <body className={fontVariables}>
-        <AppProviders activeTheme={activeTheme}>{children}</AppProviders>
+        {children}
       </body>
     </html>
   );

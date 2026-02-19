@@ -2,8 +2,6 @@
 
 import * as React from 'react';
 import { IconTrendingUp } from '@tabler/icons-react';
-import { Label, Pie, PieChart } from 'recharts';
-
 import {
   Card,
   CardContent,
@@ -12,12 +10,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent
-} from '@/components/ui/chart';
+import { ChartConfig } from '@/components/ui/chart';
 
 const chartData = [
   { browser: 'chrome', visitors: 275, fill: 'var(--primary)' },
@@ -54,6 +47,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function PieGraph() {
+  void chartConfig
   const totalVisitors = React.useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
   }, []);

@@ -69,9 +69,9 @@ export function DetailRuntime({
   children,
   isLoading = false,
 }: DetailRuntimeProps) {
+  void isLoading
   // Validate model
   if (!model.id || !model.name) {
-    console.error('DetailRuntime: Invalid detail model. Must have id and name.');
     return (
       <div className="p-4 text-red-600">
         Invalid detail model. Check console for details.

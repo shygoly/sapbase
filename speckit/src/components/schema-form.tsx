@@ -33,7 +33,7 @@ export function SchemaForm({
 }: SchemaFormProps) {
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [formData, setFormData] = useState(initialData)
-  const { register, handleSubmit, formState, watch } = useForm({
+  const { register, handleSubmit, formState } = useForm({
     defaultValues: initialData,
   })
 

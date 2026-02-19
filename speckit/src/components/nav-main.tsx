@@ -1,7 +1,8 @@
-'use client';
+'use client'
 
-import { IconChevronRight } from '@tabler/icons-react';
-
+import { IconChevronRight } from '@tabler/icons-react'
+import Link from 'next/link'
+import { useLocalePrefix } from '@/hooks/use-locale'
 import {
   Collapsible,
   CollapsibleContent,
@@ -34,6 +35,7 @@ export function NavMain({
     }[];
   }[];
 }) {
+  const prefix = useLocalePrefix()
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -62,9 +64,9 @@ export function NavMain({
                     {item.items?.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild>
-                          <a href={subItem.url}>
+                          <Link href={prefix(subItem.url)}>
                             <span>{subItem.title}</span>
-                          </a>
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

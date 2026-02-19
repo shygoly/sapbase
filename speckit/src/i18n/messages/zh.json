@@ -1,0 +1,111 @@
+{
+  "common": {
+    "appName": "Speckit ERP",
+    "welcome": "欢迎，{{name}}！",
+    "appDescription": "Speckit ERP 仪表板",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "create": "创建",
+    "update": "更新",
+    "search": "搜索",
+    "filter": "筛选",
+    "actions": "操作",
+    "confirm": "确认",
+    "back": "返回",
+    "next": "下一步",
+    "previous": "上一步",
+    "submit": "提交",
+    "reset": "重置",
+    "close": "关闭",
+    "open": "打开",
+    "yes": "是",
+    "no": "否"
+  },
+  "auth": {
+    "login": "登录",
+    "logout": "登出",
+    "signIn": "登录",
+    "signUp": "注册",
+    "email": "邮箱",
+    "password": "密码",
+    "forgotPassword": "忘记密码？",
+    "rememberMe": "记住我",
+    "invalidCredentials": "邮箱或密码错误",
+    "loginSuccess": "登录成功",
+    "loginFailed": "登录失败"
+  },
+  "navigation": {
+    "dashboard": "仪表板",
+    "overview": "概览",
+    "users": "用户",
+    "organizations": "组织",
+    "settings": "设置",
+    "admin": "管理",
+    "workflows": "工作流",
+    "aiModules": "AI 模块",
+    "moduleRegistry": "模块注册表",
+    "auditLogs": "审计日志"
+  },
+  "organizations": {
+    "title": "组织",
+    "create": "创建组织",
+    "name": "组织名称",
+    "slug": "标识符",
+    "members": "成员",
+    "invitations": "邀请",
+    "settings": "组织设置",
+    "memberAdded": "成员添加成功",
+    "memberRemoved": "成员移除成功",
+    "invitationSent": "邀请发送成功"
+  },
+  "users": {
+    "title": "用户",
+    "create": "创建用户",
+    "name": "姓名",
+    "email": "邮箱",
+    "role": "角色",
+    "status": "状态",
+    "lastLogin": "最后登录",
+    "createdAt": "创建时间"
+  },
+  "workflows": {
+    "title": "工作流",
+    "create": "创建工作流",
+    "name": "工作流名称",
+    "description": "描述",
+    "status": "状态",
+    "instances": "实例",
+    "definition": "定义"
+  },
+  "aiModules": {
+    "title": "AI 模块",
+    "create": "创建 AI 模块",
+    "develop": "开发",
+    "test": "测试",
+    "publish": "发布",
+    "name": "模块名称",
+    "description": "描述",
+    "status": "状态",
+    "version": "版本"
+  },
+  "notifications": {
+    "title": "通知",
+    "noNotifications": "没有通知",
+    "markAllRead": "全部标记为已读",
+    "unread": "未读"
+  },
+  "errors": {
+    "generic": "发生错误",
+    "notFound": "页面未找到",
+    "unauthorized": "未授权",
+    "forbidden": "访问被禁止",
+    "serverError": "服务器错误",
+    "networkError": "网络错误",
+    "validationError": "验证错误"
+  }
+}

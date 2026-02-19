@@ -2,10 +2,25 @@ import { DataSource } from 'typeorm'
 import { User } from '../users/user.entity'
 import { Role } from '../roles/role.entity'
 import { Department } from '../departments/department.entity'
+import { Organization, SubscriptionStatus } from '../organizations/organization.entity'
+import { OrganizationMember, OrganizationRole } from '../organizations/organization-member.entity'
 import { AuditLog } from '../audit-logs/audit-log.entity'
 import { Setting } from '../settings/setting.entity'
 import { Permission } from '../permissions/permission.entity'
 import { MenuItem } from '../menu/menu.entity'
+import { AIModel, AIModelProvider, AIModelStatus } from '../ai-models/ai-model.entity'
+import { AIModule } from '../ai-modules/ai-module.entity'
+import { ModuleRegistry, ModuleType, ModuleStatus } from '../module-registry/module-registry.entity'
+import { ModuleCapability, CapabilityType } from '../module-registry/module-capability.entity'
+import { ModuleStatistics, HealthStatus } from '../module-registry/module-statistics.entity'
+import { ModuleRelationship } from '../module-registry/module-relationship.entity'
+import { ModuleConfiguration } from '../module-registry/module-configuration.entity'
+import {
+  WorkflowDefinition,
+  WorkflowStatus,
+} from '../workflows/workflow-definition.entity'
+import { WorkflowInstance } from '../workflows/workflow-instance.entity'
+import { WorkflowHistory } from '../workflows/workflow-history.entity'
 import { UserStatus } from '@speckit/shared-schemas'
 import * as bcrypt from 'bcrypt'
 import { v4 as uuidv4 } from 'uuid'
@@ -17,7 +32,27 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'mac',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'sapbasic',
-  entities: [User, Role, Department, AuditLog, Setting, Permission, MenuItem],
+  entities: [
+    User,
+    Role,
+    Department,
+    Organization,
+    OrganizationMember,
+    AuditLog,
+    Setting,
+    Permission,
+    MenuItem,
+    AIModel,
+    AIModule,
+    ModuleRegistry,
+    ModuleRelationship,
+    ModuleCapability,
+    ModuleStatistics,
+    ModuleConfiguration,
+    WorkflowDefinition,
+    WorkflowInstance,
+    WorkflowHistory,
+  ],
   synchronize: false,
   logging: false,
 })
@@ -35,33 +70,68 @@ async function seedDatabase() {
     await AppDataSource.query('TRUNCATE TABLE "settings" CASCADE')
     await AppDataSource.query('TRUNCATE TABLE "permissions" CASCADE')
     await AppDataSource.query('TRUNCATE TABLE "menu_items" CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE "ai_models" CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE "module_registry" CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE "module_capabilities" CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE "module_statistics" CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE "workflow_history" CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE "workflow_instances" CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE "workflow_definitions" CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE "organization_members" CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE "organizations" CASCADE')
 
     console.log('Cleared existing data')
+
+    // Create default organization (required for tenant-scoped entities)
+    const orgRepo = AppDataSource.getRepository(Organization)
+    const defaultOrg = await orgRepo.save({
+      name: 'Default Organization',
+      slug: 'default',
+      subscriptionStatus: SubscriptionStatus.INCOMPLETE,
+    })
+    console.log('Created default organization')
+
+    // Seed default Opportunity workflow (draft → formal) for current org
+    const workflowDefRepo = AppDataSource.getRepository(WorkflowDefinition)
+    await workflowDefRepo.save({
+      name: 'Opportunity',
+      description: 'Opportunity workflow from draft to formal',
+      entityType: 'opportunity',
+      organizationId: defaultOrg.id,
+      states: [
+        { name: 'draft', initial: true, final: false },
+        { name: 'formal', initial: false, final: true },
+      ],
+      transitions: [{ from: 'draft', to: 'formal' }],
+      status: WorkflowStatus.ACTIVE,
+      version: '1.0.0',
+    })
+    console.log('Created default Opportunity workflow')
 
     // Seed Roles (5 roles)
     const roleRepository = AppDataSource.getRepository(Role)
     const roles = await roleRepository.save([
-      { name: 'Admin', description: 'Administrator with full access' },
-      { name: 'Manager', description: 'Manager with limited access' },
-      { name: 'User', description: 'Regular user' },
-      { name: 'Viewer', description: 'Read-only access' },
-      { name: 'Guest', description: 'Guest user' },
+      { name: 'Admin', description: 'Administrator with full access', organizationId: defaultOrg.id },
+      { name: 'Manager', description: 'Manager with limited access', organizationId: defaultOrg.id },
+      { name: 'User', description: 'Regular user', organizationId: defaultOrg.id },
+      { name: 'Viewer', description: 'Read-only access', organizationId: defaultOrg.id },
+      { name: 'Guest', description: 'Guest user', organizationId: defaultOrg.id },
     ])
     console.log(`Created ${roles.length} roles`)
 
     // Seed Departments (10 departments)
     const departmentRepository = AppDataSource.getRepository(Department)
     const departments = await departmentRepository.save([
-      { name: 'Engineering', description: 'Engineering department' },
-      { name: 'Sales', description: 'Sales department' },
-      { name: 'Marketing', description: 'Marketing department' },
-      { name: 'HR', description: 'Human Resources' },
-      { name: 'Finance', description: 'Finance department' },
-      { name: 'Operations', description: 'Operations department' },
-      { name: 'Support', description: 'Customer Support' },
-      { name: 'Product', description: 'Product Management' },
-      { name: 'Design', description: 'Design department' },
-      { name: 'Legal', description: 'Legal department' },
+      { name: 'Engineering', description: 'Engineering department', organizationId: defaultOrg.id },
+      { name: 'Sales', description: 'Sales department', organizationId: defaultOrg.id },
+      { name: 'Marketing', description: 'Marketing department', organizationId: defaultOrg.id },
+      { name: 'HR', description: 'Human Resources', organizationId: defaultOrg.id },
+      { name: 'Finance', description: 'Finance department', organizationId: defaultOrg.id },
+      { name: 'Operations', description: 'Operations department', organizationId: defaultOrg.id },
+      { name: 'Support', description: 'Customer Support', organizationId: defaultOrg.id },
+      { name: 'Product', description: 'Product Management', organizationId: defaultOrg.id },
+      { name: 'Design', description: 'Design department', organizationId: defaultOrg.id },
+      { name: 'Legal', description: 'Legal department', organizationId: defaultOrg.id },
     ])
     console.log(`Created ${departments.length} departments`)
 
@@ -69,7 +139,7 @@ async function seedDatabase() {
     const userRepository = AppDataSource.getRepository(User)
     const users = []
     for (let i = 1; i <= 50; i++) {
-      const hashedPassword = await bcrypt.hash('password123', 10)
+      const hashedPassword = await bcrypt.hash('123456', 10)
       const user = userRepository.create({
         email: `user${i}@example.com`,
         passwordHash: hashedPassword,
@@ -110,6 +180,8 @@ async function seedDatabase() {
       'menu:create',
       'menu:update',
       'menu:delete',
+      'plugins:read',
+      'plugins:create',
       'reports:create',
       'reports:read',
       'reports:update',
@@ -118,6 +190,7 @@ async function seedDatabase() {
       'analytics:read',
       'system:admin',
       'system:manage',
+      'system:generate', // Full system code generation and deploy (highest privilege; admin has it for testing)
       'batch:operations',
       'export:data',
       'import:data',
@@ -136,6 +209,20 @@ async function seedDatabase() {
       'backup:restore',
       'config:read',
       'config:update',
+      // CRM permissions
+      'customers:create',
+      'customers:read',
+      'customers:update',
+      'customers:delete',
+      'orders:create',
+      'orders:read',
+      'orders:update',
+      'orders:delete',
+      'transactions:create',
+      'transactions:read',
+      'transactions:update',
+      'transactions:delete',
+      'crm:*',
     ]
 
     const permissions = await permissionRepository.save(
@@ -143,6 +230,7 @@ async function seedDatabase() {
         permissionRepository.create({
           name,
           description: `Permission for ${name}`,
+          organizationId: defaultOrg.id,
         }),
       ),
     )
@@ -168,7 +256,7 @@ async function seedDatabase() {
     // Create admin user with all permissions from Admin role
     const adminRole = roles.find(r => r.name === 'Admin')
     if (adminRole) {
-      const adminHashedPassword = await bcrypt.hash('password123', 10)
+      const adminHashedPassword = await bcrypt.hash('123456', 10)
       const adminUser = userRepository.create({
         email: 'admin@example.com',
         passwordHash: adminHashedPassword,
@@ -179,7 +267,87 @@ async function seedDatabase() {
         permissions: adminRole.permissions, // Copy all permissions from Admin role
       })
       await userRepository.save(adminUser)
-      console.log('Created admin user: admin@example.com with all permissions')
+      const memberRepo = AppDataSource.getRepository(OrganizationMember)
+      await memberRepo.save({
+        organizationId: defaultOrg.id,
+        userId: adminUser.id,
+        role: OrganizationRole.OWNER,
+      })
+      console.log('Created admin user: admin@example.com with all permissions and default organization membership')
+    }
+
+    // Create additional test users with specific roles
+    const salesRole = roles.find(r => r.name === 'User')
+    const managerRole = roles.find(r => r.name === 'Manager')
+    const accountantRole = roles.find(r => r.name === 'Viewer')
+
+    // Sales user with CRM permissions
+    if (salesRole) {
+      const salesHashedPassword = await bcrypt.hash('123456', 10)
+      const salesPermissions = permissions
+        .filter(p => p.name.startsWith('customers:') || p.name.startsWith('orders:') || p.name === 'dashboard:read')
+        .map(p => p.name)
+      const salesUser = userRepository.create({
+        email: 'sales@example.com',
+        passwordHash: salesHashedPassword,
+        name: 'Sales User',
+        role: salesRole.name,
+        department: departments.find(d => d.name === 'Sales')?.name || departments[1].name,
+        status: UserStatus.ACTIVE,
+        permissions: salesPermissions,
+      })
+      await userRepository.save(salesUser)
+      console.log('Created sales user: sales@example.com')
+    }
+
+    // Manager user with CRM and management permissions
+    if (managerRole) {
+      const managerHashedPassword = await bcrypt.hash('123456', 10)
+      const managerPermissions = permissions
+        .filter(p => 
+          p.name.startsWith('customers:') || 
+          p.name.startsWith('orders:') || 
+          p.name.startsWith('transactions:') ||
+          p.name.startsWith('users:read') ||
+          p.name.startsWith('dashboard:') ||
+          p.name.startsWith('reports:')
+        )
+        .map(p => p.name)
+      const managerUser = userRepository.create({
+        email: 'manager@example.com',
+        passwordHash: managerHashedPassword,
+        name: 'Manager User',
+        role: managerRole.name,
+        department: departments.find(d => d.name === 'Sales')?.name || departments[1].name,
+        status: UserStatus.ACTIVE,
+        permissions: managerPermissions,
+      })
+      await userRepository.save(managerUser)
+      console.log('Created manager user: manager@example.com')
+    }
+
+    // Accountant user with transaction permissions
+    if (accountantRole) {
+      const accountantHashedPassword = await bcrypt.hash('123456', 10)
+      const accountantPermissions = permissions
+        .filter(p => 
+          p.name.startsWith('transactions:') || 
+          p.name.startsWith('orders:read') ||
+          p.name.startsWith('reports:read') ||
+          p.name === 'dashboard:read'
+        )
+        .map(p => p.name)
+      const accountantUser = userRepository.create({
+        email: 'accountant@example.com',
+        passwordHash: accountantHashedPassword,
+        name: 'Accountant User',
+        role: accountantRole.name,
+        department: departments.find(d => d.name === 'Finance')?.name || departments[4].name,
+        status: UserStatus.ACTIVE,
+        permissions: accountantPermissions,
+      })
+      await userRepository.save(accountantUser)
+      console.log('Created accountant user: accountant@example.com')
     }
 
     // Seed Settings (50 settings, one per user)
@@ -195,6 +363,7 @@ async function seedDatabase() {
         pageSize: [10, 20, 50][Math.floor(Math.random() * 3)],
         fontSize: [12, 14, 16][Math.floor(Math.random() * 3)],
         enableNotifications: Math.random() > 0.3,
+        organizationId: defaultOrg.id,
       }),
     )
     await settingRepository.save(settings)
@@ -220,6 +389,7 @@ async function seedDatabase() {
         actor: actor.email,
         status,
         resourceId,
+        organizationId: defaultOrg.id,
         changes: {
           before: { field: 'old_value' },
           after: { field: 'new_value' },
@@ -236,16 +406,93 @@ async function seedDatabase() {
     await auditLogRepository.save(auditLogs)
     console.log(`Created ${auditLogs.length} audit logs`)
 
+    // Seed AI Models
+    const aiModelRepository = AppDataSource.getRepository(AIModel)
+    const kimiModel = aiModelRepository.create({
+      name: 'Kimi API',
+      provider: AIModelProvider.KIMI,
+      apiKey: 'sk-kimi-NFr9OldbRTRzzyFCJbNTozG1LPP9yb90Uas7AomC4Lz57OomFPk7115ZhDSBHmlJ',
+      baseUrl: 'https://api.kimi.com/coding/',
+      model: 'kimi-for-coding',
+      status: AIModelStatus.ACTIVE,
+      description: 'Kimi API for AI-powered patch generation',
+      isDefault: true,
+    })
+    await aiModelRepository.save(kimiModel)
+    console.log('Created Kimi AI model configuration')
+
     // Seed Menu Items with hierarchical structure
     const menuItemRepository = AppDataSource.getRepository(MenuItem)
     
-    // Create parent menu items first
+    // Create Dashboard menu item first
+    const dashboardItem = await menuItemRepository.save({
+      label: 'Dashboard',
+      path: '/dashboard/overview',
+      icon: 'dashboard',
+      order: 1,
+      visible: true,
+      disabled: false,
+      permissions: ['dashboard:read'],
+      organizationId: defaultOrg.id,
+    })
+
+    // Create CRM Management parent menu item
+    const crmManagement = await menuItemRepository.save({
+      label: 'CRM Management',
+      icon: 'users',
+      order: 2,
+      visible: true,
+      disabled: false,
+      permissions: ['customers:read', 'orders:read', 'transactions:read'],
+      organizationId: defaultOrg.id,
+    })
+
+    // Create child items for CRM Management
+    const crmChildren = await menuItemRepository.save([
+      {
+        label: 'Customer Management',
+        path: '/crm/customers',
+        icon: 'users',
+        order: 1,
+        visible: true,
+        disabled: false,
+        permissions: ['customers:read'],
+        parent: crmManagement,
+        organizationId: defaultOrg.id,
+      },
+      {
+        label: 'Order Management',
+        path: '/crm/orders',
+        icon: 'shopping',
+        order: 2,
+        visible: true,
+        disabled: false,
+        permissions: ['orders:read'],
+        parent: crmManagement,
+        organizationId: defaultOrg.id,
+      },
+      {
+        label: 'Financial Transactions',
+        path: '/crm/transactions',
+        icon: 'dollar',
+        order: 3,
+        visible: true,
+        disabled: false,
+        permissions: ['transactions:read'],
+        parent: crmManagement,
+        organizationId: defaultOrg.id,
+      },
+    ])
+
+    // Create parent menu items for System Management
     const systemManagement = await menuItemRepository.save({
       label: 'System Management',
       icon: 'settings',
-      order: 1,
+      order: 3,
       visible: true,
+      disabled: false,
       permissions: ['system:manage'],
+      organizationId: defaultOrg.id,
     })
 
     // Create child items for System Management
@@ -256,8 +503,10 @@ async function seedDatabase() {
         icon: 'users',
         order: 1,
         visible: true,
+        disabled: false,
         permissions: ['users:read'],
         parent: systemManagement,
+        organizationId: defaultOrg.id,
       },
       {
         label: 'Menu Management',
@@ -265,8 +514,10 @@ async function seedDatabase() {
         icon: 'menu',
         order: 2,
         visible: true,
+        disabled: false,
         permissions: ['menu:read'],
         parent: systemManagement,
+        organizationId: defaultOrg.id,
       },
       {
         label: 'Department Management',
@@ -274,8 +525,10 @@ async function seedDatabase() {
         icon: 'building',
         order: 3,
         visible: true,
+        disabled: false,
         permissions: ['departments:read'],
         parent: systemManagement,
+        organizationId: defaultOrg.id,
       },
       {
         label: 'Role Management',
@@ -283,8 +536,10 @@ async function seedDatabase() {
         icon: 'shield',
         order: 4,
         visible: true,
+        disabled: false,
         permissions: ['roles:read'],
         parent: systemManagement,
+        organizationId: defaultOrg.id,
       },
       {
         label: 'Audit Logs',
@@ -292,56 +547,268 @@ async function seedDatabase() {
         icon: 'history',
         order: 5,
         visible: true,
+        disabled: false,
         permissions: ['audit-logs:read'],
         parent: systemManagement,
+        organizationId: defaultOrg.id,
+      },
+      {
+        label: 'Plugins',
+        path: '/admin/plugins',
+        icon: 'settings',
+        order: 6,
+        visible: true,
+        disabled: false,
+        permissions: ['plugins:read'],
+        parent: systemManagement,
+        organizationId: defaultOrg.id,
+      },
+      {
+        label: '工作流',
+        path: '/admin/workflows',
+        icon: 'workflow',
+        order: 7,
+        visible: true,
+        disabled: false,
+        permissions: ['system:manage', 'admin'],
+        parent: systemManagement,
+        organizationId: defaultOrg.id,
+      },
+      {
+        label: '品牌配置',
+        path: '/admin/organization/brand-config',
+        icon: 'settings',
+        order: 8,
+        visible: true,
+        disabled: false,
+        permissions: ['system:manage', 'admin'],
+        parent: systemManagement,
+        organizationId: defaultOrg.id,
+      },
+    ])
+
+    // Create AI Management parent menu item
+    const aiManagement = await menuItemRepository.save({
+      label: 'AI Management',
+      icon: 'brain',
+      order: 4,
+      visible: true,
+      disabled: false,
+      permissions: ['system:manage'],
+      organizationId: defaultOrg.id,
+    })
+
+    // Create child items for AI Management
+    const aiChildren = await menuItemRepository.save([
+      {
+        label: 'AI Model Configuration',
+        path: '/admin/ai-models',
+        icon: 'brain',
+        order: 1,
+        visible: true,
+        disabled: false,
+        permissions: ['system:manage'],
+        parent: aiManagement,
+        organizationId: defaultOrg.id,
+      },
+      {
+        label: 'AI Module Development',
+        path: '/admin/ai-modules/develop',
+        icon: 'code',
+        order: 2,
+        visible: true,
+        disabled: false,
+        permissions: ['system:manage'],
+        parent: aiManagement,
+        organizationId: defaultOrg.id,
+      },
+      {
+        label: 'AI Module Testing',
+        path: '/admin/ai-modules/test',
+        icon: 'test-tube',
+        order: 3,
+        visible: true,
+        disabled: false,
+        permissions: ['system:manage'],
+        parent: aiManagement,
+        organizationId: defaultOrg.id,
+      },
+      {
+        label: 'AI Module Review',
+        path: '/admin/ai-modules/review',
+        icon: 'eye',
+        order: 4,
+        visible: true,
+        disabled: false,
+        permissions: ['system:manage'],
+        parent: aiManagement,
+        organizationId: defaultOrg.id,
+      },
+      {
+        label: 'AI Module Publishing',
+        path: '/admin/ai-modules/publish',
+        icon: 'upload',
+        order: 5,
+        visible: true,
+        disabled: false,
+        permissions: ['system:manage'],
+        parent: aiManagement,
+        organizationId: defaultOrg.id,
+      },
+      {
+        label: 'Module Registry',
+        path: '/admin/module-registry',
+        icon: 'package',
+        order: 6,
+        visible: true,
+        disabled: false,
+        permissions: ['system:manage'],
+        parent: aiManagement,
+        organizationId: defaultOrg.id,
       },
     ])
 
     // Create standalone menu items
+    // Note: Only Profile is kept, Settings/Reports/Analytics removed per requirement
     const standaloneItems = await menuItemRepository.save([
-      {
-        label: 'Dashboard',
-        path: '/dashboard',
-        icon: 'dashboard',
-        order: 2,
-        visible: true,
-        permissions: ['dashboard:read'],
-      },
-      {
-        label: 'Settings',
-        path: '/admin/settings',
-        icon: 'settings',
-        order: 3,
-        visible: true,
-        permissions: ['settings:read'],
-      },
-      {
-        label: 'Reports',
-        path: '/admin/reports',
-        icon: 'chart',
-        order: 4,
-        visible: true,
-        permissions: ['reports:read'],
-      },
-      {
-        label: 'Analytics',
-        path: '/admin/analytics',
-        icon: 'analytics',
-        order: 5,
-        visible: true,
-        permissions: ['analytics:read'],
-      },
       {
         label: 'Profile',
         path: '/profile',
         icon: 'user',
-        order: 6,
+        order: 5,
         visible: true,
+        disabled: false,
+        organizationId: defaultOrg.id,
       },
     ])
 
-    const menuItems = [systemManagement, ...systemChildren, ...standaloneItems]
+    const menuItems = [dashboardItem, crmManagement, ...crmChildren, systemManagement, ...systemChildren, aiManagement, ...aiChildren, ...standaloneItems]
+    
+    // Delete any existing menu items with order > Profile's order (order 5)
+    // This ensures we remove Settings, Reports, Analytics if they exist
+    // Note: AI Management is now order 4, Profile is order 5
+    const existingItems = await menuItemRepository.find()
+    const itemsToDelete = existingItems.filter(item => {
+      // Delete standalone items (no parent) with order > 5, but keep Profile
+      if (!item.parent && item.order > 5 && item.label !== 'Profile') {
+        return true
+      }
+      return false
+    })
+    if (itemsToDelete.length > 0) {
+      for (const item of itemsToDelete) {
+        // Set parent to null for children first
+        await menuItemRepository.update({ parent: { id: item.id } }, { parent: null } as any)
+        await menuItemRepository.delete(item.id)
+      }
+      console.log(`Deleted ${itemsToDelete.length} menu items that were after Profile`)
+    }
     console.log(`Created ${menuItems.length} menu items with hierarchical structure`)
+
+    // Register CRM Module in Module Registry
+    const moduleRegistryRepository = AppDataSource.getRepository(ModuleRegistry)
+    const moduleCapabilityRepository = AppDataSource.getRepository(ModuleCapability)
+    const moduleStatisticsRepository = AppDataSource.getRepository(ModuleStatistics)
+
+    const adminUser = await AppDataSource.getRepository(User).findOne({ where: { email: 'admin@example.com' } })
+    const defaultAiModel = await AppDataSource.getRepository(AIModel).findOne({ where: { isDefault: true } })
+
+    const crmModule = await moduleRegistryRepository.save({
+      name: 'CRM Module',
+      description: 'Customer Relationship Management module with Customer, Order, OrderTracking, and FinancialTransaction entities',
+      moduleType: ModuleType.CRUD,
+      aiModelId: defaultAiModel?.id,
+      createdById: adminUser?.id,
+      organizationId: defaultOrg.id,
+      version: '1.0.0',
+      status: ModuleStatus.ACTIVE,
+      metadata: {
+        schemaPath: '/public/specs/modules/crm',
+        apiBasePath: '/crm',
+        entities: ['Customer', 'Order', 'OrderTracking', 'FinancialTransaction'],
+      },
+    })
+
+    console.log('✅ Registered CRM Module in Module Registry')
+
+    // Register CRM Module Capabilities
+    const crmCapabilities = [
+      {
+        moduleId: crmModule.id,
+        capabilityType: CapabilityType.CRUD,
+        entity: 'Customer',
+        operations: ['create', 'read', 'update', 'delete', 'list'],
+        apiEndpoints: ['/crm/customers'],
+        description: 'CRUD operations for Customer entity',
+      },
+      {
+        moduleId: crmModule.id,
+        capabilityType: CapabilityType.CRUD,
+        entity: 'Order',
+        operations: ['create', 'read', 'update', 'delete', 'list'],
+        apiEndpoints: ['/crm/orders'],
+        description: 'CRUD operations for Order entity',
+      },
+      {
+        moduleId: crmModule.id,
+        capabilityType: CapabilityType.CRUD,
+        entity: 'OrderTracking',
+        operations: ['create', 'read', 'update', 'delete', 'list'],
+        apiEndpoints: ['/crm/order-tracking'],
+        description: 'CRUD operations for OrderTracking entity',
+      },
+      {
+        moduleId: crmModule.id,
+        capabilityType: CapabilityType.CRUD,
+        entity: 'FinancialTransaction',
+        operations: ['create', 'read', 'update', 'delete', 'list'],
+        apiEndpoints: ['/crm/transactions'],
+        description: 'CRUD operations for FinancialTransaction entity',
+      },
+    ]
+
+    await moduleCapabilityRepository.save(crmCapabilities)
+    console.log(`✅ Registered ${crmCapabilities.length} CRM module capabilities`)
+
+    // Initialize CRM Module Statistics
+    const crmStatistics = [
+      {
+        moduleId: crmModule.id,
+        entity: 'Customer',
+        recordCount: 2,
+        lastUpdate: new Date(),
+        errorCount: 0,
+        healthStatus: HealthStatus.HEALTHY,
+        collectedAt: new Date(),
+      },
+      {
+        moduleId: crmModule.id,
+        entity: 'Order',
+        recordCount: 0,
+        errorCount: 0,
+        healthStatus: HealthStatus.HEALTHY,
+        collectedAt: new Date(),
+      },
+      {
+        moduleId: crmModule.id,
+        entity: 'OrderTracking',
+        recordCount: 0,
+        errorCount: 0,
+        healthStatus: HealthStatus.HEALTHY,
+        collectedAt: new Date(),
+      },
+      {
+        moduleId: crmModule.id,
+        entity: 'FinancialTransaction',
+        recordCount: 0,
+        errorCount: 0,
+        healthStatus: HealthStatus.HEALTHY,
+        collectedAt: new Date(),
+      },
+    ]
+
+    await moduleStatisticsRepository.save(crmStatistics)
+    console.log(`✅ Initialized ${crmStatistics.length} CRM module statistics`)
 
     console.log('✅ Database seeding completed successfully!')
     process.exit(0)

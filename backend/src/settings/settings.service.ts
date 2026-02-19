@@ -11,45 +11,47 @@ export class SettingsService {
     private settingsRepository: Repository<Setting>,
   ) {}
 
-  async create(userId: string, createSettingDto: CreateSettingDto): Promise<Setting> {
-    // Check if user already has settings
+  async create(userId: string, createSettingDto: CreateSettingDto, organizationId: string): Promise<Setting> {
+    // Check if user already has settings for this organization
     const existing = await this.settingsRepository.findOne({
-      where: { userId },
+      where: { userId, organizationId },
     })
 
     if (existing) {
-      return this.update(userId, createSettingDto)
+      return this.update(userId, createSettingDto, organizationId)
     }
 
     const setting = this.settingsRepository.create({
       userId,
+      organizationId,
       ...createSettingDto,
     })
     return this.settingsRepository.save(setting)
   }
 
-  async findByUserId(userId: string): Promise<Setting> {
+  async findByUserId(userId: string, organizationId: string): Promise<Setting> {
     const setting = await this.settingsRepository.findOne({
-      where: { userId },
+      where: { userId, organizationId },
     })
 
     if (!setting) {
       // Return default settings if not found
-      return this.getDefaultSettings(userId)
+      return this.getDefaultSettings(userId, organizationId)
     }
 
     return setting
   }
 
-  async update(userId: string, updateSettingDto: UpdateSettingDto): Promise<Setting> {
+  async update(userId: string, updateSettingDto: UpdateSettingDto, organizationId: string): Promise<Setting> {
     let setting = await this.settingsRepository.findOne({
-      where: { userId },
+      where: { userId, organizationId },
     })
 
     if (!setting) {
       // Create with defaults if not exists
       setting = this.settingsRepository.create({
         userId,
+        organizationId,
         theme: 'light',
         language: 'en',
         timezone: 'UTC',
@@ -66,9 +68,10 @@ export class SettingsService {
     return this.settingsRepository.save(setting)
   }
 
-  private getDefaultSettings(userId: string): Setting {
+  private getDefaultSettings(userId: string, organizationId: string): Setting {
     const setting = new Setting()
     setting.userId = userId
+    setting.organizationId = organizationId
     setting.theme = 'light'
     setting.language = 'en'
     setting.timezone = 'UTC'
@@ -80,13 +83,15 @@ export class SettingsService {
     return setting
   }
 
-  async findAll(): Promise<Setting[]> {
-    return this.settingsRepository.find()
+  async findAll(organizationId: string): Promise<Setting[]> {
+    return this.settingsRepository.find({
+      where: { organizationId },
+    })
   }
 
-  async findOne(id: string): Promise<Setting> {
+  async findOne(id: string, organizationId: string): Promise<Setting> {
     const setting = await this.settingsRepository.findOne({
-      where: { id },
+      where: { id, organizationId },
     })
 
     if (!setting) {

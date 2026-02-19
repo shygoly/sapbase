@@ -10,7 +10,7 @@ import { useMenuItems } from '@/core/navigation/menu-hooks'
 import { useAuth } from '@/core/auth/auth-hooks'
 import { useSidebar } from '@/core/ui/ui-hooks'
 import { MenuItem } from '@/lib/api/types'
-import { ChevronDown, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 
 function SidebarContent() {
   const { items: menuItems, isLoading } = useMenuItems()

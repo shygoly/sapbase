@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "patchId": "crm-001-add-website-field",
+  "timestamp": "2026-02-16T12:00:00.000Z",
+  "actor": "ai",
+  "scope": "object",
+  "operation": "add",
+  "target": {
+    "type": "field",
+    "identifier": "Customer"
+  },
+  "payload": {
+    "field": {
+      "name": "website",
+      "label": "网站",
+      "type": "text",
+      "required": false,
+      "placeholder": "https://example.com",
+      "description": "客户网站地址"
+    }
+  },
+  "description": "为 Customer 对象添加 website 字段",
+  "securityLevel": "L1"
+}

@@ -1,0 +1,111 @@
+{
+  "common": {
+    "appName": "Speckit ERP",
+    "welcome": "ようこそ、{{name}}！",
+    "appDescription": "Speckit ERP ダッシュボード",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "create": "作成",
+    "update": "更新",
+    "search": "検索",
+    "filter": "フィルター",
+    "actions": "操作",
+    "confirm": "確認",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "submit": "送信",
+    "reset": "リセット",
+    "close": "閉じる",
+    "open": "開く",
+    "yes": "はい",
+    "no": "いいえ"
+  },
+  "auth": {
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "signIn": "サインイン",
+    "signUp": "サインアップ",
+    "email": "メール",
+    "password": "パスワード",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "rememberMe": "ログイン状態を保持",
+    "invalidCredentials": "メールまたはパスワードが正しくありません",
+    "loginSuccess": "ログイン成功",
+    "loginFailed": "ログイン失敗"
+  },
+  "navigation": {
+    "dashboard": "ダッシュボード",
+    "overview": "概要",
+    "users": "ユーザー",
+    "organizations": "組織",
+    "settings": "設定",
+    "admin": "管理",
+    "workflows": "ワークフロー",
+    "aiModules": "AI モジュール",
+    "moduleRegistry": "モジュールレジストリ",
+    "auditLogs": "監査ログ"
+  },
+  "organizations": {
+    "title": "組織",
+    "create": "組織を作成",
+    "name": "組織名",
+    "slug": "スラッグ",
+    "members": "メンバー",
+    "invitations": "招待",
+    "settings": "組織設定",
+    "memberAdded": "メンバーを追加しました",
+    "memberRemoved": "メンバーを削除しました",
+    "invitationSent": "招待を送信しました"
+  },
+  "users": {
+    "title": "ユーザー",
+    "create": "ユーザーを作成",
+    "name": "名前",
+    "email": "メール",
+    "role": "役割",
+    "status": "ステータス",
+    "lastLogin": "最終ログイン",
+    "createdAt": "作成日時"
+  },
+  "workflows": {
+    "title": "ワークフロー",
+    "create": "ワークフローを作成",
+    "name": "ワークフロー名",
+    "description": "説明",
+    "status": "ステータス",
+    "instances": "インスタンス",
+    "definition": "定義"
+  },
+  "aiModules": {
+    "title": "AI モジュール",
+    "create": "AI モジュールを作成",
+    "develop": "開発",
+    "test": "テスト",
+    "publish": "公開",
+    "name": "モジュール名",
+    "description": "説明",
+    "status": "ステータス",
+    "version": "バージョン"
+  },
+  "notifications": {
+    "title": "通知",
+    "noNotifications": "通知はありません",
+    "markAllRead": "すべて既読にする",
+    "unread": "未読"
+  },
+  "errors": {
+    "generic": "エラーが発生しました",
+    "notFound": "ページが見つかりません",
+    "unauthorized": "認証されていません",
+    "forbidden": "アクセスが拒否されました",
+    "serverError": "サーバーエラー",
+    "networkError": "ネットワークエラー",
+    "validationError": "検証エラー"
+  }
+}

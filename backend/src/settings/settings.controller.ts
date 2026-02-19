@@ -9,6 +9,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { SettingsService } from './settings.service'
 import { Auth } from '../common/decorators/auth.decorator'
+import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import { CreateSettingDto, UpdateSettingDto, SettingResponseDto } from './dto'
 import { ApiResponseDto } from '../common'
 
@@ -22,9 +23,9 @@ export class SettingsController {
   @Auth()
   @ApiOperation({ summary: 'Get current user settings' })
   @ApiResponse({ status: 200, description: 'Settings retrieved successfully' })
-  async findByUserId(@Request() req: any) {
+  async findByUserId(@Request() req: any, @OrganizationId() organizationId: string) {
     const userId = req.user.id
-    const settings = await this.settingsService.findByUserId(userId)
+    const settings = await this.settingsService.findByUserId(userId, organizationId)
     return ApiResponseDto.success(settings, 'Settings retrieved successfully')
   }
 
@@ -35,9 +36,10 @@ export class SettingsController {
   async create(
     @Request() req: any,
     @Body() createSettingDto: CreateSettingDto,
+    @OrganizationId() organizationId: string,
   ) {
     const userId = req.user.id
-    const settings = await this.settingsService.create(userId, createSettingDto)
+    const settings = await this.settingsService.create(userId, createSettingDto, organizationId)
     return ApiResponseDto.created(settings, 'Settings created successfully')
   }
 
@@ -48,9 +50,10 @@ export class SettingsController {
   async update(
     @Request() req: any,
     @Body() updateSettingDto: UpdateSettingDto,
+    @OrganizationId() organizationId: string,
   ) {
     const userId = req.user.id
-    const settings = await this.settingsService.update(userId, updateSettingDto)
+    const settings = await this.settingsService.update(userId, updateSettingDto, organizationId)
     return ApiResponseDto.success(settings, 'Settings updated successfully')
   }
 }

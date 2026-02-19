@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "patchId": "550e8400-e29b-41d4-a716-446655440001",
+  "timestamp": "2026-02-16T10:05:00.000Z",
+  "actor": "human",
+  "scope": "permission",
+  "operation": "update",
+  "target": {
+    "type": "role",
+    "identifier": "sales"
+  },
+  "payload": {
+    "allow": ["view", "submit"],
+    "deny": ["approve"],
+    "permissions": {
+      "view": ["sales", "admin"],
+      "create": ["sales"],
+      "edit": ["sales"],
+      "delete": []
+    }
+  },
+  "description": "Update sales role permissions to allow view and submit but deny approve"
+}

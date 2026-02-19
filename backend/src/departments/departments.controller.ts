@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Roles } from '../auth/roles.decorator'
 import { ApiResponseDto, PaginatedResponseDto } from '../common'
+import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 
 @ApiTags('Departments')
 @ApiBearerAuth()
@@ -35,8 +36,8 @@ export class DepartmentsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new department' })
   @ApiResponse({ status: 201, description: 'Department created successfully' })
-  async create(@Body() createDepartmentDto: CreateDepartmentDto) {
-    const department = await this.departmentsService.create(createDepartmentDto)
+  async create(@Body() createDepartmentDto: CreateDepartmentDto, @OrganizationId() organizationId: string) {
+    const department = await this.departmentsService.create(createDepartmentDto, organizationId)
     return ApiResponseDto.created(department, 'Department created successfully')
   }
 
@@ -44,10 +45,11 @@ export class DepartmentsController {
   @ApiOperation({ summary: 'Get all departments with pagination' })
   @ApiResponse({ status: 200, description: 'Departments retrieved successfully' })
   async findAll(
+    @OrganizationId() organizationId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('pageSize', new DefaultValuePipe(10), ParseIntPipe) pageSize: number = 10,
   ) {
-    const result = await this.departmentsService.findAll(page, pageSize)
+    const result = await this.departmentsService.findAll(organizationId, page, pageSize)
     return PaginatedResponseDto.create(
       result.data,
       result.page,
@@ -60,8 +62,8 @@ export class DepartmentsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific department by ID' })
   @ApiResponse({ status: 200, description: 'Department retrieved successfully' })
-  async findOne(@Param('id') id: string) {
-    const department = await this.departmentsService.findOne(id)
+  async findOne(@Param('id') id: string, @OrganizationId() organizationId: string) {
+    const department = await this.departmentsService.findOne(id, organizationId)
     return ApiResponseDto.success(department, 'Department retrieved successfully')
   }
 
@@ -73,8 +75,9 @@ export class DepartmentsController {
   async update(
     @Param('id') id: string,
     @Body() updateDepartmentDto: UpdateDepartmentDto,
+    @OrganizationId() organizationId: string,
   ) {
-    const department = await this.departmentsService.update(id, updateDepartmentDto)
+    const department = await this.departmentsService.update(id, updateDepartmentDto, organizationId)
     return ApiResponseDto.success(department, 'Department updated successfully')
   }
 
@@ -84,7 +87,7 @@ export class DepartmentsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a department' })
   @ApiResponse({ status: 204, description: 'Department deleted successfully' })
-  async remove(@Param('id') id: string): Promise<void> {
-    return this.departmentsService.remove(id)
+  async remove(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<void> {
+    return this.departmentsService.remove(id, organizationId)
   }
 }

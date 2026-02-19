@@ -1,8 +1,9 @@
-'use client';
+'use client'
 
-import * as React from 'react';
-import { IconChevronRight } from '@tabler/icons-react';
-import Link from 'next/link';
+import * as React from 'react'
+import { IconChevronRight } from '@tabler/icons-react'
+import Link from 'next/link'
+import { useLocalePrefix } from '@/hooks/use-locale'
 import {
   Infobar,
   InfobarContent,
@@ -34,8 +35,9 @@ const defaultData = {
 export function InfoSidebar({
   ...props
 }: React.ComponentProps<typeof Infobar>) {
-  const { content } = useInfobar();
-  const data = content || defaultData;
+  const { content } = useInfobar()
+  const data = content || defaultData
+  const prefix = useLocalePrefix()
 
   return (
     <Infobar {...props}>
@@ -75,9 +77,9 @@ export function InfoSidebar({
                           {section.links.map((link, linkIndex) => (
                             <li key={linkIndex}>
                               <Link
-                                href={link.url}
+                                href={link.url.startsWith('http') || link.url.startsWith('#') ? link.url : prefix(link.url)}
                                 className='text-primary flex items-center gap-1.5 text-sm underline'
-                                target='_blank'
+                                target={link.url.startsWith('http') ? '_blank' : undefined}
                               >
                                 <span>{link.title}</span>
                                 <IconChevronRight className='h-3 w-3' />

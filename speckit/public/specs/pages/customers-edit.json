@@ -1,0 +1,13 @@
+{
+  "path": "/crm/customers/:id/edit",
+  "view": "customer-form",
+  "label": "编辑客户",
+  "metadata": {
+    "title": "编辑客户",
+    "description": "编辑客户信息",
+    "icon": "UserEdit",
+    "breadcrumb": true
+  },
+  "permissions": ["admin", "sales"],
+  "version": "1.0"
+}

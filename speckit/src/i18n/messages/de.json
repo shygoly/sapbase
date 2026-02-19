@@ -1,0 +1,111 @@
+{
+  "common": {
+    "appName": "Speckit ERP",
+    "welcome": "Willkommen, {{name}}!",
+    "appDescription": "Speckit ERP Dashboard",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "update": "Aktualisieren",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "actions": "Aktionen",
+    "confirm": "Bestätigen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "submit": "Absenden",
+    "reset": "Zurücksetzen",
+    "close": "Schließen",
+    "open": "Öffnen",
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "signIn": "Anmelden",
+    "signUp": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "forgotPassword": "Passwort vergessen?",
+    "rememberMe": "Angemeldet bleiben",
+    "invalidCredentials": "Ungültige E-Mail oder Passwort",
+    "loginSuccess": "Anmeldung erfolgreich",
+    "loginFailed": "Anmeldung fehlgeschlagen"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "overview": "Übersicht",
+    "users": "Benutzer",
+    "organizations": "Organisationen",
+    "settings": "Einstellungen",
+    "admin": "Administration",
+    "workflows": "Workflows",
+    "aiModules": "KI-Module",
+    "moduleRegistry": "Modul-Register",
+    "auditLogs": "Audit-Protokolle"
+  },
+  "organizations": {
+    "title": "Organisationen",
+    "create": "Organisation erstellen",
+    "name": "Organisationsname",
+    "slug": "Slug",
+    "members": "Mitglieder",
+    "invitations": "Einladungen",
+    "settings": "Organisationseinstellungen",
+    "memberAdded": "Mitglied erfolgreich hinzugefügt",
+    "memberRemoved": "Mitglied erfolgreich entfernt",
+    "invitationSent": "Einladung erfolgreich gesendet"
+  },
+  "users": {
+    "title": "Benutzer",
+    "create": "Benutzer erstellen",
+    "name": "Name",
+    "email": "E-Mail",
+    "role": "Rolle",
+    "status": "Status",
+    "lastLogin": "Letzte Anmeldung",
+    "createdAt": "Erstellt am"
+  },
+  "workflows": {
+    "title": "Workflows",
+    "create": "Workflow erstellen",
+    "name": "Workflow-Name",
+    "description": "Beschreibung",
+    "status": "Status",
+    "instances": "Instanzen",
+    "definition": "Definition"
+  },
+  "aiModules": {
+    "title": "KI-Module",
+    "create": "KI-Modul erstellen",
+    "develop": "Entwickeln",
+    "test": "Testen",
+    "publish": "Veröffentlichen",
+    "name": "Modulname",
+    "description": "Beschreibung",
+    "status": "Status",
+    "version": "Version"
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "noNotifications": "Keine Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "unread": "ungelesen"
+  },
+  "errors": {
+    "generic": "Ein Fehler ist aufgetreten",
+    "notFound": "Seite nicht gefunden",
+    "unauthorized": "Nicht autorisiert",
+    "forbidden": "Zugriff verweigert",
+    "serverError": "Serverfehler",
+    "networkError": "Netzwerkfehler",
+    "validationError": "Validierungsfehler"
+  }
+}

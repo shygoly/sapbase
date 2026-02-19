@@ -24,15 +24,16 @@ const routeMapping: Record<string, BreadcrumbItem[]> = {
 
 export function useBreadcrumbs() {
   const pathname = usePathname();
+  const safePathname = pathname ?? '';
 
   const breadcrumbs = useMemo(() => {
     // Check if we have a custom mapping for this exact path
-    if (routeMapping[pathname]) {
-      return routeMapping[pathname];
+    if (routeMapping[safePathname]) {
+      return routeMapping[safePathname];
     }
 
     // If no exact match, fall back to generating breadcrumbs from the path
-    const segments = pathname.split('/').filter(Boolean);
+    const segments = safePathname.split('/').filter(Boolean);
     return segments.map((segment, index) => {
       const path = `/${segments.slice(0, index + 1).join('/')}`;
       return {
@@ -40,7 +41,7 @@ export function useBreadcrumbs() {
         link: path
       };
     });
-  }, [pathname]);
+  }, [safePathname]);
 
   return breadcrumbs;
 }

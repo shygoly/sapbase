@@ -1,0 +1,111 @@
+{
+  "common": {
+    "appName": "Speckit ERP",
+    "welcome": "{{name}}님, 환영합니다!",
+    "appDescription": "Speckit ERP 대시보드",
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공",
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "편집",
+    "create": "생성",
+    "update": "업데이트",
+    "search": "검색",
+    "filter": "필터",
+    "actions": "작업",
+    "confirm": "확인",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "submit": "제출",
+    "reset": "재설정",
+    "close": "닫기",
+    "open": "열기",
+    "yes": "예",
+    "no": "아니오"
+  },
+  "auth": {
+    "login": "로그인",
+    "logout": "로그아웃",
+    "signIn": "로그인",
+    "signUp": "회원가입",
+    "email": "이메일",
+    "password": "비밀번호",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "rememberMe": "로그인 상태 유지",
+    "invalidCredentials": "이메일 또는 비밀번호가 올바르지 않습니다",
+    "loginSuccess": "로그인 성공",
+    "loginFailed": "로그인 실패"
+  },
+  "navigation": {
+    "dashboard": "대시보드",
+    "overview": "개요",
+    "users": "사용자",
+    "organizations": "조직",
+    "settings": "설정",
+    "admin": "관리",
+    "workflows": "워크플로우",
+    "aiModules": "AI 모듈",
+    "moduleRegistry": "모듈 레지스트리",
+    "auditLogs": "감사 로그"
+  },
+  "organizations": {
+    "title": "조직",
+    "create": "조직 생성",
+    "name": "조직 이름",
+    "slug": "슬러그",
+    "members": "멤버",
+    "invitations": "초대",
+    "settings": "조직 설정",
+    "memberAdded": "멤버가 추가되었습니다",
+    "memberRemoved": "멤버가 제거되었습니다",
+    "invitationSent": "초대가 전송되었습니다"
+  },
+  "users": {
+    "title": "사용자",
+    "create": "사용자 생성",
+    "name": "이름",
+    "email": "이메일",
+    "role": "역할",
+    "status": "상태",
+    "lastLogin": "마지막 로그인",
+    "createdAt": "생성일"
+  },
+  "workflows": {
+    "title": "워크플로우",
+    "create": "워크플로우 생성",
+    "name": "워크플로우 이름",
+    "description": "설명",
+    "status": "상태",
+    "instances": "인스턴스",
+    "definition": "정의"
+  },
+  "aiModules": {
+    "title": "AI 모듈",
+    "create": "AI 모듈 생성",
+    "develop": "개발",
+    "test": "테스트",
+    "publish": "게시",
+    "name": "모듈 이름",
+    "description": "설명",
+    "status": "상태",
+    "version": "버전"
+  },
+  "notifications": {
+    "title": "알림",
+    "noNotifications": "알림이 없습니다",
+    "markAllRead": "모두 읽음으로 표시",
+    "unread": "未読"
+  },
+  "errors": {
+    "generic": "오류가 발생했습니다",
+    "notFound": "페이지를 찾을 수 없습니다",
+    "unauthorized": "인증되지 않음",
+    "forbidden": "접근이 거부되었습니다",
+    "serverError": "서버 오류",
+    "networkError": "네트워크 오류",
+    "validationError": "검증 오류"
+  }
+}

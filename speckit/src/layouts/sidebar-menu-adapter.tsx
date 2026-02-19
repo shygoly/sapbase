@@ -72,6 +72,8 @@ export function SidebarMenuAdapter({
     });
   }, [source, staticItems, menuItems, hasPermission, filterFn]);
 
+  void filteredItems
+
   // Loading state
   if (isLoading) {
     return (

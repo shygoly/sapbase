@@ -18,10 +18,10 @@ interface AuthState {
   setUser: (user: User | null) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string, organizationId?: string) => Promise<void>
   logout: () => Promise<void>
   fetchProfile: () => Promise<void>
-  initializeAuth: () => void
+  initializeAuth: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -36,17 +36,32 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setError: (error) => set({ error }),
 
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string, organizationId?: string) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await authApi.login({ email, password })
+      const response = await authApi.login({ email, password, organizationId })
       // Update permission store with user permissions
-      usePermissionStore.getState().setPermissions(response.user.permissions || [])
+      usePermissionStore.getState().setPermissions(response.user?.permissions || [])
       set({
         user: response.user,
         isAuthenticated: true,
         isLoading: false,
       })
+      // Load organizations after login
+      const { useOrganizationStore } = await import('./organization.store')
+      if (response.organizations) {
+        useOrganizationStore.getState().setOrganizations(response.organizations)
+        if (response.currentOrganizationId) {
+          const currentOrg = response.organizations.find(org => org.id === response.currentOrganizationId)
+          if (currentOrg) {
+            useOrganizationStore.getState().setCurrentOrganization(currentOrg)
+          }
+        } else if (response.organizations.length === 1) {
+          useOrganizationStore.getState().setCurrentOrganization(response.organizations[0])
+        }
+      } else {
+        useOrganizationStore.getState().loadOrganizations()
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed'
       set({
@@ -96,15 +111,39 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  initializeAuth: () => {
+  initializeAuth: async () => {
+    set({ isLoading: true })
     const storedUser = authApi.getStoredUser()
-    if (storedUser && authApi.isAuthenticated()) {
-      // Restore permissions from stored user
+    const hasToken = authApi.isAuthenticated()
+
+    if (storedUser && hasToken) {
       usePermissionStore.getState().setPermissions(storedUser.permissions || [])
       set({
         user: storedUser,
         isAuthenticated: true,
+        isLoading: true,
       })
+
+      try {
+        const user = await authApi.getProfile()
+        usePermissionStore.getState().setPermissions(user.permissions || [])
+        set({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+        })
+        const { useOrganizationStore } = await import('./organization.store')
+        useOrganizationStore.getState().loadOrganizations()
+      } catch (error) {
+        authApi.logout()
+        set({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        })
+      }
+    } else {
+      set({ isLoading: false })
     }
   },
 }))

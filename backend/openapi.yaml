@@ -1,0 +1,117 @@
+openapi: 3.0.0
+paths: {}
+info:
+  title: Speckit ERP Backend API
+  description: |-
+    # Speckit ERP Backend API
+
+    Complete REST API documentation for Speckit ERP system.
+
+    ## Features
+
+    - **Authentication**: JWT-based authentication with organization support
+    - **Multi-tenancy**: Organization-scoped resources
+    - **Real-time**: WebSocket support for notifications and collaboration
+    - **Workflow Engine**: Advanced workflow management
+    - **AI Integration**: AI module development and management
+
+    ## Authentication
+
+    All protected endpoints require a Bearer token in the Authorization header:
+
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+    ## Base URL
+
+    - **Development**: http://localhost:3051/api
+    - **Production**: https://api.speckit.com/api
+
+    ## Rate Limiting
+
+    API requests are rate-limited to prevent abuse. Current limits:
+    - **Authenticated**: 1000 requests/hour
+    - **Unauthenticated**: 100 requests/hour
+
+    ## Error Responses
+
+    All errors follow a consistent format:
+
+    ```json
+    {
+      "statusCode": 400,
+      "message": "Error description",
+      "error": "Bad Request",
+      "timestamp": "2024-01-01T00:00:00.000Z",
+      "path": "/api/endpoint"
+    }
+    ```
+
+    ## WebSocket
+
+    Real-time features are available via WebSocket:
+    - **URL**: ws://localhost:3051
+    - **Authentication**: JWT token in connection handshake
+    - **Events**: See WebSocket documentation for available events
+
+    ## Support
+
+    For API support, please contact: api-support@speckit.com
+  version: 1.0.0
+  contact:
+    name: Speckit API Support
+    url: https://speckit.com
+    email: api-support@speckit.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+tags:
+  - name: Auth
+    description: Authentication and authorization endpoints
+  - name: Users
+    description: User management endpoints
+  - name: Organizations
+    description: Organization management endpoints
+  - name: Roles
+    description: Role management endpoints
+  - name: Departments
+    description: Department management endpoints
+  - name: Permissions
+    description: Permission management endpoints
+  - name: Menu
+    description: Menu management endpoints
+  - name: Audit Logs
+    description: Audit log endpoints
+  - name: Settings
+    description: Settings endpoints
+  - name: Workflows
+    description: Workflow management endpoints
+  - name: AI Modules
+    description: AI module development and management
+  - name: AI Models
+    description: AI model configuration
+  - name: Module Registry
+    description: Module registry endpoints
+  - name: Health
+    description: Health check endpoints
+  - name: System
+    description: System administration endpoints
+servers:
+  - url: http://localhost:3051/api
+    description: Development Server
+  - url: https://api.speckit.com/api
+    description: Production Server
+components:
+  securitySchemes:
+    access-token:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+      description: Enter JWT token
+    api-key:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key for service-to-service authentication
+  schemas: {}

@@ -1,0 +1,135 @@
+{
+  "name": "FinancialTransaction",
+  "label": "资金往来",
+  "description": "Financial transaction schema for payments and receipts",
+  "fields": [
+    {
+      "name": "id",
+      "label": "ID",
+      "type": "text",
+      "required": true,
+      "readonly": true,
+      "hidden": true
+    },
+    {
+      "name": "transactionNumber",
+      "label": "交易编号",
+      "type": "text",
+      "required": true,
+      "readonly": true,
+      "placeholder": "自动生成"
+    },
+    {
+      "name": "order",
+      "label": "关联订单",
+      "type": "relation",
+      "required": false,
+      "relationObject": "Order",
+      "relationField": "orderNumber"
+    },
+    {
+      "name": "customer",
+      "label": "客户",
+      "type": "relation",
+      "required": true,
+      "relationObject": "Customer",
+      "relationField": "name"
+    },
+    {
+      "name": "type",
+      "label": "交易类型",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "label": "收款", "value": "receipt" },
+        { "label": "付款", "value": "payment" },
+        { "label": "退款", "value": "refund" },
+        { "label": "其他", "value": "other" }
+      ]
+    },
+    {
+      "name": "amount",
+      "label": "金额",
+      "type": "number",
+      "required": true,
+      "default": 0,
+      "description": "交易金额（正数）"
+    },
+    {
+      "name": "paymentMethod",
+      "label": "支付方式",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "label": "现金", "value": "cash" },
+        { "label": "银行转账", "value": "bank_transfer" },
+        { "label": "支付宝", "value": "alipay" },
+        { "label": "微信支付", "value": "wechat" },
+        { "label": "信用卡", "value": "credit_card" },
+        { "label": "其他", "value": "other" }
+      ]
+    },
+    {
+      "name": "date",
+      "label": "交易日期",
+      "type": "date",
+      "required": true,
+      "default": "today"
+    },
+    {
+      "name": "status",
+      "label": "状态",
+      "type": "select",
+      "required": true,
+      "default": "pending",
+      "options": [
+        { "label": "待处理", "value": "pending" },
+        { "label": "已完成", "value": "completed" },
+        { "label": "已取消", "value": "cancelled" },
+        { "label": "失败", "value": "failed" }
+      ]
+    },
+    {
+      "name": "notes",
+      "label": "备注",
+      "type": "textarea",
+      "required": false,
+      "placeholder": "请输入交易备注"
+    },
+    {
+      "name": "createdAt",
+      "label": "创建时间",
+      "type": "datetime",
+      "required": true,
+      "readonly": true
+    },
+    {
+      "name": "updatedAt",
+      "label": "更新时间",
+      "type": "datetime",
+      "required": true,
+      "readonly": true
+    }
+  ],
+  "relations": [
+    {
+      "name": "order",
+      "type": "many-to-one",
+      "targetObject": "Order",
+      "foreignKey": "orderId"
+    },
+    {
+      "name": "customer",
+      "type": "many-to-one",
+      "targetObject": "Customer",
+      "foreignKey": "customerId"
+    }
+  ],
+  "permissions": {
+    "view": ["admin", "sales", "manager", "accountant"],
+    "create": ["admin", "accountant"],
+    "edit": ["admin", "accountant"],
+    "delete": ["admin"]
+  },
+  "version": "1.0"
+}

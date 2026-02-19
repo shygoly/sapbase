@@ -1,6 +1,5 @@
 'use client';
 
-import { useTheme } from 'next-themes';
 import React from 'react';
 import { ActiveThemeProvider } from '../themes/active-theme';
 import { RootProviders } from '../root-providers';
