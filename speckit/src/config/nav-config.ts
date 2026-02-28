@@ -49,6 +49,35 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Lab Operations',
+    url: '#',
+    icon: 'product',
+    isActive: false,
+    items: [
+      {
+        title: 'Samples',
+        url: '/dashboard/lab/samples',
+        icon: 'workspace'
+      },
+      {
+        title: 'Methods',
+        url: '/dashboard/lab/methods',
+        icon: 'file'
+      },
+      {
+        title: 'Work Queue',
+        url: '/dashboard/lab/workflows',
+        icon: 'kanban'
+      },
+      {
+        title: 'QA Review',
+        url: '/dashboard/lab/qa',
+        icon: 'check'
+      }
+    ],
+    access: { requireOrg: true }
+  },
+  {
     title: 'Teams',
     url: '/dashboard/workspaces/team',
     icon: 'teams',

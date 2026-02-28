@@ -19,6 +19,11 @@ import { OrganizationsModule } from './organizations/organizations.module'
 import { CacheModule } from './cache/cache.module'
 import { WorkflowsModule } from './workflows/workflows.module'
 import { PluginsModule } from './plugins/plugins.module'
+import { SampleContextModule } from './sample-context/sample-context.module'
+import { MethodContextModule } from './method-context/method-context.module'
+import { LabWorkflowContextModule } from './lab-workflow-context/lab-workflow-context.module'
+import { QaContextModule } from './qa-context/qa-context.module'
+import { PharmanaCompatModule } from './pharmana-compat/pharmana-compat.module'
 import { User } from './users/user.entity'
 import { Organization } from './organizations/organization.entity'
 import { OrganizationMember } from './organizations/organization-member.entity'
@@ -45,6 +50,12 @@ import { WorkflowInstance } from './workflows/workflow-instance.entity'
 import { WorkflowHistory } from './workflows/workflow-history.entity'
 import { WorkflowAutoSuggestionLog } from './workflows/workflow-auto-suggestion-log.entity'
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
+import { LabSample } from './sample-context/lab-sample.entity'
+import { LabMethod } from './method-context/lab-method.entity'
+import { LabMethodVersion } from './method-context/lab-method-version.entity'
+import { LabWorkflowExecution } from './lab-workflow-context/lab-workflow-execution.entity'
+import { LabQaSubmission } from './qa-context/lab-qa-submission.entity'
+import { LabQaReview } from './qa-context/lab-qa-review.entity'
 import { LoggerMiddleware } from './common/middleware/logger.middleware'
 import { EventBusModule } from './common/events/event-bus.module'
 // WebSocketModule - conditionally imported to avoid dependency issues during doc generation
@@ -100,6 +111,12 @@ try {
         WorkflowHistory,
         WorkflowAutoSuggestionLog,
         PluginOrm,
+        LabSample,
+        LabMethod,
+        LabMethodVersion,
+        LabWorkflowExecution,
+        LabQaSubmission,
+        LabQaReview,
       ],
       synchronize: true,
       logging: process.env.NODE_ENV === 'development',
@@ -120,6 +137,11 @@ try {
     OrganizationsModule,
     WorkflowsModule,
     PluginsModule,
+    SampleContextModule,
+    MethodContextModule,
+    LabWorkflowContextModule,
+    QaContextModule,
+    PharmanaCompatModule,
   ],
   controllers: [],
   providers: [],

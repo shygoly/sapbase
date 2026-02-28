@@ -15,6 +15,7 @@ export { aiModulesApi } from './ai-modules.api'
 export { moduleRegistryApi } from './module-registry.api'
 export { pluginsApi } from './plugins.api'
 export { systemApi } from './system.api'
+export { labApi } from './lab.api'
 export { apiClient, httpClient } from './client'
 
 // Export types
