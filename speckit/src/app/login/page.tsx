@@ -4,7 +4,7 @@
 
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/core/store'
 import { useOrganizationStore } from '@/core/store/organization.store'
@@ -31,7 +31,7 @@ const TEST_USERS: TestUser[] = [
   { email: 'accountant@example.com', password: '123456', name: 'Accountant User', role: 'Accountant' },
 ]
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [selectedUser, setSelectedUser] = useState<string>('admin@example.com')
   const [email, setEmail] = useState('admin@example.com')
   const [password, setPassword] = useState('123456')
@@ -283,5 +283,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" />}>
+      <LoginPageContent />
+    </Suspense>
   )
 }

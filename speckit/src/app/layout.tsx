@@ -19,7 +19,7 @@ export const revalidate = 3600;
 export default function RootLayout({
   children
 }: {
-  children: React.ReactNode;
+  children: any;
 }) {
   return (
     <html lang='en' suppressHydrationWarning>

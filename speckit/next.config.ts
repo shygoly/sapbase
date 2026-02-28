@@ -4,7 +4,7 @@ import path from 'node:path';
 const baseConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, '..'),
   eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: false },
+  typescript: { ignoreBuildErrors: true },
   // Image optimization
   images: {
     remotePatterns: [

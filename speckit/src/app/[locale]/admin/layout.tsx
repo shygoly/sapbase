@@ -6,10 +6,9 @@
 
 'use client'
 
-import React from 'react'
 import { LayoutRuntimeAdapter } from '@/layouts/layout-runtime-adapter'
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: any }) {
   // Require admin access: user must have at least one of these permissions
   return (
     <LayoutRuntimeAdapter

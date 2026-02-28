@@ -8,6 +8,16 @@
     "speckit",
     "backend"
   ],
+  "overrides": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@types/react": "18.3.28",
+    "@types/react-dom": "18.3.7"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace speckit\" \"npm run start:dev --workspace backend\"",
     "dev:all": "concurrently -n \"frontend,backend\" -c \"cyan,magenta\" \"npm run dev --workspace speckit\" \"npm run start:dev --workspace backend\"",
