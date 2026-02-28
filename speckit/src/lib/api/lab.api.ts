@@ -40,6 +40,25 @@ export interface LabQaSubmission {
   submittedAt: string
 }
 
+export interface LabReport {
+  id: string
+  title: string
+  status: string
+  format: string
+  language: string
+  createdAt: string
+}
+
+export interface LabAuditLog {
+  id: string
+  eventAt: string
+  actorId?: string | null
+  action: string
+  entityType: string
+  entityId: string
+  message?: string | null
+}
+
 function unwrap<T>(response: { data: T | { data?: T } }): T {
   const body = response.data
   if (body != null && typeof body === 'object' && 'data' in body && (body as { data?: T }).data !== undefined) {
@@ -67,6 +86,51 @@ class LabApi {
   async listQaReviewQueue(): Promise<LabQaSubmission[]> {
     const response = await httpClient.get<any>('/api/qa/review-queue')
     return unwrap(response) ?? []
+  }
+
+  async listReports(): Promise<LabReport[]> {
+    const response = await httpClient.get<any>('/api/reports')
+    return unwrap(response) ?? []
+  }
+
+  async getReport(id: string): Promise<LabReport> {
+    const response = await httpClient.get<any>(`/api/reports/${id}`)
+    return unwrap(response)
+  }
+
+  async generateReport(id: string, payload?: { format?: string; language?: string }): Promise<LabReport> {
+    const response = await httpClient.post<any>(`/api/reports/${id}/generate`, payload ?? {})
+    return unwrap(response)
+  }
+
+  async finalizeReport(id: string): Promise<LabReport> {
+    const response = await httpClient.post<any>(`/api/reports/${id}/finalize`, {})
+    return unwrap(response)
+  }
+
+  async listAuditLogs(filters?: {
+    action?: string
+    entityType?: string
+    entityId?: string
+    from?: string
+    to?: string
+  }): Promise<LabAuditLog[]> {
+    const response = await httpClient.get<any>('/api/audit/logs', { params: filters ?? {} })
+    return unwrap(response) ?? []
+  }
+
+  async exportAuditLogs(filters?: {
+    action?: string
+    entityType?: string
+    entityId?: string
+    from?: string
+    to?: string
+  }): Promise<string> {
+    const response = await httpClient.get('/api/audit/export', {
+      params: filters ?? {},
+      responseType: 'text',
+    })
+    return response.data as string
   }
 }
 

@@ -1,4 +1,4 @@
-# Pharmana -> Sapbase Integration Mapping (Phase 1)
+# Pharmana -> Sapbase Integration Mapping (Phase 1 + Phase 2)
 
 ## Scope
 Phase 1 integrates Pharmana lab core flows into sapbase native contexts:
@@ -7,12 +7,20 @@ Phase 1 integrates Pharmana lab core flows into sapbase native contexts:
 - Workflow Execution
 - QA Review
 
+Phase 2 extends the integration with:
+- Report Generation
+- Immutable Audit Trail
+
 ## Data Mapping
 - `Sample` -> `LabSample`
   - `sampleCode`, `sampleType`, `quantity`, `status`, assignment fields
 - `Method` + `MethodVersion` -> `LabMethod` + `LabMethodVersion`
 - `WorkflowExecution` (lab use case) -> `LabWorkflowExecution`
 - `AnalysisSubmission` + `AnalysisReview` -> `LabQaSubmission` + `LabQaReview`
+- `Report` -> `LabReport`
+  - `title`, `status`, `format`, `language`, generation/finalization metadata
+- `AuditLog` -> `LabAuditLog`
+  - `action`, `entityType`, `entityId`, `details`, append-only digest
 
 All target entities are tenant-scoped by `organizationId`.
 
@@ -32,6 +40,13 @@ All target entities are tenant-scoped by `organizationId`.
 - `POST /api/lab/qa/submissions`
 - `GET /api/lab/qa/review-queue`
 - `POST /api/lab/qa/reviews`
+- `GET/POST /api/lab/reports`
+- `GET /api/lab/reports/:id`
+- `POST /api/lab/reports/:id/generate`
+- `POST /api/lab/reports/:id/finalize`
+- `POST /api/lab/audit/logs`
+- `GET /api/lab/audit/logs`
+- `GET /api/lab/audit/export`
 
 ### Compatibility APIs
 - `GET/POST /api/samples`
@@ -48,6 +63,13 @@ All target entities are tenant-scoped by `organizationId`.
 - `GET /api/qa/review-queue`
 - `POST /api/qa/submissions`
 - `POST /api/qa/reviews`
+- `GET/POST /api/reports`
+- `GET /api/reports/:id`
+- `POST /api/reports/:id/generate`
+- `POST /api/reports/:id/finalize`
+- `POST /api/audit/logs`
+- `GET /api/audit/logs`
+- `GET /api/audit/export`
 
 ## Frontend Integration
 New pages under Speckit dashboard:
@@ -55,5 +77,24 @@ New pages under Speckit dashboard:
 - `/dashboard/lab/methods`
 - `/dashboard/lab/workflows`
 - `/dashboard/lab/qa`
+- `/dashboard/lab/reports`
+- `/dashboard/lab/reports/[id]`
+- `/dashboard/lab/audit`
 
 Navigation section added: `Lab Operations`.
+
+## Migration Notes (Phase 2 Backfill)
+1. Report history backfill:
+- Migrate historical Pharmana report rows into `lab_reports`
+- Preserve source identifiers in `metadata.sourceReportId`
+- Map old status values to `draft/generated/finalized`
+
+2. Audit history backfill:
+- Migrate historical immutable audit records into `lab_audit_logs`
+- Recompute digest per row during import to keep tamper-evident chain
+- Preserve legacy log ID in `details.legacyLogId`
+
+3. Execution strategy:
+- Perform migration per `organizationId` in batches
+- Use idempotent import keys (`organizationId + legacyId`)
+- Validate row counts and random record hashes after each batch

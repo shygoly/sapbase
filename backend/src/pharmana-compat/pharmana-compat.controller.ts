@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Header, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
@@ -18,6 +18,13 @@ import { CreateLabSampleDto } from '../sample-context/dto/create-lab-sample.dto'
 import { UpdateLabSampleDto } from '../sample-context/dto/update-lab-sample.dto'
 import { LabSampleStatus } from '../sample-context/lab-sample.entity'
 import { SampleContextService } from '../sample-context/sample-context.service'
+import { ReportContextService } from '../report-context/report-context.service'
+import { CreateLabReportDto } from '../report-context/dto/create-lab-report.dto'
+import { GenerateLabReportDto } from '../report-context/dto/generate-lab-report.dto'
+import { LabReportStatus } from '../report-context/lab-report.entity'
+import { AuditContextService } from '../audit-context/audit-context.service'
+import { QueryLabAuditLogDto } from '../audit-context/dto/query-lab-audit-log.dto'
+import { CreateLabAuditLogDto } from '../audit-context/dto/create-lab-audit-log.dto'
 
 class CompatAssignMethodDto {
   @IsUUID()
@@ -39,6 +46,12 @@ class CompatWorkQueueQueryDto {
   status?: string
 }
 
+class CompatReportListQueryDto {
+  @IsOptional()
+  @IsEnum(LabReportStatus)
+  status?: LabReportStatus
+}
+
 @ApiTags('Pharmana Compatibility')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -49,6 +62,8 @@ export class PharmanaCompatController {
     private readonly methodService: MethodContextService,
     private readonly workflowService: LabWorkflowContextService,
     private readonly qaService: QaContextService,
+    private readonly reportService: ReportContextService,
+    private readonly auditService: AuditContextService,
   ) {}
 
   // ---------- Sample Management Compatibility ----------
@@ -188,5 +203,70 @@ export class PharmanaCompatController {
     @OrganizationId() organizationId: string,
   ) {
     return this.qaService.review(dto, user.id, organizationId)
+  }
+
+  // ---------- Report Compatibility ----------
+  @Get('reports')
+  listReports(
+    @OrganizationId() organizationId: string,
+    @Query() query: CompatReportListQueryDto,
+  ) {
+    return this.reportService.list(organizationId, query.status)
+  }
+
+  @Post('reports')
+  createReport(@Body() dto: CreateLabReportDto, @OrganizationId() organizationId: string) {
+    return this.reportService.create(dto, organizationId)
+  }
+
+  @Get('reports/:id')
+  getReport(@Param('id') id: string, @OrganizationId() organizationId: string) {
+    return this.reportService.get(id, organizationId)
+  }
+
+  @Post('reports/:id/generate')
+  generateReport(
+    @Param('id') id: string,
+    @Body() dto: GenerateLabReportDto,
+    @CurrentUser() user: { id: string },
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.reportService.generate(id, dto, user.id, organizationId)
+  }
+
+  @Post('reports/:id/finalize')
+  finalizeReport(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string },
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.reportService.finalize(id, user.id, organizationId)
+  }
+
+  // ---------- Audit Compatibility ----------
+  @Post('audit/logs')
+  appendAuditLog(
+    @Body() dto: CreateLabAuditLogDto,
+    @CurrentUser() user: { id: string },
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.auditService.append(dto, user.id, organizationId)
+  }
+
+  @Get('audit/logs')
+  queryAuditLogs(
+    @Query() query: QueryLabAuditLogDto,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.auditService.query(query, organizationId)
+  }
+
+  @Get('audit/export')
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  exportAuditLogs(
+    @Query() query: QueryLabAuditLogDto,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.auditService.exportCsv(query, organizationId)
   }
 }

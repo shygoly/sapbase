@@ -73,6 +73,18 @@ export const navItems: NavItem[] = [
         title: 'QA Review',
         url: '/dashboard/lab/qa',
         icon: 'check'
+      },
+      {
+        title: 'Reports',
+        url: '/dashboard/lab/reports',
+        icon: 'post',
+        access: { requireOrg: true, permission: 'lab:reports:view' }
+      },
+      {
+        title: 'Audit',
+        url: '/dashboard/lab/audit',
+        icon: 'settings',
+        access: { requireOrg: true, permission: 'lab:audit:view' }
       }
     ],
     access: { requireOrg: true }

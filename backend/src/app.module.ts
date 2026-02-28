@@ -24,6 +24,8 @@ import { MethodContextModule } from './method-context/method-context.module'
 import { LabWorkflowContextModule } from './lab-workflow-context/lab-workflow-context.module'
 import { QaContextModule } from './qa-context/qa-context.module'
 import { PharmanaCompatModule } from './pharmana-compat/pharmana-compat.module'
+import { ReportContextModule } from './report-context/report-context.module'
+import { AuditContextModule } from './audit-context/audit-context.module'
 import { User } from './users/user.entity'
 import { Organization } from './organizations/organization.entity'
 import { OrganizationMember } from './organizations/organization-member.entity'
@@ -56,6 +58,8 @@ import { LabMethodVersion } from './method-context/lab-method-version.entity'
 import { LabWorkflowExecution } from './lab-workflow-context/lab-workflow-execution.entity'
 import { LabQaSubmission } from './qa-context/lab-qa-submission.entity'
 import { LabQaReview } from './qa-context/lab-qa-review.entity'
+import { LabReport } from './report-context/lab-report.entity'
+import { LabAuditLog } from './audit-context/lab-audit-log.entity'
 import { LoggerMiddleware } from './common/middleware/logger.middleware'
 import { EventBusModule } from './common/events/event-bus.module'
 // WebSocketModule - conditionally imported to avoid dependency issues during doc generation
@@ -117,6 +121,8 @@ try {
         LabWorkflowExecution,
         LabQaSubmission,
         LabQaReview,
+        LabReport,
+        LabAuditLog,
       ],
       synchronize: true,
       logging: process.env.NODE_ENV === 'development',
@@ -141,6 +147,8 @@ try {
     MethodContextModule,
     LabWorkflowContextModule,
     QaContextModule,
+    ReportContextModule,
+    AuditContextModule,
     PharmanaCompatModule,
   ],
   controllers: [],
