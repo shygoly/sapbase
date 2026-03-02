@@ -1,6 +1,60 @@
-**Language:** English | [繁體中文](docs/zh-TW/README.md)
+# Speckit ERP - Full-Stack ERP System
 
-# Everything Claude Code
+基于 NestJS + Next.js + PostgreSQL 的企业级 ERP 系统，包含完整的用户管理、角色权限、菜单管理等功能。
+
+## 快速开始 / Quick Start
+
+### 1. 克隆项目
+
+```bash
+git clone git@codeup.aliyun.com:619371654d2b371c479a94e5/sapbase.git
+cd sapbase
+```
+
+### 2. 安装依赖
+
+```bash
+npm install
+```
+
+### 3. 数据库设置
+
+```bash
+# 创建数据库
+createdb sapbasic
+
+# 配置后端环境变量
+cd backend
+cp .env.example .env
+# 编辑 .env 文件，配置数据库连接
+
+# 运行种子数据
+npm run seed
+```
+
+详细的数据库设置请参考 [DATABASE_SETUP.md](./DATABASE_SETUP.md)
+
+### 4. 启动开发服务器
+
+```bash
+# 在项目根目录
+npm run dev
+```
+
+这会同时启动：
+- 前端: http://localhost:3000
+- 后端: http://localhost:3001
+- API 文档: http://localhost:3001/api/docs
+
+### 5. 登录系统
+
+打开浏览器访问 http://localhost:3000/login
+
+**默认账号：**
+- 邮箱: `admin@example.com`
+- 密码: `password123`
+
+## 项目结构
 
 [![Stars](https://img.shields.io/github/stars/affaan-m/everything-claude-code?style=flat)](https://github.com/affaan-m/everything-claude-code/stargazers)
 [![Forks](https://img.shields.io/github/forks/affaan-m/everything-claude-code?style=flat)](https://github.com/affaan-m/everything-claude-code/network/members)

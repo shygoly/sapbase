@@ -2,13 +2,24 @@ import { useState, useEffect } from 'react'
 import { UnifiedMenuItem, MenuState } from '@/types/navigation'
 import { adaptBackendMenuToUnified, flattenMenuItems } from '@/lib/menu-adapter'
 import { useUserPermissions } from '@/core/auth/permission-hooks'
-import { useAuthStore } from '@/core/store'
+import { useAuthStore, usePermissionStore } from '@/core/store'
 import { menuApi } from '@/lib/api/menu.api'
 
+const PLUGINS_PATH = '/admin/plugins'
 const WORKFLOW_PATH = '/admin/workflows'
 const BRAND_CONFIG_PATH = '/admin/organization/brand-config'
 
 const FALLBACK_MENU_ITEMS: UnifiedMenuItem[] = [
+  {
+    id: 'admin-plugins',
+    label: '插件管理',
+    path: PLUGINS_PATH,
+    icon: 'settings',
+    order: 7,
+    permissions: ['admin', 'system:manage', 'plugins:read'],
+    visible: true,
+    disabled: false,
+  },
   {
     id: 'admin-workflows',
     label: '工作流',
@@ -46,20 +57,16 @@ function hasSystemManagePermission(userPermissions: string[]): boolean {
   )
 }
 
+/** Only the dedicated "系统管理" / "System Management" group gets fallback items (plugins, workflow, brand). Avoid injecting into "AI管理" etc. */
 function isSystemManagementRoot(root: UnifiedMenuItem): boolean {
-  const children = root.children ?? []
-  const hasAdminChild = children.some((c) => normPath(c.path).includes('/admin'))
-  if (hasAdminChild) return true
-  const label = (root.label ?? '').toLowerCase()
-  return (
-    label.includes('system management') ||
-    label.includes('系统管理') ||
-    label.includes('管理') ||
-    label.includes('admin')
-  )
+  const id = (root.id ?? '').toLowerCase()
+  const label = (root.label ?? '').trim().toLowerCase()
+  if (id === 'admin' || id === 'system-management' || id === 'system_management') return true
+  if (label === '系统管理' || label === 'system management') return true
+  return false
 }
 
-/** Ensure 工作流 and 品牌配置 are present under System Management if user has permission and API didn't return them. */
+/** Inject 插件管理、工作流、品牌配置 when missing, only if user has system manage or plugins permission. */
 function ensureFallbackMenuItems(items: UnifiedMenuItem[], userPermissions: string[]): UnifiedMenuItem[] {
   if (!hasSystemManagePermission(userPermissions)) return items
 
@@ -112,9 +119,24 @@ export function useUnifiedMenu(options: UseUnifiedMenuOptions): MenuState {
   })
 
   const permissions = useUserPermissions()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const permissionsReady = usePermissionStore((s) => s.permissionsReady)
+  const isLoggedIn = useAuthStore((s) => s.isAuthenticated)
+  const menuSourceReady =
+    options.source === 'api' || (options.source === 'static' && options.staticItems != null)
+
+  const canBuildMenu = isLoggedIn && permissionsReady && menuSourceReady
 
   useEffect(() => {
+    if (!canBuildMenu) {
+      setState((prev) => ({
+        ...prev,
+        items: [],
+        loading: true,
+        error: null,
+      }))
+      return
+    }
+
     const loadMenu = async () => {
       try {
         setState((prev) => ({ ...prev, loading: true, error: null }))
@@ -123,12 +145,7 @@ export function useUnifiedMenu(options: UseUnifiedMenuOptions): MenuState {
 
         if (options.source === 'static' && options.staticItems) {
           items = options.staticItems
-        } else if (options.source === 'api') {
-          // Wait for auth so permissions are set; avoid loading with empty permissions
-          if (!isAuthenticated) {
-            setState((prev) => ({ ...prev, items: [], loading: false }))
-            return
-          }
+        } else {
           const menuItems = await menuApi.findAll()
           items = adaptBackendMenuToUnified(menuItems, permissions)
           items = ensureFallbackMenuItems(items, permissions)
@@ -140,7 +157,6 @@ export function useUnifiedMenu(options: UseUnifiedMenuOptions): MenuState {
           loading: false,
         }))
       } catch (error) {
-        // On API error, still show 工作流 and 品牌配置 if user has permission so they can navigate
         let fallbackItems: UnifiedMenuItem[] = []
         if (options.source === 'api' && hasSystemManagePermission(permissions)) {
           fallbackItems = [
@@ -163,7 +179,7 @@ export function useUnifiedMenu(options: UseUnifiedMenuOptions): MenuState {
     }
 
     loadMenu()
-  }, [options.source, options.staticItems, permissions, isAuthenticated])
+  }, [canBuildMenu, options.source, options.staticItems, permissions, isLoggedIn, menuSourceReady, permissionsReady])
 
   return state
 }

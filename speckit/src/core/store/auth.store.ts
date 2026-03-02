@@ -77,6 +77,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true })
     try {
       await authApi.logout()
+      usePermissionStore.getState().clearPermissions()
       set({
         user: null,
         isAuthenticated: false,
@@ -143,6 +144,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         })
       }
     } else {
+      usePermissionStore.getState().setPermissions([])
       set({ isLoading: false })
     }
   },

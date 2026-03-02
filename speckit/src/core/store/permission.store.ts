@@ -9,12 +9,15 @@ import { permissionsApi } from '@/lib/api/permissions.api'
 
 interface PermissionState {
   permissions: string[]
+  /** True after permissions have been set (from login, init, or cleared on logout). Used as menu build gate. */
+  permissionsReady: boolean
   allPermissions: Permission[]
   isLoading: boolean
   error: string | null
 
   // Actions
   setPermissions: (permissions: string[]) => void
+  setPermissionsReady: (ready: boolean) => void
   setAllPermissions: (permissions: Permission[]) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
@@ -28,11 +31,14 @@ interface PermissionState {
 
 export const usePermissionStore = create<PermissionState>((set, get) => ({
   permissions: [],
+  permissionsReady: false,
   allPermissions: [],
   isLoading: false,
   error: null,
 
-  setPermissions: (permissions) => set({ permissions }),
+  setPermissions: (permissions) => set({ permissions, permissionsReady: true }),
+
+  setPermissionsReady: (permissionsReady) => set({ permissionsReady }),
 
   setAllPermissions: (allPermissions) => set({ allPermissions }),
 
@@ -81,6 +87,7 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
   clearPermissions: () => {
     set({
       permissions: [],
+      permissionsReady: true,
       allPermissions: [],
       error: null,
     })

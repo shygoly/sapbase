@@ -120,13 +120,17 @@ export function PluginRuntimeProvider({
 interface PluginComponentRendererProps {
   pluginId: string
   componentName: string
+  /** Shown while the component is loading */
   fallback?: React.ReactNode
+  /** Shown when the component fails to load (e.g. not found); if not set, error message is shown */
+  fallbackOnError?: React.ReactNode
 }
 
 export function PluginComponentRenderer({
   pluginId,
   componentName,
   fallback,
+  fallbackOnError,
 }: PluginComponentRendererProps) {
   const [Component, setComponent] = useState<React.ComponentType | null>(null)
   const [error, setError] = useState<Error | null>(null)
@@ -164,6 +168,9 @@ export function PluginComponentRenderer({
     }
   }
 
+  if (error && fallbackOnError) {
+    return <>{fallbackOnError}</>
+  }
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">

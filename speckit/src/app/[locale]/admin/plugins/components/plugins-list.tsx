@@ -5,6 +5,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { Plugin, PluginStatus, PluginType } from '@/lib/api/plugins.api'
 import {
   Table,
@@ -16,7 +17,8 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, Power, PowerOff, Info } from 'lucide-react'
+import { Trash2, Power, PowerOff, Info, Settings } from 'lucide-react'
+import { useLocale } from '@/hooks/use-locale'
 
 interface PluginsListProps {
   plugins: Plugin[]
@@ -33,6 +35,8 @@ export function PluginsList({
   onUninstall,
   onViewDetails,
 }: PluginsListProps) {
+  const locale = useLocale()
+
   const getStatusColor = (status: PluginStatus) => {
     switch (status) {
       case PluginStatus.ACTIVE:
@@ -78,7 +82,7 @@ export function PluginsList({
           <TableHead>Type</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Description</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+          <TableHead className="text-right">配置 / Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -101,6 +105,11 @@ export function PluginsList({
             </TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" asChild title="插件配置">
+                  <Link href={`/${locale}/admin/plugins/${plugin.id}/config`}>
+                    <Settings className="h-4 w-4" />
+                  </Link>
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
