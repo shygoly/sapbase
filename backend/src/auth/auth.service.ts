@@ -43,11 +43,14 @@ export class AuthService {
       selectedOrgId = organizations[0].id
     }
 
+    const roleName = user.roleName || user.role || 'user'
+    const permissions = user.rolePermissions || []
+
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
-      permissions: user.permissions || [],
+      role: roleName,
+      permissions,
       organizationId: selectedOrgId,
     }
 
@@ -57,8 +60,10 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
-        permissions: user.permissions || [],
+        role: roleName,
+        roleName,
+        roleId: user.roleId,
+        permissions,
       },
       organizations,
       currentOrganizationId: selectedOrgId,
@@ -74,11 +79,14 @@ export class AuthService {
     // Verify user has access to organization
     await this.organizationsService.findOne(organizationId, userId)
 
+    const roleName = user.roleName || user.role || 'user'
+    const permissions = user.rolePermissions || []
+
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
-      permissions: user.permissions || [],
+      role: roleName,
+      permissions,
       organizationId,
     }
 

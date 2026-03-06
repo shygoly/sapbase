@@ -24,6 +24,7 @@ import { Organization } from './organizations/organization.entity'
 import { OrganizationMember } from './organizations/organization-member.entity'
 import { Invitation } from './organizations/invitation.entity'
 import { OrganizationActivity } from './organizations/organization-activity.entity'
+import { BrandConfig } from './organizations/brand-config.entity'
 import { Department } from './departments/department.entity'
 import { Role } from './roles/role.entity'
 import { AuditLog } from './audit-logs/audit-log.entity'
@@ -79,6 +80,7 @@ try {
         OrganizationMember,
         Invitation,
         OrganizationActivity,
+        BrandConfig,
         Department,
         Role,
         AuditLog,

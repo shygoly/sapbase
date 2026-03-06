@@ -19,12 +19,16 @@ export class UserRepository implements IUserRepository {
   }
 
   private mapToDomain(user: any): User {
+    const roleName = user.roleName || user.role || 'user'
+    const permissions = user.rolePermissions || []
+
     return {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
-      permissions: user.permissions || [],
+      role: roleName,
+      roleId: user.roleId,
+      permissions,
       passwordHash: user.passwordHash,
     }
   }

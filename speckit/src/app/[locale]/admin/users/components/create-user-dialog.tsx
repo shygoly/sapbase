@@ -4,12 +4,13 @@
 
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { usersApi, CreateUserDto } from '@/lib/api/users.api'
-import { UserStatus } from '@/lib/api/types'
+import { rolesApi } from '@/lib/api/roles.api'
+import { UserStatus, Role, Department } from '@/lib/api/types'
 import { useNotification } from '@/core/ui/ui-hooks'
 import {
   Dialog,
@@ -26,9 +27,9 @@ import { Loader2 } from 'lucide-react'
 const createUserSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  role: z.string().min(1, 'Role is required'),
-  department: z.string().optional(),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  roleId: z.string().min(1, 'Role is required'),
+  departmentId: z.string().optional(),
   status: z.enum(['active', 'inactive', 'suspended']).optional(),
 })
 
@@ -38,10 +39,13 @@ interface CreateUserDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  departments: Department[]
 }
 
-export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDialogProps) {
+export function CreateUserDialog({ open, onOpenChange, onSuccess, departments }: CreateUserDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [roles, setRoles] = useState<Role[]>([])
+  const [isLoadingRoles, setIsLoadingRoles] = useState(true)
   const notification = useNotification()
   const {
     register,
@@ -52,14 +56,35 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       status: 'active',
+      roleId: '',
+      departmentId: '',
     },
   })
+
+  // Fetch roles when dialog opens
+  useEffect(() => {
+    if (open) {
+      const fetchRoles = async () => {
+        try {
+          const rolesData = await rolesApi.findAll()
+          setRoles(rolesData)
+        } catch (error) {
+          notification.error('Failed to load roles')
+        } finally {
+          setIsLoadingRoles(false)
+        }
+      }
+      fetchRoles()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const onSubmit = async (data: CreateUserFormData) => {
     setIsSubmitting(true)
     try {
       const submitData: CreateUserDto = {
         ...data,
+        departmentId: data.departmentId || undefined,
         status: data.status ? (data.status as UserStatus) : undefined,
       }
       await usersApi.create(submitData)
@@ -67,8 +92,21 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
       reset()
       onOpenChange(false)
       onSuccess()
-    } catch (error) {
-      notification.error('Failed to create user')
+    } catch (error: any) {
+      // Extract error message from backend response
+      let errorMessage = 'Failed to create user'
+      if (error?.response?.data?.message) {
+        const backendMessage = error.response.data.message
+        // Handle array of validation errors
+        if (Array.isArray(backendMessage)) {
+          errorMessage = backendMessage.join(', ')
+        } else {
+          errorMessage = backendMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      notification.error(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -114,7 +152,6 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
             <Input
               id="password"
               type="password"
-              placeholder="••••••"
               {...register('password')}
               disabled={isSubmitting}
             />
@@ -123,30 +160,39 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
 
           {/* Role */}
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="roleId">Role</Label>
             <select
               id="role"
-              {...register('role')}
-              disabled={isSubmitting}
+              {...register('roleId')}
+              disabled={isSubmitting || isLoadingRoles}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select a role</option>
-              <option value="Admin">Admin</option>
-              <option value="Manager">Manager</option>
-              <option value="User">User</option>
+              {roles.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
+                </option>
+              ))}
             </select>
-            {errors.role && <p className="text-sm text-red-500">{errors.role.message}</p>}
+            {errors.roleId && <p className="text-sm text-red-500">{errors.roleId.message}</p>}
           </div>
 
           {/* Department */}
           <div className="space-y-2">
-            <Label htmlFor="department">Department (Optional)</Label>
-            <Input
-              id="department"
-              placeholder="Engineering"
-              {...register('department')}
+            <Label htmlFor="departmentId">Department (Optional)</Label>
+            <select
+              id="departmentId"
+              {...register('departmentId')}
               disabled={isSubmitting}
-            />
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">No department</option>
+              {departments.map((department) => (
+                <option key={department.id} value={department.id}>
+                  {department.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Status */}

@@ -26,6 +26,7 @@ interface DepartmentsListProps {
   pageSize: number
   onPageChange: (page: number) => void
   onDelete: (id: string) => void
+  onEdit: (department: Department) => void
 }
 
 export function DepartmentsList({
@@ -35,6 +36,7 @@ export function DepartmentsList({
   pageSize,
   onPageChange,
   onDelete,
+  onEdit,
 }: DepartmentsListProps) {
   const canDelete = usePermission('departments:delete')
   const canUpdate = usePermission('departments:update')
@@ -89,7 +91,11 @@ export function DepartmentsList({
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {canUpdate && (
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEdit(dept)}
+                        >
                           <Edit2 className="h-4 w-4" />
                         </Button>
                       )}

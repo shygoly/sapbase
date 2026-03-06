@@ -73,7 +73,7 @@ function SidebarContent() {
               <p className="text-sm font-medium text-gray-900">{user.name}</p>
               <p className="text-xs text-gray-500">{user.email}</p>
               <p className="mt-1 inline-block rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
-                {user.role}
+                {user.roleName ?? 'user'}
               </p>
             </div>
           )}

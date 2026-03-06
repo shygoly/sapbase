@@ -1,6 +1,8 @@
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm'
 import { UserStatus } from '@speckit/shared-schemas'
 import { BaseEntity } from '../common/entities/base.entity'
+import { Role } from '../roles/role.entity'
+import { Department } from '../departments/department.entity'
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -13,15 +15,24 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   passwordHash: string
 
-  @Column({ type: 'varchar', length: 255, default: 'user' })
-  role: string
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  department: string
+  @Column({ type: 'uuid', nullable: true })
+  departmentId?: string
 
   @Column({ type: 'varchar', length: 50, default: UserStatus.ACTIVE })
   status: UserStatus
 
-  @Column({ type: 'simple-array', default: '' })
-  permissions: string[]
+  @ManyToOne(() => Role, { nullable: true, eager: true })
+  @JoinColumn({ name: 'roleId' })
+  roleEntity?: Role
+
+  @Column({ type: 'uuid', nullable: true })
+  roleId?: string
+
+  @ManyToOne(() => Department, { nullable: true, eager: true })
+  @JoinColumn({ name: 'departmentId' })
+  departmentEntity?: Department
+
+  role?: string
+  roleName?: string
+  rolePermissions?: string[]
 }

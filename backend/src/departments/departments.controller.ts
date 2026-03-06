@@ -8,7 +8,6 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
-  UseGuards,
   Query,
   DefaultValuePipe,
   ParseIntPipe,
@@ -17,22 +16,18 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { DepartmentsService } from './departments.service'
 import { CreateDepartmentDto } from './dto/create-department.dto'
 import { UpdateDepartmentDto } from './dto/update-department.dto'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { RolesGuard } from '../auth/roles.guard'
-import { Roles } from '../auth/roles.decorator'
+import { Auth } from '../common/decorators/auth.decorator'
 import { ApiResponseDto, PaginatedResponseDto } from '../common'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 
 @ApiTags('Departments')
 @ApiBearerAuth()
 @Controller('departments')
-@UseGuards(JwtAuthGuard)
 export class DepartmentsController {
   constructor(private readonly departmentsService: DepartmentsService) {}
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles('Admin', 'Manager')
+  @Auth('departments:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new department' })
   @ApiResponse({ status: 201, description: 'Department created successfully' })
@@ -42,6 +37,7 @@ export class DepartmentsController {
   }
 
   @Get()
+  @Auth('departments:read')
   @ApiOperation({ summary: 'Get all departments with pagination' })
   @ApiResponse({ status: 200, description: 'Departments retrieved successfully' })
   async findAll(
@@ -60,6 +56,7 @@ export class DepartmentsController {
   }
 
   @Get(':id')
+  @Auth('departments:read')
   @ApiOperation({ summary: 'Get a specific department by ID' })
   @ApiResponse({ status: 200, description: 'Department retrieved successfully' })
   async findOne(@Param('id') id: string, @OrganizationId() organizationId: string) {
@@ -68,8 +65,7 @@ export class DepartmentsController {
   }
 
   @Put(':id')
-  @UseGuards(RolesGuard)
-  @Roles('Admin', 'Manager')
+  @Auth('departments:update')
   @ApiOperation({ summary: 'Update a department' })
   @ApiResponse({ status: 200, description: 'Department updated successfully' })
   async update(
@@ -82,8 +78,7 @@ export class DepartmentsController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
-  @Roles('Admin')
+  @Auth('departments:delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a department' })
   @ApiResponse({ status: 204, description: 'Department deleted successfully' })

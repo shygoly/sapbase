@@ -5,9 +5,12 @@ import { BaseAuditEntity, UserStatus } from './common';
 export interface User extends BaseAuditEntity {
     name: string;
     email: string;
-    role: string;
+    roleId?: string;
+    roleName?: string;
+    rolePermissions?: string[];
     status: UserStatus;
-    department?: string;
+    departmentId?: string;
+    departmentName?: string | null;
     permissions: string[];
 }
 export interface UserEntity extends User {
@@ -17,18 +20,17 @@ export interface CreateUserInput {
     name: string;
     email: string;
     password: string;
-    role?: string;
-    department?: string;
+    roleId?: string;
+    departmentId?: string;
     status?: UserStatus;
 }
 export interface UpdateUserInput {
     name?: string;
     email?: string;
     password?: string;
-    role?: string;
-    department?: string;
+    roleId?: string;
+    departmentId?: string;
     status?: UserStatus;
-    permissions?: string[];
 }
 export interface LoginRequest {
     email: string;

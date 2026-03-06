@@ -8,7 +8,6 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
-  UseGuards,
   Query,
   DefaultValuePipe,
   ParseIntPipe,
@@ -17,9 +16,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { UsersService } from './users.service'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { RolesGuard } from '../auth/roles.guard'
-import { Roles } from '../auth/roles.decorator'
+import { Auth } from '../common/decorators/auth.decorator'
 import { ApiResponseDto, PaginatedResponseDto } from '../common'
 
 @ApiTags('Users')
@@ -29,8 +26,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('Admin', 'Manager')
+  @Auth('users:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
@@ -40,7 +36,7 @@ export class UsersController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @Auth('users:read')
   @ApiOperation({ summary: 'Get all users with pagination' })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
   async findAll(
@@ -59,7 +55,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @Auth('users:read')
   @ApiOperation({ summary: 'Get a specific user by ID' })
   @ApiResponse({ status: 200, description: 'User retrieved successfully' })
   async findOne(@Param('id') id: string) {
@@ -68,8 +64,7 @@ export class UsersController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('Admin', 'Manager')
+  @Auth('users:update')
   @ApiOperation({ summary: 'Update a user' })
   @ApiResponse({ status: 200, description: 'User updated successfully' })
   async update(
@@ -81,8 +76,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('Admin')
+  @Auth('users:delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a user' })
   @ApiResponse({ status: 204, description: 'User deleted successfully' })

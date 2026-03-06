@@ -21,24 +21,26 @@ export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Post()
-  @Auth('admin')
+  @Auth('roles:create')
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createRoleDto: CreateRoleDto, @OrganizationId() organizationId: string): Promise<Role> {
     return this.rolesService.create(createRoleDto, organizationId)
   }
 
   @Get()
+  @Auth('roles:read')
   async findAll(@OrganizationId() organizationId: string): Promise<Role[]> {
     return this.rolesService.findAll(organizationId)
   }
 
   @Get(':id')
+  @Auth('roles:read')
   async findOne(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<Role> {
     return this.rolesService.findOne(id, organizationId)
   }
 
   @Put(':id')
-  @Auth('admin')
+  @Auth('roles:update')
   async update(
     @Param('id') id: string,
     @Body() updateRoleDto: UpdateRoleDto,
@@ -48,7 +50,7 @@ export class RolesController {
   }
 
   @Delete(':id')
-  @Auth('admin')
+  @Auth('roles:delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<void> {
     return this.rolesService.remove(id, organizationId)
