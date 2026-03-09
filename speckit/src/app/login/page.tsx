@@ -85,10 +85,17 @@ export default function LoginPage() {
 
     setIsLoading(true)
     try {
-    const response = await authApi.login({ email, password, organizationId: selectedOrgId || undefined })
-    
+      const response = await authApi.login({ email, password, organizationId: selectedOrgId || undefined })
+
+      // Check if user has no organizations
+      if (!response.organizations || response.organizations.length === 0) {
+        notification.error('Your account is not associated with any organization. Please contact your administrator.')
+        setIsLoading(false)
+        return
+      }
+
       // If user has multiple organizations and none selected, show selector
-      if (response.organizations && response.organizations.length > 1 && !selectedOrgId) {
+      if (response.organizations.length > 1 && !selectedOrgId) {
         setOrganizations(response.organizations)
         setShowOrgSelector(true)
         setIsLoading(false)
@@ -97,13 +104,23 @@ export default function LoginPage() {
 
       applyLoginResponse(response)
       notification.success('Login successful')
-      
+
       // Redirect to returnUrl or default page
       const returnUrl = searchParams?.get('returnUrl') || '/admin/users'
       router.push(returnUrl)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Login failed'
-      notification.error(message)
+    } catch (error: any) {
+      let errorMessage = 'Login failed'
+      if (error?.response?.data?.message) {
+        const backendMessage = error.response.data.message
+        if (Array.isArray(backendMessage)) {
+          errorMessage = backendMessage.join(', ')
+        } else {
+          errorMessage = backendMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      notification.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -117,17 +134,27 @@ export default function LoginPage() {
 
     setIsLoading(true)
     try {
-    const response = await authApi.login({ email, password, organizationId: selectedOrgId })
-    applyLoginResponse(response)
+      const response = await authApi.login({ email, password, organizationId: selectedOrgId })
+      applyLoginResponse(response)
 
       notification.success('Login successful')
-      
+
       // Redirect to returnUrl or default page
       const returnUrl = searchParams?.get('returnUrl') || '/admin/users'
       router.push(returnUrl)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Login failed'
-      notification.error(message)
+    } catch (error: any) {
+      let errorMessage = 'Login failed'
+      if (error?.response?.data?.message) {
+        const backendMessage = error.response.data.message
+        if (Array.isArray(backendMessage)) {
+          errorMessage = backendMessage.join(', ')
+        } else {
+          errorMessage = backendMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      notification.error(errorMessage)
     } finally {
       setIsLoading(false)
     }

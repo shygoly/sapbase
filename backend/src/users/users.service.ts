@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository, ILike } from 'typeorm'
 import * as bcrypt from 'bcrypt'
@@ -8,6 +8,7 @@ import { UpdateUserDto } from './dto/update-user.dto'
 import { BaseCrudHelper, PaginatedResult } from '../common'
 import { Role } from '../roles/role.entity'
 import { Department } from '../departments/department.entity'
+import { OrganizationMember, OrganizationRole } from '../organizations/organization-member.entity'
 
 @Injectable()
 export class UsersService {
@@ -18,9 +19,15 @@ export class UsersService {
     private rolesRepository: Repository<Role>,
     @InjectRepository(Department)
     private departmentsRepository: Repository<Department>,
+    @InjectRepository(OrganizationMember)
+    private organizationMembersRepository: Repository<OrganizationMember>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto, organizationId?: string, createdBy?: string): Promise<User> {
+    if (!organizationId) {
+      throw new BadRequestException('Organization context is required to create a user')
+    }
+
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10)
     let role = await this.resolveRoleAssignment(createUserDto.roleId)
     if (!role) {
@@ -41,6 +48,16 @@ export class UsersService {
       passwordHash: hashedPassword,
     })
     const savedUser = await this.usersRepository.save(user)
+
+    // Add user to organization
+    const organizationMember = this.organizationMembersRepository.create({
+      userId: savedUser.id,
+      organizationId: organizationId,
+      role: OrganizationRole.MEMBER,
+      invitedById: createdBy,
+    })
+    await this.organizationMembersRepository.save(organizationMember)
+
     return (await this.ensureRoleAssociation(savedUser))!
   }
 

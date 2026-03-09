@@ -11,6 +11,7 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  Req,
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { UsersService } from './users.service'
@@ -30,8 +31,10 @@ export class UsersController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
-  async create(@Body() createUserDto: CreateUserDto) {
-    const user = await this.usersService.create(createUserDto)
+  async create(@Body() createUserDto: CreateUserDto, @Req() req: any) {
+    const organizationId = req.organizationId
+    const createdBy = req.user?.sub
+    const user = await this.usersService.create(createUserDto, organizationId, createdBy)
     return ApiResponseDto.created(user, 'User created successfully')
   }
 
