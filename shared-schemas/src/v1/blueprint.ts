@@ -67,6 +67,8 @@ export interface BlueprintIr {
   ir: typeof BLUEPRINT_IR_VERSION
   blueprint: string
   version: string
+  /** 所需 Runtime 的语义化范围（与 manifest.runtime 一致） */
+  runtime: string
   entities: BlueprintIrEntity[]
   events: BlueprintIrEvent[]
   /** 编译时**实际解析到的**依赖版本 */

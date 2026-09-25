@@ -13,6 +13,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { BlueprintService } from './blueprint.service'
 import { PackageError } from './packager'
+import { CompileError } from './compiler'
 
 /**
  * 蓝图包的 HTTP 入口（B2）。
@@ -55,5 +56,24 @@ export class BlueprintController {
   @ApiOperation({ summary: '读取蓝图包的清单' })
   manifest(@Param('id') id: string) {
     return this.blueprints.manifestOf(id)
+  }
+
+  @Post(':id/compile')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '编译蓝图包，产出 IR（文本 + 结构）与依赖解析结果' })
+  async compile(@Param('id') id: string) {
+    try {
+      return await this.blueprints.compile(id)
+    } catch (error) {
+      if (error instanceof CompileError) {
+        // 冲突明细一并返回：调用方要能逐条展示，而不是拿一句"编译失败"
+        throw new BadRequestException({
+          message: error.message,
+          reason: error.reason,
+          conflicts: error.conflicts,
+        })
+      }
+      throw error
+    }
   }
 }

@@ -8,3 +8,4 @@ export * from './role';
 export * from './audit-log';
 export * from './settings';
 export * from './permissions';
+export * from './blueprint';

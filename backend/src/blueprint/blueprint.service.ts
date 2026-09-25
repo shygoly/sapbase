@@ -3,6 +3,9 @@ import { existsSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import type { BlueprintManifest } from '@speckit/shared-schemas'
 import { packBlueprint, readBlueprintMeta, unpackBlueprint } from './packager'
+import { compileBlueprint } from './compiler'
+import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
+import type { BlueprintCompileResult } from '@speckit/shared-schemas'
 
 /**
  * 蓝图包服务（v1 的"注册表"就是**一个目录**）。
@@ -17,6 +20,8 @@ export class BlueprintService {
   private readonly packagesDir =
     process.env.BLUEPRINT_PACKAGES_DIR ??
     resolve(__dirname, '../../../blueprints')
+
+  constructor(private readonly atomicRegistry: AtomicRegistryService) {}
 
   /** 打包目录为 `.erpkg`（不指定 out 时落到包目录，名字由 id + 版本决定）。 */
   packageFrom(
@@ -67,5 +72,14 @@ export class BlueprintService {
 
   packagesDirectory(): string {
     return this.packagesDir
+  }
+
+  /** 编译包内的蓝图：解包 → 编译（依赖闭包走原子注册表）。 */
+  async compile(id: string): Promise<BlueprintCompileResult> {
+    const path = join(this.packagesDir, `${id}.erpkg`)
+    if (!existsSync(path)) {
+      throw new NotFoundException(`蓝图包不存在：${id}`)
+    }
+    return compileBlueprint(unpackBlueprint(path), this.atomicRegistry)
   }
 }

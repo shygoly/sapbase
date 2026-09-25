@@ -104,6 +104,7 @@ describe('validateBlueprintIr', () => {
     ir: 'blueprint-ir/v1',
     blueprint: 'auto-parts-erp',
     version: '2026.1.0',
+    runtime: '>=1.0.0 <2.0.0',
     entities: [{ name: 'SalesOrder', fieldCount: 6, states: ['draft', 'submitted'] }],
     events: [
       {

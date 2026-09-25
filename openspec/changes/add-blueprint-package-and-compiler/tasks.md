@@ -22,6 +22,12 @@
 > 一处如实标注：路径穿越**没有**用 `adm-zip` 造出集成样本（它在写入时会自行清理 `../`），
 > 因此改为对纯函数 `assertSafeEntryName` 做 6 类恶意条目名的表驱动测试 —— 检查仍然必要，
 > 因为来自外部的恶意包不受那层清理保护。
+>
+> **B3 证据（2026-09-25）**：`jest src/blueprint` → **61 passed**（validator 22 + packager 18 + controller 7 + compiler 14）；
+> 全量回归：单元 **184** × 两引擎、e2e **3**、`tsc --noEmit` **0**。
+> 编译器负例覆盖：未覆盖文件被拒 / 形状非法 / 原子依赖不可满足 / 四类冲突（重复定义、悬空引用、流程成环、状态机三种非法）/
+> 实体关系成环**不**报错（防误报的反例）。IR 往返：结构与文本互相导出等价，且文本→结构→文本逐字节一致。
+> 顺带发现：`shared-schemas` 是**构建产物**被后端消费，改了类型必须重建（CI 的 apps job 已先 build shared-schemas）。
 
 1. 每完成一项：勾选 + 附证据（命令 + 结果），不写"应该可以"。
 2. 协议先行：B1 未完成不进 B2。
@@ -56,10 +62,14 @@
 
 ## Phase B3: 编译器
 
-- [ ] `compiler/`：Schema 校验 → 依赖闭包（`AtomicRegistryService.resolve`）→ 冲突检测 → IR
-- [ ] 冲突检测四类（重复定义 / 悬空引用 / 循环依赖 / 状态机合法性），每类一个负例
-- [ ] IR 生成：结构 + 文本；`toText(parseText(x)) === toText(x)` 往返测试
-- [ ] `POST /api/blueprints/compile`（返回 IR + 依赖清单 + 摘要）
+- [x] 补两个**内容 Schema**（B1 只冻了包与 IR）：`blueprint-semantic.schema.json`、`blueprint-flows.schema.json`
+- [x] `compiler.ts`：逐文件 Schema（**未覆盖的文件拒绝，不跳过**）→ 依赖闭包（`AtomicRegistryService.resolve`）→ 冲突检测 → IR（生成后自检）
+- [x] 冲突检测四类：重复定义 / 悬空引用 / **流程成环** / 状态机合法性（初始态唯一、有终态、无不可达、迁移目标已声明），每类都有负例
+- [x] IR 生成：结构 + 文本；`parseIrText(toIrText(ir))` 等价 + 文本↔结构逐字节往返
+- [x] `POST /api/blueprints/:id/compile`（冲突明细逐条返回，不是一句"编译失败"）
+- [x] **自我修正**：初稿的"实体关系图环检测"会大量误报（`Employee.manager` 自引用、`Order.billingCustomer` 回指都合法）。
+      改为只对 flow 步骤图检测，并把"**v1 的 flow 是 DAG**"作为协议约定写进 design.md（回环场景用事件再次触发流程表达）
+- [x] 引用了 v1 未覆盖的规则层 → 明确报为悬空，而不是静默放过
 
 ## Phase B4: 运行时可加载
 

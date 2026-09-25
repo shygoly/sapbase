@@ -5,11 +5,16 @@
   "description": "编译器的结构化输出 / Runtime 的输入。文本形态（见 docs/protocols/blueprint-ir.md）必须与结构形态等价，等价性由往返测试保证。",
   "type": "object",
   "additionalProperties": false,
-  "required": ["ir", "blueprint", "version", "entities", "events", "dependencies"],
+  "required": ["ir", "blueprint", "version", "runtime", "entities", "events", "dependencies"],
   "properties": {
     "ir": { "const": "blueprint-ir/v1" },
     "blueprint": { "type": "string", "minLength": 1 },
     "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "runtime": {
+      "type": "string",
+      "minLength": 1,
+      "description": "所需 Runtime 的语义化范围（与 manifest.runtime 一致；文本形态需要它才能往返）"
+    },
     "entities": {
       "type": "array",
       "items": {
