@@ -53,9 +53,10 @@ menu_items, module_capabilities, module_configurations, module_registry,
 module_relationships, module_statistics, roles, users, workflow_auto_suggestion_logs
 ```
 
-因此 P0 只收敛到**能立刻验证的那一半**：补 `users` 基线（空库建表 / 旧库补列，幂等且只做加法），
-让受影响的既有接口 e2e 真的跑起来；"完整从零重建"（其余 14 张 + 扩展与索引）**明确留给后续变更**，
-并在这里留下清单，避免它再次被当成"应该能重建"。
+因此 P0 分两步做：先补 `users` 基线（空库建表 / 旧库补列，幂等且只做加法）让受影响的既有接口
+e2e 跑起来；再把**"完整从零重建"做完** —— squash 基线（从实体定义生成）+ 重建脚本 + 验证器，
+判据是"TypeORM 的 schema diff 里没有结构差异"，而不是"数出 30 张表"。
+实测还否掉了一条看起来更自然的路（基线 + 回放历史迁移），原因见 `tasks.md` 的 P0 记录。
 
 ## Impact
 

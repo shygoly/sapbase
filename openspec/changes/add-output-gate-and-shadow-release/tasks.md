@@ -26,6 +26,12 @@
 > `jest --config ./test/jest-e2e.json test/blueprint-pipeline.e2e-spec.ts` → **3 passed**
 > （其中「模块注册表的既有查询在真实库上可用」此前是 500）。
 >
+> **P0 补完（2026-09-25，"从零重建"）**：`npx ts-node --transpile-only scripts/verify-from-zero.ts --db=sapbase_rebuild`
+> → 空库建出 **30/30 张实体表** + `migrations` 台账 14 条（基线 1 + 被吸收的历史迁移 13）；
+> TypeORM schema 差异：**结构差异 0**，仅剩 3 处 jsonb 默认值写法差异
+> （`'[]'` vs `'[]'::jsonb`，Postgres 里同一个默认值）→ 退出码 0。
+> 边界与两条路径写进 `backend/src/migrations/README.md`。
+>
 > **P1 证据（2026-09-25）**：`jest src/atomic-registry` → **57 passed**（新增 7：三档位正例、未声明可选、
 > 未知档位被拒、`commutative` 正例、值域倒置被拒、汇总位重名被拒）。
 > 改动过程中踩到一次自己造的坑并已修：编辑 `schemas/atomic-contract.schema.json` 时多删了一个 `}`，
@@ -75,8 +81,13 @@
 
 - [x] 核实并写下事实：仓库迁移集里**没有**任何迁移创建 `users` 表，本地库的 `users` 是早期形态
       （`roleId` / `departmentId`），与 `User` 实体声明的 `role` / `department` / `permissions` 不一致
-- [x] 量化"从零重建"的真实规模：**30 张实体表里 15 张没有任何迁移创建**（清单写进 `proposal.md`）。
-      因此 P0 收敛为可验证的那一半；其余 14 张 + 扩展/索引**明确留给后续变更**
+- [x] 量化"从零重建"的真实规模：**30 张实体表里 15 张没有任何迁移创建**（清单写进 `proposal.md`）
+- [x] **把"从零重建"做完**（初稿曾把它收窄到"留给后续变更"，这里收回）：
+      · `scripts/generate-schema-baseline.ts` 从实体定义生成 squash 基线（`schema-baseline*.ts`，勿手改）
+      · `scripts/rebuild-database.ts` 在空库上一次建成整张 schema，并把基线 + 被吸收的历史迁移写进台账
+      · `scripts/verify-from-zero.ts` 断言"实体与库无结构差异"（不是数表，而是 TypeORM 的 schema diff）
+      · 中途否掉一条路并记下原因：**基线 + 回放历史迁移走不通**（`EnhanceAuditLogTable` 会对基线
+        已建的 `audit_logs` 再 `ADD COLUMN changes`），而历史迁移不许改写 → 改用 squash
 - [x] `1790600000000-AddUsersBaseline`：空库建表 / 旧库补列，**只做加法**（`roleId` / `departmentId` 一律保留，
       删列不可逆）；空库路径还要自己装 `uuid-ossp`（其余迁移都假设它已存在）
 - [x] 定向迁移运行器：`scripts/run-atomic-migration.ts` → `scripts/run-targeted-migration.ts`，
