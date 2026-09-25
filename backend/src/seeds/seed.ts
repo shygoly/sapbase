@@ -1,7 +1,10 @@
 import { DataSource } from 'typeorm'
+import * as bcrypt from 'bcrypt'
 import { User } from '../users/user.entity'
 import { Role } from '../roles/role.entity'
 import { Department } from '../departments/department.entity'
+import { MenuItem } from '../menu/menu.entity'
+import { Permission } from '../permissions/permission.entity'
 import { UserStatus, EntityStatus } from '@speckit/shared-schemas'
 
 const AppDataSource = new DataSource({
@@ -11,7 +14,7 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'mac',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'sapbasic',
-  entities: [User, Department, Role],
+  entities: [User, Department, Role, MenuItem, Permission],
   synchronize: false,
   logging: true,
 })
@@ -25,6 +28,8 @@ async function seed() {
     await AppDataSource.query('TRUNCATE TABLE users CASCADE')
     await AppDataSource.query('TRUNCATE TABLE departments CASCADE')
     await AppDataSource.query('TRUNCATE TABLE roles CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE menu_items CASCADE')
+    await AppDataSource.query('TRUNCATE TABLE permissions CASCADE')
     console.log('Cleared existing data')
 
     // Create Roles
@@ -175,12 +180,134 @@ async function seed() {
     ])
     console.log(`Created ${additionalUsers.length} additional users`)
 
+    // Hash password for admin user
+    const hashedPassword = await bcrypt.hash('password123', 10)
+    
+    // Update admin user with hashed password
+    const adminUser = await userRepository.findOne({ where: { email: 'admin@example.com' } })
+    if (adminUser) {
+      await userRepository.update(adminUser.id, { password: hashedPassword })
+      console.log('Updated admin user password')
+    }
+
+    // Create Permissions
+    const permissionRepository = AppDataSource.getRepository(Permission)
+    const permissions = await permissionRepository.save([
+      { name: 'users:read', description: 'View users', category: 'users', status: EntityStatus.ACTIVE },
+      { name: 'users:create', description: 'Create users', category: 'users', status: EntityStatus.ACTIVE },
+      { name: 'users:update', description: 'Update users', category: 'users', status: EntityStatus.ACTIVE },
+      { name: 'users:delete', description: 'Delete users', category: 'users', status: EntityStatus.ACTIVE },
+      { name: 'roles:read', description: 'View roles', category: 'roles', status: EntityStatus.ACTIVE },
+      { name: 'roles:create', description: 'Create roles', category: 'roles', status: EntityStatus.ACTIVE },
+      { name: 'roles:update', description: 'Update roles', category: 'roles', status: EntityStatus.ACTIVE },
+      { name: 'roles:delete', description: 'Delete roles', category: 'roles', status: EntityStatus.ACTIVE },
+      { name: 'departments:read', description: 'View departments', category: 'departments', status: EntityStatus.ACTIVE },
+      { name: 'departments:create', description: 'Create departments', category: 'departments', status: EntityStatus.ACTIVE },
+      { name: 'departments:update', description: 'Update departments', category: 'departments', status: EntityStatus.ACTIVE },
+      { name: 'departments:delete', description: 'Delete departments', category: 'departments', status: EntityStatus.ACTIVE },
+      { name: 'menu:read', description: 'View menu', category: 'menu', status: EntityStatus.ACTIVE },
+      { name: 'menu:create', description: 'Create menu', category: 'menu', status: EntityStatus.ACTIVE },
+      { name: 'menu:update', description: 'Update menu', category: 'menu', status: EntityStatus.ACTIVE },
+      { name: 'menu:delete', description: 'Delete menu', category: 'menu', status: EntityStatus.ACTIVE },
+      { name: 'dashboard:read', description: 'View dashboard', category: 'dashboard', status: EntityStatus.ACTIVE },
+      { name: 'settings:read', description: 'View settings', category: 'settings', status: EntityStatus.ACTIVE },
+      { name: 'settings:update', description: 'Update settings', category: 'settings', status: EntityStatus.ACTIVE },
+      { name: 'audit:read', description: 'View audit logs', category: 'audit', status: EntityStatus.ACTIVE },
+    ])
+    console.log(`Created ${permissions.length} permissions`)
+
+    // Create Menu Items
+    const menuItemRepository = AppDataSource.getRepository(MenuItem)
+    
+    const dashboardItem = await menuItemRepository.save({
+      label: 'Dashboard',
+      path: '/admin/dashboard',
+      icon: 'dashboard',
+      order: 1,
+      visible: true,
+      permissions: ['dashboard:read'],
+    })
+
+    const systemManagement = await menuItemRepository.save({
+      label: 'System Management',
+      icon: 'settings',
+      order: 2,
+      visible: true,
+      permissions: ['users:read', 'roles:read', 'departments:read'],
+    })
+
+    const systemChildren = await menuItemRepository.save([
+      {
+        label: 'User Management',
+        path: '/admin/users',
+        icon: 'users',
+        order: 1,
+        visible: true,
+        permissions: ['users:read'],
+        parent: systemManagement,
+      },
+      {
+        label: 'Role Management',
+        path: '/admin/roles',
+        icon: 'shield',
+        order: 2,
+        visible: true,
+        permissions: ['roles:read'],
+        parent: systemManagement,
+      },
+      {
+        label: 'Department Management',
+        path: '/admin/departments',
+        icon: 'building',
+        order: 3,
+        visible: true,
+        permissions: ['departments:read'],
+        parent: systemManagement,
+      },
+      {
+        label: 'Menu Management',
+        path: '/admin/menu',
+        icon: 'menu',
+        order: 4,
+        visible: true,
+        permissions: ['menu:read'],
+        parent: systemManagement,
+      },
+      {
+        label: 'Settings',
+        path: '/admin/settings',
+        icon: 'cog',
+        order: 5,
+        visible: true,
+        permissions: ['settings:read'],
+        parent: systemManagement,
+      },
+      {
+        label: 'Audit Logs',
+        path: '/admin/audit-logs',
+        icon: 'history',
+        order: 6,
+        visible: true,
+        permissions: ['audit:read'],
+        parent: systemManagement,
+      },
+    ])
+
+    const menuItems = [dashboardItem, systemManagement, ...systemChildren]
+    console.log(`Created ${menuItems.length} menu items`)
+
     console.log('✅ Seed data successfully created!')
     console.log(`
     Summary:
     - Roles: ${roles.length}
     - Departments: ${departments.length}
     - Users: ${managers.length + additionalUsers.length}
+    - Permissions: ${permissions.length}
+    - Menu Items: ${menuItems.length}
+    
+    Login Credentials:
+    - Email: admin@example.com
+    - Password: password123
     `)
   } catch (error) {
     console.error('❌ Error seeding database:', error)

@@ -1,0 +1,6 @@
+# 入库产物（.wasm / manifest.json）由准入 CLI 生成并登记，显式放行；
+# 其余（临时构建目录、.wat 等）不入库。
+*
+!*.wasm
+!manifest.json
+!.gitignore

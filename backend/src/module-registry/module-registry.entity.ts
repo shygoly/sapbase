@@ -35,6 +35,14 @@ export class ModuleRegistry extends TenantAwareEntity {
   @Column({ type: 'varchar', length: 50, default: ModuleType.CRUD })
   moduleType: ModuleType
 
+  /**
+   * 依赖的原子：形如 `available-inventory@^1.0.0`（原子类型 + 语义化范围）。
+   * 模块发布（status = active）时会逐个解析：解析不到可执行实现即拒绝发布
+   * （元语不变量 4：不静默降级到"没有这个能力也能跑"）。
+   */
+  @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
+  dependsOnAtomics: string[]
+
   @ManyToOne(() => AIModel, { nullable: true })
   aiModel: AIModel
 

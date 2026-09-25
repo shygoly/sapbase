@@ -1,6 +1,83 @@
-**Language:** English | [繁體中文](docs/zh-TW/README.md)
+# Speckit ERP - Full-Stack ERP System
 
-# Everything Claude Code
+基于 NestJS + Next.js + PostgreSQL 的企业级 ERP 系统，包含完整的用户管理、角色权限、菜单管理等功能。
+
+## 快速开始 / Quick Start
+
+### 1. 克隆项目
+
+```bash
+git clone git@codeup.aliyun.com:619371654d2b371c479a94e5/sapbase.git
+cd sapbase
+```
+
+### 2. 安装依赖
+
+```bash
+npm install
+```
+
+### 3. 数据库设置
+
+```bash
+# 创建数据库
+createdb sapbasic
+
+# 配置后端环境变量
+cd backend
+cp .env.example .env
+# 编辑 .env 文件，配置数据库连接
+
+# 运行种子数据
+npm run seed
+```
+
+详细的数据库设置请参考 [DATABASE_SETUP.md](./DATABASE_SETUP.md)
+
+### 4. 启动开发服务器
+
+```bash
+# 在项目根目录
+npm run dev
+```
+
+这会同时启动：
+- 前端: http://localhost:3000
+- 后端: http://localhost:3001
+- API 文档: http://localhost:3001/api/docs
+
+### 5. 登录系统
+
+打开浏览器访问 http://localhost:3000/login
+
+**默认账号：**
+- 邮箱: `admin@example.com`
+- 密码: `password123`
+
+## 文档地图 / Documentation Map
+
+先读这两份**元上下文**，其余文档都是它们的展开：
+
+- [docs/META_LANGUAGE.md](./docs/META_LANGUAGE.md) —— **项目元语**：元模型 `Ω`、五个核心协议、
+  执行原语（原子契约 / ABI / 准入闸）、不变量、术语表与文档真源
+- [openspec/project.md](./openspec/project.md) —— **项目上下文**：技术栈、约定、领域边界与硬性约束
+
+按主题查真源（避免读到过期内容）：
+
+| 我想了解 | 看这里 |
+| --- | --- |
+| 平台总体设计 | [docs/ERP_Space_Platform_设计方案_v3.md](./docs/ERP_Space_Platform_设计方案_v3.md) |
+| 当前技术栈 vs 目标栈的差距 | [docs/TECH_STACK_GAP.md](./docs/TECH_STACK_GAP.md) |
+| 前端依赖的真实版本 | [docs/TECH_STACK_v2.md](./docs/TECH_STACK_v2.md) |
+| 依赖安装与包管理器约定 | [docs/PACKAGE_MANAGER.md](./docs/PACKAGE_MANAGER.md) |
+| Wasm 原子模块与准入门禁 | [wasm-modules/README.md](./wasm-modules/README.md) |
+| 正在进行的变更提案 | [openspec/changes/](./openspec/changes/) |
+
+> ⚠️ 本文件的 `## 项目结构` 以下部分（含 Stars 徽章、"The Guides"、"Key Concepts" 等）
+> 是上游 `everything-claude-code` 模板 README 的原文，与本项目无关，尚未清理。
+> 同理，[`speckit/README.md`](./speckit/README.md) 保留了上游 starter 模板原文。
+
+## 项目结构
 
 [![Stars](https://img.shields.io/github/stars/affaan-m/everything-claude-code?style=flat)](https://github.com/affaan-m/everything-claude-code/stargazers)
 [![Forks](https://img.shields.io/github/forks/affaan-m/everything-claude-code?style=flat)](https://github.com/affaan-m/everything-claude-code/network/members)

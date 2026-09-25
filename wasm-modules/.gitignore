@@ -1,0 +1,9 @@
+node_modules/
+dist/
+
+# 提交形状的源码目录里的构建缓存不入库（复现构建必须从零开始）
+modules/*/target/
+modules/*/.cargo/
+
+# 临时构建目录
+*.tmp

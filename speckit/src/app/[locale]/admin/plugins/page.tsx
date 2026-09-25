@@ -9,7 +9,9 @@ import { pluginsApi, Plugin } from '@/lib/api/plugins.api'
 import { useNotification } from '@/core/ui/ui-hooks'
 import { PermissionGuard } from '@/core/auth/permission-guard'
 import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { Plus, BookOpen } from 'lucide-react'
+import Link from 'next/link'
+import { useLocale } from '@/hooks/use-locale'
 import { PluginsList } from './components/plugins-list'
 import { InstallPluginDialog } from './components/install-plugin-dialog'
 import { RegistryBrowser } from './components/registry-browser'
@@ -34,6 +36,7 @@ const PluginsCollectionModel: CollectionModel = {
 }
 
 export default function PluginsPage() {
+  const locale = useLocale()
   const [plugins, setPlugins] = useState<Plugin[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showInstallDialog, setShowInstallDialog] = useState(false)
@@ -118,14 +121,22 @@ export default function PluginsPage() {
     notification.success('Plugin installed successfully')
   }
 
-  // Page header action button
+  // Page header action: docs link + install button
   const pageHeaderAction = (
-    <PermissionGuard permission="plugins:create">
-      <Button onClick={() => setShowInstallDialog(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        Install Plugin
-      </Button>
-    </PermissionGuard>
+    <div className="flex items-center gap-2">
+      <Link href={`/${locale}/docs/plugin`}>
+        <Button variant="outline" size="default">
+          <BookOpen className="mr-2 h-4 w-4" />
+          插件配置说明
+        </Button>
+      </Link>
+      <PermissionGuard permission="plugins:create">
+        <Button onClick={() => setShowInstallDialog(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Install Plugin
+        </Button>
+      </PermissionGuard>
+    </div>
   )
 
   return (

@@ -17,7 +17,12 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "baseUrl": "./",
-    "paths": { "@/*": ["src/*"] }
+    "paths": {
+      "@/*": ["src/*"],
+      // workspace 链接尚未安装（需 npm ci）时的类型解析回退；
+      // 运行时由 backend/jest.config.js 的 moduleNameMapper 对应。
+      "@speckit/wasm-modules": ["../wasm-modules/dist/index"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]

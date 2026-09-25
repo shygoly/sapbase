@@ -1,0 +1,40 @@
+{
+  "generatedBy": "wasm-modules/scripts/admit-cli.mjs",
+  "modules": [
+    {
+      "atomicType": "available-inventory",
+      "file": "available-inventory-54c7674e402c.wasm",
+      "tier": "A",
+      "abiVersion": 1,
+      "sha256": "54c7674e402c268b7b3bf29cd2fb496557c836c7e82c95684db12147d13d8736",
+      "sizeBytes": 265,
+      "compiler": {
+        "name": "rust",
+        "version": "1.95.0"
+      },
+      "language": "rust",
+      "reproducibleBuildRef": "repro:rust:1.95.0:54c7674e402c268b7b3bf29cd2fb496557c836c7e82c95684db12147d13d8736",
+      "staticGate": {
+        "byteLength": 265,
+        "memoryPages": {
+          "min": 2,
+          "max": 1024
+        },
+        "exports": [
+          "abi_version",
+          "run",
+          "__data_end",
+          "__heap_base"
+        ],
+        "abiVersionExportKind": "function",
+        "checks": [
+          "byteLength<=2097152",
+          "no-start-section",
+          "features:no-tag/no-gc/no-table/no-own-memory",
+          "import=env.memory(min=2,max=1024)",
+          "exports=run(func)+abi_version(func|global)[+memory]"
+        ]
+      }
+    }
+  ]
+}

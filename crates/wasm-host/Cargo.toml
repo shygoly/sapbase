@@ -1,0 +1,24 @@
+[package]
+name = "wasm-host"
+version = "0.1.0"
+edition = "2021"
+description = "原子执行引擎宿主（Wasmtime）：行分隔 JSON over stdio，给 sapbase 后端提供 fuel/epoch 约束的零能力沙箱"
+
+[[bin]]
+name = "wasm-host"
+path = "src/main.rs"
+
+[dependencies]
+# 版本与工具链强相关：49.x 要求 rustc 1.96，而本仓库锁定 1.95.0
+# （与 wasm-modules 的模块产出同一工具链，便于宿主/模块同期验证）。
+wasmtime = "48.0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.23"
+anyhow = "1"
+
+[profile.release]
+opt-level = 2
+lto = "thin"
+codegen-units = 1
+strip = true

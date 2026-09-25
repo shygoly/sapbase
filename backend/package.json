@@ -54,6 +54,7 @@
     "@nestjs/swagger": "^7.1.16",
     "@nestjs/typeorm": "^10.0.0",
     "@speckit/shared-schemas": "*",
+    "@speckit/wasm-modules": "*",
     "@types/adm-zip": "^0.5.7",
     "@types/bcrypt": "^6.0.0",
     "@types/jsonschema": "^0.0.5",

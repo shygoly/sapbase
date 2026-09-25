@@ -1,146 +1,160 @@
 name: CI
 
+# 包管理器约定：本仓库统一使用 npm（唯一锁文件 = 根目录 package-lock.json）。
+# 不再跑 npm/pnpm/yarn/bun 四包管理器 × 三平台矩阵 —— 那条矩阵来自上游模板，
+# 它验证的是模板资产而非本仓库产品代码，却让 CI 结果随包管理器漂移。
+# 详见 docs/PACKAGE_MANAGER.md。
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
-# Prevent duplicate runs
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Minimal permissions
 permissions:
   contents: read
 
 jobs:
-  test:
-    name: Test (${{ matrix.os }}, Node ${{ matrix.node }}, ${{ matrix.pm }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node: ['18.x', '20.x', '22.x']
-        pm: [npm, pnpm, yarn, bun]
-        exclude:
-          # Bun has limited Windows support
-          - os: windows-latest
-            pm: bun
+  wasm-modules:
+    name: Wasm Atomic Modules
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: '22.x'
 
-      # Package manager setup
-      - name: Setup pnpm
-        if: matrix.pm == 'pnpm'
-        uses: pnpm/action-setup@v4
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Rust toolchain (pinned by rust-toolchain.toml)
+        uses: dtolnay/rust-toolchain@stable
         with:
-          version: latest
+          toolchain: 1.95.0
+          targets: wasm32-unknown-unknown
 
-      - name: Setup Bun
-        if: matrix.pm == 'bun'
-        uses: oven-sh/setup-bun@v2
+      # 编译准入判定逻辑（tsc → dist/），scripts 从这里 require
+      - name: Build admission logic
+        run: npm run wasm:build
 
-      # Cache configuration
-      - name: Get npm cache directory
-        if: matrix.pm == 'npm'
-        id: npm-cache-dir
-        shell: bash
-        run: echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
+      # 闸 0 源码预检 + 闸 1 静态白名单拒绝集 + 闸 2 双构建器复现 + ABI 往返
+      # 用 host 隔离模式：CI 里没有 Docker，且这是"本机自证"路径（不静默回退）
+      - name: Test gates and ABI
+        env:
+          WASM_BUILD_ISOLATION: host
+        run: npm run wasm:test
 
-      - name: Cache npm
-        if: matrix.pm == 'npm'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ matrix.node }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ matrix.node }}-npm-
+      # 入库产物字节 = 清单哈希 = 源码重建哈希
+      - name: Verify reproducible build
+        env:
+          WASM_BUILD_ISOLATION: host
+        run: npm run wasm:reproducible -- modules/available-inventory-rust
 
-      - name: Get pnpm store directory
-        if: matrix.pm == 'pnpm'
-        id: pnpm-cache-dir
-        shell: bash
-        run: echo "dir=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Cache pnpm
-        if: matrix.pm == 'pnpm'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ matrix.node }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ matrix.node }}-pnpm-
-
-      - name: Get yarn cache directory
-        if: matrix.pm == 'yarn'
-        id: yarn-cache-dir
-        shell: bash
+      # 产物与清单的变更必须进版本控制，否则运行时校验会失败
+      - name: Ensure build artifacts are committed
         run: |
-          # Try Yarn Berry first, fall back to Yarn v1
-          if yarn config get cacheFolder >/dev/null 2>&1; then
-            echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
-          else
-            echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+          if [ -n "$(git status --porcelain wasm-modules/build)" ]; then
+            echo "::error::wasm-modules/build 有未提交的改动 —— 请提交更新后的产物与清单"
+            git status --porcelain wasm-modules/build
+            exit 1
           fi
 
-      - name: Cache yarn
-        if: matrix.pm == 'yarn'
-        uses: actions/cache@v4
+  wasm-host:
+    name: Wasm Host Engine (Rust sidecar)
+    # 执行引擎二进制必须与 backend 一起可构建：默认引擎已是 wasmtime，
+    # 缺二进制时原子接口会（按设计）显式失败而不是回退。
+    # linux/arm64 走 cross-rs（在 ubuntu runner 上用容器交叉编译）；
+    # 该行在本机（macOS）无法验证 —— cross 需要 Linux 宿主或容器内 Rust，
+    # 已实测：cross-rs 镜像不自带 Rust、cross CLI 在 macOS 会回落到宿主 cargo。
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            cross: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain (pinned by rust-toolchain.toml)
+        uses: dtolnay/rust-toolchain@stable
         with:
-          path: ${{ steps.yarn-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ matrix.node }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ matrix.node }}-yarn-
+          toolchain: 1.95.0
+          targets: ${{ matrix.target }}
 
-      - name: Cache bun
-        if: matrix.pm == 'bun'
-        uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+      # wasmtime 48 的 MSRV 是 1.95，与 wasm-modules 的工具链一致（升级需同时改两处）
+      - name: Test engine
+        if: ${{ !matrix.cross }}
+        run: cargo test --release --locked --target ${{ matrix.target }} --manifest-path crates/wasm-host/Cargo.toml
 
-      # Install dependencies
-      - name: Install dependencies
-        shell: bash
-        run: |
-          case "${{ matrix.pm }}" in
-            npm) npm ci ;;
-            pnpm) pnpm install ;;
-            # --ignore-engines required for Node 18 compat with some devDependencies (e.g., markdownlint-cli)
-            yarn) yarn install --ignore-engines ;;
-            bun) bun install ;;
-            *) echo "Unsupported package manager: ${{ matrix.pm }}" && exit 1 ;;
-          esac
+      - name: Build engine binary
+        if: ${{ !matrix.cross }}
+        run: cargo build --release --locked --target ${{ matrix.target }} --manifest-path crates/wasm-host/Cargo.toml
 
-      # Run tests
-      - name: Run tests
-        run: node tests/run-all.js
-        env:
-          CLAUDE_CODE_PACKAGE_MANAGER: ${{ matrix.pm }}
+      # linux/arm64：容器内交叉编译（runner 有 Docker）
+      - name: Install cross
+        if: ${{ matrix.cross }}
+        uses: taiki-e/install-action@cross
 
-      # Upload test artifacts on failure
-      - name: Upload test artifacts
-        if: failure()
+      - name: Build engine binary (cross)
+        if: ${{ matrix.cross }}
+        run: cross build --release --locked --target ${{ matrix.target }} --manifest-path crates/wasm-host/Cargo.toml
+
+      - name: Upload engine binary
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.os }}-node${{ matrix.node }}-${{ matrix.pm }}
-          path: |
-            tests/
-            !tests/node_modules/
+          name: wasm-host-${{ matrix.target }}
+          path: crates/wasm-host/target/${{ matrix.target }}/release/wasm-host
+          if-no-files-found: error
+
+  apps:
+    name: Apps (backend / speckit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # 首次把产品代码接入 CI：允许失败以便先暴露问题、不阻塞合并。
+    # 稳定后应改为 false。
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared schemas
+        run: npm run build --workspace shared-schemas
+
+      - name: Type-check backend
+        run: npm run build --workspace backend
+
+      - name: Test backend
+        run: npm run test --workspace backend
+
+      - name: Build frontend
+        run: npm run build --workspace speckit
 
   validate:
     name: Validate Components
@@ -154,27 +168,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
 
       - name: Validate agents
         run: node scripts/ci/validate-agents.js
-        continue-on-error: false
 
       - name: Validate hooks
         run: node scripts/ci/validate-hooks.js
-        continue-on-error: false
 
       - name: Validate commands
         run: node scripts/ci/validate-commands.js
-        continue-on-error: false
 
       - name: Validate skills
         run: node scripts/ci/validate-skills.js
-        continue-on-error: false
 
       - name: Validate rules
         run: node scripts/ci/validate-rules.js
-        continue-on-error: false
 
   security:
     name: Security Scan
@@ -188,14 +197,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
 
       - name: Run npm audit
         run: npm audit --audit-level=high
-        continue-on-error: true  # Allows PR to proceed, but marks job as failed if vulnerabilities found
+        continue-on-error: true  # 允许合并，但把高危依赖标出来
 
-  lint:
-    name: Lint
+  docs:
+    name: Markdown Lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -206,13 +215,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run ESLint
-        run: npx eslint scripts/**/*.js tests/**/*.js
-
+      # 只 lint 本仓库自己维护的文档。
+      # 未纳入：docs/zh-CN/**、docs/zh-TW/** 与根目录的历史文档 —— 它们是上游模板
+      # 或早期文档，存在既存的 MD034 / MD056 问题，需单独清理后再纳入（技术债）。
+      # 同样未纳入：openspec/changes/** 的历史变更文档（既存 MD009 / MD024 / MD058 问题）。
+      # 新增文档请自行确保通过；清理完成后可把范围扩到这两个目录。
       - name: Run markdownlint
-        run: npx markdownlint "agents/**/*.md" "skills/**/*.md" "commands/**/*.md" "rules/**/*.md"
+        run: |
+          npx markdownlint-cli "docs/*.md" \
+            "wasm-modules/README.md" \
+            "openspec/project.md" \
+            "openspec/AGENTS.md" \
+            "AGENTS.md" \
+            "speckit/AGENTS.md" \
+            "backend/AGENTS.md"

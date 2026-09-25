@@ -160,11 +160,16 @@ Clone the repo:
 git clone https://github.com/Kiranism/next-shadcn-dashboard-starter.git
 ```
 
-- `bun install`
+- `npm install`（在**仓库根目录**执行；npm workspaces 会一并安装 `speckit` / `backend` / `shared-schemas` / `wasm-modules`）
 - Create a `.env.local` file by copying the example environment file:
   `cp env.example.txt .env.local`
 - Add the required environment variables to the `.env.local` file.
-- `bun run dev`
+- `npm run dev`（根目录，前后端一起起；只起前端用 `npm run dev:frontend`）
+
+> [!IMPORTANT]
+> 本仓库统一使用 **npm**，不使用 bun / pnpm / yarn（见根目录 `docs/PACKAGE_MANAGER.md`）。
+> 另外，本篇 Getting Started 以下部分仍保留上游 starter 模板的原文（含 Next.js 16 / React 19 /
+> Clerk 等描述），与本仓库实际技术栈不一致 —— 实际版本以根目录 `docs/TECH_STACK_v2.md` 为准。
 
 ##### Environment Configuration Setup
 
