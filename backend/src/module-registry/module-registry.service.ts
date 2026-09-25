@@ -94,12 +94,15 @@ export class ModuleRegistryService {
     /** 舍弃的实体候选及原因（不静默丢弃）。 */
     dropped: Array<{ name: string; reason: string }>
   }> {
-    // 只用窄查询取需要的东西（模块行 + capabilities）。
+    // 只用窄查询取需要的东西（模块行 + capabilities），不用 `findOne()` 的 8 个关系：
+    // 导出一份骨架不需要 aiModel / createdBy / statistics / configurations，
+    // 多 JOIN 一次就是多一份故障面与开销。
     //
-    // 不用 `findOne()` 是因为它会连同 `createdBy` 一起 JOIN `users`，而本地库的 `users`
-    // 是早期形态（`roleId` / `departmentId`），`User` 实体声明的 `role` / `department` /
-    // `permissions` 在库里不存在，于是那条查询直接报 `column ... role does not exist`。
-    // 根因是**仓库迁移集没有 `users` 基线**（没有任何迁移创建该表），属既有缺口，另立变更修。
+    // 这条窄查询曾经是**必要的绕过**：`findOne()` 会 JOIN `createdBy`，而早期库的 `users`
+    // 表缺 `User` 实体声明的 `role` / `department` / `permissions` 列，查询直接报
+    // `column ... role does not exist`。该缺口已由 `1790600000000-AddUsersBaseline` 补上
+    // （空库建表 / 旧库补列），既有接口的回归见 `test/blueprint-pipeline.e2e-spec.ts`。
+    // 缺口修完后仍保留窄查询：这是**选择**，不再是绕过。
     // 导出这条路径不该被它拖住 —— 但也不该假装它不存在，故在此写明。
     const module = await this.moduleRegistryRepository.findOne({
       where: { id: moduleId, organizationId },

@@ -34,8 +34,10 @@
 - **MODIFIED**: `schemas/atomic-contract.schema.json` —— 输出契约补齐可判据的声明：`commutative`（声明后置换不变性可判）
   与输出行可交换性 `commutative`；逐列值域**复用既有的 `minimum` / `maximum`**（不另造 `range` 这种同义词）
 - **ADDED**: `backend/src/atomic-runtime/output-gate.ts` —— 闸 3 实现：四条判决 + 一条信号，全部**确定性**
-- **ADDED**: `backend/src/atomic-runtime/shadow-release.ts` —— 闸 4：`Tested → Shadow → Canary → Active` 的编排与证据门，
-  缺证据即拒；`bindImplementation` 不得绕过它
+- **ADDED**: `backend/src/atomic-registry/shadow-release.ts` —— 闸 4：`Tested → Shadow → Canary → Active`
+  的证据门，缺证据即拒；`bindImplementation` / `promoteImplementation` 都不得绕过它。
+  **实现位置与初稿不同**（初稿写在 `atomic-runtime/`）：状态机属于注册表，
+  而运行时模块已经依赖注册表模块 —— 放在 runtime 侧会形成 Nest 的模块环。
 - **ADDED**: 一个**故意要泄漏**的样例模块（`wasm-modules/modules/leaky-*`）：把常量塞进输出高位 + 让输出依赖行序，
   用来证明闸 3 真的挡得住（而不是"看起来挡得住"）
 - **MODIFIED**: 原子执行链：闸 3 在执行后运行；命中判决则拒绝返回结果并审计留痕（**不返回**、不是"警告后放行"）

@@ -78,8 +78,11 @@ rejected / revoked     任意状态可达（终态）
 
 ### `bindImplementation` 的变化
 
-现在它接受任意状态。改后：`status: 'active'` 必须能沿状态机回溯到一条完整证据链；
-`shadow` / `canary` 是**可绑定的**（这正是影子期的意义：绑定但不对外执行）。
+判据落在 `backend/src/atomic-registry/shadow-release.ts`（状态机属于注册表；
+运行时模块已依赖注册表模块，放 runtime 会形成模块环）。
+
+现在它接受任意状态。改后：首次绑定只能落在 `submitted`，其余状态必须逐级带着证据走上来；
+`shadow` / `canary` 仍是**可绑定的**（这正是影子期的意义：绑定但不对外执行）。
 对外执行仍受既有规则约束（`isRunnableStatus` 允许 shadow / canary / active 执行）——
 这一点在 v1 保持不动，因为"影子期也要能被调用"是影子运行的前提。
 
@@ -91,7 +94,7 @@ rejected / revoked     任意状态可达（终态）
 | --- | --- |
 | 闸 0 / 1 / 2（`wasm-modules/src/gates/*`） | 闸 4 直接消费它们的报告，不新造格式 |
 | `atomic.moduleSha256` + `AdmissionTier` + `review` | 闸 4 的证据门字段来源；不新增表 |
-| `AtomicExecutorService`（执行 + 审计） | 闸 3 挂在"执行完成 → 返回结果"之间，复用同一条审计出口 |
+| `AtomicExecutorService`（执行 + 审计） | 闸 3 挂在"执行完成 → 返回结果"之间，复用同一条审计出口；**执行器不再自己判值域与上限** —— 原先散在 `invoke` 里的两条检查已收进 `output-gate.ts` |
 | `maxOutputBytes` / `outputSchema.columns` | O1 / O2 / O3 的声明来源 |
 | `contract.cpuBudget`（fuel） | 闸 3 追加执行会消耗预算，需要在同一预算内结算，不额外放宽 |
 
