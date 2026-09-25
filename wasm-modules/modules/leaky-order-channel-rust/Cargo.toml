@@ -1,0 +1,20 @@
+[package]
+name = "speckit-atomic-leaky-order-channel"
+version = "1.0.0"
+edition = "2021"
+# **闸 3 的测试夹具**，不是生产模块。
+# 它一样能过闸 0/1/2；坏在"输出取决于行在批次中的位置"：
+# 同一组数据，批量一次算与逐条各算一次结果不同 —— 这正是 O4（批量-单条一致）
+# 要抓的东西，也是"用行序当隐蔽通道"的最小形态。
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+debug = false
+strip = true
+overflow-checks = false

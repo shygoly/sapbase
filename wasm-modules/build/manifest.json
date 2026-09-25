@@ -35,6 +35,76 @@
           "exports=run(func)+abi_version(func|global)[+memory]"
         ]
       }
+    },
+    {
+      "atomicType": "leaky-output-bits",
+      "file": "leaky-output-bits-d29eac7a44ed.wasm",
+      "tier": "A",
+      "abiVersion": 1,
+      "sha256": "d29eac7a44ede03300ff2e9acb8d0e036131e043fc227e078d1b92fb8c3c7c73",
+      "sizeBytes": 272,
+      "compiler": {
+        "name": "rust",
+        "version": "1.95.0"
+      },
+      "language": "rust",
+      "reproducibleBuildRef": "repro:rust:1.95.0:d29eac7a44ede03300ff2e9acb8d0e036131e043fc227e078d1b92fb8c3c7c73",
+      "staticGate": {
+        "byteLength": 272,
+        "memoryPages": {
+          "min": 2,
+          "max": 1024
+        },
+        "exports": [
+          "abi_version",
+          "run",
+          "__data_end",
+          "__heap_base"
+        ],
+        "abiVersionExportKind": "function",
+        "checks": [
+          "byteLength<=2097152",
+          "no-start-section",
+          "features:no-tag/no-gc/no-table/no-own-memory",
+          "import=env.memory(min=2,max=1024)",
+          "exports=run(func)+abi_version(func|global)[+memory]"
+        ]
+      }
+    },
+    {
+      "atomicType": "leaky-order-channel",
+      "file": "leaky-order-channel-025b9fe3998f.wasm",
+      "tier": "A",
+      "abiVersion": 1,
+      "sha256": "025b9fe3998f0529b70680f8e23f00b4baaa9286e7e8dd8d736945229db3aab4",
+      "sizeBytes": 281,
+      "compiler": {
+        "name": "rust",
+        "version": "1.95.0"
+      },
+      "language": "rust",
+      "reproducibleBuildRef": "repro:rust:1.95.0:025b9fe3998f0529b70680f8e23f00b4baaa9286e7e8dd8d736945229db3aab4",
+      "staticGate": {
+        "byteLength": 281,
+        "memoryPages": {
+          "min": 2,
+          "max": 1024
+        },
+        "exports": [
+          "abi_version",
+          "run",
+          "__data_end",
+          "__heap_base"
+        ],
+        "abiVersionExportKind": "function",
+        "checks": [
+          "byteLength<=2097152",
+          "no-start-section",
+          "features:no-tag/no-gc/no-table/no-own-memory",
+          "import=env.memory(min=2,max=1024)",
+          "exports=run(func)+abi_version(func|global)[+memory]"
+        ]
+      }
     }
   ]
 }

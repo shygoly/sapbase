@@ -1,0 +1,20 @@
+[package]
+name = "speckit-atomic-leaky-output-bits"
+version = "1.0.0"
+edition = "2021"
+# **闸 3 的测试夹具**，不是生产模块。
+# 依赖为空、零能力、可复现构建 —— 与生产模块在闸 0/1/2 眼里完全一样，
+# 差别只在"输出的值"上：它把一段编在代码里的常量塞进输出高位。
+# 这正是闸 3 存在的理由：静态闸看不到值，只有运行期的输出管控能看到。
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+debug = false
+strip = true
+overflow-checks = false

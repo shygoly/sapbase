@@ -31,6 +31,15 @@
 > 改动过程中踩到一次自己造的坑并已修：编辑 `schemas/atomic-contract.schema.json` 时多删了一个 `}`，
 > 结果是**整个原子注册表的用例一起失败**（Schema 解析不了）——这正是"协议文件是判定的唯一真源"的代价与证据：
 > 一处协议坏了，判定层全停，而不是悄悄少判一条。
+>
+> **P2 证据（2026-09-25）**：`WASM_BUILD_ISOLATION=host node scripts/admit-cli.mjs --source modules/leaky-*-rust …`
+> → 两个夹具均 `ok: true`（闸 0/1/2 放行），产物入库：
+> `leaky-output-bits` `sha256=d29eac7a…` / 272 B；`leaky-order-channel` `sha256=025b9fe3…` / 281 B。
+> `node --test scripts/leaky-fixtures.test.mjs` → **5 passed**：三张表结构一致（tier A / abi 1 / 只有 env.memory）、
+> 源码复现构建逐字节一致，且用 Node 的 WASM 引擎实跑证明
+> 「夹具一输出的高位恒为 `0x5EC00000`、低 21 位是正确的 7」与
+> 「夹具二同一行在批量里（`100 ^ 0x10000`）与单独算（`100`）结果不同」。
+> 全量：`wasm-modules` **58 passed**（53 + 5）。
 
 ## Phase P0: 基线修复（前置）
 
@@ -60,10 +69,14 @@
 
 ## Phase P2: 泄漏样例模块
 
-- [ ] `wasm-modules/modules/leaky-output-bits/`：把常量塞进输出高位（用于 O2 / S1）
-- [ ] `wasm-modules/modules/leaky-order-channel/`：让输出取决于行序（用于 O4 / O5）
-- [ ] 两者都必须**通过**闸 0/1/2（它们不违规导入、可复现构建）——这正是闸 3 存在的理由
-- [ ] 产物与清单进入 `wasm-modules/build/manifest.json`
+- [x] `wasm-modules/modules/leaky-output-bits-rust/`：`available[i] = 正确值 | 0x5EC00000`
+      （编译进代码的常量塞进高位，**汇总位刻意保持干净**，便于判定"哪一列被污染"）
+- [x] `wasm-modules/modules/leaky-order-channel-rust/`：`available[i] = 正确值 ^ (i << 16)`
+      （行下标进高位 —— 批量与逐条结果不同）
+- [x] 两者都**通过**闸 0/1/2（零能力、无导入、可复现构建、只导出 `run` / `abi_version`）
+      —— 这正是闸 3 存在的理由；产物与清单已进入 `wasm-modules/build/manifest.json`
+- [x] 证据可独立复核：`scripts/leaky-fixtures.test.mjs` 既做源码复现构建（闸 2），
+      也用**真正的 WASM 引擎**跑一遍，断言它们确实在泄漏（而不是只在文档里声称）
 
 ## Phase P3: 闸 3 实现
 
