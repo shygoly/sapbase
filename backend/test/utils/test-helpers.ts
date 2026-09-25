@@ -56,16 +56,30 @@ export function wait(ms: number): Promise<void> {
 }
 
 /**
- * Create a mock repository with common methods
+ * Create a mock repository with common methods.
+ *
+ * ⚠️ 这个替身是"按方法名列表"建的，因此**会随接口漂移**：接口加了方法而这里没加，
+ * 用它的 spec 就会在运行时报 `Cannot read properties of undefined`（整仓红灯里有一批就是这个）。
+ * 本次补齐了当前各仓储接口用到的方法集；长期修法是给每个接口一个**带类型的工厂**
+ * （`jest.Mocked<IOrganizationRepository>`），接口一变就在编译期报错 —— 见 change
+ * `restore-green-backend-tests` 的 tasks.md。
  */
 export function createMockRepository<T = any>() {
   return {
+    // 通用
     findById: jest.fn(),
     findAll: jest.fn(),
     save: jest.fn(),
     delete: jest.fn(),
     update: jest.fn(),
     count: jest.fn(),
+    // organization-context：三个仓储接口的专有查询
+    findBySlug: jest.fn(),
+    findByOrganization: jest.fn(),
+    findByOrganizationAndUser: jest.fn(),
+    findByOrganizationAndEmail: jest.fn(),
+    findByToken: jest.fn(),
+    countByOrganizationAndRole: jest.fn(),
   } as any
 }
 

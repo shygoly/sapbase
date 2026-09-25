@@ -22,7 +22,7 @@ cd backend && npx jest --config jest.config.js --runInBand
 | # | 域 | 套件 | 状态 |
 | --- | --- | --- | --- |
 | 0 | 路径与工具模块（`test/utils` 相对深度） | 跨域 8 文件 | ✅ 2026-09-25（20 → 19 套件失败） |
-| 1 | `organization-context` | 9 | 🚧 5/9（domain 5 套件 + 仓库 1 已绿；4 个应用服务套件仍红：真实断言不匹配） |
+| 1 | `organization-context` | 9 | 🚧 6/9（domain 5 + 仓库 1 已绿；4 个应用服务套件仍红：DI 供应商与真实断言不匹配） |
 | 2 | `auth-context` + `auth` | 5 | ⏳ |
 | 3 | `common/events` | 1 | ⏳ |
 | 4 | `ai-modules` | 1（4 个断言失败） | ⏳ |
@@ -50,6 +50,7 @@ cd backend && npx jest --config jest.config.js --runInBand
 | --- | --- | --- |
 | `OrganizationSlug.create()` → `Organization.create(id, name)` | **由名字推导的 slug 不校验**：`generateFromName('已存在模块')` → `''`，于是可以建出 slug 为空的组织 | 组织标识（用于 URL/查找）可能为空；建议单独变更补校验，或明确允许并写进协议 |
 | `test/utils/domain-builders.ts` | 与实现漂移严重（`Invitation.create` 7 参、`Organization.create` 3 参、`WorkflowInstance.create` 传 id 而非实例、成员构造参数顺序） | 它是**共享测试基础设施**：它错一处，所有 import 它的 spec 一起挂。本次已按当前实现逐个改正 |
+| `test/utils/test-helpers.ts` 的 `createMockRepository()` | 按**方法名列表**建替身，接口加方法它就少一个，用它的 spec 在运行时报 `Cannot read properties of undefined` | 本次补齐了 organization-context 三个仓储接口的方法；长期修法是给每个接口一个 `jest.Mocked<IXxxRepository>` 类型的工厂 —— 接口一变就在编译期报错 |
 
 ## 里程碑 0：路径与工具模块（已完成）
 
