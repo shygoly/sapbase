@@ -11,7 +11,6 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import {
-  canPromote,
   isRunnableStatus,
   staticGate,
   type AdmissionStatus as WasmAdmissionStatus,
@@ -32,6 +31,12 @@ import {
   validateAtomicContract,
   validateModuleManifest,
 } from './contract-validator'
+import {
+  checkPromotion,
+  requiresReleaseEvidence,
+  validateReleaseEvidence,
+  type ReleaseEvidence,
+} from './shadow-release'
 
 export interface ResolvedAtomic {
   contract: AtomicContract
@@ -217,6 +222,30 @@ export class AtomicRegistryService {
       }
     }
 
+    // ── 闸 4：首次绑定不得直接落在可运行状态 ──────────────────────────
+    // 判据走 `shadow-release.ts`（唯一实现），这里只把结论变成错误消息。
+    // 注意：`sourceGate` / `staticGate` / `reproducibleBuildRef` 可以随绑定一起传入 ——
+    // 它们是控制面自己跑闸的产物（admit-cli），不是客户能编的东西；
+    // 而影子/灰度记录**只能**来自 `recordReleaseEvidence`（平台记录），不接受随请求传入。
+    const targetStatus = input.status ?? AdmissionStatus.SUBMITTED
+    // `submitted` 是**起点**，不是一次流转（所以不拿它去问状态机）；
+    // 别的状态都得从起点一步一步走上来。
+    const promotion =
+      targetStatus === AdmissionStatus.SUBMITTED
+        ? { allowed: true as const }
+        : checkPromotion(AdmissionStatus.SUBMITTED, targetStatus, {
+            sourceGate: input.sourceGate,
+            staticGate: input.staticGate,
+            reproducibleBuildRef: input.reproducibleBuildRef,
+            review: input.review,
+          })
+    if (!promotion.allowed) {
+      throw new BadRequestException(
+        `绑定被闸 4 拒绝[${promotion.code}]：${promotion.detail}` +
+          (promotion.missing?.length ? `；缺少：${promotion.missing.join('、')}` : ''),
+      )
+    }
+
     return this.implementations.save(
       this.implementations.create({
         atomicContractId: contractId,
@@ -235,14 +264,10 @@ export class AtomicRegistryService {
 
   /** 状态流转校验：复用 wasm-modules 的状态机，不另造一套。 */
   assertTransitionAllowed(from: AdmissionStatus, to: AdmissionStatus): void {
-    const allowed = canPromote(
-      from as unknown as WasmAdmissionStatus,
-      to as unknown as WasmAdmissionStatus,
-    )
-    if (!allowed) {
-      throw new BadRequestException(
-        `不允许的状态流转：${from} → ${to}（准入状态不得跳闸；rejected / revoked 为终态）`,
-      )
+    // 状态机（canPromote）与证据门（闸 4）都走 shadow-release 那一份判定
+    const check = checkPromotion(from, to, {})
+    if (!check.allowed && check.code !== 'EVIDENCE_MISSING') {
+      throw new BadRequestException(`不允许的状态流转：${from} → ${to}（${check.detail}）`)
     }
   }
 
@@ -256,9 +281,99 @@ export class AtomicRegistryService {
     if (!impl) {
       throw new NotFoundException(`实现不存在：${implementationId}`)
     }
-    this.assertTransitionAllowed(impl.status, to)
+
+    // ── 闸 4：证据门 ─────────────────────────────────────────────
+    // 证据取自**实体列**（平台记录），不看调用方参数 —— 这是"不得自证"的落地方式。
+    const evidence = (impl.releaseEvidence ?? {}) as ReleaseEvidence
+    const check = checkPromotion(impl.status, to, evidence)
+    if (!check.allowed) {
+      throw new BadRequestException(
+        `晋升被闸 4 拒绝[${check.code}]：${check.detail}` +
+          (check.missing?.length ? `；缺少：${check.missing.join('、')}` : ''),
+      )
+    }
+
     impl.status = to
     return this.implementations.save(impl)
+  }
+
+  /**
+   * 记录闸 4 的证据（**平台侧**动作：影子运行器 / 灰度运行器 / 人工审查结论）。
+   *
+   * 它没有对外的 HTTP 入口是刻意的吗？不 —— 有入口，但挂在控制面权限点上（见
+   * `atomic-runtime.controller` 的 `release-evidence` 端点）。关键不在"谁能调"，
+   * 而在"证据一旦写进这一列，晋升判定就只看这一列"：调用方在晋升请求里塞字段没用。
+   */
+  async recordReleaseEvidence(
+    implementationId: string,
+    patch: ReleaseEvidence,
+  ): Promise<AtomicImplementation> {
+    const impl = await this.implementations.findOne({
+      where: { id: implementationId },
+    })
+    if (!impl) {
+      throw new NotFoundException(`实现不存在：${implementationId}`)
+    }
+
+    const errors = validateReleaseEvidence(patch)
+    if (errors.length > 0) {
+      throw new BadRequestException(`证据形状不合法：${errors.join('；')}`)
+    }
+
+    impl.releaseEvidence = {
+      ...((impl.releaseEvidence ?? {}) as ReleaseEvidence),
+      ...patch,
+    }
+    return this.implementations.save(impl)
+  }
+
+  /**
+   * 一次性补录：闸 4 上线**之前**就已经在跑的实现。
+   *
+   * 为什么不直接放行：那等于闸 4 从第一天就漏。补录必须留下理由与决定人，
+   * 并且能被查出来（`listGrandfathered()`）——"隐形的例外"才是真正危险的东西。
+   */
+  async grandfatherImplementation(
+    implementationId: string,
+    input: { reason: string; decidedBy: string; status?: AdmissionStatus },
+  ): Promise<AtomicImplementation> {
+    const impl = await this.implementations.findOne({
+      where: { id: implementationId },
+    })
+    if (!impl) {
+      throw new NotFoundException(`实现不存在：${implementationId}`)
+    }
+    const existing = (impl.releaseEvidence ?? {}) as ReleaseEvidence
+    if (existing.grandfather) {
+      throw new BadRequestException(
+        `该实现已补录过（${existing.grandfather.decidedBy}：${existing.grandfather.reason}）—— 补录只能做一次`,
+      )
+    }
+    const errors = validateReleaseEvidence({
+      grandfather: { ...input, at: new Date().toISOString() },
+    })
+    if (errors.length > 0) {
+      throw new BadRequestException(`补录记录不完整：${errors.join('；')}`)
+    }
+
+    impl.releaseEvidence = {
+      ...existing,
+      grandfather: {
+        reason: input.reason,
+        decidedBy: input.decidedBy,
+        at: new Date().toISOString(),
+      },
+    }
+    impl.status = input.status ?? AdmissionStatus.ACTIVE
+    return this.implementations.save(impl)
+  }
+
+  /** 哪些实现是靠补录放行的（上线后的必查项）。 */
+  async listGrandfathered(): Promise<AtomicImplementation[]> {
+    const all = await this.implementations.find({})
+    return all.filter(
+      (impl) => ((impl.releaseEvidence ?? {}) as ReleaseEvidence).grandfather !== undefined,
+    )
   }
 
   /**

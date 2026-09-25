@@ -8,6 +8,7 @@ import { readdirSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
 import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
+import { bindRunnableForTest } from '../atomic-registry/test-fixtures'
 import { AtomicContractStatus } from '../atomic-registry/atomic-contract.entity'
 import {
   AdmissionStatus,
@@ -108,14 +109,13 @@ async function buildRuntime(boundAtomicType: string, contract?: Record<string, u
     fakeRepo() as never,
   )
   const saved = await registry.createContract(contract ?? contractFor())
-  await registry.bindImplementation(saved.id, {
+  await bindRunnableForTest(registry, saved.id, {
     kind: AtomicImplementationKind.WASM,
     moduleSha256: boundAtomicType.startsWith('leaky-')
       ? fixtureSha256(boundAtomicType)
       : manifestEntry(boundAtomicType).sha256,
     abiVersion: 1,
     tier: 'A' as never,
-    status: AdmissionStatus.ACTIVE,
   })
 
   const engineKind = (process.env.ATOMIC_ENGINE ?? 'wasmtime').toLowerCase()

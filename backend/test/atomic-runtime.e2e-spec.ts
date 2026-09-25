@@ -21,6 +21,7 @@ import { OrganizationMember } from '../src/organizations/organization-member.ent
 import { AtomicRegistryModule } from '../src/atomic-registry/atomic-registry.module'
 import { AtomicRuntimeModule } from '../src/atomic-runtime/atomic-runtime.module'
 import { AtomicRegistryService } from '../src/atomic-registry/atomic-registry.service'
+import { bindRunnableForTest } from '../src/atomic-registry/test-fixtures'
 import { JwtAuthGuard } from '../src/auth/jwt-auth.guard'
 
 const ATOMIC_TYPE = 'e2e-available-inventory'
@@ -153,12 +154,11 @@ describe('原子运行时（e2e，真实 HTTP + 真实 Wasm）', () => {
     const registry = app.get(AtomicRegistryService)
     const contract = (await registry.list(ATOMIC_TYPE))[0]
     const sha256 = manifest().modules[0].sha256
-    await registry.bindImplementation(contract.id, {
+    await bindRunnableForTest(registry, contract.id, {
       kind: 'wasm' as never,
       moduleSha256: sha256,
       abiVersion: 1,
       tier: 'A' as never,
-      status: 'active' as never,
     })
 
     // 3) 调用（走 HTTP）
@@ -203,12 +203,11 @@ describe('原子运行时（e2e，真实 HTTP + 真实 Wasm）', () => {
     const contract = (await registry.list(ATOMIC_TYPE)).find(
       (c) => c.version === '2.0.0',
     )
-    await registry.bindImplementation(contract!.id, {
+    await bindRunnableForTest(registry, contract!.id, {
       kind: 'wasm' as never,
       moduleSha256: sha256,
       abiVersion: 1,
       tier: 'A' as never,
-      status: 'active' as never,
     })
 
     // 吊销名单通过查询参数注入不在本接口范围，这里直接验证：模块哈希被替换成不存在的
@@ -240,12 +239,11 @@ describe('原子运行时（e2e，真实 HTTP + 真实 Wasm）', () => {
     const contract = (await registry.list(ATOMIC_TYPE)).find(
       (c) => c.version === '3.0.0',
     )
-    await registry.bindImplementation(contract!.id, {
+    await bindRunnableForTest(registry, contract!.id, {
       kind: 'wasm' as never,
       moduleSha256: sha256,
       abiVersion: 1,
       tier: 'A' as never,
-      status: 'active' as never,
     })
 
     // e2e 身份不带任何 permissions

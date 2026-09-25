@@ -1,6 +1,6 @@
 # 项目元语（Meta Language）
 
-> 版本：1.3
+> 版本：1.4
 > 日期：2026-09-25
 > 定位：本文件是 sapbase 的**基础定义层** —— 元模型、协议原语、执行原语、工程约定与术语真源。
 > 与设计文档的分工：设计文档回答"**要做什么**"，本文件回答"**用什么词、按什么不变量做、真源在哪**"。
@@ -91,8 +91,8 @@ run(in_off: i32, n: i32, out_off: i32) -> i32      // 0 = 成功
 | 0 源码预检 | 编译**之前** | `build.rs` / proc-macro / `.cargo/config` / 非空依赖 / npm 生命周期 | ✅ |
 | 1 静态白名单 | 不运行就挡 | 非白名单导入、start 段、共享内存、GC、表、自定义内存、memory64、未授权导出 | ✅ |
 | 2 复现构建 | 两个独立构建器 | 哈希不一致、"只交 `.wasm`"、夹带预构建 `target/` | ✅ |
-| 3 输出管控 | 运行期 | 通过输出通道夹带数据 | ❌ 未移植（判据需按 ERP 语境重设计） |
-| 4 影子发布 | 发布流程 | 未经影子验证直接上生产 | ❌ 未移植（属控制面编排） |
+| 3 输出管控 | 运行期（宿主侧） | 通过输出通道夹带数据、输出随行序变化、值越界 | ✅ 判据见 [`protocols/atomic-output-audit.md`](./protocols/atomic-output-audit.md)，实现在 `backend/src/atomic-runtime/output-gate.ts` |
+| 4 影子发布 | 发布流程（宿主侧） | 未经影子验证直接上生产、凭一次请求跳级 | ✅ 证据门见 `backend/src/atomic-registry/shadow-release.ts`（补录必须带理由与决定人） |
 | 5 吊销 | 执行前 | 已吊销模块继续执行、旧名单回放 | ✅（判定逻辑） |
 
 附：准入层级 **Tier A**（平台自研）/ **Tier B**（第三方交源码、平台复现构建 + 审查），**不设 Tier C** —— 不透明二进制结构性地无法入册。
@@ -270,6 +270,8 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 编译记录 | Compiled Record | `manifest.compiled.irDigest`、`stampCompiled()` | ✅ |
 | 原子绑定 | Atomic Binding | `AtomicBinding`（契约版本 + `moduleSha256` + tier） | ✅ |
 | 最小蓝图导出 | Minimal Blueprint Export | `buildMinimalBlueprint()`、`POST /api/module-registry/:id/export-blueprint` | ✅ |
+| 输出管控判据 | Output Audit Criterion | `output-gate.ts` 的 O1–O5 + S1；`atomic.output.O<n>` 协议码 | ✅ |
+| 影子发布证据 | Release Evidence | `AtomicImplementation.releaseEvidence`、`shadow-release.ts` | ✅ |
 | 能力胶囊 | Capability Capsule | — | ❌ |
 | 增量协议 | Delta | `space-delta/v1`（协议标识）；现有 `PatchScope`/`PatchOperation` | 🟡 |
 | 上下文编译器 | Context Compiler | `ContextEnvelope` | ❌ |
@@ -297,6 +299,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.4 | 2026-09-25 | §3.3 闸表补齐：闸 3（输出管控）与闸 4（影子发布）从 ❌ 改为 ✅ —— 闸 3 的判据文本在 `protocols/atomic-output-audit.md`、实现见 §3.8 同级的 `output-gate.ts`；闸 4 的证据门在 `atomic-registry/shadow-release.ts`。术语表补"输出管控判据 / 影子发布证据"两行 |
 | 1.3 | 2026-09-25 | 协议状态位推进：协议 2（Atomic Contract）📋 → ✅ 已冻结；协议 3（Blueprint Package）❌ → 🟡（包与 IR 已冻结，表单/规则/BOM/审批层待补）；协议 4 补加载链落点。新增 §3.8「Blueprint 编译与加载链」，术语表补 IR/编译记录/原子绑定/最小蓝图导出四行 |
 | 1.2 | 2026-09-24 | 补入口分层：新增 `speckit/AGENTS.md`、`backend/AGENTS.md` 两个作用域入口；`openspec/AGENTS.md` 的 Context Checklist 与 Stage 1 步骤纳入本文件；§5.2 补 Clerk 文档行并标注为待清理残留 |
 | 1.1 | 2026-09-24 | 按反馈修正：移除上一版加入的 space 相关表述（本文件只做结构化系统描述，不引入新概念词）；§5.2 文档真源表改为**索引项目已有的结构化文档**（speckit/docs、backend/docs、openspec），明确"新增内容先放入既有文件，不另建新文件" |

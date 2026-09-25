@@ -40,8 +40,8 @@
 | **闸 0** 源码预检 | `src/source-gate.ts`，编译**之前** | `build.rs` / `[package].build` / `[build-dependencies]` / 非空依赖 / proc-macro / `.cargo/config` / npm 生命周期脚本 / 夹带 `node_modules` / `[workspace]` |
 | **闸 1** 静态白名单 | `src/wasm-binary.ts` + `src/static-gate.ts`，不运行就挡 | 非白名单导入（WASI / env 函数 / 表 / 全局 / tag）、start 段、共享内存、GC 类型、自定义内存或表、memory64、导出未授权符号、字节与内存页超限 |
 | **闸 2** 复现构建 | `scripts/admission.mjs` + `Dockerfile.builder` | 不可复现的产物（两个独立构建器哈希不一致即拒）、把 `rustc` 装进服务容器、带预构建 `target/` 蒙混过关、"只交 `.wasm`" |
-| 闸 3 输出管控 | **不在本包**：判据已冻结在 `docs/protocols/atomic-output-audit.md`，实现在宿主侧（`backend/src/atomic-runtime/`） | 用输出通道夹带常量、输出随行序变化、值越界 |
-| 闸 4 影子发布 | **不在本包**：实现在宿主侧（准入状态机 `shadow` / `canary` 的编排） | 未经影子期直接上生产、凭一次请求跳级 |
+| 闸 3 输出管控 | **不在本包**（判据见 `docs/protocols/atomic-output-audit.md`，实现 `backend/src/atomic-runtime/output-gate.ts`） | 用输出通道夹带常量、输出随行序变化、值越界 |
+| 闸 4 影子发布 | **不在本包**（证据门见 `backend/src/atomic-registry/shadow-release.ts`） | 未经影子期直接上生产、凭一次请求跳级 |
 
 | **闸 5** 吊销 | `src/revocation.ts` | 已吊销模块继续执行；旧名单回放把吊销"撤销" |
 
@@ -163,8 +163,9 @@ repro:  源码重建与入库字节逐字节一致
   代码。需要依赖须走 vendored + 白名单，另立变更。
 - **容器隔离强度取决于宿主 Docker 配置**（用户命名空间、seccomp profile）。构建环境应与生产
   控制面网络隔离，且不持有任何控制面凭据。
-- **闸 3 / 闸 4 不在本包**：闸 3 的判据已冻结在 `docs/protocols/atomic-output-audit.md`，
-  实现在宿主侧（`backend/src/atomic-runtime/`）；闸 4 同理。本包只提供它们的对照夹具。
+- **闸 3 / 闸 4 不在本包**：闸 3 判据在 `docs/protocols/atomic-output-audit.md`、
+  实现在 `backend/src/atomic-runtime/output-gate.ts`；闸 4 的证据门在
+  `backend/src/atomic-registry/shadow-release.ts`。本包只提供闸 3 的对照夹具。
 - **已与运行时集成（模块侧这一半）**：`backend/src/atomic-registry` 导入本包的
   `build/manifest.json`（**重算哈希，不采信自述**），`backend/src/atomic-runtime` 通过
   Wasmtime sidecar（`crates/wasm-host`）执行这些产物。本包仍不负责"谁来加载"，

@@ -18,6 +18,8 @@ import { AtomicRegistryService } from '../atomic-registry/atomic-registry.servic
 import { AtomicExecutor } from './atomic-executor.service'
 import { AtomicRuntimeError, toHttpError } from './atomic-runtime.error'
 import { RevocationListService } from './revocation-list.service'
+import type { ReleaseEvidence } from '../atomic-registry/shadow-release'
+import { AdmissionStatus } from '../atomic-registry/atomic-implementation.entity'
 
 interface AuthedRequest {
   user?: {
@@ -79,6 +81,56 @@ export class AtomicRuntimeController {
       manifestPath,
       req.user?.email ?? req.user?.userId ?? 'unknown',
     )
+  }
+
+  @Post('implementations/:id/release-evidence')
+  @ApiOperation({
+    summary: '记录闸 4 证据（平台侧：影子/灰度运行结果），晋升判定只认这一列',
+  })
+  async recordReleaseEvidence(
+    @Param('id') id: string,
+    @Body() body: ReleaseEvidence,
+  ) {
+    const impl = await this.registry.recordReleaseEvidence(id, body ?? {})
+    return { id: impl.id, status: impl.status, releaseEvidence: impl.releaseEvidence }
+  }
+
+  @Post('implementations/:id/grandfather')
+  @ApiOperation({
+    summary: '一次性补录：把早于闸 4 的存量实现显式标记放行（必须写明理由与决定人）',
+  })
+  async grandfather(
+    @Param('id') id: string,
+    @Body() body: { reason?: string; decidedBy?: string; status?: AdmissionStatus },
+  ) {
+    if (!body?.reason || !body?.decidedBy) {
+      throw new HttpException(
+        {
+          statusCode: 400,
+          code: 'INVALID_INPUT',
+          message: '补录必须写明 reason 与 decidedBy（隐形的例外才是真正危险的东西）',
+        },
+        400,
+      )
+    }
+    const impl = await this.registry.grandfatherImplementation(id, {
+      reason: body.reason,
+      decidedBy: body.decidedBy,
+      status: body.status,
+    })
+    return { id: impl.id, status: impl.status, releaseEvidence: impl.releaseEvidence }
+  }
+
+  @Get('implementations/grandfathered')
+  @ApiOperation({ summary: '哪些实现是靠一次性补录放行的（上线后的必查项）' })
+  async grandfathered() {
+    const impls = await this.registry.listGrandfathered()
+    return impls.map((impl) => ({
+      id: impl.id,
+      status: impl.status,
+      moduleSha256: impl.moduleSha256,
+      releaseEvidence: impl.releaseEvidence,
+    }))
   }
 
   @Post(':atomicType/invoke')

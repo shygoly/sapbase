@@ -50,6 +50,18 @@
 > `jest src/atomic-registry src/atomic-runtime` → **159 passed × 两引擎**；e2e 6 passed；tsc 0。
 > 一处边界说明：**O5 的"声明可交换却被违反"在集成层面被 O4 先命中**（顺序通道必然同时违反两条），
 > 所以 O5 只在纯判据测试里有独立用例 —— 这不是跳测，是"两条判据的触发条件天然重叠"。
+>
+> **P4 证据（2026-09-25）**：`jest src/atomic-registry/shadow-release.spec.ts` → **35 passed**
+> （正常全链 5 步 / 跳级 4 例 / 终态复活 / 回退 / 缺证据逐条列出 / 差异未审查 / 补录 / 吊销不受限）；
+> 服务层全链（不是只测纯函数）：`jest src/atomic-registry` → **98 passed**，其中
+> 「逐级带证据 → 一路走到 active」「影子记录为空 → 卡在 tested」「吊销不受限」「补录只能做一次」。
+> 存量补录 SQL 在探针库上验证过（造一条 `status='active'` 的实现 → 再跑迁移 →
+> `releaseEvidence.grandfather = {reason, decidedBy: 'migration-1790800000000', at}`）。
+> 全量：单元 **305 × 两引擎**、e2e 6、tsc 0；本地 `sapbasic` 已应用 5 个原子分组迁移。
+>
+> **一处刻意的范围收窄**：`isReleasableStatus` 说的"影子只算不发"在本变更**未接**——
+> 那需要影子运行器与调用方身份区分，属影子编排那条线；本变更只做**证据门**。
+> 记在这里而不是假装已覆盖。
 
 ## Phase P0: 基线修复（前置）
 
@@ -107,10 +119,19 @@
 
 ## Phase P4: 闸 4 实现
 
-- [ ] `backend/src/atomic-runtime/shadow-release.ts`：证据门表 + 状态机回溯（`assertPromotable(from, to, evidence)`）
-- [ ] `bindImplementation` 接入：`status: 'active'` 必须能回溯出完整证据链；跳级与缺证据各给独立原因码
-- [ ] 迁移路径：为既有 `active` 实现提供一次性补录（或显式标记"早于闸 4"），不允许静默放行
-- [ ] jest：跳级、缺证据、自证（请求体里塞字段冒充证据）、正常晋升、吊销不受闸 4 限制
+- [x] `backend/src/atomic-registry/shadow-release.ts`：`checkPromotion(from, to, evidence)` —
+      **状态机不在这里**（复用 `@speckit/wasm-modules` 的 `canPromote`，不抄第二份 NEXT_STATUS）；
+      本模块只管证据门与安全动作
+- [x] `bindImplementation` 接入：首次绑定只能落在 `submitted`（其余状态要走晋升链），
+      直接给 `active` → `TRANSITION_NOT_ALLOWED`
+- [x] `promoteImplementation` 接入：证据取自**实体列**（不在参数里），缺什么列什么
+      （如 `shadow 差异未审查（差异 12 条，已审查 10 条）`）
+- [x] 迁移路径：`1790800000000-AddReleaseEvidence` 加列 + **存量补录**（status ∈ shadow/canary/active
+      且无证据的行写 grandfather 记录，`decidedBy` 标明是迁移补录）；
+      `grandfatherImplementation` 另提供显式补录入口且**只能做一次**，`listGrandfathered` 可查
+- [x] jest：跳级 / 终态复活 / 回退 / 缺证据（逐条列出）/ 差异未审查 / 正常全链 / 补录 / 吊销不受限
+- [x] 控制面端点：`POST /api/atomic-contracts/implementations/:id/release-evidence`、
+      `.../grandfather`、`GET .../implementations/grandfathered`
 
 ## Phase P5: 端到端
 

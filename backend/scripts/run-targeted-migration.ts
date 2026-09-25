@@ -18,6 +18,7 @@ import { CreateAtomicRegistry1790300000000 } from '../src/migrations/17903000000
 import { AddModuleAtomicDependencies1790400000000 } from '../src/migrations/1790400000000-AddModuleAtomicDependencies'
 import { AddAtomicCpuBudget1790500000000 } from '../src/migrations/1790500000000-AddAtomicCpuBudget'
 import { AddAtomicOutputAudit1790700000000 } from '../src/migrations/1790700000000-AddAtomicOutputAudit'
+import { AddReleaseEvidence1790800000000 } from '../src/migrations/1790800000000-AddReleaseEvidence'
 import { AddUsersBaseline1790600000000 } from '../src/migrations/1790600000000-AddUsersBaseline'
 
 type MigrationClass = new () => { up: (q: never) => Promise<void>; down: (q: never) => Promise<void> }
@@ -28,6 +29,7 @@ const GROUPS: Record<string, MigrationClass[]> = {
     AddModuleAtomicDependencies1790400000000,
     AddAtomicCpuBudget1790500000000,
     AddAtomicOutputAudit1790700000000,
+    AddReleaseEvidence1790800000000,
   ],
   baseline: [AddUsersBaseline1790600000000],
 }

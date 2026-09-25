@@ -18,6 +18,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { AtomicRegistryModule } from '../src/atomic-registry/atomic-registry.module'
 import { AtomicRegistryService } from '../src/atomic-registry/atomic-registry.service'
+import { bindRunnableForTest } from '../src/atomic-registry/test-fixtures'
 import { AtomicRuntimeModule } from '../src/atomic-runtime/atomic-runtime.module'
 import { BlueprintModule } from '../src/blueprint/blueprint.module'
 import { ModuleRegistryModule } from '../src/module-registry/module-registry.module'
@@ -156,12 +157,11 @@ describe('蓝图管线（e2e，真实模块 + 真实 Wasm 原子）', () => {
     await request(server).post('/atomic-contracts').send(CONTRACT).expect(201)
     const registry = app.get(AtomicRegistryService)
     const contract = (await registry.list(ATOMIC_TYPE))[0]
-    await registry.bindImplementation(contract.id, {
+    await bindRunnableForTest(registry, contract.id, {
       kind: 'wasm' as never,
       moduleSha256: sha256,
       abiVersion: 1,
       tier: 'A' as never,
-      status: 'active' as never,
     })
 
     // 2) 真实模块：建记录（发布时按同一判据校验原子依赖）+ 挂 capability
