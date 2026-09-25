@@ -23,7 +23,7 @@ cd backend && npx jest --config jest.config.js --runInBand
 | --- | --- | --- | --- |
 | 0 | 路径与工具模块（`test/utils` 相对深度） | 跨域 8 文件 | ✅ 2026-09-25（20 → 19 套件失败） |
 | 1 | `organization-context` | 9 | ✅ 2026-09-25（9 套件 / **61 用例全绿**；整仓 13 → 9 套件失败） |
-| 2 | `auth-context` + `auth` | 5 | ⏳ |
+| 2 | `auth-context` + `auth` | 6 | 🚧 2/6（`password` / `jwt` 基础设施已绿；4 个应用服务与策略 spec 仍红） |
 | 3 | `common/events` | 1 | ⏳ |
 | 4 | `ai-modules` | 1（4 个断言失败） | ⏳ |
 | 5 | `ai-module-context` | 1 | ⏳ |
@@ -41,6 +41,8 @@ cd backend && npx jest --config jest.config.js --runInBand
 | `invitation.entity.spec.ts` | `acceptedAt` / `isAccepted()` 断言、7 参 `create(id, …, expiresAt)` 用例 | 现在的模型是**状态机**（`status` + `isPending/accept/expire/cancel`）+ 仓储分配 id + 按天数算过期 | 新写的状态机用例（accept 一次性、过期、cancel 权限、expire） |
 | `invite-member.service.spec.ts` | `should throw error if invitation already exists` | 行为已**有意改成幂等**：重复邀请不再报错，而是刷新那条待接受邀请的有效期后复用 | 改写成 `should refresh the pending invitation instead of failing`：断言复用同一条（id 不变）、有效期被推后、写回仓储 |
 | `add-member.service.spec.ts` | 用 `memberRepository.findByOrganizationAndUser` 造"已存在" | 重复校验已移到**聚合内部**（`Organization.validateCanAddMember`），不再查仓储 | 改为把既有成员放进聚合（`OrganizationBuilder.withMembers`）后再断言抛错 |
+| `auth-context/…/services/{password,jwt}.service.spec.ts` | 整文件跑不起来 | 实现一直在 `infrastructure/external/`，spec 却写在 `infrastructure/services/` 并引用不存在的 `./password.service` / `./jwt.service`；类名也不是 `*Impl` | 按「spec 与实现同目录」归位到 `external/`，类名改成 `PasswordService` / `JwtService` |
+| 同上（jwt） | `should throw error for invalid token` | 真实契约是**无效 token 返回 `null`**（`verify(): Promise<Payload \| null>`），实现里 `catch` 后返回 null | 改写成 `should return null for an invalid token` |
 
 > 判定：这三条都属于**能力被有意移除**（不是实现漏做）——它们在当前 API 里没有对应物，
 > 而新 API 用更细的规则覆盖了同类关注点。整仓 `tsc` 也从未接受过旧断言，说明它们
