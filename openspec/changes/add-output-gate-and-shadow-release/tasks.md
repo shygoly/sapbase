@@ -5,7 +5,7 @@
 | 里程碑 | 范围 | 验收门（命令 + 期望） |
 | --- | --- | --- |
 | **P0** 基线修复 | 迁移集补 `users` 基线与实体对齐 | 从空库跑完迁移不报错；`GET /api/module-registry/:id` 等既有接口的 e2e 通过 |
-| **P1** 判据冻结 | 闸 3 判据文本 + 契约 Schema 扩展 | `openspec validate --strict` 通过；Schema 正例通过、负例（越界 range / 未知档位）被拒 |
+| **P1** 判据冻结 | 闸 3 判据文本 + 契约 Schema 扩展 | `openspec validate --strict` 通过；Schema 正例通过、负例（值域倒置 / 未知档位）被拒 |
 | **P2** 泄漏样例 | 故意泄漏的 Wasm 模块 + 构建产物 | `wasm-modules` 全部测试通过；样例如实被闸 1 放行（它不违规导入，只是在**值**上做手脚） |
 | **P3** 闸 3 实现 | 四条判决 + 一条信号 | jest：O1–O5 每条各有正例与负例；命中判决时**不返回**结果且审计留痕；S1 只写审计 |
 | **P4** 闸 4 实现 | 证据门 + 状态机门 | jest：跳级被拒、缺证据被拒、正常晋升通过；`bindImplementation(active)` 绕过被拒 |
@@ -25,6 +25,12 @@
 > 旧库路径：本地 `sapbasic` 应用后 e2e 断言通过 ——
 > `jest --config ./test/jest-e2e.json test/blueprint-pipeline.e2e-spec.ts` → **3 passed**
 > （其中「模块注册表的既有查询在真实库上可用」此前是 500）。
+>
+> **P1 证据（2026-09-25）**：`jest src/atomic-registry` → **57 passed**（新增 7：三档位正例、未声明可选、
+> 未知档位被拒、`commutative` 正例、值域倒置被拒、汇总位重名被拒）。
+> 改动过程中踩到一次自己造的坑并已修：编辑 `schemas/atomic-contract.schema.json` 时多删了一个 `}`，
+> 结果是**整个原子注册表的用例一起失败**（Schema 解析不了）——这正是"协议文件是判定的唯一真源"的代价与证据：
+> 一处协议坏了，判定层全停，而不是悄悄少判一条。
 
 ## Phase P0: 基线修复（前置）
 
@@ -42,11 +48,15 @@
 
 ## Phase P1: 判据冻结
 
-- [ ] `docs/protocols/atomic-output-audit.md`：判别表（O1–O5 判决、S1 信号）+ **明确的不判清单** + 档位语义
-- [ ] `schemas/atomic-contract.schema.json`：新增可选 `outputAudit`（`off` / `standard` / `strict`，默认 `standard`）、
-      输出行可交换性 `commutative`、逐列可选 `range`
-- [ ] 负例覆盖：未知档位 / `range` 越界或倒置 / `commutative` 与"输出含汇总位"组合的矛盾声明
-- [ ] `shared-schemas` 暴露类型（只类型、不判定），并按既有约定重建 `dist`
+- [x] `docs/protocols/atomic-output-audit.md`：判据表（O1–O5 判决、S1 信号）+ **明确的不判清单** + 档位语义 + 结果形态
+- [x] `schemas/atomic-contract.schema.json`：新增可选 `outputAudit`（`off` / `standard` / `strict`，默认 `standard`）
+      与 `output.commutative`。**值域复用既有的 `minimum` / `maximum`** —— 不新增 `range`
+      （元语 §6：不另造同义词）
+- [x] 跨字段判据进校验器：`validateContractConsistency`（值域倒置、汇总位与列同名），
+      与蓝图校验器的 `validateManifestConsistency` 同一套路；`validateAtomicContract` = 形状 + 一致性
+- [x] 负例覆盖：未知档位（形状）/ 值域倒置（跨字段）/ 汇总位重名（跨字段）；正例覆盖三个档位与 `commutative`
+- [x] `shared-schemas` 无需改动：原子契约类型本就不在那里镜像（核对过 `shared-schemas/src/v1/`），
+      因此没有"改了类型忘了重建 dist"的风险
 
 ## Phase P2: 泄漏样例模块
 

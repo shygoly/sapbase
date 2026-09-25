@@ -32,7 +32,7 @@
 - **ADDED**: `docs/protocols/atomic-output-audit.md` —— 闸 3 的判据文本（结构封闭 / 值域 / 批量-单条一致 /
   置换不变 / 常量位信号），并**明确列出不判什么**（不判"输出是否好看"、不做统计显著性检验）
 - **MODIFIED**: `schemas/atomic-contract.schema.json` —— 输出契约补齐可判据的声明：`commutative`（声明后置换不变性可判）
-  与逐列 `range`（值域），缺失即按"不判该项"处理，不假装判过
+  与输出行可交换性 `commutative`；逐列值域**复用既有的 `minimum` / `maximum`**（不另造 `range` 这种同义词）
 - **ADDED**: `backend/src/atomic-runtime/output-gate.ts` —— 闸 3 实现：四条判决 + 一条信号，全部**确定性**
 - **ADDED**: `backend/src/atomic-runtime/shadow-release.ts` —— 闸 4：`Tested → Shadow → Canary → Active` 的编排与证据门，
   缺证据即拒；`bindImplementation` 不得绕过它
@@ -62,7 +62,7 @@ module_relationships, module_statistics, roles, users, workflow_auto_suggestion_
 - 受影响规格：`atomic-runtime`（新增闸 3 / 闸 4 两组要求）、`atomic-registry`（输出契约与状态机门）
 - 受影响代码：`backend/src/atomic-runtime/`（执行链、审计）、`backend/src/atomic-registry/`（绑定路径）、
   `wasm-modules/`（新增泄漏样例与其构建）、`schemas/atomic-contract.schema.json`、`backend/src/migrations/`
-- **向后兼容**：`commutative` / 列 `range` 都是**可选**声明。未声明的原子只跑"结构封闭 + 值域上限 + 批量-单条一致"
+- **向后兼容**：`outputAudit` / `commutative` 都是**可选**声明。未声明的原子只跑"结构封闭 + 值域上限 + 批量-单条一致"
   这三条不需要额外声明的判据；置换不变性在未声明时**不判**，并在审计里写明"未判"（而不是默认通过）
 - 风险：闸 3 会对**已在跑**的原子生效。带 `atomic-cpu-budget` 的既有契约不受影响（默认引擎不变），
   但若某个既有原子的输出含有与输入无关的常量，它会从 active 变为"被拦下"——这正是想要的行为，

@@ -58,7 +58,48 @@ function validate(
 export function validateAtomicContract(
   contract: unknown,
 ): SchemaValidationResult {
-  return validate(contract, CONTRACT_SCHEMA_FILE)
+  const shape = validate(contract, CONTRACT_SCHEMA_FILE)
+  if (!shape.valid) return shape
+  return validateContractConsistency(contract)
+}
+
+/**
+ * 契约的**跨字段一致性** —— JSON Schema 表达不了的部分。
+ *
+ * 两条判据，都是确定性的：
+ *   1. 输出列的 `minimum` 不得大于 `maximum`（值域倒置的声明，闸 3 判不了它）
+ *   2. 汇总位名字不得与某个输出列同名（否则输出布局有歧义，宿主回填时无处安放）
+ *
+ * 为什么放校验器而不是硬塞进 Schema：draft-07 无法在数组元素之间做这类判断；
+ * 放这里判定仍然只有一份（元语不变量 12），前端若需要则调用同一入口。
+ */
+export function validateContractConsistency(
+  contract: unknown,
+): SchemaValidationResult {
+  const errors: string[] = []
+  const output = (contract as { outputSchema?: { columns?: unknown; total?: unknown } })
+    ?.outputSchema
+  const columns = Array.isArray(output?.columns)
+    ? (output.columns as Array<{ name?: string; minimum?: number; maximum?: number }>)
+    : []
+
+  for (const column of columns) {
+    const { name, minimum, maximum } = column
+    if (typeof minimum === 'number' && typeof maximum === 'number' && minimum > maximum) {
+      errors.push(
+        `outputSchema.columns.${name}: minimum (${minimum}) 不得大于 maximum (${maximum})`,
+      )
+    }
+  }
+
+  const totalName = (output?.total as { name?: string } | undefined)?.name
+  if (totalName && columns.some((column) => column.name === totalName)) {
+    errors.push(
+      `outputSchema.total.name: 汇总位名字 ${totalName} 与输出列同名（输出布局有歧义）`,
+    )
+  }
+
+  return { valid: errors.length === 0, errors }
 }
 
 /** 校验一份准入清单（`wasm-modules/build/manifest.json` 的形态）。 */

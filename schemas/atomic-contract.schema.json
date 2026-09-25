@@ -53,6 +53,11 @@
       "maximum": 100000000000,
       "description": "可选：该原子的执行预算（fuel 指令单位）。声明后执行引擎按此预算计量并中断；未声明时取平台默认（ATOMIC_DEFAULT_FUEL）。"
     },
+    "outputAudit": {
+      "enum": ["off", "standard", "strict"],
+      "default": "standard",
+      "description": "闸 3（输出管控）的档位。判据见 docs/protocols/atomic-output-audit.md；off 表示不跑追加判据（既有大小上限检查不受影响）。"
+    },
     "implementation": { "$ref": "#/$defs/implementation" }
   },
   "$defs": {
@@ -118,13 +123,18 @@
             "name": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" }
           }
         },
-        "maxOutputBytes": {
-          "type": "integer",
-          "minimum": 4,
-          "maximum": 67108864,
-          "default": 1048576,
-          "description": "输出区上限，超过即拒并记审计"
-        }
+      "maxOutputBytes": {
+        "type": "integer",
+        "minimum": 4,
+        "maximum": 67108864,
+        "default": 1048576,
+        "description": "输出区上限，超过即拒并记审计"
+      },
+      "commutative": {
+        "type": "boolean",
+        "default": false,
+        "description": "声明该原子对输入行序可交换：打乱行序后输出行应随之重排、汇总位不变。声明后闸 3 才判置换不变（O5）；未声明即记「未判」，不默认通过。"
+      }
       }
     },
     "implementation": {
