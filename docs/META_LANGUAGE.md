@@ -1,7 +1,7 @@
 # 项目元语（Meta Language）
 
-> 版本：1.0
-> 日期：2026-09-24
+> 版本：1.3
+> 日期：2026-09-25
 > 定位：本文件是 sapbase 的**基础定义层** —— 元模型、协议原语、执行原语、工程约定与术语真源。
 > 与设计文档的分工：设计文档回答"**要做什么**"，本文件回答"**用什么词、按什么不变量做、真源在哪**"。
 > 任何新增设计、代码或文档，都应先在本文件的词汇与不变量里找到落点；找不到，说明元语需要扩展（走变更记录）。
@@ -51,9 +51,9 @@ $$
 | # | 协议 | 目的 | 状态 | 落点 |
 | --- | --- | --- | --- | --- |
 | 1 | ERP Meta Model | 业务对象、字段、关系、状态、事件、能力、上下文、版本 | 🟡 部分 | 前端 Schema + `shared-schemas`；JSON Schema 权威源待建 |
-| 2 | Atomic Contract | 原子能力的输入输出、前后置条件、副作用、幂等、权限、错误、实现封装 | 📋 提案中 | `openspec/changes/add-wasm-atomic-runtime/`；实现侧参照 `wasm-modules/build/manifest.json` |
-| 3 | Blueprint Package | 完整 ERP 的语义/流程/规则/表单/BOM/审批/记账/分层/签名 | ❌ 未开始 | 设计见 v3 §5.3、§7 |
-| 4 | Runtime SDK Contract | Blueprint 如何被本地 Runtime 加载、验证、编译、执行 | 🟡 部分 | 执行链已有实际实现（见 3.2 与 3.3），契约文本待固化 |
+| 2 | Atomic Contract | 原子能力的输入输出、前后置条件、副作用、幂等、权限、错误、实现封装 | ✅ 已冻结 | `schemas/atomic-contract.schema.json`、`schemas/atomic-module-manifest.schema.json`；实现见 `openspec/specs/atomic-registry/` |
+| 3 | Blueprint Package | 完整 ERP 的语义/流程/规则/表单/BOM/审批/记账/分层/签名 | 🟡 包与 IR 已冻结 | `schemas/blueprint-package.schema.json`、`schemas/blueprint-ir.schema.json`；文本语法见 [`protocols/blueprint-ir.md`](./protocols/blueprint-ir.md)；表单/规则/BOM/审批层 Schema 待补（v1 逐文件不覆盖即拒） |
+| 4 | Runtime SDK Contract | Blueprint 如何被本地 Runtime 加载、验证、编译、执行 | 🟡 加载链已实现 | 编译与加载见 3.8；执行链见 3.2、3.3。**待固化**：customer 本地 Runtime 侧的装载契约（runtime 范围协商、远端注册表） |
 | 5 | License / Encryption Protocol | 模块如何加密、授权、绑定客户、防二次销售 | ❌ 未开始 | 设计见 v3 §11 |
 
 ---
@@ -136,6 +136,32 @@ L3 验证层     Schema 验证、引用完整性、权限验证、可执行性�
 ```
 
 `Context Envelope` 由 Context Compiler 产出，是送给 LLM 的最小上下文包。
+
+### 3.8 Blueprint 编译与加载链（v1）
+
+从"作者的一堆文件"到"可执行计划"，四道关，**任一不过即拒**（无部分加载、无静默降级）：
+
+```text
+作者目录 ──packBlueprint──▶ .erpkg（包清单是包内唯一权威：逐文件 sha256 + 分层 + 依赖）
+.erpkg ──unpackBlueprint──▶ 内存结构（**永不落盘**：zip slip 最强的防线是没有写入机会）
+.erpkg ──compileBlueprint─▶ IR（逐文件 Schema → 依赖闭包 → 冲突检测 → IR 自检）
+.erpkg ──loadBlueprint────▶ 可执行计划（重编 → 比对 compiled.irDigest → 绑定原子实现）
+```
+
+| 环节 | 落点 | 关键约定 |
+| --- | --- | --- |
+| 打包 / 解包 | `backend/src/blueprint/packager.ts` | 清单由**打包器生成**（不手写）；`.erpkg` 只读进内存 |
+| 编译 | `backend/src/blueprint/compiler.ts` | 未覆盖的文件**拒绝**（不跳过未知文件）；冲突只做**确定性判据** |
+| 加载 | `backend/src/blueprint/loader.ts` | 记录 `irDigest` 是**外部可写数据**，只用来与本次重编结果比对；不采信自述 |
+| 绑定 | `loader.resolveBindings` | 加载期就把 `moduleSha256` 定下来（"客户同意跑的那一份代码"），不留到第一次调用 |
+| 导出 | `backend/src/module-registry/blueprint-export.ts` | 模块记录 → 最小蓝图：只声明模块**确实拥有**的实体名与原子依赖，字段与生命周期**不编** |
+
+两条容易被忽略的边界，写在协议里而不是实现者的默契里：
+
+1. **v1 的 flow 是 DAG**。步骤图成环即冲突；需要回环的场景用"事件再次触发流程"表达。
+   反过来，**实体关系图的环不判**——`Employee.manager` 自引用与 `Order.billingCustomer` 回指都是合法建模。
+2. **IR 双形态等价**。结构化 IR 与文本 IR 互相导出等价，且文本→结构→文本**逐字节一致**，可作 diff 基线
+   （摘要 `compiled.irDigest` 就是文本形态的 sha256）。
 
 ---
 
@@ -226,10 +252,10 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | --- | --- | --- | --- |
 | 元模型 | Meta Model | `Ω`；`ObjectSchema` | 🟡 部分 |
 | 语义对象 | Semantic Object | `ObjectSchema` | ✅ |
-| 原子契约 | Atomic Contract | `atomicType`、`AtomicContract`（提案） | 📋 |
+| 原子契约 | Atomic Contract | `atomicType`、`AtomicContract`、`schemas/atomic-contract.schema.json` | ✅ |
 | 原子模块 | Atomic Module | `wasm-modules/modules/*` | ✅ |
 | 执行引擎 | Wasm Engine | `WasmEngine` 接口；`crates/wasm-host`（Wasmtime）/ `WasmInstancePool`（V8） | ✅ |
-| 原子实现 | Atomic Implementation | `AtomicImplementation.moduleSha256`（提案） | 📋 |
+| 原子实现 | Atomic Implementation | `AtomicImplementation.moduleSha256` | ✅ |
 | 模块清单 | Module Manifest | `wasm-modules/build/manifest.json` | ✅ |
 | 准入层级 | Admission Tier | `AdmissionTier = "A" \| "B"` | ✅ |
 | 准入状态机 | Admission Status | `submitted → built → tested → shadow → canary → active` | ✅ |
@@ -238,8 +264,12 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 静态闸 | Static Gate | `staticGate()`、`StaticGateError` | ✅ |
 | 源码闸 | Source Gate | `sourceGate()`、`SourceGateError` | ✅ |
 | 吊销名单 | Revocation List | `RevocationList`、`assertNotRevoked()` | ✅ |
-| 业务蓝图 | Blueprint | — | 📋 |
-| 蓝图包 | Blueprint Package | `blueprint.erpkg` | ❌ |
+| 业务蓝图 | Blueprint | `blueprint.json`（作者元数据）+ 分层文件 | 🟡 |
+| 蓝图包 | Blueprint Package | `.erpkg`；`schemas/blueprint-package.schema.json`；`BLUEPRINT_PACKAGES_DIR` | ✅ |
+| 蓝图 IR | Blueprint IR | `blueprint-ir/v1`；`schemas/blueprint-ir.schema.json` | ✅ |
+| 编译记录 | Compiled Record | `manifest.compiled.irDigest`、`stampCompiled()` | ✅ |
+| 原子绑定 | Atomic Binding | `AtomicBinding`（契约版本 + `moduleSha256` + tier） | ✅ |
+| 最小蓝图导出 | Minimal Blueprint Export | `buildMinimalBlueprint()`、`POST /api/module-registry/:id/export-blueprint` | ✅ |
 | 能力胶囊 | Capability Capsule | — | ❌ |
 | 增量协议 | Delta | `space-delta/v1`（协议标识）；现有 `PatchScope`/`PatchOperation` | 🟡 |
 | 上下文编译器 | Context Compiler | `ContextEnvelope` | ❌ |
@@ -257,7 +287,8 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | [`TECH_STACK_GAP.md`](./TECH_STACK_GAP.md) | 第 2 节各协议"状态"列的判定依据；Rust 触发条件 |
 | [`TECH_STACK_v2.md`](./TECH_STACK_v2.md) | 前端维度的实际事实（纠正了上游模板残留） |
 | [`wasm-modules/`](../wasm-modules/README.md) | 第 3.2、3.3 节的实现（ABI v1 + 闸 0/1/2/5） |
-| [`openspec/changes/add-wasm-atomic-runtime/`](../openspec/changes/add-wasm-atomic-runtime/proposal.md) | 第 2 节协议 2/4 的落地提案 |
+| [`openspec/specs/atomic-registry/`](../openspec/specs/atomic-registry/spec.md) | 第 2 节协议 2 的落地规格（执行链另见 `wasm-atomic-runtime`） |
+| [`openspec/changes/add-blueprint-package-and-compiler/`](../openspec/changes/add-blueprint-package-and-compiler/proposal.md) | 第 2 节协议 3/4 的落地提案；第 3.8 节的实现设计在其 `design.md` |
 | [`PACKAGE_MANAGER.md`](./PACKAGE_MANAGER.md) | 第 5.1 节工程元语 |
 
 ---
@@ -266,6 +297,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.3 | 2026-09-25 | 协议状态位推进：协议 2（Atomic Contract）📋 → ✅ 已冻结；协议 3（Blueprint Package）❌ → 🟡（包与 IR 已冻结，表单/规则/BOM/审批层待补）；协议 4 补加载链落点。新增 §3.8「Blueprint 编译与加载链」，术语表补 IR/编译记录/原子绑定/最小蓝图导出四行 |
 | 1.2 | 2026-09-24 | 补入口分层：新增 `speckit/AGENTS.md`、`backend/AGENTS.md` 两个作用域入口；`openspec/AGENTS.md` 的 Context Checklist 与 Stage 1 步骤纳入本文件；§5.2 补 Clerk 文档行并标注为待清理残留 |
 | 1.1 | 2026-09-24 | 按反馈修正：移除上一版加入的 space 相关表述（本文件只做结构化系统描述，不引入新概念词）；§5.2 文档真源表改为**索引项目已有的结构化文档**（speckit/docs、backend/docs、openspec），明确"新增内容先放入既有文件，不另建新文件" |
 | 1.0 | 2026-09-24 | 首次建立：从本次会话（设计 v3、技术栈差距、Wasm 原子模块、变更提案、包管理器收敛）提炼元模型、协议与执行原语、不变量、术语表与文档真源 |

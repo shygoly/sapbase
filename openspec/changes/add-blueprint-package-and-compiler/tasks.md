@@ -35,6 +35,22 @@
 > 另有"计划里出现悬空动作"的纯函数负例 —— 这条在正常路径够不到（编译器只允许调用已声明的原子），
 > 保留它作纵深防御，并在测试里写明为什么只能以纯函数方式测。
 > 确定性：同一包重复加载得到同一 `irDigest` 与逐字节相同的 `irText`。
+>
+> **B5 证据（2026-09-25）**：`jest src/module-registry` → **28 passed**（既有 4 + 导出 24）；
+> e2e `test/blueprint-pipeline.e2e-spec.ts` → **2 passed**（真实 PostgreSQL + 真实 Wasm 产物）。
+> 全量回归：单元 **212** × 两引擎、e2e **5**（原子 3 + 蓝图管线 2）、wasm-modules **53**、`tsc --noEmit` **0**。
+> 收口用例逐步断言：模块记录 → 骨架内容（实体名、字段为空）→ manifest 依赖 → 编译摘要写回 → 清单里的 `compiled.irDigest` →
+> 加载后的 `resolvedAtomics` → 经 HTTP 调用该原子返回的 `moduleSha256` 与计划里的绑定**一致**。
+>
+> **顺带发现（既有缺口，不在本变更范围）**：`ModuleRegistryService.findOne` 会 JOIN `createdBy`，
+> 而 `User` 实体仍声明着库里没有的 `role` / `department` / `permissions` 列
+> （库侧已迁到 `roleId` / `departmentId`），于是那条查询在真实库上直接报
+> `column ModuleRegistry__ModuleRegistry_createdBy.role does not exist` ——
+> 受影响的既有接口包括 `GET /api/module-registry/:id`、`:id/capabilities`、`:id/relationships`、`:id/configurations`
+> 与 `addCapability` 等（同一实体的查询都受牵连，含登录路径）。本次**不顺手改**：
+> 它属"用户模型与迁移的一致性"，改动面覆盖 auth 与组织成员，应另立变更。
+> 导出路径因此改用**窄查询**（只要模块行 + capabilities），并在代码里写明原因；
+> e2e 里那一行 capability 用 SQL 造，是为了不把无关失败掩进蓝图管线用例。
 
 1. 每完成一项：勾选 + 附证据（命令 + 结果），不写"应该可以"。
 2. 协议先行：B1 未完成不进 B2。
@@ -88,6 +104,8 @@
 
 ## Phase B5: 端到端
 
-- [ ] `module-registry` 增加"导出最小蓝图"能力（模块 + `dependsOnAtomics` → 包）
-- [ ] e2e：真实模块 → 导出 → 编译 → 加载 → 原子解析 → 经 HTTP 调用该原子
-- [ ] 文档：`META_LANGUAGE.md` 的协议状态位更新（协议 3/4 从 ❌/🟡 前进）、`TECH_STACK_GAP.md` 对应行更新
+- [x] `module-registry` 增加"导出最小蓝图"能力：`blueprint-export.ts`（纯函数）+ `exportBlueprint(moduleId, org, {dir,out})` + `POST /api/module-registry/:id/export-blueprint`
+- [x] 导出只声明模块**确实拥有**的东西（实体名来自 capability / `metadata.entities`；原子依赖来自 `dependsOnAtomics`），字段与生命周期**不编**；不合命名约定的候选连原因一起回报，不静默丢弃
+- [x] 原子依赖逐条解析（与发布同一判据）：解析不到即拒，不交付"编译必然失败"的包
+- [x] e2e：真实模块 → 导出 → 打包 → 编译（写回摘要）→ 加载 → 原子绑定 → **经 HTTP 调用该原子**，并断言计划里的 `moduleSha256` 与调用返回值一致
+- [x] 文档：`META_LANGUAGE.md` 协议状态位（协议 2 📋→✅、协议 3 ❌→🟡、协议 4 补落点）+ 新增 §3.8 编译与加载链；`TECH_STACK_GAP.md` 第 3 / 5.1 / 5.3 节对应行更新

@@ -8,6 +8,11 @@
 > 新增 workspace 包 [`wasm-modules`](../wasm-modules/README.md)。本次更新改变了第 5.3 节
 > "Rust / WASM" 与第 7 节的结论，相关行已就地标注。仍缺的是宿主侧 Wasm 运行时
 > （Wasmtime / WasmEdge）与控制面集成。
+>
+> **更新（2026-09-25）**：宿主侧 Wasm 运行时（Wasmtime）与 Blueprint 包/编译器均已落地，
+> 第 3、5.1、5.3 节的相关行就地更新（变更提案见
+> [`openspec/changes/add-blueprint-package-and-compiler/`](../openspec/changes/add-blueprint-package-and-compiler/proposal.md)）。
+> 结论摘要里的"缺协议与制品"已不再成立；剩下的空白集中在**图/向量检索、事件溯源、可观测性、部署形态**。
 
 ---
 
@@ -77,7 +82,7 @@ find . -maxdepth 5 -type d -name "axios" -not -path "*/axios/*"
 | 元模型定义 | JSON Schema 为权威 + TS(Zod/TypeBox) 与 Rust 双实现 | Zod 4 + 手写 TS 类型；根目录 `schemas/*.schema.json` 仅覆盖 plugin / package-manager / hooks | 🟡 只有 TS 侧一半，且权威源是 TS 类型而非 Schema |
 | 语义图存储 | PostgreSQL + Apache AGE / Memgraph | PostgreSQL（TypeORM）；租户隔离在应用层 | 🟡 有主库，无图扩展 |
 | 版本与生命周期 | semver + 声明式 diff 迁移 + 事件溯源 | `semver` 已装但未做解析器；TypeORM **命令式**迁移；无事件溯源 | ⚠️ 迁移范式与目标相反 |
-| Blueprint 编译器 / IR | Rust，SSA-like IR（文本 + 二进制） | 无 | ❌ |
+| Blueprint 编译器 / IR | Rust，SSA-like IR（文本 + 二进制） | **已实现，但用 TS 而非 Rust**：`backend/src/blueprint/`（校验 → 依赖闭包 → 冲突检测 → IR）+ `schemas/blueprint-ir.schema.json`；IR 双形态（文本 + 结构化）等价且可 **逐字节往返**，摘要为文本形态 sha256，见 `docs/protocols/blueprint-ir.md`。二进制形态仍在目标侧 | 🟡 能力已具备，**实现语言与目标不同**（见 §7 触发条件） |
 | LLM 接入 | 统一 Gateway + 多模型路由 + 成本 / 限流 / 审计 | `backend/src/ai-models/ai-model.entity.ts` 已是模型注册表（kimi / openai / anthropic + `isDefault` + `baseUrl` + `apiKey` + `lastTestedAt`）；另有 `speckit/src/lib/ai/kimi-client.ts` 与 workflow AI guard/suggestion | 🟡 有注册表与调用点，无网关、路由、成本追踪 |
 | 受约束生成 | Structured Outputs / Outlines / XGrammar | 无约束解码；靠 prompt + 回环校验（patch validator、`step3-normalizer`） | 🟡 有回环思想，无语法级约束 |
 | Context Compiler | 图查询 + 向量检索 + 预算优化 | 无（`backend/src/ai-module-context` 手工组织上下文） | ❌ 图库与向量库均不存在 |
@@ -124,7 +129,7 @@ find . -maxdepth 5 -type d -name "axios" -not -path "*/axios/*"
 | 多模型注册表 | `backend/src/ai-models/` | LLM Gateway（雏形） |
 | 应用层租户隔离 | `backend/src/common/entities/tenant-aware.entity.ts` + `common/interceptors/data-isolation.interceptor.ts` | 多租户 |
 | PostgreSQL + Redis | TypeORM + `cache-manager-redis-store` | 主库 + 缓存 |
-| 已装但未用足的三个包 | `adm-zip`（打包）、`jsonschema`（校验）、`semver`（依赖求解） | Blueprint Package 三件套雏形 |
+| ~~已装但未用足的三个包~~ | `adm-zip` / `jsonschema` / `semver` **都已用上**：`.erpkg` 打包与解包、包与 IR 的 Schema 校验、原子依赖的语义化范围求解（`backend/src/blueprint/`、`backend/src/atomic-registry/`） | Blueprint Package 三件套（**已完成**） |
 | GitHub Actions 管道骨架 | `.github/workflows/` | CI/CD（内容需替换） |
 
 ### 5.2 B 组：方向一致但只做到皮毛（补深即可，不换技术）
@@ -134,15 +139,15 @@ find . -maxdepth 5 -type d -name "axios" -not -path "*/axios/*"
 | 多租户 | `organizationId` + 拦截器做应用层隔离 | 数据库 RLS（目标栈推荐的 Pool + RLS 默认策略） |
 | 事件 | 进程内 EventBus，README 已注明可扩展 Redis/RabbitMQ | Outbox、Saga、事件溯源、哈希链 |
 | LLM | 模型注册表 + 调用点 | 统一网关、模型路由、成本与限流、受约束解码 |
-| 版本 | 装了 `semver` | 语义版本求解器 + 兼容性检查（编译期执行） |
-| 制品 | `adm-zip` + `jsonschema` | Blueprint 包格式（manifest / 分层 / 签名） |
+| 版本 | `semver` 已在注册表解析与依赖闭包里使用 | 兼容性检查（跨版本迁移规则）仍缺 |
+| 制品 | `.erpkg` 包格式已落（manifest / 分层 / 逐文件校验和），见 `schemas/blueprint-package.schema.json` | **签名**与 Protected 层加密（属 License 那条线） |
 
 ### 5.3 C 组：真正空白（新增工作量，非改造）
 
 ```text
 ~~Rust / WASM~~（已部分具备：模块源码通道 + 准入门禁 + 复现构建，见 `wasm-modules/`）
 ~~Wasmtime / WasmEdge / Extism~~（**已完成**：openspec change `add-wasmtime-host` —— Rust sidecar + Wasmtime 48 + fuel/epoch/进程隔离；对拍数据与代价清单在其 `design.md`）
-Blueprint Compiler 与 IR
+~~Blueprint Compiler 与 IR~~（**已完成（TS 实现）**：openspec change `add-blueprint-package-and-compiler` —— 包与 IR 协议冻结、编译器、加载与原子绑定；编译/加载链见 `docs/META_LANGUAGE.md` §3.8）
 图数据库（Apache AGE / Memgraph）
 向量检索（Qdrant / pgvector）
 Context Compiler
@@ -173,21 +178,23 @@ OIDC / Keycloak
 ## 6. 建议：先做的三件事（不涉及换栈）
 
 ```text
-1. 五个协议写成 JSON Schema
+1. 五个协议写成 JSON Schema          ← 部分完成：原子契约、蓝图包、IR 已冻结（schemas/）
    现用 Zod 4 可直接导出 JSON Schema，几乎零成本；
    产物放进 schemas/，由 shared-schemas 引用。
 
-2. 落一个最小 Blueprint 包格式（先不加密）
+2. 落一个最小 Blueprint 包格式（先不加密）   ← 已完成（2026-09-25）
    复用已装的 adm-zip + jsonschema + semver；
    打通「模块定义 → 包 → 加载」闭环。
 
-3. 把 Patch DSL 扩展为 space-delta/v2
+3. 把 Patch DSL 扩展为 space-delta/v2     ← 未开始（下一个协议）
    增加 link / unlink 操作；
-   scope 扩展到 semantic / policy / flow / form 等命名空间；
+    scope 扩展到 semantic / policy / flow / form 等命名空间；
    让 AI 生成走「增量 Delta + 确定性校验」。
 ```
 
 三件事的顺序是硬约束：**第 1 件不完成，第 2、3 件会返工**。
+实测结论一致：第 2 件（包与编译器）之所以能一次做对，正是因为第 1 件的包与 IR 协议先冻住了
+（`.erpkg` 的 manifest 是包内唯一权威，编译器与加载器都只认它）。
 
 ---
 
