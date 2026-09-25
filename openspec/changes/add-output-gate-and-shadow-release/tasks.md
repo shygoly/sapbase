@@ -62,6 +62,14 @@
 > **一处刻意的范围收窄**：`isReleasableStatus` 说的"影子只算不发"在本变更**未接**——
 > 那需要影子运行器与调用方身份区分，属影子编排那条线；本变更只做**证据门**。
 > 记在这里而不是假装已覆盖。
+>
+> **P5 证据（2026-09-25）**：`jest --config ./test/jest-e2e.json test/atomic-gates.e2e-spec.ts`
+> → **4 passed**（真实 PostgreSQL + 真实 Wasm 产物，全程 HTTP）：
+> ① 泄漏夹具 → 422 `atomic.output.O2`，响应无 `columns`/`total`，审计 `reason` 含该协议码；
+> ② 诚实模块全链晋升（绑定被拒 → 从 submitted 起步 → 逐级记录证据并晋升 → active）后调用成功，
+> 审计里的 `outputGate` 为 `{profile: standard, rounds: 3}`；
+> ③ 夹具二 → 422 `atomic.output.O4`；④ 补录实现可查。
+> 全量：单元 **305 × 两引擎**、e2e **10**（原子 3 + 蓝图 3 + 闸门 4）、wasm-modules **58**、tsc 0。
 
 ## Phase P0: 基线修复（前置）
 
@@ -135,7 +143,16 @@
 
 ## Phase P5: 端到端
 
-- [ ] e2e：`leaky-output-bits` 模块经真实 HTTP 调用 → 被闸 3 拦下，审计留痕，**未返回结果**
-- [ ] e2e：合规模块 `tested → shadow → canary → active` 全链晋升后调用成功
-- [ ] e2e：`tested → active` 直接绑定被拒（错误里指出缺 `shadow` / `canary` 证据）
-- [ ] 文档：`docs/META_LANGUAGE.md` §3.3 闸表把闸 3 / 闸 4 从 ❌ 改为 ✅，并在变更记录里加一行
+- [x] 控制面端点补齐（否则端到端只能停服务层）：`POST :contractId/implementations`、
+      `POST implementations/:id/promote`，与释放证据 / 补录 / 查补录三个端点一起
+- [x] e2e：`leaky-output-bits` 经真实 HTTP 调用 → **422 + `protocolCode: atomic.output.O2`**，
+      响应里没有 `columns` / `total`（不是"警告后放行"），审计留痕含 `atomic.output.O2`
+- [x] e2e：`leaky-order-channel` 经真实 HTTP → 422 + `atomic.output.O4`，
+      明细含"第 1 行"（O4 不需要任何声明就能判）
+- [x] e2e：诚实模块 `submitted → built → tested → shadow → canary → active` **全链走 HTTP**
+      （证据逐级由端点记录），之后调用成功且审计里的闸 3 报告为 `rounds=3`
+- [x] e2e：绑定成 `active` 被拒（`TRANSITION_NOT_ALLOWED`）、`submitted → active` 跳级被拒、
+      晋 `built` 缺 `sourceGate` 被拒（`EVIDENCE_MISSING`）
+- [x] e2e：补录过的实现可查（`GET implementations/grandfathered`）
+- [x] 文档：`docs/META_LANGUAGE.md` §3.3 闸表闸 3 / 闸 4 从 ❌ 改为 ✅ + 变更记录 1.4；
+      `wasm-modules/README.md` 同步（闸 3/4 归位宿主侧，本包提供闸 3 的对照夹具）

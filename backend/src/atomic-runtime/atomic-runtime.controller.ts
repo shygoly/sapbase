@@ -83,6 +83,52 @@ export class AtomicRuntimeController {
     )
   }
 
+  @Post(':contractId/implementations')
+  @ApiOperation({
+    summary: '把实现绑定到契约（控制面动作；闸 4 在这里拦"直接绑成可运行状态"）',
+  })
+  async bindImplementation(
+    @Param('contractId') contractId: string,
+    @Body()
+    body: {
+      kind: 'typescript' | 'wasm'
+      moduleSha256?: string
+      abiVersion?: number
+      tier?: 'A' | 'B'
+      review?: Record<string, unknown>
+      reproducibleBuildRef?: string
+      sourceGate?: Record<string, unknown>
+      staticGate?: Record<string, unknown>
+      status?: AdmissionStatus
+    },
+  ) {
+    const impl = await this.registry.bindImplementation(contractId, body as never)
+    return {
+      id: impl.id,
+      status: impl.status,
+      moduleSha256: impl.moduleSha256,
+      releaseEvidence: impl.releaseEvidence,
+    }
+  }
+
+  @Post('implementations/:id/promote')
+  @ApiOperation({
+    summary: '推进准入状态（闸 4：逐级过、每级都要平台记录的证据）',
+  })
+  async promote(
+    @Param('id') id: string,
+    @Body() body: { to?: AdmissionStatus },
+  ) {
+    if (!body?.to) {
+      throw new HttpException(
+        { statusCode: 400, code: 'INVALID_INPUT', message: '缺少 to（目标准入状态）' },
+        400,
+      )
+    }
+    const impl = await this.registry.promoteImplementation(id, body.to)
+    return { id: impl.id, status: impl.status, releaseEvidence: impl.releaseEvidence }
+  }
+
   @Post('implementations/:id/release-evidence')
   @ApiOperation({
     summary: '记录闸 4 证据（平台侧：影子/灰度运行结果），晋升判定只认这一列',
