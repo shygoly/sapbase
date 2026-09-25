@@ -63,6 +63,7 @@ describe('AddMemberService', () => {
         organizationId: 'org-1',
         userId: 'user-2',
         role: OrganizationRole.MEMBER,
+        addedById: 'user-1',
       }
 
       organizationRepository.findById.mockResolvedValue(organization)
@@ -85,6 +86,7 @@ describe('AddMemberService', () => {
         organizationId: 'org-999',
         userId: 'user-2',
         role: OrganizationRole.MEMBER,
+        addedById: 'user-1',
       }
 
       organizationRepository.findById.mockResolvedValue(null)
@@ -106,6 +108,7 @@ describe('AddMemberService', () => {
         organizationId: 'org-1',
         userId: 'user-2',
         role: OrganizationRole.MEMBER,
+        addedById: 'user-1',
       }
 
       organizationRepository.findById.mockResolvedValue(organization)

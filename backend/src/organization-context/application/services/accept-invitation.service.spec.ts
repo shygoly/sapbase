@@ -10,7 +10,7 @@ import type {
   IOrganizationMemberRepository,
 } from '../../domain/repositories'
 import type { IEventPublisher } from '../../domain/events'
-import { Invitation } from '../../domain/entities/invitation.entity'
+import { Invitation, InvitationStatus } from '../../domain/entities/invitation.entity'
 import { OrganizationRole } from '../../domain/entities/organization-member.entity'
 import { BusinessRuleViolation } from '../../domain/errors'
 import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
@@ -63,6 +63,7 @@ describe('AcceptInvitationService', () => {
       const command = {
         token: 'token-123',
         userId: 'user-1',
+        userEmail: 'user@example.com',
       }
 
       invitationRepository.findByToken.mockResolvedValue(invitation)
@@ -75,7 +76,7 @@ describe('AcceptInvitationService', () => {
       expect(result).toBeDefined()
       expect(result.organizationId).toBe('org-1')
       expect(result.userId).toBe('user-1')
-      expect(invitation.isAccepted()).toBe(true)
+      expect(invitation.status).toBe(InvitationStatus.ACCEPTED)
       expect(memberRepository.save).toHaveBeenCalled()
     })
 
@@ -83,6 +84,7 @@ describe('AcceptInvitationService', () => {
       const command = {
         token: 'invalid-token',
         userId: 'user-1',
+        userEmail: 'user@example.com',
       }
 
       invitationRepository.findByToken.mockResolvedValue(null)
@@ -100,6 +102,7 @@ describe('AcceptInvitationService', () => {
       const command = {
         token: 'token-123',
         userId: 'user-1',
+        userEmail: 'user@example.com',
       }
 
       invitationRepository.findByToken.mockResolvedValue(invitation)
@@ -119,6 +122,7 @@ describe('AcceptInvitationService', () => {
       const command = {
         token: 'token-123',
         userId: 'user-1',
+        userEmail: 'user@example.com',
       }
 
       invitationRepository.findByToken.mockResolvedValue(invitation)
@@ -143,6 +147,7 @@ describe('AcceptInvitationService', () => {
       const command = {
         token: 'token-123',
         userId: 'user-1',
+        userEmail: 'user@example.com',
       }
 
       invitationRepository.findByToken.mockResolvedValue(invitation)

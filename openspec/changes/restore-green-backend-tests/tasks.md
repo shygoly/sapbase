@@ -22,7 +22,7 @@ cd backend && npx jest --config jest.config.js --runInBand
 | # | 域 | 套件 | 状态 |
 | --- | --- | --- | --- |
 | 0 | 路径与工具模块（`test/utils` 相对深度） | 跨域 8 文件 | ✅ 2026-09-25（20 → 19 套件失败） |
-| 1 | `organization-context` | 9 | 🚧 1/9（`organization.entity` 已修，19 → 18） |
+| 1 | `organization-context` | 9 | 🚧 5/9（domain 5 套件 + 仓库 1 已绿；4 个应用服务套件仍红：真实断言不匹配） |
 | 2 | `auth-context` + `auth` | 5 | ⏳ |
 | 3 | `common/events` | 1 | ⏳ |
 | 4 | `ai-modules` | 1（4 个断言失败） | ⏳ |
@@ -36,10 +36,20 @@ cd backend && npx jest --config jest.config.js --runInBand
 | `organization-context/domain/entities/organization.entity.spec.ts` | `updateSlug` 的用例 | `Organization.updateSlug()` 在实现里不存在（slug 只由 name 推导，构造后不可改） | 无（能力已移除，不是漏测） |
 | 同上 | `removeMemberFromCollection()` 的两个用例 | 方法不存在；当前是 `removeMember(userId, removerId)`，且带 owner 权限与"最后一个 owner 不能删"的规则 | 新写的 `removeMember` 三例（owner 可删 / 非 owner 拒绝 / 最后一个 owner 拒绝） |
 | 同上 | `hasOwner()` 的两个用例 | 方法不存在；owner 判定改成 `canBeUpdatedBy(userId)` 与各方法内部的 owner 校验 | 新写的 `canBeUpdatedBy` 一例 + `updateMemberRole` 的 owner 校验两例 |
+| `organization-slug.vo.spec.ts` | `create()` 上的 5 个校验负例（空/过短/非法字符/首尾连字符） | `OrganizationSlug.create()` 只做**归一化**不做校验（校验在 `fromString`）—— 旧断言对着不存在的校验 | 新写的 `fromString` 三例（空 / 大写下划线 / 合法） |
+| `organization-member.entity.spec.ts` | `isOwner()` / `isAdmin()` / `OrganizationRole.ADMIN` 相关用例 | 实现里角色只有 `OWNER` / `MEMBER`，也没有 `isOwner` / `isAdmin` 方法 | 角色用 `role` getter 断言；成员权限规则改在 `organization.entity.spec.ts` 测（owner 才能移除/改角色） |
+| `invitation.entity.spec.ts` | `acceptedAt` / `isAccepted()` 断言、7 参 `create(id, …, expiresAt)` 用例 | 现在的模型是**状态机**（`status` + `isPending/accept/expire/cancel`）+ 仓储分配 id + 按天数算过期 | 新写的状态机用例（accept 一次性、过期、cancel 权限、expire） |
 
 > 判定：这三条都属于**能力被有意移除**（不是实现漏做）——它们在当前 API 里没有对应物，
 > 而新 API 用更细的规则覆盖了同类关注点。整仓 `tsc` 也从未接受过旧断言，说明它们
 > 不是"曾经绿过之后被改坏"，而是**写下来就没跑过**。
+
+### 发现：实现缺口（不是 spec 的问题，单列出来）
+
+| 位置 | 现象 | 影响 |
+| --- | --- | --- |
+| `OrganizationSlug.create()` → `Organization.create(id, name)` | **由名字推导的 slug 不校验**：`generateFromName('已存在模块')` → `''`，于是可以建出 slug 为空的组织 | 组织标识（用于 URL/查找）可能为空；建议单独变更补校验，或明确允许并写进协议 |
+| `test/utils/domain-builders.ts` | 与实现漂移严重（`Invitation.create` 7 参、`Organization.create` 3 参、`WorkflowInstance.create` 传 id 而非实例、成员构造参数顺序） | 它是**共享测试基础设施**：它错一处，所有 import 它的 spec 一起挂。本次已按当前实现逐个改正 |
 
 ## 里程碑 0：路径与工具模块（已完成）
 

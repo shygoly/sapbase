@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid'
-import { Organization } from '../../src/organization-context/domain/entities/organization.entity'
+import { Organization, SubscriptionStatus } from '../../src/organization-context/domain/entities/organization.entity'
 import { OrganizationMember, OrganizationRole } from '../../src/organization-context/domain/entities/organization-member.entity'
-import { Invitation } from '../../src/organization-context/domain/entities/invitation.entity'
+import { Invitation, InvitationStatus } from '../../src/organization-context/domain/entities/invitation.entity'
 import { WorkflowDefinition } from '../../src/workflow-context/domain/entities/workflow-definition.entity'
-import { WorkflowInstance } from '../../src/workflow-context/domain/entities/workflow-instance.entity'
+import { WorkflowInstance, WorkflowInstanceStatus } from '../../src/workflow-context/domain/entities/workflow-instance.entity'
 import { OrganizationSlug } from '../../src/organization-context/domain/value-objects/organization-slug.vo'
 
 /**
@@ -14,6 +14,7 @@ export class OrganizationBuilder {
   private id: string = `org-${uuidv4()}`
   private name: string = 'Test Organization'
   private slug: OrganizationSlug = OrganizationSlug.create('test-org')
+  private members: OrganizationMember[] = []
   private createdAt: Date = new Date()
   private updatedAt: Date = new Date()
 
@@ -32,8 +33,25 @@ export class OrganizationBuilder {
     return this
   }
 
+  withMembers(...members: OrganizationMember[]): this {
+    this.members = members
+    return this
+  }
+
   build(): Organization {
-    return Organization.create(this.id, this.name, this.slug)
+    // 当前模型：slug 由 name 推导、且不可变；需要特定 slug/成员/订阅状态时必须走 fromPersistence
+    // （change: restore-green-backend-tests）
+    return Organization.fromPersistence(
+      this.id,
+      this.name,
+      this.slug.toString(),
+      this.members,
+      SubscriptionStatus.ACTIVE,
+      null,
+      null,
+      null,
+      null,
+    )
   }
 }
 
@@ -66,11 +84,15 @@ export class OrganizationMemberBuilder {
   }
 
   build(): OrganizationMember {
-    return OrganizationMember.create(
+    // create() 的签名是 (organizationId, userId, role, invitedById) 且 id 留空由仓储分配；
+    // builder 要能指定 id，所以走 fromPersistence（change: restore-green-backend-tests）
+    return OrganizationMember.fromPersistence(
       this.id,
       this.organizationId,
       this.userId,
       this.role,
+      null,
+      this.createdAt,
     )
   }
 }
@@ -122,14 +144,18 @@ export class InvitationBuilder {
   }
 
   build(): Invitation {
-    return Invitation.create(
+    // 当前模型：状态机 + 仓储分配 id + expiresAt。用 fromPersistence 精确构造，
+    // 才能同时表达「已接受」与「已过期」两种测试前置（change: restore-green-backend-tests）
+    return Invitation.fromPersistence(
       this.id,
       this.organizationId,
       this.email,
-      this.invitedBy,
       this.role,
+      this.invitedBy,
+      this.acceptedAt ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING,
       this.token,
       this.expiresAt,
+      this.createdAt,
     )
   }
 }
@@ -264,14 +290,24 @@ export class WorkflowInstanceBuilder {
   }
 
   build(): WorkflowInstance {
-    return WorkflowInstance.create(
+    // 现在 create() 要求传入 WorkflowDefinition 实例并调用 ensureCanStart()；builder 只有 id，
+    // 所以用 fromPersistence 构造（绕过启动校验，符合"测试里精确摆放状态"的用法）
+    return WorkflowInstance.fromPersistence(
       this.id,
-      this.workflowDefinitionId,
       this.organizationId,
+      this.workflowDefinitionId,
       this.entityType,
       this.entityId,
       this.currentState,
       this.context,
+      this.status === 'completed'
+        ? WorkflowInstanceStatus.COMPLETED
+        : this.status === 'cancelled'
+          ? WorkflowInstanceStatus.CANCELLED
+          : WorkflowInstanceStatus.RUNNING,
+      null,
+      this.createdAt,
+      this.status === 'running' ? null : this.updatedAt,
     )
   }
 }

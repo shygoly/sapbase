@@ -93,7 +93,7 @@ describe('OrganizationRepository (Infrastructure)', () => {
       const result = await repository.findBySlug('test-org')
 
       expect(result).toBeDefined()
-      expect(result?.slug.value).toBe('test-org')
+      expect(result?.slug).toBe('test-org')
     })
   })
 

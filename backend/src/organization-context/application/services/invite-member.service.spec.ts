@@ -11,7 +11,7 @@ import type {
 } from '../../domain/repositories'
 import type { IEventPublisher } from '../../domain/events'
 import { Organization } from '../../domain/entities/organization.entity'
-import { Invitation } from '../../domain/entities/invitation.entity'
+import { Invitation, InvitationStatus } from '../../domain/entities/invitation.entity'
 import { OrganizationRole } from '../../domain/entities/organization-member.entity'
 import { BusinessRuleViolation } from '../../domain/errors'
 import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
@@ -62,11 +62,11 @@ describe('InviteMemberService', () => {
         organizationId: 'org-1',
         email: 'newuser@example.com',
         role: OrganizationRole.MEMBER,
-        invitedBy: 'user-1',
+        invitedById: 'user-1',
       }
 
       organizationRepository.findById.mockResolvedValue(organization)
-      invitationRepository.findByEmailAndOrganization.mockResolvedValue(null)
+      invitationRepository.findByOrganizationAndEmail.mockResolvedValue(null)
       invitationRepository.save.mockResolvedValue(undefined)
 
       const result = await service.execute(command)
@@ -82,7 +82,7 @@ describe('InviteMemberService', () => {
         organizationId: 'org-999',
         email: 'user@example.com',
         role: OrganizationRole.MEMBER,
-        invitedBy: 'user-1',
+        invitedById: 'user-1',
       }
 
       organizationRepository.findById.mockResolvedValue(null)
@@ -95,25 +95,27 @@ describe('InviteMemberService', () => {
         .withId('org-1')
         .build()
 
-      const existingInvitation = Invitation.create(
+      const existingInvitation = Invitation.fromPersistence(
         'invitation-1',
         'org-1',
         'user@example.com',
-        'user-1',
         OrganizationRole.MEMBER,
+        'user-1',
+        InvitationStatus.PENDING,
         'token-123',
         new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        new Date(),
       )
 
       const command = {
         organizationId: 'org-1',
         email: 'user@example.com',
         role: OrganizationRole.MEMBER,
-        invitedBy: 'user-1',
+        invitedById: 'user-1',
       }
 
       organizationRepository.findById.mockResolvedValue(organization)
-      invitationRepository.findByEmailAndOrganization.mockResolvedValue(existingInvitation)
+      invitationRepository.findByOrganizationAndEmail.mockResolvedValue(existingInvitation)
 
       await expect(service.execute(command)).rejects.toThrow(
         BusinessRuleViolation,
