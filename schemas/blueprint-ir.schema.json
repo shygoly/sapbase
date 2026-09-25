@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/blueprint-ir.schema.json",
+  "title": "Blueprint IR (structured)",
+  "description": "编译器的结构化输出 / Runtime 的输入。文本形态（见 docs/protocols/blueprint-ir.md）必须与结构形态等价，等价性由往返测试保证。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ir", "blueprint", "version", "entities", "events", "dependencies"],
+  "properties": {
+    "ir": { "const": "blueprint-ir/v1" },
+    "blueprint": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "fieldCount", "states"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+          "fieldCount": { "type": "integer", "minimum": 0 },
+          "states": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["on", "actions"],
+        "properties": {
+          "on": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*\\.[a-z][A-Za-z0-9]*$", "description": "如 SalesOrder.submitted" },
+          "actions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind"],
+              "properties": {
+                "kind": { "enum": ["check", "require-approval", "post-accounting"] },
+                "atomic": { "type": "string", "description": "kind=check 时必填：atomicType@range" },
+                "rule": { "type": "string", "description": "kind=require-approval 时必填：规则 id" },
+                "entry": { "type": "string", "description": "kind=post-accounting 时必填：会计事件 id" },
+                "when": { "type": "string", "description": "可选触发条件（表达式文本）" }
+              },
+              "allOf": [
+                {
+                  "if": { "properties": { "kind": { "const": "check" } }, "required": ["kind"] },
+                  "then": { "required": ["atomic"] }
+                },
+                {
+                  "if": { "properties": { "kind": { "const": "require-approval" } }, "required": ["kind"] },
+                  "then": { "required": ["rule"] }
+                },
+                {
+                  "if": { "properties": { "kind": { "const": "post-accounting" } }, "required": ["kind"] },
+                  "then": { "required": ["entry"] }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "解析后的依赖引用（如 available-inventory@1.0.0）—— 记录编译时实际解析到的版本"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entities": { "type": "integer", "minimum": 0 },
+        "events": { "type": "integer", "minimum": 0 },
+        "files": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

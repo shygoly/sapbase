@@ -8,7 +8,7 @@ import {
   validateAtomicContract,
   validateModuleManifest,
 } from './contract-validator'
-import { resolveSchemasDir } from './schema-loader'
+import { resolveSchemasDir } from '../common/protocol/schema-loader'
 
 /** 可用库存原子的真实契约（与 wasm-modules 的 ABI v1 对应）。 */
 const VALID_CONTRACT = {

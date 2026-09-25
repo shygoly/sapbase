@@ -15,7 +15,7 @@ import {
   CONTRACT_SCHEMA_FILE,
   MANIFEST_SCHEMA_FILE,
   loadSchema,
-} from './schema-loader'
+} from '../common/protocol/schema-loader'
 
 export interface SchemaValidationResult {
   valid: boolean

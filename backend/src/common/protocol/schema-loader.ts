@@ -1,13 +1,14 @@
-// 协议 Schema 的定位与加载。
+// 协议 Schema 的定位与加载（**通用工具**，被原子注册表与蓝图编译器共用）。
 //
-// 权威定义在仓库根 `schemas/atomic-*.schema.json`：它是语言中立的协议产物，
-// 前后端与外部工具都消费同一份，避免"每端各写一套判定"（元语不变量 12）。
-// 本模块只负责找到并读入它，不做任何判定。
+// 权威定义在仓库根 `schemas/*.schema.json`：语言中立的协议产物，前后端与外部工具消费同一份，
+// 避免"每端各写一套判定"（元语不变量 12）。本模块只负责找到并读入，不做任何判定。
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 
 export const CONTRACT_SCHEMA_FILE = 'atomic-contract.schema.json'
 export const MANIFEST_SCHEMA_FILE = 'atomic-module-manifest.schema.json'
+export const BLUEPRINT_PACKAGE_SCHEMA_FILE = 'blueprint-package.schema.json'
+export const BLUEPRINT_IR_SCHEMA_FILE = 'blueprint-ir.schema.json'
 
 /** 向上查找的最大层数：backend/src/xxx → backend → 仓库根 */
 const MAX_WALK_UP = 8

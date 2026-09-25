@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/blueprint-package.schema.json",
+  "title": "Blueprint Package Manifest",
+  "description": "蓝图包（.erpkg）的 manifest —— 包内**唯一权威**入口。它声明 id/版本/runtime 范围/依赖/分层/每个文件的校验和。校验和只描述形状；「分层引用必须都属于 files」「files 必须被任何一层覆盖」这类跨字段一致性由校验器负责（见 backend/src/blueprint）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["blueprint", "version", "runtime", "layers", "files"],
+  "properties": {
+    "blueprint": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "maxLength": 64,
+      "description": "蓝图标识（kebab-case），如 auto-parts-erp"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "蓝图语义化版本"
+    },
+    "runtime": {
+      "type": "string",
+      "minLength": 1,
+      "description": "所需 Runtime 的语义化范围，如 \">=1.0.0 <2.0.0\""
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "依赖声明。原子走 AtomicRegistry.resolve 校验；模块与蓝图依赖由各自注册表校验。",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["atomic", "version"],
+            "properties": {
+              "atomic": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+              "version": { "type": "string", "minLength": 1 }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["module", "version"],
+            "properties": {
+              "module": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+              "version": { "type": "string", "minLength": 1 }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["blueprint", "version"],
+            "properties": {
+              "blueprint": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+              "version": { "type": "string", "minLength": 1 }
+            }
+          }
+        ]
+      }
+    },
+    "layers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["public"],
+      "description": "分层可见性。public 必须有；configurable / protected 可选。**每个文件都必须被某一层覆盖**（校验器强制）。",
+      "properties": {
+        "public": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/filePath" }
+        },
+        "configurable": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/filePath" }
+        },
+        "protected": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/filePath" },
+          "description": "v1 只校验存在性与校验和；**不承诺加密**（加密与签名属 License 协议，另立变更）"
+        }
+      }
+    },
+    "files": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "包内每个文件的校验和（含 manifest 之外的所有文件）。",
+      "propertyNames": { "$ref": "#/$defs/filePath" },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^sha256:[0-9a-f]{64}$"
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "server": { "type": ["string", "null"] }
+      }
+    },
+    "signature": {
+      "type": "string",
+      "description": "v1 允许缺失；校验和必须存在，签名属 License 协议那条线"
+    }
+  },
+  "$defs": {
+    "filePath": {
+      "type": "string",
+      "pattern": "^(?!.*\\.\\.)(?!/)[A-Za-z0-9._/-]+$",
+      "minLength": 1,
+      "description": "包内相对路径：禁止以 / 开头、禁止出现 ..（防路径穿越）"
+    }
+  }
+}
