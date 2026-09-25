@@ -14,8 +14,8 @@ import { Organization } from '../../domain/entities/organization.entity'
 import { OrganizationMember, OrganizationRole } from '../../domain/entities/organization-member.entity'
 import { BusinessRuleViolation } from '../../domain/errors'
 import { MemberAddedEvent } from '../../domain/events'
-import { createMockEventPublisher, createMockRepository } from '../../../test/utils/test-helpers'
-import { OrganizationBuilder, OrganizationMemberBuilder } from '../../../test/utils/domain-builders'
+import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
+import { OrganizationBuilder, OrganizationMemberBuilder } from '../../../../test/utils/domain-builders'
 
 describe('AddMemberService', () => {
   let service: AddMemberService

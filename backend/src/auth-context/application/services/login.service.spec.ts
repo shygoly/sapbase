@@ -13,7 +13,7 @@ import type {
 import type { IJwtService, IPasswordService } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { AuthenticationError } from '../../domain/errors'
-import { createMockEventPublisher, createMockRepository } from '../../../test/utils/test-helpers'
+import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
 
 describe('LoginService', () => {
   let service: LoginService

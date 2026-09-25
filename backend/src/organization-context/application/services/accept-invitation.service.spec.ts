@@ -13,8 +13,8 @@ import type { IEventPublisher } from '../../domain/events'
 import { Invitation } from '../../domain/entities/invitation.entity'
 import { OrganizationRole } from '../../domain/entities/organization-member.entity'
 import { BusinessRuleViolation } from '../../domain/errors'
-import { createMockEventPublisher, createMockRepository } from '../../../test/utils/test-helpers'
-import { InvitationBuilder, OrganizationMemberBuilder } from '../../../test/utils/domain-builders'
+import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
+import { InvitationBuilder, OrganizationMemberBuilder } from '../../../../test/utils/domain-builders'
 
 describe('AcceptInvitationService', () => {
   let service: AcceptInvitationService

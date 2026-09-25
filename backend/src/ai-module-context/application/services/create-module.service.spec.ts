@@ -7,7 +7,7 @@ import {
 import type { IAIModuleRepository } from '../../domain/repositories'
 import type { IEventPublisher } from '../../domain/events'
 import { AIModule } from '../../domain/entities/ai-module.entity'
-import { createMockEventPublisher, createMockRepository } from '../../../test/utils/test-helpers'
+import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
 
 describe('CreateModuleService', () => {
   let service: CreateModuleService

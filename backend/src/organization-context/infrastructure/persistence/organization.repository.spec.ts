@@ -6,7 +6,7 @@ import { Organization as OrganizationOrm } from '../../../organizations/organiza
 import { OrganizationMember as OrganizationMemberOrm } from '../../../organizations/organization-member.entity'
 import { Organization } from '../../domain/entities/organization.entity'
 import { OrganizationSlug } from '../../domain/value-objects/organization-slug.vo'
-import { OrganizationBuilder } from '../../../test/utils/domain-builders'
+import { OrganizationBuilder } from '../../../../test/utils/domain-builders'
 
 describe('OrganizationRepository (Infrastructure)', () => {
   let repository: OrganizationRepository

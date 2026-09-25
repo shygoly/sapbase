@@ -13,7 +13,7 @@ import type {
 import type { IJwtService } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { AuthenticationError } from '../../domain/errors'
-import { createMockEventPublisher, createMockRepository } from '../../../test/utils/test-helpers'
+import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
 
 describe('SwitchOrganizationService', () => {
   let service: SwitchOrganizationService

@@ -12,8 +12,8 @@ import { Organization } from '../../domain/entities/organization.entity'
 import { OrganizationSlug } from '../../domain/value-objects/organization-slug.vo'
 import { BusinessRuleViolation } from '../../domain/errors'
 import { OrganizationCreatedEvent } from '../../domain/events'
-import { createMockEventPublisher, createMockRepository } from '../../../test/utils/test-helpers'
-import { OrganizationBuilder } from '../../../test/utils/domain-builders'
+import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
+import { OrganizationBuilder } from '../../../../test/utils/domain-builders'
 
 describe('CreateOrganizationService', () => {
   let service: CreateOrganizationService
