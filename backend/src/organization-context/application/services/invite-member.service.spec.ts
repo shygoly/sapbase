@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { InviteMemberService } from './invite-member.service'
 import {
+  ORGANIZATION_MEMBER_REPOSITORY,
   ORGANIZATION_REPOSITORY,
   INVITATION_REPOSITORY,
   EVENT_PUBLISHER,
@@ -26,6 +27,8 @@ describe('InviteMemberService', () => {
   beforeEach(async () => {
     const mockOrganizationRepository = createMockRepository<IOrganizationRepository>()
     const mockInvitationRepository = createMockRepository<IInvitationRepository>()
+    // 服务后来加了「邀请前校验邀请人是否为成员」这一步
+    const mockMemberRepository = createMockRepository()
     const mockEventPublisher = createMockEventPublisher()
 
     const module: TestingModule = await Test.createTestingModule({
@@ -38,6 +41,10 @@ describe('InviteMemberService', () => {
         {
           provide: INVITATION_REPOSITORY,
           useValue: mockInvitationRepository,
+        },
+        {
+          provide: ORGANIZATION_MEMBER_REPOSITORY,
+          useValue: mockMemberRepository,
         },
         {
           provide: EVENT_PUBLISHER,
@@ -90,7 +97,9 @@ describe('InviteMemberService', () => {
       await expect(service.execute(command)).rejects.toThrow()
     })
 
-    it('should throw error if invitation already exists', async () => {
+    // 行为已变更（有意）：重复邀请**不再报错**，而是刷新那条待接受邀请的有效期后复用。
+    // 旧断言写的是"应抛错" —— 与当前实现相反，属"能力被有意改成幂等"，已登记在 tasks.md。
+    it('should refresh the pending invitation instead of failing（幂等重发）', async () => {
       const organization = new OrganizationBuilder()
         .withId('org-1')
         .build()
@@ -103,7 +112,8 @@ describe('InviteMemberService', () => {
         'user-1',
         InvitationStatus.PENDING,
         'token-123',
-        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        // 只剩 1 天：刷新后应当明显更远（用 7 天做夹具的话，与刷新后的时间在毫秒级上分不出来）
+        new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
         new Date(),
       )
 
@@ -116,10 +126,17 @@ describe('InviteMemberService', () => {
 
       organizationRepository.findById.mockResolvedValue(organization)
       invitationRepository.findByOrganizationAndEmail.mockResolvedValue(existingInvitation)
+      invitationRepository.save.mockResolvedValue(undefined)
 
-      await expect(service.execute(command)).rejects.toThrow(
-        BusinessRuleViolation,
-      )
+      // 先取原值：服务是**就地**改这条邀请的 expiresAt（复用的就是同一个对象）
+      const originalExpiresAt = existingInvitation.expiresAt!.getTime()
+      const result = await service.execute(command)
+
+      expect(result.id).toBe('invitation-1')
+      expect(result.status).toBe(InvitationStatus.PENDING)
+      // 有效期被推后（复用同一条邀请，而不是新建一条）
+      expect(result.expiresAt!.getTime()).toBeGreaterThan(originalExpiresAt)
+      expect(invitationRepository.save).toHaveBeenCalledWith(existingInvitation)
     })
   })
 })

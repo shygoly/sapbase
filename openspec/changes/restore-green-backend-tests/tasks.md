@@ -22,7 +22,7 @@ cd backend && npx jest --config jest.config.js --runInBand
 | # | 域 | 套件 | 状态 |
 | --- | --- | --- | --- |
 | 0 | 路径与工具模块（`test/utils` 相对深度） | 跨域 8 文件 | ✅ 2026-09-25（20 → 19 套件失败） |
-| 1 | `organization-context` | 9 | 🚧 6/9（domain 5 + 仓库 1 已绿；4 个应用服务套件仍红：DI 供应商与真实断言不匹配） |
+| 1 | `organization-context` | 9 | ✅ 2026-09-25（9 套件 / **61 用例全绿**；整仓 13 → 9 套件失败） |
 | 2 | `auth-context` + `auth` | 5 | ⏳ |
 | 3 | `common/events` | 1 | ⏳ |
 | 4 | `ai-modules` | 1（4 个断言失败） | ⏳ |
@@ -39,6 +39,8 @@ cd backend && npx jest --config jest.config.js --runInBand
 | `organization-slug.vo.spec.ts` | `create()` 上的 5 个校验负例（空/过短/非法字符/首尾连字符） | `OrganizationSlug.create()` 只做**归一化**不做校验（校验在 `fromString`）—— 旧断言对着不存在的校验 | 新写的 `fromString` 三例（空 / 大写下划线 / 合法） |
 | `organization-member.entity.spec.ts` | `isOwner()` / `isAdmin()` / `OrganizationRole.ADMIN` 相关用例 | 实现里角色只有 `OWNER` / `MEMBER`，也没有 `isOwner` / `isAdmin` 方法 | 角色用 `role` getter 断言；成员权限规则改在 `organization.entity.spec.ts` 测（owner 才能移除/改角色） |
 | `invitation.entity.spec.ts` | `acceptedAt` / `isAccepted()` 断言、7 参 `create(id, …, expiresAt)` 用例 | 现在的模型是**状态机**（`status` + `isPending/accept/expire/cancel`）+ 仓储分配 id + 按天数算过期 | 新写的状态机用例（accept 一次性、过期、cancel 权限、expire） |
+| `invite-member.service.spec.ts` | `should throw error if invitation already exists` | 行为已**有意改成幂等**：重复邀请不再报错，而是刷新那条待接受邀请的有效期后复用 | 改写成 `should refresh the pending invitation instead of failing`：断言复用同一条（id 不变）、有效期被推后、写回仓储 |
+| `add-member.service.spec.ts` | 用 `memberRepository.findByOrganizationAndUser` 造"已存在" | 重复校验已移到**聚合内部**（`Organization.validateCanAddMember`），不再查仓储 | 改为把既有成员放进聚合（`OrganizationBuilder.withMembers`）后再断言抛错 |
 
 > 判定：这三条都属于**能力被有意移除**（不是实现漏做）——它们在当前 API 里没有对应物，
 > 而新 API 用更细的规则覆盖了同类关注点。整仓 `tsc` 也从未接受过旧断言，说明它们

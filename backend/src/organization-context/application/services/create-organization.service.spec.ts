@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { CreateOrganizationService } from './create-organization.service'
 import {
   ORGANIZATION_REPOSITORY,
+  ORGANIZATION_MEMBER_REPOSITORY,
   EVENT_PUBLISHER,
 } from '../../domain/repositories'
 import type {
@@ -22,6 +23,8 @@ describe('CreateOrganizationService', () => {
 
   beforeEach(async () => {
     const mockOrganizationRepository = createMockRepository<IOrganizationRepository>()
+    // 服务后来加了「创建者即为 owner 成员」这一步，依赖随之增加（spec 没跟上就 DI 报错）
+    const mockMemberRepository = createMockRepository()
     const mockEventPublisher = createMockEventPublisher()
 
     const module: TestingModule = await Test.createTestingModule({
@@ -30,6 +33,10 @@ describe('CreateOrganizationService', () => {
         {
           provide: ORGANIZATION_REPOSITORY,
           useValue: mockOrganizationRepository,
+        },
+        {
+          provide: ORGANIZATION_MEMBER_REPOSITORY,
+          useValue: mockMemberRepository,
         },
         {
           provide: EVENT_PUBLISHER,

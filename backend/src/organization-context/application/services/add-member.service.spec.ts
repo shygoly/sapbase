@@ -95,13 +95,16 @@ describe('AddMemberService', () => {
     })
 
     it('should throw error if member already exists', async () => {
-      const organization = new OrganizationBuilder()
-        .withId('org-1')
-        .build()
-
+      // 重复校验现在在**聚合内部**（Organization.validateCanAddMember）：把既有成员放进聚合，
+      // 而不是 mock 一次仓储查询 —— 旧写法测的是已经不存在的实现细节
       const existingMember = new OrganizationMemberBuilder()
         .withOrganizationId('org-1')
         .withUserId('user-2')
+        .build()
+
+      const organization = new OrganizationBuilder()
+        .withId('org-1')
+        .withMembers(existingMember)
         .build()
 
       const command = {
@@ -112,8 +115,6 @@ describe('AddMemberService', () => {
       }
 
       organizationRepository.findById.mockResolvedValue(organization)
-      memberRepository.findByOrganizationAndUser.mockResolvedValue(existingMember)
-
       await expect(service.execute(command)).rejects.toThrow(
         BusinessRuleViolation,
       )
