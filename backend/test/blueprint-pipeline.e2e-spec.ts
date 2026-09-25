@@ -259,4 +259,30 @@ describe('蓝图管线（e2e，真实模块 + 真实 Wasm 原子）', () => {
       modules.exportBlueprint(moduleId, ORGANIZATION_ID, { dir: exportDir }),
     ).rejects.toThrow(/依赖的原子不可用/)
   })
+
+  it('模块注册表的既有查询在真实库上可用（users 基线回归）', async () => {
+    if (!available) return
+    const modules = app.get(ModuleRegistryService)
+
+    const module = await modules.create(
+      { name: 'Baseline Probe', version: '1.0.0', metadata: { entities: ['Probe'] } },
+      ORGANIZATION_ID,
+    )
+
+    // 这一条在补 users 基线之前是 500：findOne 会 JOIN createdBy，
+    // 而 User 实体声明的 role / department / permissions 在早期库的 users 表里不存在。
+    const found = await modules.findOne(module.id, ORGANIZATION_ID)
+    expect(found.name).toBe('Baseline Probe')
+
+    // capability 走同一条查询（也是之前挂掉的那条路）
+    await expect(
+      modules.addCapability(
+        module.id,
+        { capabilityType: 'crud' as never, entity: 'Probe', operations: [], apiEndpoints: [] },
+        ORGANIZATION_ID,
+      ),
+    ).resolves.toBeDefined()
+
+    await modules.remove(module.id, ORGANIZATION_ID)
+  })
 })

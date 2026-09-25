@@ -2,7 +2,7 @@
  * 端到端：**经真实 HTTP 接口**调用一个真实的 Wasm 原子，并核对审计落库。
  *
  * 前置：本地 PostgreSQL 已有 `sapbasic` 库，且原子注册表三张表已建
- * （`npx ts-node --transpile-only scripts/run-atomic-migration.ts`）。
+ * （`npx ts-node --transpile-only scripts/run-targeted-migration.ts --group=atomic`）。
  * 未满足时不硬失败，而是跳过并说明 —— 但那种跳过会在输出里明确写出来。
  */
 import { INestApplication } from '@nestjs/common'
@@ -137,7 +137,7 @@ describe('原子运行时（e2e，真实 HTTP + 真实 Wasm）', () => {
 
   it('POST /api/atomic-contracts/:type/invoke 返回真实计算结果，并写入审计', async () => {
     if (!available) {
-      console.warn('跳过 e2e：本地库缺少原子注册表（先跑 scripts/run-atomic-migration.ts）')
+      console.warn('跳过 e2e：本地库缺少原子注册表（先跑 scripts/run-targeted-migration.ts --group=atomic）')
       return
     }
 

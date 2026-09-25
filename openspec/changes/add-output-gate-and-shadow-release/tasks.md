@@ -18,16 +18,27 @@
 3. fail-closed：闸 3 命中判决即**不返回结果**；闸 4 缺证据即**不绑定**。没有"警告后放行"。
 4. 每个里程碑结束跑一次全量回归（单元 × 两引擎、e2e、`wasm-modules`、`tsc`）。
 
+> **P0 证据（2026-09-25）**：
+> 空库路径 `DB_NAME=sapbase_baseline_probe npx ts-node --transpile-only scripts/run-targeted-migration.ts --group=baseline`
+> → 建出 `users`（首次失败：`function uuid_generate_v4() does not exist`，补上扩展安装后通过，
+> 这正是"从零重建"才会暴露的问题）；`--revert` → 表被删除。
+> 旧库路径：本地 `sapbasic` 应用后 e2e 断言通过 ——
+> `jest --config ./test/jest-e2e.json test/blueprint-pipeline.e2e-spec.ts` → **3 passed**
+> （其中「模块注册表的既有查询在真实库上可用」此前是 500）。
+
 ## Phase P0: 基线修复（前置）
 
-- [ ] 核实并写下事实：仓库迁移集里**没有**任何迁移创建 `users` 表（`rg "name: 'users'" src/migrations/` 无结果），
-      本地库的 `users` 是早期形态（`roleId` / `departmentId`），与 `User` 实体声明的
-      `role` / `department` / `permissions` 不一致
-- [ ] 补 `users` 基线迁移（含 `roles` / `departments` 外键列），并让迁移在**已有旧表**的库上也能跑通（幂等：存在即跳过/对齐）
-- [ ] 验证"从零重建"：在空库上跑完全部迁移不报错，且 `synchronize: false` 下 TypeORM 能加载全部实体
-- [ ] 回归：`GET /api/module-registry/:id`、`:id/capabilities`、`addCapability` 的 e2e 通过（当前它们在真实库上直接 500）
-- [ ] 把 `backend/src/module-registry/module-registry.service.ts` 里的**窄查询**还原为 `findOne()`，
-      或写明为何保留窄查询（两条路都要留下理由，不允许"改完就忘"）
+- [x] 核实并写下事实：仓库迁移集里**没有**任何迁移创建 `users` 表，本地库的 `users` 是早期形态
+      （`roleId` / `departmentId`），与 `User` 实体声明的 `role` / `department` / `permissions` 不一致
+- [x] 量化"从零重建"的真实规模：**30 张实体表里 15 张没有任何迁移创建**（清单写进 `proposal.md`）。
+      因此 P0 收敛为可验证的那一半；其余 14 张 + 扩展/索引**明确留给后续变更**
+- [x] `1790600000000-AddUsersBaseline`：空库建表 / 旧库补列，**只做加法**（`roleId` / `departmentId` 一律保留，
+      删列不可逆）；空库路径还要自己装 `uuid-ossp`（其余迁移都假设它已存在）
+- [x] 定向迁移运行器：`scripts/run-atomic-migration.ts` → `scripts/run-targeted-migration.ts`，
+      按分组（`atomic` / `baseline`）应用，避免"要么全跑要么不跑"
+- [x] 回归：`modules.findOne()`（含 8 个关系）与 `addCapability` 在真实库上通过 —— 见
+      `test/blueprint-pipeline.e2e-spec.ts` 的「模块注册表的既有查询在真实库上可用」
+- [x] 窄查询的去留写明：缺口修完后**保留**窄查询，并在代码注释里说明这是选择而非绕过
 
 ## Phase P1: 判据冻结
 

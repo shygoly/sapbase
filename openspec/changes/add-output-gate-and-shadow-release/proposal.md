@@ -43,8 +43,19 @@
 
 **前置（P0，阻塞修复）**：`module-registry` 的查询与 `addCapability` 等既有接口在真实库上直接报错
 （`column ... role does not exist`）。根因已核实：**仓库迁移集里没有任何迁移创建 `users` 表**
-（`rg "name: 'users'" src/migrations/` 无结果），它是按增量叠在早期库上的，
-所以"从零重建数据库"目前做不到。P0 把这个基线补齐并让既有接口的 e2e 真的跑起来。
+（`rg "name: 'users'" src/migrations/` 无结果），它是按增量叠在早期库上的。
+
+量化之后，"从零重建"比这条缺口大得多：**30 张实体表里有 15 张没有任何迁移创建**
+
+```text
+ai_models, ai_module_reviews, ai_module_tests, ai_modules, audit_logs, departments,
+menu_items, module_capabilities, module_configurations, module_registry,
+module_relationships, module_statistics, roles, users, workflow_auto_suggestion_logs
+```
+
+因此 P0 只收敛到**能立刻验证的那一半**：补 `users` 基线（空库建表 / 旧库补列，幂等且只做加法），
+让受影响的既有接口 e2e 真的跑起来；"完整从零重建"（其余 14 张 + 扩展与索引）**明确留给后续变更**，
+并在这里留下清单，避免它再次被当成"应该能重建"。
 
 ## Impact
 
