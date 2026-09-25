@@ -96,10 +96,10 @@ export class ModuleRegistryService {
   }> {
     // 只用窄查询取需要的东西（模块行 + capabilities）。
     //
-    // 不用 `findOne()` 是因为它会连同 `createdBy` 一起 JOIN `users`，而 `User` 实体
-    // 仍声明着库里已经没有的 `role` / `department` / `permissions` 列（库侧已迁到 `roleId`），
-    // 于是那条查询在真实库上直接报 `column ... role does not exist`。
-    // 那是**既有缺口**（属用户模型与迁移的一致性，另立变更修），
+    // 不用 `findOne()` 是因为它会连同 `createdBy` 一起 JOIN `users`，而本地库的 `users`
+    // 是早期形态（`roleId` / `departmentId`），`User` 实体声明的 `role` / `department` /
+    // `permissions` 在库里不存在，于是那条查询直接报 `column ... role does not exist`。
+    // 根因是**仓库迁移集没有 `users` 基线**（没有任何迁移创建该表），属既有缺口，另立变更修。
     // 导出这条路径不该被它拖住 —— 但也不该假装它不存在，故在此写明。
     const module = await this.moduleRegistryRepository.findOne({
       where: { id: moduleId, organizationId },

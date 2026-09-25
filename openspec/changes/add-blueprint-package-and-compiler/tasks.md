@@ -43,8 +43,10 @@
 > 加载后的 `resolvedAtomics` → 经 HTTP 调用该原子返回的 `moduleSha256` 与计划里的绑定**一致**。
 >
 > **顺带发现（既有缺口，不在本变更范围）**：`ModuleRegistryService.findOne` 会 JOIN `createdBy`，
-> 而 `User` 实体仍声明着库里没有的 `role` / `department` / `permissions` 列
-> （库侧已迁到 `roleId` / `departmentId`），于是那条查询在真实库上直接报
+> 而本地库的 `users` 是早期形态（`roleId` / `departmentId`），`User` 实体声明的
+> `role` / `department` / `permissions` 在库里不存在 —— 根因是**仓库迁移集没有 `users` 基线**
+> （`rg "name: 'users'" src/migrations/` 无结果，即迁移集是按增量叠在旧库上的，无法从零重建），
+> 于是那条查询在真实库上直接报
 > `column ModuleRegistry__ModuleRegistry_createdBy.role does not exist` ——
 > 受影响的既有接口包括 `GET /api/module-registry/:id`、`:id/capabilities`、`:id/relationships`、`:id/configurations`
 > 与 `addCapability` 等（同一实体的查询都受牵连，含登录路径）。本次**不顺手改**：

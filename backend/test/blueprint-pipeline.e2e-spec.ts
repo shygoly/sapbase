@@ -177,9 +177,10 @@ describe('蓝图管线（e2e，真实模块 + 真实 Wasm 原子）', () => {
     )
     moduleId = module.id
     // capability 直接落库：`ModuleRegistryService.addCapability` 会走 `findOne()`，
-    // 而那条查询连 `createdBy` 一起 JOIN `users`，`User` 实体仍声明着库里没有的
-    // `role` / `department` / `permissions` 列（库侧是 `roleId` / `departmentId`），
-    // 在真实库上直接报 `column ... role does not exist`。
+    // 而那条查询连 `createdBy` 一起 JOIN `users`。本地库的 `users` 是早期形态
+    // （`roleId` / `departmentId`），而 `User` 实体声明的 `role` / `department` /
+    // `permissions` 在库里不存在（根因：仓库迁移集没有 `users` 基线），
+    // 于是直接报 `column ... role does not exist`。
     // 那是**既有缺口**（本次 e2e 顺手发现，已记录，另立变更修），
     // 与蓝图管线无关，所以这里用 SQL 造这一行数据，不把无关的失败掩进来。
     await dataSource.query(
