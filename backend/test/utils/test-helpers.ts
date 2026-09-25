@@ -80,6 +80,8 @@ export function createMockRepository<T = any>() {
     findByOrganizationAndEmail: jest.fn(),
     findByToken: jest.fn(),
     countByOrganizationAndRole: jest.fn(),
+    // auth-context：用户仓储按邮箱查
+    findByEmail: jest.fn(),
   } as any
 }
 

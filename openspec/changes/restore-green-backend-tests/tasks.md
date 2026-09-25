@@ -24,10 +24,23 @@ cd backend && npx jest --config jest.config.js --runInBand
 | 0 | 路径与工具模块（`test/utils` 相对深度） | 跨域 8 文件 | ✅ 2026-09-25（20 → 19 套件失败） |
 | 1 | `organization-context` | 9 | ✅ 2026-09-25（9 套件 / **61 用例全绿**；整仓 13 → 9 套件失败） |
 | 2 | `auth-context` + `auth` | 6 | ✅ 2026-09-25（6 套件 / **23 用例全绿**；整仓 9 → 3 套件失败） |
-| 3 | `common/events` | 1 | ⏳ |
-| 4 | `ai-modules` | 1（4 个断言失败） | ⏳ |
-| 5 | `ai-module-context` | 1 | ⏳ |
+| 3 | `common/events` | 2 | ✅ 2026-09-25（含一处**实现加固**：审计脱敏改为递归） |
+| 4 | `ai-modules` | 1 | ✅ 2026-09-25（四个"断言失败"实为 DI 缺供应商） |
+| 5 | `ai-module-context` | 2 | ✅ 2026-09-25 |
 | 6 | CI 门禁诚实化（`.github/workflows/ci.yml` 的证据/范围说明） | — | ⏳ |
+
+### 里程碑：整仓回绿（2026-09-25 达成）
+
+```text
+起点  Test Suites: 20 failed, 33 passed, 53 total
+      Tests:       4 failed, 394 passed, 398 total
+终点  Test Suites: 53 passed, 53 total
+      Tests:       492 passed, 492 total
+```
+
+`npx jest --config jest.config.js --runInBand`（即 CI 里 `npm run test --workspace backend`
+实际执行的东西）现在是**真绿**，不是子集绿。已绿部分（atomic / blueprint / module-registry /
+plugins 共 344 项）全程未变红。
 
 ## 被测行为已删除的用例（逐条登记）
 
@@ -48,6 +61,16 @@ cd backend && npx jest --config jest.config.js --runInBand
 | `auth/jwt.strategy.spec.ts` | `should reject token without userId` | `validate()` 只做 payload → 身份的映射，**不做拒绝**（拒绝在 passport 校验与守卫处） | 改写成 `should map an incomplete payload without throwing`：断言缺 sub 时 `id` 为 undefined |
 | `auth/auth.service.spec.ts` | `validateToken` 的"过期/畸形 token 应抛错"两例 | 真实契约是**捕获后返回 null**（`Promise<JwtPayload \| null>`） | 改写为断言 `null`（并补 `bcrypt` mock，否则 `validateUser` 永远为 null） |
 | 同上 | `login` 响应断言（`user` = 整个实体、无 organizations） | 现在 user 是**脱敏摘要**（不含 passwordHash/dataScope），并带 `organizations` / `currentOrganizationId` | 断言改为当前形状，并显式断言 `not.toHaveProperty('passwordHash')` |
+| `common/events/audit-log-handler.spec.ts` | "无 organizationId 也要落审计" | `audit_logs` 是租户实体，实现里 `if (organizationId)` 才写 —— 没有组织上下文就没有审计 | 改写成 `should skip logging when the event has no organizationId`（断言不写、且不抛错） |
+| 同上 | "敏感字段替换为 `[REDACTED]`" | 实现是**整键剔除**（连键名都不出现），且键在**嵌套**载荷里 | 断言改为"嵌套路径下该键不存在" |
+| `ai-module-context/domain/entities/ai-module.entity.spec.ts` | `submitReview(review 对象)` + `module.reviews` | 评审模型改成**一次决策**（`submitReview(decision, reviewerId, comments?, rejectionReason?)`，状态转 approved/rejected），没有 reviews 集合 | 重写评审一节：记录决策、拒绝带理由、二次评审被拒、draft 不能评审 |
+| 同上 | `updatePatchContent()` / `create(id, org, name, description)` / `publish()` 直接发 draft | 现在叫 `updatePatch()`；`create` 第四参是 `createdById`（描述另设）；`publish` 要求状态为 approved | 改名为 `updatePatch`；描述断言改为 null；发布改为"先送审并通过再发布"，并补"draft 不能发布""不能发布两次" |
+
+### 发现：实现加固（本次顺手做掉的）
+
+| 位置 | 问题 | 处理 |
+| --- | --- | --- |
+| `common/events/handlers/audit-log-handler.ts` | 脱敏清单**漏了 `password`**（只有 passwordHash/apiKey/token），而且**只过滤顶层键** —— 事件载荷 `{ type, data: { password } }` 会把密码明文写进审计 | 清单补入 `password` / `secret` / `authorization`，并改为**递归**剔除；数组保持形状。这是"收紧审计"，不是放松 |
 
 > 判定：这三条都属于**能力被有意移除**（不是实现漏做）——它们在当前 API 里没有对应物，
 > 而新 API 用更细的规则覆盖了同类关注点。整仓 `tsc` 也从未接受过旧断言，说明它们

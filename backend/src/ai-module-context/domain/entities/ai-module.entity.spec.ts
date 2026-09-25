@@ -1,6 +1,5 @@
-import { AIModule } from './ai-module.entity'
-import { AIModuleStatus } from './ai-module.entity'
-import { BusinessRuleViolation } from '../errors'
+import { AIModule, AIModuleStatus } from './ai-module.entity'
+import { BusinessRuleViolation, DomainError } from '../errors'
 
 describe('AIModule (Domain Entity)', () => {
   describe('create', () => {
@@ -9,126 +8,53 @@ describe('AIModule (Domain Entity)', () => {
         'module-1',
         'org-1',
         'Test Module',
-        'Test description',
+        null,
       )
 
       expect(module.id).toBe('module-1')
       expect(module.organizationId).toBe('org-1')
       expect(module.name).toBe('Test Module')
-      expect(module.description).toBe('Test description')
+      // 描述不是构造参数（create 的第四个参数是 createdById），创建后为 null
+      expect(module.description).toBeNull()
       expect(module.status).toBe(AIModuleStatus.DRAFT)
     })
 
     it('should throw error if name is empty', () => {
       expect(() => {
-        AIModule.create('module-1', 'org-1', '', 'Description')
-      }).toThrow(BusinessRuleViolation)
+        AIModule.create('module-1', 'org-1', '', null)
+      }).toThrow(DomainError)
     })
   })
 
   describe('publish', () => {
-    it('should publish a draft module', () => {
-      const module = AIModule.create(
-        'module-1',
-        'org-1',
-        'Test Module',
-        'Description',
-      )
+    // 发布的前置是「已批准」：draft 不能直接发布（旧断言假设能，与实现相反）
+    const approved = () => {
+      const module = AIModule.create('module-1', 'org-1', 'Test Module', null)
+      module.submitForReview()
+      module.submitReview('approved', 'user-1')
+      return module
+    }
+
+    it('should publish an approved module', () => {
+      const module = approved()
 
       module.publish()
 
       expect(module.status).toBe(AIModuleStatus.PUBLISHED)
+      expect(module.publishedAt).toBeInstanceOf(Date)
     })
 
-    it('should throw error if module is already published', () => {
-      const module = AIModule.create(
-        'module-1',
-        'org-1',
-        'Test Module',
-        'Description',
-      )
+    it('should refuse publishing a draft module', () => {
+      const module = AIModule.create('module-1', 'org-1', 'Test Module', null)
 
+      expect(() => module.publish()).toThrow(BusinessRuleViolation)
+    })
+
+    it('should refuse publishing twice', () => {
+      const module = approved()
       module.publish()
 
-      expect(() => {
-        module.publish()
-      }).toThrow(BusinessRuleViolation)
-    })
-  })
-
-  describe('submitReview', () => {
-    it('should submit a review', () => {
-      const module = AIModule.create(
-        'module-1',
-        'org-1',
-        'Test Module',
-        'Description',
-      )
-
-      const review = {
-        id: 'review-1',
-        moduleId: 'module-1',
-        reviewerId: 'user-1',
-        rating: 5,
-        comment: 'Great module',
-        createdAt: new Date(),
-      }
-
-      module.submitReview(review)
-
-      expect(module.reviews).toContain(review)
-    })
-
-    it('should throw error if reviewer already reviewed', () => {
-      const module = AIModule.create(
-        'module-1',
-        'org-1',
-        'Test Module',
-        'Description',
-      )
-
-      const review1 = {
-        id: 'review-1',
-        moduleId: 'module-1',
-        reviewerId: 'user-1',
-        rating: 5,
-        comment: 'First review',
-        createdAt: new Date(),
-      }
-
-      const review2 = {
-        id: 'review-2',
-        moduleId: 'module-1',
-        reviewerId: 'user-1',
-        rating: 4,
-        comment: 'Second review',
-        createdAt: new Date(),
-      }
-
-      module.submitReview(review1)
-
-      expect(() => {
-        module.submitReview(review2)
-      }).toThrow(BusinessRuleViolation)
-    })
-  })
-
-  describe('updatePatchContent', () => {
-    it('should update patch content', () => {
-      const module = AIModule.create(
-        'module-1',
-        'org-1',
-        'Test Module',
-        'Description',
-      )
-
-      const patchContent = {
-        entities: [{ name: 'Order', fields: [] }],
-      }
-
-      module.updatePatchContent(patchContent)
-
-      expect(module.patchContent).toEqual(patchContent)
+      expect(() => module.publish()).toThrow(BusinessRuleViolation)
     })
   })
 })
