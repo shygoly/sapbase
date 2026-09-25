@@ -236,3 +236,58 @@ export function unpackBlueprint(packagePath: string): UnpackedBlueprint {
 export function readManifestFromPackage(packagePath: string): BlueprintManifest {
   return unpackBlueprint(packagePath).manifest
 }
+
+export interface CompiledRecord {
+  /** 编译得到的 IR 摘要（`sha256:<64 hex>`）。 */
+  irDigest: string
+  compiledAt: string
+}
+
+/**
+ * 把编译记录写回包内清单（**就地重写** `.erpkg`）。
+ *
+ * 为什么值得写回去：`compiled.irDigest` 是"这个包被编译成了什么"的**可核对声明**。
+ * 有了它，加载时就能发现"包内容与编译产物已经漂移"（换过编译器版本、改过包又没重编、
+ * 拿到的是别人编到一半的包）。没有它，加载方只能无条件相信"我这次编出来的就是对的"。
+ *
+ * 注意两点：
+ *   1. `compiled` 只改清单，**不改任何被哈希覆盖的文件**，逐文件校验和因此仍然成立
+ *      （`manifest.json` 自身不在 `files` 里）。
+ *   2. 记录的是**摘要**而不是 IR 正文：把编译产物存进包内需要打包器支持附带产物，
+ *      属后续范围；摘要在 v1 已足够做防漂移。
+ */
+export function stampCompiled(
+  packagePath: string,
+  record: CompiledRecord,
+): BlueprintManifest {
+  let zip: AdmZip
+  try {
+    zip = new AdmZip(packagePath)
+  } catch (error) {
+    throw new PackageError(`不是合法 zip：${(error as Error).message}`, 'malformed-zip')
+  }
+  const entry = zip.getEntry(BLUEPRINT_MANIFEST_FILE)
+  if (!entry) {
+    throw new PackageError(`包内缺少 ${BLUEPRINT_MANIFEST_FILE}`, 'missing-manifest')
+  }
+
+  let manifest: BlueprintManifest
+  try {
+    manifest = JSON.parse(entry.getData().toString('utf8')) as BlueprintManifest
+  } catch (error) {
+    throw new PackageError(`清单解析失败：${(error as Error).message}`, 'missing-manifest')
+  }
+
+  const next: BlueprintManifest = {
+    ...manifest,
+    compiled: { irDigest: record.irDigest, compiledAt: record.compiledAt },
+  }
+  const check = validateBlueprintPackage(next)
+  if (!check.valid) {
+    throw new PackageError(`写入编译记录后清单不再合法：${check.errors.join('; ')}`, 'invalid-manifest')
+  }
+
+  zip.updateFile(BLUEPRINT_MANIFEST_FILE, Buffer.from(`${JSON.stringify(next, null, 2)}\n`))
+  zip.writeZip(packagePath)
+  return next
+}

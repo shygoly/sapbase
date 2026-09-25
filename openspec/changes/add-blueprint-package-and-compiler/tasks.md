@@ -28,6 +28,13 @@
 > 编译器负例覆盖：未覆盖文件被拒 / 形状非法 / 原子依赖不可满足 / 四类冲突（重复定义、悬空引用、流程成环、状态机三种非法）/
 > 实体关系成环**不**报错（防误报的反例）。IR 往返：结构与文本互相导出等价，且文本→结构→文本逐字节一致。
 > 顺带发现：`shared-schemas` 是**构建产物**被后端消费，改了类型必须重建（CI 的 apps job 已先 build shared-schemas）。
+>
+> **B4 证据（2026-09-25）**：`jest src/blueprint` → **77 passed**（validator 22 + packager 20 + controller 12 + compiler 14 + loader 11，本里程碑新增 16）；
+> 全量回归：单元 **200** × 两引擎、e2e **3**、`tsc --noEmit` **0**。
+> 加载负例：IR 摘要漂移 / 原子依赖不可满足 / Wasm 实现缺 `moduleSha256` / 包内有未覆盖文件；
+> 另有"计划里出现悬空动作"的纯函数负例 —— 这条在正常路径够不到（编译器只允许调用已声明的原子），
+> 保留它作纵深防御，并在测试里写明为什么只能以纯函数方式测。
+> 确定性：同一包重复加载得到同一 `irDigest` 与逐字节相同的 `irText`。
 
 1. 每完成一项：勾选 + 附证据（命令 + 结果），不写"应该可以"。
 2. 协议先行：B1 未完成不进 B2。
@@ -73,9 +80,11 @@
 
 ## Phase B4: 运行时可加载
 
-- [ ] `loader/`：验 manifest 哈希 → 验 IR 摘要 → 验依赖可解析 → `LoadedBlueprint`
-- [ ] fail-closed：任一不过即拒，无部分加载
-- [ ] `POST /api/blueprints/load`（返回受执行计划 + `resolvedAtomics`）
+- [x] `loader.ts`：包完整性（解包自验）→ 编译（Schema/依赖闭包/冲突/IR）→ **防漂移**（比对 `compiled.irDigest`）→ 绑定 → `LoadedBlueprint`
+- [x] 绑定把"要跑哪一份代码"定在加载期：每个 `check` 动作带 `binding`（契约版本 + `moduleSha256` + tier），而不是等第一次调用才查
+- [x] 编译记录**可写回**（`stampCompiled`）：`POST /:id/compile` 带 `{stamp:true}` 时把 IR 摘要写进包内清单 —— 否则 `compiled` 字段只是协议里的死字段，"防漂移"无从发生
+- [x] fail-closed：任一不过即拒，无部分加载；错误类型不混用（编译期 `CompileError` / 加载期 `LoadError` / 包 `PackageError`）
+- [x] `POST /api/blueprints/:id/load`（返回可执行计划 + `resolvedAtomics`）
 
 ## Phase B5: 端到端
 

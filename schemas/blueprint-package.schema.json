@@ -98,6 +98,16 @@
         "server": { "type": ["string", "null"] }
       }
     },
+    "compiled": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["irDigest"],
+      "description": "可选的编译记录：加载时用它比对「重新编译得到的 IR 摘要」，防止包内容与编译结果漂移。",
+      "properties": {
+        "irDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "compiledAt": { "type": "string", "minLength": 1 }
+      }
+    },
     "signature": {
       "type": "string",
       "description": "v1 允许缺失；校验和必须存在，签名属 License 协议那条线"

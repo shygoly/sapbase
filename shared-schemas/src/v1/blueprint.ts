@@ -30,6 +30,8 @@ export interface BlueprintManifest {
   /** 包内每个文件的校验和，形如 `sha256:<64 hex>` */
   files: Record<string, string>
   license?: { required: boolean; server?: string | null }
+  /** 可选编译记录：加载时比对 IR 摘要，防"包内容与编译结果"漂移 */
+  compiled?: { irDigest: string; compiledAt?: string }
   /** v1 允许缺失（签名属 License 协议那条线） */
   signature?: string
 }

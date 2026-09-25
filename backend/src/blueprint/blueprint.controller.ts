@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { BlueprintService } from './blueprint.service'
 import { PackageError } from './packager'
 import { CompileError } from './compiler'
+import { LoadError } from './loader'
 
 /**
  * 蓝图包的 HTTP 入口（B2）。
@@ -60,10 +61,14 @@ export class BlueprintController {
 
   @Post(':id/compile')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '编译蓝图包，产出 IR（文本 + 结构）与依赖解析结果' })
-  async compile(@Param('id') id: string) {
+  @ApiOperation({
+    summary: '编译蓝图包，产出 IR（文本 + 结构）与依赖解析结果',
+    description: 'body.stamp = true 时把 IR 摘要写回包内清单，供后续加载比对（防漂移）',
+  })
+  async compile(@Param('id') id: string, @Body() body?: { stamp?: boolean }) {
     try {
-      return await this.blueprints.compile(id)
+      const result = await this.blueprints.compile(id, { stamp: body?.stamp === true })
+      return { ...result, stamped: body?.stamp === true }
     } catch (error) {
       if (error instanceof CompileError) {
         // 冲突明细一并返回：调用方要能逐条展示，而不是拿一句"编译失败"
@@ -72,6 +77,30 @@ export class BlueprintController {
           reason: error.reason,
           conflicts: error.conflicts,
         })
+      }
+      throw error
+    }
+  }
+
+  @Post(':id/load')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '加载蓝图包为可执行计划（fail-closed：任一校验不过即拒）' })
+  async load(@Param('id') id: string) {
+    try {
+      return await this.blueprints.load(id)
+    } catch (error) {
+      if (error instanceof LoadError) {
+        throw new BadRequestException({ message: error.message, reason: error.reason })
+      }
+      if (error instanceof CompileError) {
+        throw new BadRequestException({
+          message: error.message,
+          reason: error.reason,
+          conflicts: error.conflicts,
+        })
+      }
+      if (error instanceof PackageError) {
+        throw new BadRequestException({ message: error.message, reason: error.reason })
       }
       throw error
     }

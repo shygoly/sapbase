@@ -11,6 +11,7 @@ import {
   layerOf,
   packBlueprint,
   readManifestFromPackage,
+  stampCompiled,
   unpackBlueprint,
 } from './packager'
 
@@ -178,5 +179,31 @@ describe('packBlueprint + unpackBlueprint', () => {
   it('readManifestFromPackage 只读清单', () => {
     const manifest = packBlueprint(dir, pkg)
     expect(readManifestFromPackage(pkg)).toEqual(manifest)
+  })
+
+  it('误用：compiled.irDigest 形状非法时写回被拒（清单不能因为写回而变非法）', () => {
+    packBlueprint(dir, pkg)
+    try {
+      // 类型上 irDigest 只是个字符串，形状由 Schema 兜住 —— 正是这条判定的意义所在
+      stampCompiled(pkg, { irDigest: 'not-a-digest', compiledAt: '2026-09-25T00:00:00.000Z' })
+      throw new Error('本应被拒')
+    } catch (error) {
+      expect((error as PackageError).reason).toBe('invalid-manifest')
+    }
+  })
+
+  it('stampCompiled：写回编译记录后仍是合法包（逐文件校验和不受影响）', () => {
+    const before = packBlueprint(dir, pkg)
+    const stamped = stampCompiled(pkg, {
+      irDigest: `sha256:${'a'.repeat(64)}`,
+      compiledAt: '2026-09-25T00:00:00.000Z',
+    })
+
+    expect(stamped.compiled?.irDigest).toBe(`sha256:${'a'.repeat(64)}`)
+    // 记录只改清单，被哈希覆盖的文件一字未动
+    expect(stamped.files).toEqual(before.files)
+    expect(unpackBlueprint(pkg).manifest.compiled?.compiledAt).toBe(
+      '2026-09-25T00:00:00.000Z',
+    )
   })
 })

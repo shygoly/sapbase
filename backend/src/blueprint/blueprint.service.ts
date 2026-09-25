@@ -2,8 +2,9 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { existsSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import type { BlueprintManifest } from '@speckit/shared-schemas'
-import { packBlueprint, readBlueprintMeta, unpackBlueprint } from './packager'
+import { packBlueprint, readBlueprintMeta, stampCompiled, unpackBlueprint } from './packager'
 import { compileBlueprint } from './compiler'
+import { loadBlueprint, type LoadedBlueprint } from './loader'
 import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
 import type { BlueprintCompileResult } from '@speckit/shared-schemas'
 
@@ -74,12 +75,37 @@ export class BlueprintService {
     return this.packagesDir
   }
 
-  /** 编译包内的蓝图：解包 → 编译（依赖闭包走原子注册表）。 */
-  async compile(id: string): Promise<BlueprintCompileResult> {
+  private packagePathOf(id: string): string {
     const path = join(this.packagesDir, `${id}.erpkg`)
     if (!existsSync(path)) {
       throw new NotFoundException(`蓝图包不存在：${id}`)
     }
-    return compileBlueprint(unpackBlueprint(path), this.atomicRegistry)
+    return path
+  }
+
+  /**
+   * 编译包内的蓝图：解包 → 编译（依赖闭包走原子注册表）。
+   *
+   * `stamp = true` 时把编译得到的 IR 摘要写回包内清单 —— 之后的加载会拿它比对，
+   * 于是"包内容与编译结果不一致"就变成可检测的（见 `loader.loadBlueprint`）。
+   */
+  async compile(
+    id: string,
+    options: { stamp?: boolean } = {},
+  ): Promise<BlueprintCompileResult> {
+    const path = this.packagePathOf(id)
+    const result = await compileBlueprint(unpackBlueprint(path), this.atomicRegistry)
+    if (options.stamp) {
+      stampCompiled(path, {
+        irDigest: result.irDigest,
+        compiledAt: new Date().toISOString(),
+      })
+    }
+    return result
+  }
+
+  /** 加载蓝图包 → 可执行计划（fail-closed：任一校验不过即拒）。 */
+  async load(id: string): Promise<LoadedBlueprint> {
+    return loadBlueprint(this.packagePathOf(id), this.atomicRegistry)
   }
 }
