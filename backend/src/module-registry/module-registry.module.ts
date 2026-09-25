@@ -8,9 +8,11 @@ import { ModuleConfiguration } from './module-configuration.entity'
 import { ModuleRegistryService } from './module-registry.service'
 import { ModuleRegistryController } from './module-registry.controller'
 import { AIContextController } from './ai-context.controller'
+import { AtomicRegistryModule } from '../atomic-registry/atomic-registry.module'
 
 @Module({
   imports: [
+    AtomicRegistryModule,
     TypeOrmModule.forFeature([
       ModuleRegistry,
       ModuleRelationship,

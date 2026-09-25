@@ -6,13 +6,18 @@
   "workspaces": [
     "shared-schemas",
     "speckit",
-    "backend"
+    "backend",
+    "wasm-modules"
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace speckit\" \"npm run start:dev --workspace backend\"",
     "dev:all": "concurrently -n \"frontend,backend\" -c \"cyan,magenta\" \"npm run dev --workspace speckit\" \"npm run start:dev --workspace backend\"",
     "dev:frontend": "npm run dev --workspace speckit",
     "dev:backend": "npm run start:dev --workspace backend",
+    "wasm:build": "npm run build --workspace @speckit/wasm-modules",
+    "wasm:admit": "npm run admit --workspace @speckit/wasm-modules --",
+    "wasm:test": "npm run test --workspace @speckit/wasm-modules",
+    "wasm:reproducible": "npm run check:reproducible --workspace @speckit/wasm-modules --",
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces"
   },

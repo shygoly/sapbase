@@ -1,0 +1,4 @@
+# 与 wasm-modules 的模块产出一致锁定工具链：宿主与模块在同一版本上验证。
+[toolchain]
+channel = "1.95.0"
+profile = "minimal"

@@ -19,6 +19,7 @@ import { OrganizationsModule } from './organizations/organizations.module'
 import { CacheModule } from './cache/cache.module'
 import { WorkflowsModule } from './workflows/workflows.module'
 import { PluginsModule } from './plugins/plugins.module'
+import { AtomicRuntimeModule } from './atomic-runtime/atomic-runtime.module'
 import { User } from './users/user.entity'
 import { Organization } from './organizations/organization.entity'
 import { OrganizationMember } from './organizations/organization-member.entity'
@@ -120,6 +121,7 @@ try {
     OrganizationsModule,
     WorkflowsModule,
     PluginsModule,
+    AtomicRuntimeModule,
   ],
   controllers: [],
   providers: [],

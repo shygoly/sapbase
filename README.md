@@ -54,6 +54,29 @@ npm run dev
 - 邮箱: `admin@example.com`
 - 密码: `password123`
 
+## 文档地图 / Documentation Map
+
+先读这两份**元上下文**，其余文档都是它们的展开：
+
+- [docs/META_LANGUAGE.md](./docs/META_LANGUAGE.md) —— **项目元语**：元模型 `Ω`、五个核心协议、
+  执行原语（原子契约 / ABI / 准入闸）、不变量、术语表与文档真源
+- [openspec/project.md](./openspec/project.md) —— **项目上下文**：技术栈、约定、领域边界与硬性约束
+
+按主题查真源（避免读到过期内容）：
+
+| 我想了解 | 看这里 |
+| --- | --- |
+| 平台总体设计 | [docs/ERP_Space_Platform_设计方案_v3.md](./docs/ERP_Space_Platform_设计方案_v3.md) |
+| 当前技术栈 vs 目标栈的差距 | [docs/TECH_STACK_GAP.md](./docs/TECH_STACK_GAP.md) |
+| 前端依赖的真实版本 | [docs/TECH_STACK_v2.md](./docs/TECH_STACK_v2.md) |
+| 依赖安装与包管理器约定 | [docs/PACKAGE_MANAGER.md](./docs/PACKAGE_MANAGER.md) |
+| Wasm 原子模块与准入门禁 | [wasm-modules/README.md](./wasm-modules/README.md) |
+| 正在进行的变更提案 | [openspec/changes/](./openspec/changes/) |
+
+> ⚠️ 本文件的 `## 项目结构` 以下部分（含 Stars 徽章、"The Guides"、"Key Concepts" 等）
+> 是上游 `everything-claude-code` 模板 README 的原文，与本项目无关，尚未清理。
+> 同理，[`speckit/README.md`](./speckit/README.md) 保留了上游 starter 模板原文。
+
 ## 项目结构
 
 [![Stars](https://img.shields.io/github/stars/affaan-m/everything-claude-code?style=flat)](https://github.com/affaan-m/everything-claude-code/stargazers)

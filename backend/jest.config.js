@@ -45,6 +45,10 @@ module.exports = {
   testEnvironment: 'node',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    // 桥接：@speckit/wasm-modules 的 workspace 链接尚未安装（需 npm ci，见
+    // openspec/changes/add-wasm-atomic-runtime/tasks.md 的 M0）。先指向其构建产物；
+    // 安装后此行可删（判定逻辑仍是同一份 dist，不产生第二套实现）。
+    '^@speckit/wasm-modules$': '<rootDir>/../../wasm-modules/dist/index.js',
   },
   setupFilesAfterEnv: ['<rootDir>/../test/setup.ts'],
   testTimeout: 10000,

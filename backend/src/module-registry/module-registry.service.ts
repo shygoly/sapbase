@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { ModuleRegistry, ModuleStatus, ModuleType } from './module-registry.entity'
@@ -6,9 +10,12 @@ import { ModuleRelationship, RelationshipType } from './module-relationship.enti
 import { ModuleCapability, CapabilityType } from './module-capability.entity'
 import { ModuleStatistics, HealthStatus } from './module-statistics.entity'
 import { ModuleConfiguration } from './module-configuration.entity'
+import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
 
 export interface CreateModuleRegistryDto {
   name: string
+  /** 依赖的原子：`atomicType@range`，发布（active）时校验。 */
+  dependsOnAtomics?: string[]
   description?: string
   moduleType?: ModuleType
   aiModelId?: string
@@ -47,7 +54,42 @@ export class ModuleRegistryService {
     private statisticsRepository: Repository<ModuleStatistics>,
     @InjectRepository(ModuleConfiguration)
     private configurationRepository: Repository<ModuleConfiguration>,
+    private readonly atomicRegistry: AtomicRegistryService,
   ) {}
+
+  /**
+   * 发布前校验原子依赖（元语不变量 4：依赖不满足就不许发布）。
+   *
+   * 每条依赖形如 `available-inventory@^1.0.0`；逐条走 `AtomicRegistry.resolve`，
+   * 解析不到（无 active 契约 / 无可执行实现）即拒，并**一次列出全部缺失项**
+   * —— 而不是让调用方一条一条试。
+   */
+  async assertAtomicDependencies(dependsOnAtomics: string[]): Promise<void> {
+    if (!dependsOnAtomics || dependsOnAtomics.length === 0) return
+
+    const missing: string[] = []
+    for (const dependency of dependsOnAtomics) {
+      const at = dependency.lastIndexOf('@')
+      if (at <= 0 || at === dependency.length - 1) {
+        missing.push(`${dependency}（格式应为 atomicType@range）`)
+        continue
+      }
+      try {
+        await this.atomicRegistry.resolve(
+          dependency.slice(0, at),
+          dependency.slice(at + 1),
+        )
+      } catch (error) {
+        missing.push(`${dependency}（${(error as Error).message}）`)
+      }
+    }
+
+    if (missing.length > 0) {
+      throw new BadRequestException(
+        `模块依赖的原子不可用，拒绝发布：${missing.join('; ')}`,
+      )
+    }
+  }
 
   async findAll(organizationId: string): Promise<ModuleRegistry[]> {
     return this.moduleRegistryRepository.find({
@@ -80,6 +122,12 @@ export class ModuleRegistryService {
   }
 
   async create(dto: CreateModuleRegistryDto, organizationId: string): Promise<ModuleRegistry> {
+    const status = dto.status || ModuleStatus.ACTIVE
+    const dependsOnAtomics = dto.dependsOnAtomics ?? []
+    if (status === ModuleStatus.ACTIVE) {
+      await this.assertAtomicDependencies(dependsOnAtomics)
+    }
+
     const module = this.moduleRegistryRepository.create({
       name: dto.name,
       description: dto.description,
@@ -87,7 +135,8 @@ export class ModuleRegistryService {
       aiModelId: dto.aiModelId,
       createdById: dto.createdById,
       version: dto.version || '1.0.0',
-      status: dto.status || ModuleStatus.ACTIVE,
+      status,
+      dependsOnAtomics,
       aiModuleId: dto.aiModuleId,
       metadata: dto.metadata || {},
       organizationId,

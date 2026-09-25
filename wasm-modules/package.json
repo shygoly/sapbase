@@ -1,0 +1,17 @@
+{
+  "name": "@speckit/wasm-modules",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Speckit Wasm 原子模块 —— 零能力沙箱 + 复现构建 + 静态准入闸（Atomic Contract 的实现封装层）",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.json && node --test src/*.test.mjs scripts/*.test.mjs",
+    "admit": "node scripts/admit-cli.mjs",
+    "check:reproducible": "node scripts/check-reproducible.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
