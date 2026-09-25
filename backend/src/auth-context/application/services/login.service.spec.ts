@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { LoginService } from './login.service'
+// 实体构造是私有的：测试替身用 cast（change: restore-green-backend-tests）
+import type { User } from '../../../users/user.entity'
+import type { Organization } from '../../../organization-context/domain/entities/organization.entity'
 import {
   USER_REPOSITORY,
   ORGANIZATION_REPOSITORY,
@@ -90,15 +93,18 @@ describe('LoginService', () => {
         organizationId: 'org-1',
       }
 
-      userRepository.findByEmail.mockResolvedValue(user)
+      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
       passwordService.compare.mockResolvedValue(true)
-      organizationRepository.findById.mockResolvedValue(organization)
-      jwtService.sign.mockReturnValue('jwt-token')
+      // 服务用的是 findAll(userId)（列出用户所属组织）而不是 findById
+      organizationRepository.findAll.mockResolvedValue([
+        organization as unknown as Organization,
+      ])
+      jwtService.sign.mockResolvedValue('jwt-token')
 
       const result = await service.execute(command)
 
       expect(result).toBeDefined()
-      expect(result.accessToken).toBe('jwt-token')
+      expect(result.access_token).toBe('jwt-token')
       expect(result.user).toBeDefined()
       expect(passwordService.compare).toHaveBeenCalledWith(
         'password123',
@@ -133,7 +139,7 @@ describe('LoginService', () => {
         password: 'wrong-password',
       }
 
-      userRepository.findByEmail.mockResolvedValue(user)
+      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
       passwordService.compare.mockResolvedValue(false)
 
       await expect(service.execute(command)).rejects.toThrow(
@@ -155,9 +161,12 @@ describe('LoginService', () => {
         organizationId: 'org-999',
       }
 
-      userRepository.findByEmail.mockResolvedValue(user)
+      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
       passwordService.compare.mockResolvedValue(true)
-      organizationRepository.findById.mockResolvedValue(null)
+      // 用户所属组织为 org-1，但请求的是 org-999 → 服务按"无访问权"拒绝
+      organizationRepository.findAll.mockResolvedValue([
+        { id: 'org-1', name: 'Org One', slug: 'org-one' } as unknown as Organization,
+      ])
 
       await expect(service.execute(command)).rejects.toThrow()
     })

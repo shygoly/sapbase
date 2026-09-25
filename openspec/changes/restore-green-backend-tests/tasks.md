@@ -23,7 +23,7 @@ cd backend && npx jest --config jest.config.js --runInBand
 | --- | --- | --- | --- |
 | 0 | 路径与工具模块（`test/utils` 相对深度） | 跨域 8 文件 | ✅ 2026-09-25（20 → 19 套件失败） |
 | 1 | `organization-context` | 9 | ✅ 2026-09-25（9 套件 / **61 用例全绿**；整仓 13 → 9 套件失败） |
-| 2 | `auth-context` + `auth` | 6 | 🚧 2/6（`password` / `jwt` 基础设施已绿；4 个应用服务与策略 spec 仍红） |
+| 2 | `auth-context` + `auth` | 6 | ✅ 2026-09-25（6 套件 / **23 用例全绿**；整仓 9 → 3 套件失败） |
 | 3 | `common/events` | 1 | ⏳ |
 | 4 | `ai-modules` | 1（4 个断言失败） | ⏳ |
 | 5 | `ai-module-context` | 1 | ⏳ |
@@ -43,6 +43,11 @@ cd backend && npx jest --config jest.config.js --runInBand
 | `add-member.service.spec.ts` | 用 `memberRepository.findByOrganizationAndUser` 造"已存在" | 重复校验已移到**聚合内部**（`Organization.validateCanAddMember`），不再查仓储 | 改为把既有成员放进聚合（`OrganizationBuilder.withMembers`）后再断言抛错 |
 | `auth-context/…/services/{password,jwt}.service.spec.ts` | 整文件跑不起来 | 实现一直在 `infrastructure/external/`，spec 却写在 `infrastructure/services/` 并引用不存在的 `./password.service` / `./jwt.service`；类名也不是 `*Impl` | 按「spec 与实现同目录」归位到 `external/`，类名改成 `PasswordService` / `JwtService` |
 | 同上（jwt） | `should throw error for invalid token` | 真实契约是**无效 token 返回 `null`**（`verify(): Promise<Payload \| null>`），实现里 `catch` 后返回 null | 改写成 `should return null for an invalid token` |
+| `auth-context/login.service.spec.ts` | `result.accessToken` / `result.organization` / `findById` 安排 | 响应体现在是 `{ access_token, user(脱敏摘要), organizations, currentOrganizationId }`；组织来自 `findAll(userId)` | 断言改为 `access_token` + 组织列表；"无访问权"用例改为 `findAll` 返回别的组织 |
+| `auth-context/switch-organization.service.spec.ts` | `result.accessToken` / `result.organization` | 返回值只有 `{ access_token }` | 断言改为 `access_token`（去掉 organization 断言） |
+| `auth/jwt.strategy.spec.ts` | `should reject token without userId` | `validate()` 只做 payload → 身份的映射，**不做拒绝**（拒绝在 passport 校验与守卫处） | 改写成 `should map an incomplete payload without throwing`：断言缺 sub 时 `id` 为 undefined |
+| `auth/auth.service.spec.ts` | `validateToken` 的"过期/畸形 token 应抛错"两例 | 真实契约是**捕获后返回 null**（`Promise<JwtPayload \| null>`） | 改写为断言 `null`（并补 `bcrypt` mock，否则 `validateUser` 永远为 null） |
+| 同上 | `login` 响应断言（`user` = 整个实体、无 organizations） | 现在 user 是**脱敏摘要**（不含 passwordHash/dataScope），并带 `organizations` / `currentOrganizationId` | 断言改为当前形状，并显式断言 `not.toHaveProperty('passwordHash')` |
 
 > 判定：这三条都属于**能力被有意移除**（不是实现漏做）——它们在当前 API 里没有对应物，
 > 而新 API 用更细的规则覆盖了同类关注点。整仓 `tsc` 也从未接受过旧断言，说明它们
