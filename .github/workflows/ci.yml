@@ -128,9 +128,8 @@ jobs:
     name: Apps (backend / speckit)
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # 首次把产品代码接入 CI：允许失败以便先暴露问题、不阻塞合并。
-    # 稳定后应改为 false。
-    continue-on-error: true
+    # 已转强制门禁（2026-09-25）：依赖收敛（npm install）后实测
+    # `nest build` + `next build` + 全部单元/e2e 均通过。
 
     steps:
       - name: Checkout

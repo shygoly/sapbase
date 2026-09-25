@@ -86,9 +86,11 @@ npm run build --workspace backend
 
 ## 已知遗留
 
-- `node_modules` 尚未做干净重建（见上）。
-- CI 的 `apps` job 是首次把 backend / speckit 接入 CI，目前设了 `continue-on-error: true`；
-  跑通后应改为强制。
+- ~~`node_modules` 尚未做干净重建~~ **已完成（2026-09-25）**：执行 `npm install`（1502 包），
+  之后 `backend` 类型检查错误 18 → **0**、`nest build` 通过、`next build` 通过、全部测试保持全绿。
+  过程中修掉两个被缺依赖掩盖的真实问题：种子脚本写错字段名（`password` → `passwordHash`）、
+  `/login` 页面缺 `useSearchParams()` 的 Suspense 边界导致预渲染失败。
+- ~~CI 的 `apps` job 设 `continue-on-error: true`~~ **已转强制门禁（2026-09-25）**。
 - 历史文档（`DATABASE_SETUP.md`、`docs/zh-CN/**`、`docs/zh-TW/**`）仍存在 markdownlint
   既存问题，暂未纳入 CI 的文档检查范围。
 - 根 `README.md` 的下半部分是上游模板 README 原文（含裸 URL 等既存问题），
