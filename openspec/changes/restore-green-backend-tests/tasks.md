@@ -22,7 +22,7 @@ cd backend && npx jest --config jest.config.js --runInBand
 | # | 域 | 套件 | 状态 |
 | --- | --- | --- | --- |
 | 0 | 路径与工具模块（`test/utils` 相对深度） | 跨域 8 文件 | ✅ 2026-09-25（20 → 19 套件失败） |
-| 1 | `organization-context` | 9 | ⏳ |
+| 1 | `organization-context` | 9 | 🚧 1/9（`organization.entity` 已修，19 → 18） |
 | 2 | `auth-context` + `auth` | 5 | ⏳ |
 | 3 | `common/events` | 1 | ⏳ |
 | 4 | `ai-modules` | 1（4 个断言失败） | ⏳ |
@@ -31,7 +31,15 @@ cd backend && npx jest --config jest.config.js --runInBand
 
 ## 被测行为已删除的用例（逐条登记）
 
-> 目前为空。删任何用例都要在这里写清：文件、用例名、为什么该行为已不存在、由谁覆盖。
+| 文件 | 用例 / 断言 | 为什么删 | 该行为现在由什么覆盖 |
+| --- | --- | --- | --- |
+| `organization-context/domain/entities/organization.entity.spec.ts` | `updateSlug` 的用例 | `Organization.updateSlug()` 在实现里不存在（slug 只由 name 推导，构造后不可改） | 无（能力已移除，不是漏测） |
+| 同上 | `removeMemberFromCollection()` 的两个用例 | 方法不存在；当前是 `removeMember(userId, removerId)`，且带 owner 权限与"最后一个 owner 不能删"的规则 | 新写的 `removeMember` 三例（owner 可删 / 非 owner 拒绝 / 最后一个 owner 拒绝） |
+| 同上 | `hasOwner()` 的两个用例 | 方法不存在；owner 判定改成 `canBeUpdatedBy(userId)` 与各方法内部的 owner 校验 | 新写的 `canBeUpdatedBy` 一例 + `updateMemberRole` 的 owner 校验两例 |
+
+> 判定：这三条都属于**能力被有意移除**（不是实现漏做）——它们在当前 API 里没有对应物，
+> 而新 API 用更细的规则覆盖了同类关注点。整仓 `tsc` 也从未接受过旧断言，说明它们
+> 不是"曾经绿过之后被改坏"，而是**写下来就没跑过**。
 
 ## 里程碑 0：路径与工具模块（已完成）
 
