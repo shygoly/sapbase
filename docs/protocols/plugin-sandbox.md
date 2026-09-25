@@ -23,6 +23,17 @@
 node --permission --allow-fs-read=<插件目录> plugin-host-entry.js
 ```
 
+### 两个实现层的事实（踩过才知道，写下来省下一次）
+
+1. **`--allow-fs-read` 要用真实路径**：macOS 的 `tmpdir()` 是符号链接（`/var` → `/private/var`），
+   而权限模型按解析后的**真实路径**判 —— 只给符号链接路径会在插件激活时四处
+   `ERR_ACCESS_DENIED`（实测）。
+2. **一条目录路径即可覆盖其下所有文件（含子目录）**，不需要写通配符
+   （`<dir>` / `<dir>/*` / `<dir>/**` 三种写法实测等价）。
+
+入口脚本本身可以是 `.ts`：Node 的类型剥离能直接跑（要求只含可擦除语法），
+于是同一份源码在 ts-jest 与 `nest build` 之后都能用。
+
 ### 实测结果（Node v24.18.0，本仓库开发机）
 
 ```bash

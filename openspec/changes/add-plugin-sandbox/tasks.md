@@ -54,11 +54,26 @@ Tests:       4 failed, 394 passed, 398 total
 
 ## Phase P2: 进程边界
 
-- [ ] `plugin-host-entry.ts`（子进程侧）：加载插件入口 → 只暴露宿主 API 的 RPC 桩
-- [ ] `plugin-host-process.ts`（宿主侧）：`node --permission` 启动、行分隔 JSON 协议、
-      超时终止、崩溃后重建（与 `crates/wasm-host` 的 sidecar 客户端同构）
-- [ ] 启动前探测 `--permission` 可用性；不可用即拒（fail-closed，不退回同进程）
-- [ ] 证据：子进程内 `fs.readFileSync` / `child_process.execSync` / `new Worker` 三条**实测被拒**
+- [x] `plugin-host-entry.ts`（子进程侧）：加载插件入口；插件**唯一**的对外出口是
+      `callHost(capability, args)`，其余能力都从它长出来（`query` / `mutate` / `callApi` /
+      `extendModule` / `log`）。协议用行分隔 JSON，与 `crates/wasm-host` 同形态
+- [x] `plugin-host-process.ts`（宿主侧）：探测 → `node --permission --allow-fs-read=<插件真实路径>`
+      启动 → 行分隔 JSON 往返 → 超时 SIGKILL 并**立刻**把进程标记为不可用
+- [x] 启动前探测 `--permission`；不可用即抛 `PERMISSION_MODEL_UNAVAILABLE`，
+      **不退回同进程 require**（Node 二进制可注入，正是为了让这条路径可测）
+- [x] 能力请求中转：`authorize`（判定者）→ 拒绝则把"缺哪条声明"回给插件并写审计；
+      允许则交给 `executeCapability`（判定权在平台，子进程无权自证）
+- [x] 证据：`jest src/plugins/infrastructure/runtime/plugin-host-process.spec.ts` → **11 passed**，
+      其中三条越权是在真实子进程里实测：
+      `fs.readFileSync('/etc/hosts')` / `child_process.execSync` / `new Worker`
+      全部返回 `ERR_ACCESS_DENIED`
+
+> **P2 证据（2026-09-25）**：`node --version` → v24.18.0；`isPermissionModelAvailable()` → true；
+> 三条越权实测被拒；合规插件（纯计算 + 走 `context.query`）正常工作；超时 3s → `TIMEOUT`
+> 且 `running === false`。
+> 两个实现层坑已写进协议文本：① `--allow-fs-read` 必须用**真实路径**
+> （macOS `tmpdir` 是符号链接，权限模型按解析后的路径判）；② 一条目录路径即覆盖子目录，
+> 不需要通配符。入口脚本用 TS 写（Node 类型剥离可直接跑），同一份源码在 ts-jest 与 dist 都可用。
 
 ## Phase P3: 能力中介
 
