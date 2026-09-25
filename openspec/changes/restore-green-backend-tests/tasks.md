@@ -27,7 +27,42 @@ cd backend && npx jest --config jest.config.js --runInBand
 | 3 | `common/events` | 2 | ✅ 2026-09-25（含一处**实现加固**：审计脱敏改为递归） |
 | 4 | `ai-modules` | 1 | ✅ 2026-09-25（四个"断言失败"实为 DI 缺供应商） |
 | 5 | `ai-module-context` | 2 | ✅ 2026-09-25 |
-| 6 | CI 门禁诚实化（`.github/workflows/ci.yml` 的证据/范围说明） | — | ⏳ |
+| 6 | CI 门禁诚实化（`.github/workflows/ci.yml`） | — | ✅ 2026-09-25（描述改准 + 新增 e2e job） |
+
+## 里程碑 6：CI 门禁诚实化（已完成）
+
+**改准描述**：`apps` job 上原本写着"`nest build` + `next build` + 全部单元/e2e 均通过"。
+事实是：这个 job **从来没有跑过 e2e**（没有任何 e2e 步骤），而且它连单元测试都曾是红的。
+现在把覆盖范围逐条写清，并显式列出"不覆盖什么、为什么"。
+
+**补上一个真会跑 e2e 的 job**（`e2e`）：
+
+```text
+postgres:16 service  →  npm ci  →  shared-schemas  →  cargo build wasm-host  →
+rebuild-database（squash 基线，顺带在 CI 里验证"从零重建"）
+  → verify-from-zero（断言实体与库无结构差异）
+  → 三个维护中的 e2e（atomic-runtime / atomic-gates / blueprint-pipeline）
+```
+
+**另一个必须说的事实**：单元测试里原子执行链默认走 wasmtime sidecar，二进制不存在时
+测试**会失败而不是跳过** —— 本机之所以一直绿，是因为本地构建过它。所以 CI 里必须加
+`cargo build --release --locked --manifest-path crates/wasm-host/Cargo.toml`，
+否则刚修绿的 53 个套件在 CI 里照样红。这一步已加进 `apps` 与 `e2e` 两个 job。
+
+**仍然不覆盖（写在 CI 注释里，不假装）**：`backend/test/` 下其余历史 e2e
+（auth / roles / departments / users / plugins / ai-module-lifecycle）既需要完整 AppModule
+又会挂住，不在任何 job 里。
+
+**本地证据**（CI 步骤逐步照跑）：
+
+```text
+npx ts-node --transpile-only scripts/rebuild-database.ts --db=sapbase_rebuild
+  → 已重建 sapbase_rebuild：31 张表；台账 14 条
+npx ts-node --transpile-only scripts/verify-from-zero.ts --db=sapbase_rebuild
+  → ✅ 从零重建成功：实体与库无结构差异（另有 3 处默认值写法差异）
+DB_NAME=sapbase_rebuild npx jest --config ./test/jest-e2e.json --runInBand <三个 spec>
+  → Tests: 10 passed, 10 total
+```
 
 ### 里程碑：整仓回绿（2026-09-25 达成）
 
