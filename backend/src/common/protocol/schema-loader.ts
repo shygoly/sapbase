@@ -9,6 +9,7 @@ export const CONTRACT_SCHEMA_FILE = 'atomic-contract.schema.json'
 export const MANIFEST_SCHEMA_FILE = 'atomic-module-manifest.schema.json'
 export const BLUEPRINT_PACKAGE_SCHEMA_FILE = 'blueprint-package.schema.json'
 export const BLUEPRINT_IR_SCHEMA_FILE = 'blueprint-ir.schema.json'
+export const PLUGIN_MANIFEST_SCHEMA_FILE = 'plugin-manifest.schema.json'
 
 /** 向上查找的最大层数：backend/src/xxx → backend → 仓库根 */
 const MAX_WALK_UP = 8

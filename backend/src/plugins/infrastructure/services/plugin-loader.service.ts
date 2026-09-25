@@ -2,9 +2,9 @@ import { Injectable, BadRequestException } from '@nestjs/common'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import AdmZip from 'adm-zip'
-import { Validator } from 'jsonschema'
 import { PluginManifest, PluginType } from '../../domain/entities/plugin.entity'
 import type { IPluginLoader } from '../../domain/services'
+import { validatePluginManifest } from '../security/plugin-manifest-validator'
 
 const MANIFEST_SCHEMA = {
   type: 'object',
@@ -174,26 +174,12 @@ export class PluginLoaderService implements IPluginLoader {
   }
 
   async validateManifest(manifest: PluginManifest): Promise<void> {
-    const validator = new Validator()
-    const result = validator.validate(manifest, MANIFEST_SCHEMA)
-
+    // 判定的唯一实现在 plugin-manifest-validator（协议 = schemas/plugin-manifest.schema.json）。
+    // 这里**不再**自己写一份形状校验：两份判定漂移的那一刻，`additionalProperties: false`
+    // 这条最关键的约束就会在其中一份里悄悄消失。
+    const result = validatePluginManifest(manifest)
     if (!result.valid) {
-      const errors = result.errors.map((e: { property: string; message: string }) => `${e.property}: ${e.message}`)
-      throw new BadRequestException(
-        `Invalid manifest: ${errors.join(', ')}`,
-      )
-    }
-
-    // Validate plugin type
-    if (!['integration', 'ui', 'theme'].includes(manifest.type)) {
-      throw new BadRequestException(
-        `Invalid plugin type: ${manifest.type}. Must be 'integration', 'ui', or 'theme'`,
-      )
-    }
-
-    // Validate entry point exists (will be checked during extraction)
-    if (!manifest.entry?.backend) {
-      throw new BadRequestException('Plugin must declare backend entry point')
+      throw new BadRequestException(`Invalid manifest: ${result.errors.join('; ')}`)
     }
   }
 

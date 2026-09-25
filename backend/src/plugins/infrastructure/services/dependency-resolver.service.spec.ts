@@ -1,5 +1,5 @@
 import { DependencyResolverService } from './dependency-resolver.service'
-import type { PluginManifest } from '../../domain/entities/plugin.entity'
+import { PluginType, type PluginManifest } from '../../domain/entities/plugin.entity'
 
 describe('DependencyResolverService', () => {
   let service: DependencyResolverService
@@ -13,7 +13,7 @@ describe('DependencyResolverService', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {},
         entry: { backend: 'index.js' },
       }
@@ -28,7 +28,7 @@ describe('DependencyResolverService', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {},
         entry: { backend: 'index.js' },
         dependencies: {
@@ -36,7 +36,7 @@ describe('DependencyResolverService', () => {
         },
       }
 
-      const installedPlugins = []
+      const installedPlugins: PluginManifest[] = []
 
       const result = await service.resolveDependencies(manifest, installedPlugins)
 
@@ -49,7 +49,7 @@ describe('DependencyResolverService', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {},
         entry: { backend: 'index.js' },
         dependencies: {
@@ -69,7 +69,7 @@ describe('DependencyResolverService', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {},
         entry: { backend: 'index.js' },
         dependencies: {
@@ -90,7 +90,7 @@ describe('DependencyResolverService', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {},
         entry: { backend: 'index.js' },
         dependencies: {

@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/plugin-manifest.schema.json",
+  "title": "Plugin Manifest",
+  "description": "插件清单 —— 插件能力的**唯一来源**。声明之外的能力在运行时不存在（见 docs/protocols/plugin-sandbox.md §2）。本 Schema 只描述形状；入口路径是否越出插件目录这类跨字段判据由校验器负责（见 backend/src/plugins/infrastructure/security/plugin-manifest-validator.ts）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "version", "type", "permissions", "entry"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "maxLength": 64,
+      "description": "插件标识（kebab-case）"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$",
+      "description": "语义化版本"
+    },
+    "hostApiVersion": {
+      "type": "integer",
+      "const": 1,
+      "description": "插件所依赖的宿主 API 契约版本。缺省视为 1；写别的值即拒装（宿主只提供 1）。"
+    },
+    "type": {
+      "enum": ["integration", "ui", "theme"]
+    },
+    "description": { "type": "string", "maxLength": 500 },
+    "author": { "type": "string", "maxLength": 200 },
+    "license": { "type": "string", "maxLength": 200 },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["backend"],
+      "properties": {
+        "backend": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*\\.\\.)[^\\u0000]+\\.(js|mjs|cjs)$",
+          "description": "后端入口（相对插件目录的路径）。禁止绝对路径与 `..`；且必须是 JS 文件 —— 入口的加载方式由宿主决定，插件不能自选。"
+        },
+        "frontend": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*\\.\\.)[^\\u0000]+$"
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "声明的能力。**未声明即拿不到**，不是被拒是根本不存在。",
+      "properties": {
+        "api": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "endpoints": { "type": "array", "items": { "type": "string", "pattern": "^/" }, "uniqueItems": true },
+            "methods": {
+              "type": "array",
+              "items": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+              "uniqueItems": true
+            }
+          }
+        },
+        "database": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tables": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+            "operations": {
+              "type": "array",
+              "items": { "enum": ["read", "write", "delete"] },
+              "uniqueItems": true
+            }
+          }
+        },
+        "ui": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "components": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+            "pages": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+          }
+        },
+        "modules": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "extend": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+            "create": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+    "routes": {
+      "type": "array",
+      "description": "插件**声明**的路由；由宿主注册，插件不能自装。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "method", "handler"],
+        "properties": {
+          "path": { "type": "string", "pattern": "^/" },
+          "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+          "handler": { "type": "string", "pattern": "^[A-Za-z_$][A-Za-z0-9_$]*$" }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "plugins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "version"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "version": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "system": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "minVersion": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "钩子名 → 插件入口导出的函数名（宿主调用，不给插件额外能力）。",
+      "properties": {
+        "onInstall": { "type": "string", "minLength": 1 },
+        "onActivate": { "type": "string", "minLength": 1 },
+        "onDeactivate": { "type": "string", "minLength": 1 },
+        "onUninstall": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

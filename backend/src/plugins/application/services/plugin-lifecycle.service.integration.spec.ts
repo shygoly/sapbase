@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { TypeOrmModule } from '@nestjs/typeorm'
 import { ConfigModule } from '@nestjs/config'
+import { DataSource } from 'typeorm'
 import { PluginLifecycleService } from './plugin-lifecycle.service'
 import { PluginRepository } from '../../infrastructure/persistence/plugin.repository'
+import type { Plugin } from '../../domain/entities/plugin.entity'
 import { PluginLoaderService } from '../../infrastructure/services/plugin-loader.service'
 import { DependencyResolverService } from '../../infrastructure/services/dependency-resolver.service'
 import { PluginRuntimeService } from '../../infrastructure/runtime/plugin-runtime.service'
@@ -11,24 +12,56 @@ import { PluginEventEmitterService } from '../../infrastructure/events/plugin-ev
 import { PluginSecurityValidatorService } from '../../infrastructure/security/plugin-security-validator.service'
 import { PluginDatabaseAccessService } from '../../infrastructure/database/plugin-database-access.service'
 import { PluginModuleIntegrationService } from './plugin-module-integration.service'
+import { PLUGIN_REPOSITORY } from '../../domain/repositories'
+import { MODULE_REGISTRY_SERVICE } from '../../../ai-module-context/domain/services/tokens'
 import {
-  PLUGIN_REPOSITORY,
   PLUGIN_LOADER,
   DEPENDENCY_RESOLVER,
   PERMISSION_CHECKER,
   PLUGIN_EVENT_EMITTER,
 } from '../../domain/services'
 import { PermissionCheckerService } from '../../infrastructure/services/permission-checker.service'
-import { Plugin as PluginOrm } from '../../infrastructure/persistence/plugin.entity'
 import * as fs from 'fs/promises'
 import * as path from 'path'
-import * as AdmZip from 'adm-zip'
+import AdmZip from 'adm-zip'
+
+
+/**
+ * 内存仓库替身。
+ *
+ * 原来这里用 `TypeOrmModule.forRoot({ type: 'sqlite' })`，依赖收敛后仓库不再安装
+ * `sqlite3`（原生依赖），于是整个文件在跑之前就炸。本用例验证的是**生命周期编排**
+ * （安装 → 激活 → 停用 → 卸载），数据库不是它的对象 —— 换成内存替身，
+ * 真实的 loader / runtime / validator / 事件仍然全部参与。
+ */
+function memoryRepository() {
+  const rows = new Map<string, Plugin>()
+  const key = (id: string, organizationId: string) => `${organizationId}::${id}`
+  return {
+    rows,
+    findById: async (id: string, organizationId: string) =>
+      rows.get(key(id, organizationId)) ?? null,
+    findByName: async (name: string, organizationId: string) =>
+      [...rows.values()].find(
+        (plugin) => plugin.name === name && plugin.organizationId === organizationId,
+      ) ?? null,
+    findAll: async (organizationId: string) =>
+      [...rows.values()].filter((plugin) => plugin.organizationId === organizationId),
+    save: async (plugin: Plugin) => {
+      rows.set(key(plugin.id, plugin.organizationId), plugin)
+    },
+    delete: async (id: string, organizationId: string) => {
+      rows.delete(key(id, organizationId))
+    },
+  }
+}
 
 describe('PluginLifecycleService (Integration)', () => {
   let service: PluginLifecycleService
   let module: TestingModule
   let testZipPath: string
   let testPluginsDir: string
+  let pluginRepository: ReturnType<typeof memoryRepository>
   const testOrgId = 'test-org-1'
 
   beforeAll(async () => {
@@ -67,22 +100,15 @@ describe('PluginLifecycleService (Integration)', () => {
   })
 
   beforeEach(async () => {
+    pluginRepository = memoryRepository()
     module = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({ isGlobal: true }),
-        TypeOrmModule.forRoot({
-          type: 'sqlite',
-          database: ':memory:',
-          entities: [PluginOrm],
-          synchronize: true,
-        }),
-        TypeOrmModule.forFeature([PluginOrm]),
-      ],
+      imports: [ConfigModule.forRoot({ isGlobal: true })],
       providers: [
         PluginLifecycleService,
+        { provide: DataSource, useValue: {} },
         {
           provide: PLUGIN_REPOSITORY,
-          useClass: PluginRepository,
+          useValue: pluginRepository,
         },
         {
           provide: PLUGIN_LOADER,
@@ -96,11 +122,15 @@ describe('PluginLifecycleService (Integration)', () => {
           provide: PERMISSION_CHECKER,
           useClass: PermissionCheckerService,
         },
+        // PluginModuleIntegrationService 需要模块注册表；本 spec 用最小替身
+        {
+          provide: MODULE_REGISTRY_SERVICE,
+          useValue: { create: async () => ({ id: 'stub' }), findOne: async () => null, register: async () => ({ id: 'stub' }) },
+        },
         {
           provide: PLUGIN_EVENT_EMITTER,
           useClass: PluginEventEmitterService,
         },
-        PluginRepository,
         PluginLoaderService,
         DependencyResolverService,
         PermissionCheckerService,
@@ -178,7 +208,7 @@ describe('PluginLifecycleService (Integration)', () => {
       })
 
       // Verify plugin is removed
-      const repository = module.get(PLUGIN_REPOSITORY)
+      const repository = pluginRepository
       const found = await repository.findById(installed.id, testOrgId)
       expect(found).toBeNull()
     })

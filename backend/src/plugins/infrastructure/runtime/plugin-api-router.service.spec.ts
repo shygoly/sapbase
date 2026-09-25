@@ -1,6 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { PluginApiRouterService } from './plugin-api-router.service'
 import { PluginRuntimeService } from './plugin-runtime.service'
+import { PluginContextProvider } from './plugin-context-provider.service'
+import { PluginDatabaseAccessService } from '../database/plugin-database-access.service'
+import { PluginModuleIntegrationService } from '../../application/services/plugin-module-integration.service'
+import { DataSource } from 'typeorm'
+import { PluginPermissions } from '../../domain/entities/plugin-permission.entity'
+import { MODULE_REGISTRY_SERVICE } from '../../../ai-module-context/domain/services/tokens'
+import { PLUGIN_REPOSITORY } from '../../domain/repositories'
 import {
   PERMISSION_CHECKER,
   PLUGIN_EVENT_EMITTER,
@@ -20,6 +27,22 @@ describe('PluginApiRouterService - Permission Enforcement', () => {
       providers: [
         PluginApiRouterService,
         PluginRuntimeService,
+        // PluginRuntimeService 后来新增了 context provider 依赖；spec 没跟上就会 DI 报错
+        PluginContextProvider,
+        PluginDatabaseAccessService,
+        // 本 spec 只验证路由权限，数据库访问用占位（真连库会让单测依赖环境）
+        { provide: DataSource, useValue: {} },
+        {
+          provide: PLUGIN_REPOSITORY,
+          useValue: { findById: async () => null, findByName: async () => null, findAll: async () => [], save: async () => {}, delete: async () => {} },
+        },
+        // PluginModuleIntegrationService 需要模块注册表；本 spec 用最小替身
+        {
+          provide: MODULE_REGISTRY_SERVICE,
+          useValue: { create: async () => ({ id: 'stub' }), findOne: async () => null, register: async () => ({ id: 'stub' }) },
+        },
+
+        PluginModuleIntegrationService,
         {
           provide: PERMISSION_CHECKER,
           useClass: PermissionCheckerService,
@@ -90,15 +113,17 @@ describe('PluginApiRouterService - Permission Enforcement', () => {
     })
 
     it('should deny access to non-permitted endpoint', () => {
-      const pluginPermissions = {
+      // 权限必须是领域值对象（PluginPermissions）：传普通对象会让
+      // `permissions.hasApiAccess is not a function` —— 这曾是这个用例挂掉的原因
+      const pluginPermissions = PluginPermissions.fromManifest({
         api: {
           endpoints: ['/api/test'],
           methods: ['GET'],
         },
-      }
+      })
 
       const hasPermission = permissionChecker.checkApiPermission(
-        pluginPermissions as any,
+        pluginPermissions,
         '/api/unauthorized',
         'GET',
       )

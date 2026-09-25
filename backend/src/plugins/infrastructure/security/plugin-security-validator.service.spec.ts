@@ -1,7 +1,7 @@
 import { PluginSecurityValidatorService } from './plugin-security-validator.service'
 import * as fs from 'fs/promises'
 import * as AdmZip from 'adm-zip'
-import type { PluginManifest } from '../../domain/entities/plugin.entity'
+import { PluginType, type PluginManifest } from '../../domain/entities/plugin.entity'
 
 jest.mock('fs/promises')
 jest.mock('adm-zip')
@@ -20,7 +20,7 @@ describe('PluginSecurityValidatorService - Security Tests', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {},
         entry: { backend: 'index.js' },
       }
@@ -51,7 +51,7 @@ describe('PluginSecurityValidatorService - Security Tests', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {},
         entry: { backend: 'index.js' },
       }
@@ -82,7 +82,7 @@ describe('PluginSecurityValidatorService - Security Tests', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {},
         entry: { backend: 'index.js' },
       }
@@ -115,7 +115,7 @@ describe('PluginSecurityValidatorService - Security Tests', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {},
         entry: { backend: 'index.js' },
       }
@@ -137,7 +137,7 @@ describe('PluginSecurityValidatorService - Security Tests', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {
           api: {
             endpoints: Array(100).fill('/api/endpoint'),
@@ -170,7 +170,7 @@ describe('PluginSecurityValidatorService - Security Tests', () => {
       const manifest: PluginManifest = {
         name: 'test-plugin',
         version: '1.0.0',
-        type: 'integration',
+        type: PluginType.INTEGRATION,
         permissions: {
           api: {
             endpoints: ['/api/test'],
