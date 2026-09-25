@@ -20,6 +20,7 @@ import { CacheModule } from './cache/cache.module'
 import { WorkflowsModule } from './workflows/workflows.module'
 import { PluginsModule } from './plugins/plugins.module'
 import { AtomicRuntimeModule } from './atomic-runtime/atomic-runtime.module'
+import { BlueprintModule } from './blueprint/blueprint.module'
 import { User } from './users/user.entity'
 import { Organization } from './organizations/organization.entity'
 import { OrganizationMember } from './organizations/organization-member.entity'
@@ -122,6 +123,7 @@ try {
     WorkflowsModule,
     PluginsModule,
     AtomicRuntimeModule,
+    BlueprintModule,
   ],
   controllers: [],
   providers: [],

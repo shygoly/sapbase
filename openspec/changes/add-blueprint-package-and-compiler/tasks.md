@@ -16,6 +16,12 @@
 > **B1 证据（2026-09-25）**：`jest src/blueprint` → **22 passed**；
 > 全量回归：单元 **145** × 两引擎（123 + 22 新增）、e2e **3**、wasm-modules **53**、`tsc --noEmit` **0 错误**；
 > `shared-schemas` 构建通过（类型可编译）。
+>
+> **B2 证据（2026-09-25）**：`jest src/blueprint` → **45 passed**（validator 22 + packager 18 + controller 5）；
+> 全量回归：单元 **168** × 两引擎、e2e **3**、`tsc --noEmit` **0**、`nest build` 通过。
+> 一处如实标注：路径穿越**没有**用 `adm-zip` 造出集成样本（它在写入时会自行清理 `../`），
+> 因此改为对纯函数 `assertSafeEntryName` 做 6 类恶意条目名的表驱动测试 —— 检查仍然必要，
+> 因为来自外部的恶意包不受那层清理保护。
 
 1. 每完成一项：勾选 + 附证据（命令 + 结果），不写"应该可以"。
 2. 协议先行：B1 未完成不进 B2。
@@ -42,10 +48,11 @@
 
 ## Phase B2: 打包与解包
 
-- [ ] `backend/src/blueprint/packager.ts`：目录 → `.erpkg`（zip + 校验和写入 manifest）
-- [ ] 解包：`.erpkg` → 目录/内存结构，**不许路径穿越**（zip slip 防护）
-- [ ] `POST /api/blueprints/package`、`GET /api/blueprints/:id/manifest`
-- [ ] jest：往返等价、篡改被拒、manifest 与内容不符被拒、路径穿越被拒
+- [x] `backend/src/blueprint/packager.ts`：目录 → `.erpkg`（清单由打包器**生成**：逐文件 sha256 + 按路径约定分层，生成后立即用协议校验器自检）
+- [x] 解包：`.erpkg` → **内存结构（不落盘）**；`assertSafeEntryName` 拒绝穿越 / 绝对路径 / 盘符
+- [x] 失败路径逐类给原因码：缺清单、哈希不符、缺文件、多出未声明文件
+- [x] `POST /api/blueprints/package`、`GET /api/blueprints`、`GET /api/blueprints/:id/manifest`（v1 的"注册表"= 服务器上一个目录，`BLUEPRINT_PACKAGES_DIR`）
+- [x] 测试：往返等价、分层推导、篡改/缺失/多余被拒、6 类可疑条目名被拒、解包不落盘
 
 ## Phase B3: 编译器
 
