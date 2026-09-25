@@ -6,7 +6,16 @@ import {
 import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
 import { AtomicImplementationKind } from '../atomic-registry/atomic-implementation.entity'
 import { AtomicRuntimeError } from './atomic-runtime.error'
+import { OUTPUT_GATE_ERROR_CODE } from './atomic-runtime.error'
 import { missingPermissions } from './atomic-permissions'
+import {
+  GATE_MAX_REPLAY_ROWS,
+  firstFailedVerdict,
+  gateDeclarationOf,
+  judgeOutput,
+  type GateRun,
+  type OutputGateReport,
+} from './output-gate'
 import { WasmModuleLoader } from './wasm-module-loader'
 import { WasmModuleVerifier } from './wasm-module-verifier'
 import {
@@ -47,14 +56,14 @@ export interface AtomicInvocationResult {
   fuelUsed?: number
   /** 本次结果是否来自回退引擎（默认无回退配置时为 undefined）。 */
   engineFallback?: boolean
+  /** 闸 3 判定报告（档位、逐条判定、信号、实际内核回合数）。 */
+  outputGate: OutputGateReport
 }
 
 interface Projection {
   input: Int32Array
   rows: number
   columnNames: string[]
-  /** 契约声明的输出值域（缺省表示不限制）。 */
-  bounds: Array<{ name: string; minimum?: number; maximum?: number }>
   totalName?: string
   maxOutputBytes: number
 }
@@ -135,6 +144,9 @@ export class AtomicExecutor {
       )
     }
 
+    // 执行前先挡一次"按声明上限就装不下"的输出（省掉一次注定失败的执行）；
+    // 实际字节数的判定仍归闸 3 的 O3 —— 这一句是提前退出，不是第二条判据。
+    let fallbackSeen = false
     const { out: raw, fuelUsed, engineFallback } = await this.runInSandbox(
       sha256,
       bytes,
@@ -146,27 +158,95 @@ export class AtomicExecutor {
         (contract.cpuBudget ? Number(contract.cpuBudget) : undefined),
     )
 
+    // ── 闸 3：输出管控 ─────────────────────────────────────────────
+    // 批量那一次已经跑完，这里按档位补跑"逐行"与"置换"两类重放，然后把三次结果
+    // 一起交给 output-gate —— 判定只有那一处实现，执行器不再自己判任何一条。
+    const declaration = gateDeclarationOf(contract)
+    const batch: GateRun = { values: raw, rows: projection.rows }
+    let rounds = 1
+    let fuelTotal = fuelUsed
+
+    const replay = async (
+      records: Array<Record<string, number>>,
+    ): Promise<GateRun> => {
+      const replayProjection = this.project(contract, records)
+      const replayLength =
+        replayProjection.columnNames.length * replayProjection.rows +
+        (replayProjection.totalName ? 1 : 0)
+      const { out, fuelUsed: replayFuel, engineFallback: replayFallback } =
+        await this.runInSandbox(
+          sha256,
+          bytes,
+          replayProjection,
+          replayLength,
+          request.timeoutMs,
+          request.fuel ?? (contract.cpuBudget ? Number(contract.cpuBudget) : undefined),
+        )
+      rounds += 1
+      if (replayFuel !== undefined) fuelTotal = (fuelTotal ?? 0) + replayFuel
+      if (replayFallback) fallbackSeen = true
+      return { values: out, rows: replayProjection.rows }
+    }
+
+    // 重放上限是**成本**约束：逐行重放是 n 次执行。超出上限时只判前 N 行，
+    // 报告里写明 rowsJudged（确定性截断，不是抽样）。
+    const judgedRows = Math.min(projection.rows, GATE_MAX_REPLAY_ROWS)
+
+    let perRow: GateRun | undefined
+    if (declaration.profile !== 'off' && projection.rows >= 2) {
+      const values = new Int32Array(
+        projection.columnNames.length * judgedRows + (projection.totalName ? 1 : 0),
+      )
+      let total = 0
+      for (let r = 0; r < judgedRows; r += 1) {
+        const single = await replay([request.records[r]])
+        projection.columnNames.forEach((_name, ci) => {
+          values[ci * judgedRows + r] = single.values[ci]
+        })
+        if (projection.totalName) total += single.values[projection.columnNames.length]
+      }
+      if (projection.totalName) {
+        values[projection.columnNames.length * judgedRows] = total
+      }
+      perRow = { values, rows: judgedRows }
+    }
+
+    // O5 只在声明可交换后才判；`strict` 档位下同样会跑（档位是"更严"，不是"更多声明"）。
+    let permuted: { run: GateRun; permutation: number[] } | undefined
+    if (
+      declaration.profile !== 'off' &&
+      declaration.commutative &&
+      projection.rows >= 2
+    ) {
+      // 置换必须是**确定性**的（判据不许有随机）：这里用倒序。
+      const permutation = Array.from({ length: judgedRows }, (_v, i) => judgedRows - 1 - i)
+      const records = permutation.map((source) => request.records[source])
+      permuted = { run: await replay(records), permutation }
+    }
+
+    const outputGate = judgeOutput({
+      declaration,
+      batch,
+      perRow,
+      permuted,
+      rounds,
+    })
+    const failure = firstFailedVerdict(outputGate)
+    if (failure) {
+      // fail-closed：命中判决即**不返回结果**（不是"警告后放行"）
+      throw new AtomicRuntimeError(
+        OUTPUT_GATE_ERROR_CODE[failure.criterion],
+        `[atomic.output.${failure.criterion}] ${failure.detail}`,
+        `atomic.output.${failure.criterion}`,
+      )
+    }
+
     const columns: Record<string, number[]> = {}
     for (const name of projection.columnNames) columns[name] = []
     for (let r = 0; r < projection.rows; r += 1) {
       projection.columnNames.forEach((name, ci) => {
         columns[name].push(raw[ci * projection.rows + r])
       })
-    }
-    // 值域校验：契约声明了 minimum/maximum 就必须落在范围内 ——
-    // 这是"输出通道管控"里可判定的那一半（低熵判据仍未移植，见 design.md 安全边界表）。
-    for (const bound of projection.bounds) {
-      for (const value of columns[bound.name] ?? []) {
-        if (
-          (bound.minimum !== undefined && value < bound.minimum) ||
-          (bound.maximum !== undefined && value > bound.maximum)
-        ) {
-          throw new AtomicRuntimeError(
-            'OUTPUT_OUT_OF_RANGE',
-            `输出 ${bound.name}=${value} 超出契约值域 [${bound.minimum ?? '-∞'}, ${bound.maximum ?? '+∞'}]`,
-          )
-        }
-      }
     }
 
     const result: AtomicInvocationResult = {
@@ -178,14 +258,16 @@ export class AtomicExecutor {
       elapsedMs: Date.now() - startedAt,
       gateChecks: gate.checks,
       engine: this.pool.name(),
+      outputGate,
     }
     if (projection.totalName) {
       result.total = raw[projection.columnNames.length * projection.rows]
     }
-    if (fuelUsed !== undefined) {
-      result.fuelUsed = fuelUsed
+    // 闸 3 的重放计入同一预算，不额外放宽 —— 报告里的 rounds 让"贵了多少"可查
+    if (fuelTotal !== undefined) {
+      result.fuelUsed = fuelTotal
     }
-    if (engineFallback) {
+    if (engineFallback || fallbackSeen) {
       result.engineFallback = true
     }
     return result
@@ -239,11 +321,6 @@ export class AtomicExecutor {
       input,
       rows: records.length,
       columnNames,
-      bounds: outputSchema.columns.map((c) => ({
-        name: c.name,
-        minimum: c.minimum,
-        maximum: c.maximum,
-      })),
       totalName: outputSchema.total?.name,
       maxOutputBytes: outputSchema.maxOutputBytes ?? DEFAULT_MAX_OUTPUT_BYTES,
     }

@@ -15,12 +15,23 @@ export type AtomicRuntimeErrorCode =
   | 'EXECUTION_TIMEOUT'
   | 'OUTPUT_LIMIT_EXCEEDED'
   | 'OUTPUT_OUT_OF_RANGE'
+  | 'OUTPUT_GATE_STRUCTURE'
+  | 'OUTPUT_BATCH_INCONSISTENT'
+  | 'OUTPUT_ORDER_DEPENDENT'
   | 'ATOMIC_FAILED'
 
 export class AtomicRuntimeError extends Error {
   constructor(
     readonly code: AtomicRuntimeErrorCode,
     message: string,
+    /**
+     * 协议级错误码（形如 `atomic.output.O2`），来自 `docs/protocols/atomic-output-audit.md`。
+     *
+     * 为什么要两个码：`code` 是运行时错误面（HTTP 映射、契约 `errors` 声明都对着它），
+     * `protocolCode` 说的是"被哪一条**协议判据**拦下的"。闸 3 命中时必须两者都有 ——
+     * 调用方要能精确判断"是闸 3 拦的、拦在哪一条"，而不是收到一句"执行失败"。
+     */
+    readonly protocolCode?: string,
   ) {
     super(message)
     this.name = 'AtomicRuntimeError'
@@ -39,12 +50,17 @@ const HTTP_STATUS_BY_CODE: Record<AtomicRuntimeErrorCode, number> = {
   EXECUTION_TIMEOUT: 504,
   OUTPUT_LIMIT_EXCEEDED: 422,
   OUTPUT_OUT_OF_RANGE: 422,
+  OUTPUT_GATE_STRUCTURE: 422,
+  OUTPUT_BATCH_INCONSISTENT: 422,
+  OUTPUT_ORDER_DEPENDENT: 422,
   ATOMIC_FAILED: 422,
 }
 
 export interface HttpErrorPayload {
   statusCode: number
   code: AtomicRuntimeErrorCode
+  /** 协议级错误码（仅协议判据拦下的错误带此字段）。 */
+  protocolCode?: string
   message: string
 }
 
@@ -60,5 +76,23 @@ export function toHttpError(error: AtomicRuntimeError): HttpErrorPayload {
     statusCode: HTTP_STATUS_BY_CODE[error.code],
     code: error.code,
     message: error.message,
+    ...(error.protocolCode ? { protocolCode: error.protocolCode } : {}),
   }
+}
+
+/**
+ * 闸 3 的判据编号 → 运行时错误码。
+ *
+ * 映射表只此一份：判据文本改了（新增编号），这里必须同步补一行，
+ * 漏了就会在编译期报错（Record 覆盖全部编号），而不是运行期悄悄少一个码。
+ */
+export const OUTPUT_GATE_ERROR_CODE: Record<
+  'O1' | 'O2' | 'O3' | 'O4' | 'O5',
+  AtomicRuntimeErrorCode
+> = {
+  O1: 'OUTPUT_GATE_STRUCTURE',
+  O2: 'OUTPUT_OUT_OF_RANGE',
+  O3: 'OUTPUT_LIMIT_EXCEEDED',
+  O4: 'OUTPUT_BATCH_INCONSISTENT',
+  O5: 'OUTPUT_ORDER_DEPENDENT',
 }

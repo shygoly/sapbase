@@ -40,6 +40,16 @@
 > 「夹具一输出的高位恒为 `0x5EC00000`、低 21 位是正确的 7」与
 > 「夹具二同一行在批量里（`100 ^ 0x10000`）与单独算（`100`）结果不同」。
 > 全量：`wasm-modules` **58 passed**（53 + 5）。
+>
+> **P3 证据（2026-09-25）**：`jest src/atomic-runtime/output-gate.spec.ts` → **27 passed**
+> （O1–O5 各有正例/负例/未判，S1 信号，`gateDeclarationOf` 缺省语义，多条命中时取编号最小）；
+> `jest src/atomic-runtime/output-gate.integration.spec.ts` → **5 passed**（真实夹具产物）：
+> 合规模块 `rounds=3`、O4 判过、O5 如实记「未判」；夹具一 → `OUTPUT_OUT_OF_RANGE` + `atomic.output.O2`；
+> 夹具二 → `OUTPUT_BATCH_INCONSISTENT` + `atomic.output.O4`（明细含"第 1 行、批量算、单独算"）；
+> `outputAudit: off` → `rounds=1` 且 O4 记「未判」，O2/O3 照判。
+> `jest src/atomic-registry src/atomic-runtime` → **159 passed × 两引擎**；e2e 6 passed；tsc 0。
+> 一处边界说明：**O5 的"声明可交换却被违反"在集成层面被 O4 先命中**（顺序通道必然同时违反两条），
+> 所以 O5 只在纯判据测试里有独立用例 —— 这不是跳测，是"两条判据的触发条件天然重叠"。
 
 ## Phase P0: 基线修复（前置）
 
@@ -80,12 +90,20 @@
 
 ## Phase P3: 闸 3 实现
 
-- [ ] `backend/src/atomic-runtime/output-gate.ts`：纯函数实现 O1–O5 + S1，输入是"契约声明 + 输入 + 单条结果 + 批量结果"
-- [ ] 执行链接入：执行完成 → 闸 3 → 返回；命中判决抛出带 `reason` 的错误码，**不返回任何结果**
-- [ ] 审计：记录档位、判了哪几条、**未判哪几条**（如未声明 `commutative` 时的 O5）、S1 报告、实际内核回合数
-- [ ] 预算：闸 3 追加的执行必须计入同一 `cpuBudget`，不得放宽
-- [ ] 每条判据的负例：O1 多列/缺列、O2 越界、O3 超上限、O4 批量≠单条、O5 置换后汇总变了
-- [ ] 反例（必须**不**报错）：空输入、全 0 输出、未声明 `commutative` 的原子行序变化
+- [x] `backend/src/atomic-runtime/output-gate.ts`：判定只有这一处实现（O1–O5 + S1），
+      执行器只负责"按档位多跑几次 + 把结果交给它"；原先散在执行器里的值域/大小上限检查**已收进来**
+- [x] 执行链接入：执行完成 → 闸 3 → 返回；命中判决抛错且**不返回任何结果**；
+      错误同时带运行时码（HTTP 映射）与协议码 `atomic.output.OX`
+- [x] 审计：`metadata.outputGate` 记录档位、逐条判定、**未判哪几条及原因**、信号、实际内核回合数
+- [x] 预算：重放计入同一 `cpuBudget`（fuel 累加），报告里的 `rounds` 让"贵了多少"可查
+- [x] 每条判据的正例 + 负例 + **未判**三种情形（27 项纯判据测试）
+- [x] 重放上限 `GATE_MAX_REPLAY_ROWS = 64`：超出只判前 64 行并记 `rowsJudged`（确定性截断，非抽样）
+- [x] **自我修正**：S1 的"恒定高位"规则被否掉 —— 任何两个小整数的高位都相同，
+      该信号几乎次次触发；v1 只保留"整列同值"，并把理由写进协议文本
+- [x] 集成证据：`output-gate.integration.spec.ts` 用**真实夹具产物**验证
+      夹具一被 O2 拦、夹具二被 O4 拦、合规模块照常通过（两引擎各跑一遍）
+- [x] 顺带修掉一个被集成测试暴露的真问题：`outputAudit` 是契约**顶层字段**，
+      但实体里没有这一列 → 声明会被静默丢掉。补 `atomic_contracts.outputAudit` 列 + 迁移 `1790700000000`
 
 ## Phase P4: 闸 4 实现
 

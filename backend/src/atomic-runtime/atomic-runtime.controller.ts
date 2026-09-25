@@ -133,6 +133,8 @@ export class AtomicRuntimeController {
         engine: result.engine,
         fuelUsed: result.fuelUsed,
         engineFallback: result.engineFallback,
+        // 闸 3 报告进审计：档位、逐条判定（含"未判"及原因）、信号、实际回合数
+        outputGate: result.outputGate,
         resourceId: undefined,
         status: 'success',
       })
@@ -172,6 +174,8 @@ export class AtomicRuntimeController {
       engine?: string
       fuelUsed?: number
       engineFallback?: boolean
+      /** 闸 3 判定报告（成功调用才有）。 */
+      outputGate?: unknown
     },
   ) {
     await this.auditLogs.create({
@@ -191,6 +195,7 @@ export class AtomicRuntimeController {
         ...(detail.engine ? { engine: detail.engine } : {}),
         ...(detail.fuelUsed !== undefined ? { fuelUsed: detail.fuelUsed } : {}),
         ...(detail.engineFallback ? { engineFallback: true } : {}),
+        ...(detail.outputGate ? { outputGate: detail.outputGate } : {}),
         ...(detail.reason ? { reason: detail.reason } : {}),
       },
     })

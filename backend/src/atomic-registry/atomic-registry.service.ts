@@ -90,6 +90,7 @@ export class AtomicRegistryService {
       errors?: string[]
       idempotency?: 'none' | 'requestId'
       cpuBudget?: number
+      outputAudit?: 'off' | 'standard' | 'strict'
     }
 
     const existing = await this.contracts.findOne({
@@ -113,6 +114,8 @@ export class AtomicRegistryService {
         permissions: candidate.permissions ?? [],
         errors: candidate.errors ?? [],
         idempotency: candidate.idempotency ?? 'none',
+        // 未声明即按 standard；闸 3 的判据文本见 docs/protocols/atomic-output-audit.md
+        outputAudit: candidate.outputAudit ?? 'standard',
         // bigint 列在 TypeORM 里以字符串返回；这里统一存字符串避免精度问题
         cpuBudget:
           candidate.cpuBudget === undefined ? null : String(candidate.cpuBudget),

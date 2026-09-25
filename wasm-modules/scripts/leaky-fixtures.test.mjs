@@ -8,10 +8,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { reproduceAndGate } from "./admission.mjs";
-import { BUILD_DIR, readManifest } from "./wasm-utils.mjs";
+import { BUILD_DIR, sha256BytesHex } from "./wasm-utils.mjs";
 
 const FIXTURES = [
   { atomicType: "leaky-output-bits", sourceDir: "modules/leaky-output-bits-rust" },
@@ -36,16 +36,25 @@ const withHostIsolation = (fn) => async () => {
   }
 };
 
-function entryOf(atomicType) {
-  const entry = readManifest().modules.find((m) => m.atomicType === atomicType);
-  assert.ok(entry, `清单里没有夹具：${atomicType}`);
-  return entry;
+/**
+ * 夹具的产物在 `build/` 里，但**不在准入清单里**。
+ *
+ * 这是刻意的：`build/manifest.json` 是**生产准入台账**，谁导入它谁就把里面的模块
+ * 登记成"可绑定的实现"。故意做手脚的夹具不该出现在那里 —— 它只需要被
+ * "按哈希前缀找产物"的 loader 找到（那才是闸 3 要拦的场景），以及被本文件复核。
+ */
+function artifactOf(atomicType) {
+  const file = readdirSync(BUILD_DIR).find(
+    (f) => f.startsWith(`${atomicType}-`) && f.endsWith(".wasm"),
+  );
+  assert.ok(file, `build/ 里没有夹具产物：${atomicType}`);
+  const bytes = readFileSync(join(BUILD_DIR, file));
+  return { file, bytes, sha256: sha256BytesHex(bytes) };
 }
 
 /** 按 ABI v1 跑一次：输入三段等长列，输出 n 个值 + 1 个汇总位。 */
 function runFixture(atomicType, rows) {
-  const entry = entryOf(atomicType);
-  const bytes = readFileSync(join(BUILD_DIR, entry.file));
+  const { bytes } = artifactOf(atomicType);
   const memory = new WebAssembly.Memory({ initial: 2, maximum: 1024 });
   const instance = new WebAssembly.Instance(new WebAssembly.Module(bytes), {
     env: { memory },
@@ -72,15 +81,15 @@ function runFixture(atomicType, rows) {
   return { available, total: view.getInt32(outOff + n * 4, true) };
 }
 
-test("两个夹具都在清单里，且结构上就是普通模块（tier A / abi 1）", () => {
+test("夹具产物在 build/ 里，但不在生产准入清单里", () => {
+  const manifest = readFileSync(join(BUILD_DIR, "manifest.json"), "utf8");
   for (const { atomicType } of FIXTURES) {
-    const entry = entryOf(atomicType);
-    assert.equal(entry.tier, "A");
-    assert.equal(entry.abiVersion, 1);
-    assert.equal(entry.language, "rust");
-    // 静态闸只看到"导入 env.memory、导出 run" —— 它没有理由拒绝
-    assert.equal(entry.staticGate.memoryPages.max, 1024);
-    assert.ok(entry.staticGate.checks.includes("import=env.memory(min=2,max=1024)"));
+    const artifact = artifactOf(atomicType);
+    assert.equal(artifact.sha256.length, 64);
+    assert.ok(
+      !manifest.includes(artifact.sha256),
+      `${atomicType} 不该出现在 build/manifest.json（那是生产准入台账）`,
+    );
   }
 });
 
@@ -89,9 +98,9 @@ for (const { atomicType, sourceDir } of FIXTURES) {
   rustTest(
     `闸 0/1/2 放行 ${atomicType}（源码复现构建逐字节一致）`,
     withHostIsolation(async () => {
-      const entry = entryOf(atomicType);
       const rebuilt = await reproduceAndGate(sourceDir, { atomicType });
-      assert.equal(rebuilt.sha256, entry.sha256);
+      // 入库字节就是从这份源码复现出来的 —— 闸 2 对夹具同样放行
+      assert.equal(rebuilt.sha256, artifactOf(atomicType).sha256);
       // 闸 0（源码预检）与闸 1（静态白名单）都给出了逐条检查项，说明它们真的跑过
       assert.equal(rebuilt.sourceGate.language, "rust");
       assert.ok(rebuilt.sourceGate.checks.length > 0);
