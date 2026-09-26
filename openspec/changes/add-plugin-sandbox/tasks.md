@@ -77,10 +77,21 @@ Tests:       4 failed, 394 passed, 398 total
 
 ## Phase P3: 能力中介
 
-- [ ] `plugin-capability-broker.ts`：`context` 的每个方法先过声明校验（复用 `missingPermissions`）
-- [ ] 越权 → 抛 `PLUGIN_CAPABILITY_DENIED`，错误里写明"缺哪条声明"（不是"权限不足"）
-- [ ] 审计：每次越权与每次成功调用都留痕（`plugin.invoke` / `plugin.capability.denied`）
-- [ ] jest：未声明的表 / 操作 / 端点逐项被拒；合规调用通过；空声明插件只能做纯计算
+- [x] `plugin-capability-broker.ts`：**归一 → 判定 → 留痕**
+      · 归一：结构化声明摊平成权限点（`db:orders:read` / `api:GET:/api/orders` / `modules:extend:crm`）
+      · 判定：交给**原子那条线上已有的** `missingPermissions`（all-of）—— 不另写权限检查器
+      · 留痕：拒绝与放行都写审计，拒绝信息必须写明缺哪条声明
+- [x] 越权 → `PLUGIN_CAPABILITY_DENIED`，错误里带 `missing: string[]`（不是一句"权限不足"）
+- [x] `createAuthorizer()` 给子进程宿主用：放行返回 `null`、拒绝返回原因字符串 ——
+      拒绝要**回给插件**（让它知道缺哪条声明），而不是把宿主进程炸掉
+- [x] jest：未声明的表 / 操作 / 端点 / 模块逐项被拒；空声明插件只能做纯计算（写日志仍允许）；
+      未知能力一律拒（归成不可能满足的点）
+- [x] 与子进程边界对接的集成证据：子进程里 `context.query('customers')` 被 broker 拒绝，
+      插件拿到的错误含 `db:customers:read`，审计记 `plugin.capability.denied`
+
+> **P3 证据（2026-09-25）**：`jest src/plugins/infrastructure/security/plugin-capability-broker.spec.ts`
+> → **19 passed**（归一 4 例 + 请求映射 7 例 + all-of 判定 5 例 + 抛出语义 2 例 + 判定者 1 例）；
+> `jest …/plugin-host-process.spec.ts` → **12 passed**（含上述 broker 集成）。
 
 ## Phase P4: 扫描降级为信号
 

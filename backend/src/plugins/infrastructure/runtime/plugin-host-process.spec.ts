@@ -13,6 +13,7 @@ import {
   hostEntryPath,
   isPermissionModelAvailable,
 } from './plugin-host-process'
+import { createAuthorizer } from '../security/plugin-capability-broker'
 
 /** 造一个插件目录：`index.js` + 可选内容。 */
 function makePlugin(source: string): string {
@@ -194,6 +195,51 @@ describe('能力中介：判定权在平台', () => {
       capability: 'database.read',
       allowed: false,
       reason: '缺少声明：database.tables 不含 customers',
+    })
+  })
+})
+
+describe('与能力中介对接（判定来自 broker，不是测试里的假审核）', () => {
+  it('清单只声明 orders → 访问 customers 被 broker 拒绝，理由与审计都在', async () => {
+    const dir = pluginWith(`
+      let context = null
+      module.exports = {
+        initialize: (ctx) => { context = ctx },
+        readCustomers: () =>
+          context.query('customers').then(() => 'ALLOWED').catch((error) => error.message),
+        readOrders: () => context.query('orders').then((rows) => rows),
+      }
+    `)
+    const audits: Array<Record<string, unknown>> = []
+    const host = new PluginHostProcess({
+      pluginDir: dir,
+      entry: 'index.js',
+      pluginName: 'auto-parts',
+      // 判定者来自能力中介：清单只声明了 orders 的读权限
+      authorize: createAuthorizer('auto-parts', {
+        database: { tables: ['orders'], operations: ['read'] },
+      }),
+      executeCapability: async (_capability, args) => ({ table: args.table, rows: [] }),
+      onAudit: (event) => audits.push(event),
+    })
+    hosts.push(host)
+    await host.start()
+
+    await expect(host.invoke('readOrders')).resolves.toMatchObject({
+      ok: true,
+      result: { table: 'orders', rows: [] },
+    })
+
+    const denied = await host.invoke('readCustomers')
+    expect(denied.ok).toBe(true) // 插件自己 catch 了，宿主侧的调用本身是成功的
+    expect(String(denied.result)).toContain('PLUGIN_CAPABILITY_DENIED')
+    expect(String(denied.result)).toContain('db:customers:read')
+
+    expect(audits).toContainEqual({
+      action: 'plugin.capability.denied',
+      capability: 'database.read',
+      allowed: false,
+      reason: expect.stringContaining('db:customers:read'),
     })
   })
 })
