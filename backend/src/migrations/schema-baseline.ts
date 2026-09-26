@@ -1,5 +1,10 @@
 // 由 scripts/generate-schema-baseline.ts 从实体定义生成，请勿手改。
 // 重新生成：npx ts-node --transpile-only scripts/generate-schema-baseline.ts --to=sapbase_gen
+//
+// blueprint_records 例外：DDL 只有一份（semantic-runtime/blueprint-record.ddl.ts），
+// 追加在末尾以便 organizations 已存在，三处（迁移 / 基线 / e2e）共用。
+import { BLUEPRINT_RECORDS_DDL } from '../semantic-runtime/blueprint-record.ddl'
+
 export const SCHEMA_BASELINE_SQL: string[] = [
   `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`,
   `CREATE TABLE public.ai_models (
@@ -576,4 +581,5 @@ export const SCHEMA_BASELINE_SQL: string[] = [
     ADD CONSTRAINT "FK_f6414ec030ca08823b25e03cd9d" FOREIGN KEY ("managerId") REFERENCES public.users(id)`,
   `ALTER TABLE ONLY public.ai_module_tests
     ADD CONSTRAINT "FK_f8c1a6e482e1f543783a95451c6" FOREIGN KEY ("moduleId") REFERENCES public.ai_modules(id) ON DELETE CASCADE`,
+  ...BLUEPRINT_RECORDS_DDL,
 ]

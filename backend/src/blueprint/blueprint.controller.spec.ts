@@ -185,6 +185,14 @@ describe('BlueprintController（B2）', () => {
     await expect(controller.load('auto-parts-erp-2026.1.0')).resolves.toBeDefined()
   })
 
+  it('deliver 请求含未知字段 → 400', async () => {
+    await expect(
+      controller.deliver('auto-parts-min', { grantedTo: ['org-b'], extra: true }),
+    ).rejects.toMatchObject({
+      response: { reason: 'unknown-field' },
+    })
+  })
+
   it('加载失败 → 400 且带原因（ir-drift）', async () => {
     writeFileSync(
       join(sourceDir, 'semantic.json'),

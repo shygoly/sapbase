@@ -1,12 +1,35 @@
 import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common'
-import { existsSync, readdirSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { Validator } from 'jsonschema'
 import type { BlueprintCompileResult, BlueprintManifest } from '@speckit/shared-schemas'
+import { loadSchema } from '../common/protocol/schema-loader'
 import { packBlueprint, readBlueprintMeta, stampCompiled, unpackBlueprint } from './packager'
 import { compileBlueprint } from './compiler'
+import { signPackage } from './license'
 import { loadBlueprint, type BlueprintAuditRecord, type LoadedBlueprint } from './loader'
 import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
+
+export type DeliverErrorReason = 'missing-template' | 'missing-private-key' | 'invalid-license'
+
+export class DeliverError extends Error {
+  constructor(
+    message: string,
+    readonly reason: DeliverErrorReason,
+  ) {
+    super(message)
+    this.name = 'DeliverError'
+  }
+}
+
+export interface DeliverLicenseInput {
+  grantedTo: string[]
+  resell?: boolean
+  expiresAt?: string
+  issuer?: string
+}
 
 /**
  * 蓝图包服务（v1 的"注册表"就是**一个目录**）。
@@ -21,6 +44,9 @@ export class BlueprintService {
   private readonly packagesDir =
     process.env.BLUEPRINT_PACKAGES_DIR ??
     resolve(__dirname, '../../../blueprints')
+  private readonly templatesDir =
+    process.env.BLUEPRINT_TEMPLATES_DIR ??
+    resolve(__dirname, '../../../templates')
 
   constructor(
     private readonly atomicRegistry: AtomicRegistryService,
@@ -115,6 +141,68 @@ export class BlueprintService {
     })
     await this.persistAudit(loaded.audit, options.tenantId)
     return loaded
+  }
+
+  /**
+   * 一条命令：模板目录 → 已授权、已签名的可交付包。
+   *
+   * 顺序写死在本方法里，调用方不各自拼装。
+   * **先签后编会让签名失效**（compiled 在签名覆盖范围内），所以必须
+   * 写 license → 打包 → 编译盖章 → 签名。
+   */
+  async deliver(
+    templateId: string,
+    licenseInput: DeliverLicenseInput,
+  ): Promise<{ id: string; packagePath: string; manifest: BlueprintManifest }> {
+    const privateKeyPem = process.env.BLUEPRINT_LICENSE_PRIVATE_KEY
+    if (!privateKeyPem) {
+      throw new DeliverError(
+        '未配置 BLUEPRINT_LICENSE_PRIVATE_KEY，拒绝产出未签名制品',
+        'missing-private-key',
+      )
+    }
+
+    const templateDir = join(this.templatesDir, templateId)
+    if (!existsSync(templateDir)) {
+      throw new DeliverError(`模板不存在：${templateId}`, 'missing-template')
+    }
+
+    const license = {
+      license: 'blueprint-license/v1',
+      grantedTo: licenseInput.grantedTo,
+      resell: licenseInput.resell ?? false,
+      ...(licenseInput.expiresAt ? { expiresAt: licenseInput.expiresAt } : {}),
+      issuer: licenseInput.issuer ?? 'sapbase-platform',
+    }
+    const check = new Validator().validate(license, loadSchema('blueprint-license.schema.json'))
+    if (!check.valid) {
+      throw new DeliverError(
+        `license.json 未通过协议校验：${check.errors.map((error) => error.message).join('; ')}`,
+        'invalid-license',
+      )
+    }
+
+    mkdirSync(this.packagesDir, { recursive: true })
+    const staging = mkdtempSync(join(tmpdir(), 'bp-deliver-'))
+    try {
+      // 复制到 staging，绝不改 templates/ 源码
+      cpSync(templateDir, staging, { recursive: true })
+      writeFileSync(join(staging, 'license.json'), `${JSON.stringify(license, null, 2)}\n`)
+
+      const meta = readBlueprintMeta(staging)
+      const packagePath = join(this.packagesDir, `${meta.blueprint}-${meta.version}.erpkg`)
+      packBlueprint(staging, packagePath)
+
+      const compiled = await compileBlueprint(unpackBlueprint(packagePath), this.atomicRegistry)
+      stampCompiled(packagePath, {
+        irDigest: compiled.irDigest,
+        compiledAt: new Date().toISOString(),
+      })
+      const manifest = signPackage(packagePath, privateKeyPem)
+      return { id: `${meta.blueprint}-${meta.version}`, packagePath, manifest }
+    } finally {
+      rmSync(staging, { recursive: true, force: true })
+    }
   }
 
   /** 装载器是纯函数，审计记录由这里落库到既有 AuditLogsService。 */

@@ -245,6 +245,8 @@ jobs:
             test/atomic-runtime.e2e-spec.ts \
             test/atomic-gates.e2e-spec.ts \
             test/blueprint-pipeline.e2e-spec.ts \
+            test/blueprint-delivery.e2e-spec.ts \
+            test/blueprint-delivery-template.e2e-spec.ts \
             test/plugin-sandbox.e2e-spec.ts
 
   validate:

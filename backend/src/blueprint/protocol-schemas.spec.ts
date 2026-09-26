@@ -98,6 +98,70 @@ describe('blueprint-rules.schema.json', () => {
     expect(check('blueprint-rules.schema.json', bad).valid).toBe(false)
   })
 
+  it('加法修订：greaterOrEqual / lessOrEqual 现在通过，value 必须是 number', () => {
+    const ge = {
+      ...VALID_RULES,
+      validation: [
+        {
+          id: 'so-price-nonneg',
+          entity: 'SalesOrder',
+          field: 'unitPrice',
+          rule: 'greaterOrEqual',
+          value: 0,
+          message: '单价不能为负',
+        },
+      ],
+    }
+    expect(check('blueprint-rules.schema.json', ge).valid).toBe(true)
+
+    const le = {
+      ...VALID_RULES,
+      validation: [
+        {
+          id: 'so-qty-cap',
+          entity: 'SalesOrder',
+          field: 'quantity',
+          rule: 'lessOrEqual',
+          value: 100,
+          message: '数量上限',
+        },
+      ],
+    }
+    expect(check('blueprint-rules.schema.json', le).valid).toBe(true)
+
+    const badValue = {
+      ...VALID_RULES,
+      validation: [
+        {
+          id: 'so-price-nonneg',
+          entity: 'SalesOrder',
+          field: 'unitPrice',
+          rule: 'greaterOrEqual',
+          value: '0',
+          message: '单价不能为负',
+        },
+      ],
+    }
+    expect(check('blueprint-rules.schema.json', badValue).valid).toBe(false)
+  })
+
+  it('负例：未知运算符仍被拒', () => {
+    const unknown = {
+      ...VALID_RULES,
+      validation: [
+        {
+          id: 'so-price-nonneg',
+          entity: 'SalesOrder',
+          field: 'unitPrice',
+          rule: 'atLeast',
+          value: 0,
+          message: '单价不能为负',
+        },
+      ],
+    }
+    expect(check('blueprint-rules.schema.json', unknown).valid).toBe(false)
+  })
+
   it('负例：expression / eval / script / lambda / fn 有意拒绝', () => {
     for (const forbidden of ['expression', 'eval', 'script', 'lambda', 'fn']) {
       const result = check('blueprint-rules.schema.json', {

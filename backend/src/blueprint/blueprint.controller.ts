@@ -12,10 +12,12 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { CurrentUser } from '../auth/current-user.decorator'
-import { BlueprintService } from './blueprint.service'
+import { BlueprintService, DeliverError } from './blueprint.service'
 import { PackageError } from './packager'
 import { CompileError } from './compiler'
 import { LoadError } from './loader'
+
+const DELIVER_LICENSE_KEYS = new Set(['grantedTo', 'resell', 'expiresAt', 'issuer'])
 
 /**
  * 蓝图包的 HTTP 入口（B2）。
@@ -49,6 +51,60 @@ export class BlueprintController {
       if (error instanceof PackageError) {
         // 打包失败的原因必须原样透出（io / invalid-manifest），否则排查只能靠猜
         throw new BadRequestException(`打包失败[${error.reason}]：${error.message}`)
+      }
+      throw error
+    }
+  }
+
+  @Post(':id/deliver')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '把模板目录产出为已授权、已签名的 .erpkg（先盖章再签名）',
+  })
+  async deliver(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      grantedTo?: string[]
+      resell?: boolean
+      expiresAt?: string
+      issuer?: string
+      [key: string]: unknown
+    },
+  ) {
+    const extra = Object.keys(body ?? {}).filter((key) => !DELIVER_LICENSE_KEYS.has(key))
+    if (extra.length > 0) {
+      throw new BadRequestException({
+        message: `交付请求含未知字段：${extra.join(', ')}`,
+        reason: 'unknown-field',
+      })
+    }
+    if (!Array.isArray(body?.grantedTo)) {
+      throw new BadRequestException({
+        message: '缺少 grantedTo（租户数组）',
+        reason: 'invalid-license',
+      })
+    }
+    try {
+      return await this.blueprints.deliver(id, {
+        grantedTo: body.grantedTo,
+        resell: body.resell,
+        expiresAt: body.expiresAt,
+        issuer: body.issuer,
+      })
+    } catch (error) {
+      if (error instanceof DeliverError) {
+        throw new BadRequestException({ message: error.message, reason: error.reason })
+      }
+      if (error instanceof PackageError) {
+        throw new BadRequestException({ message: error.message, reason: error.reason })
+      }
+      if (error instanceof CompileError) {
+        throw new BadRequestException({
+          message: error.message,
+          reason: error.reason,
+          conflicts: error.conflicts,
+        })
       }
       throw error
     }

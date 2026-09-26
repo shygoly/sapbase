@@ -71,6 +71,8 @@
                 "required",
                 "greaterThan",
                 "lessThan",
+                "greaterOrEqual",
+                "lessOrEqual",
                 "minLength",
                 "maxLength",
                 "pattern",
@@ -84,7 +86,7 @@
           "allOf": [
             {
               "if": {
-                "properties": { "rule": { "enum": ["greaterThan", "lessThan"] } },
+                "properties": { "rule": { "enum": ["greaterThan", "lessThan", "greaterOrEqual", "lessOrEqual"] } },
                 "required": ["rule"]
               },
               "then": {

@@ -561,6 +561,39 @@ describe('rules / experience 编译期判据', () => {
     })
   })
 
+  it('sales-manager 现在被接受；未知角色 intern 仍拒', async () => {
+    const accepted = {
+      ...VALID_RULES,
+      approval: [{ ...VALID_RULES.approval[0], steps: [{ role: 'sales-manager' }] }],
+    }
+    const result = await compileBlueprint(
+      unpacked({
+        'semantic.json': VALID_SEMANTIC,
+        'flows.json': VALID_FLOWS,
+        'rules.json': accepted,
+      }),
+      registry(),
+    )
+    expect(result.ir.blueprint).toBe('auto-parts-erp')
+
+    const stillUnknown = {
+      ...VALID_RULES,
+      approval: [{ ...VALID_RULES.approval[0], steps: [{ role: 'intern' }] }],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({
+          'semantic.json': VALID_SEMANTIC,
+          'flows.json': VALID_FLOWS,
+          'rules.json': stillUnknown,
+        }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      conflicts: expect.arrayContaining([expect.stringContaining('未知角色')]),
+    })
+  })
+
   it('记账触发未声明事件 → 拒', async () => {
     const bad = {
       ...VALID_RULES,

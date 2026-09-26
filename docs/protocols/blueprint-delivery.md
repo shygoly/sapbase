@@ -61,8 +61,9 @@ license.json       授权声明（租户 / 再销售 / 到期）              �
 }
 ```
 
-`validation[].rule` 是枚举（`required | greaterThan | lessThan | minLength | maxLength | pattern | oneOf | unique`），
+`validation[].rule` 是枚举（`required | greaterThan | lessThan | greaterOrEqual | lessOrEqual | minLength | maxLength | pattern | oneOf | unique`），
 `value` 的类型按 rule 用 `allOf/if-then` 约束。
+`greaterOrEqual` / `lessOrEqual` 是 change `add-minimal-autoparts-template` 的**加法式修订**（新增允许值，既有包不受影响，不放松任何行为判据）；它们与 `greaterThan` / `lessThan` 同组，`value` 必须是 number。
 `expression` / `eval` / `script` / `lambda` / `fn` **有意非法**（`additionalProperties: false` + 显式 `not`）。
 
 ### 2.1 编译期判据
@@ -96,6 +97,19 @@ STRING      := '...' 或 "..."
 只允许：字段标识符、数字/字符串字面量、比较运算符、布尔连接、括号。
 **绝不实现求值**——表达式求值属 runtime，不属编译期。语法不合法 → `CompileError`。
 
+**已知缺口：没有算术运算符。** 因此**金额合计类条件无法表达**——
+`quantity * unitPrice > 100000` 是非法的（`*` 不在运算符集里）。
+遇到这种需求只有两条路：
+
+1. 换成一个**可表达且业务说得通**的条件（本仓库最小汽配模板就是这么做的：
+   大额审批改成"大批量审批" `quantity > 100`）；
+2. 扩展语法（属新变更，且要先想清楚在哪一层求值）。
+
+**不许用相近条件静默顶替。** 一条规则的 `id` 与 `message` MUST 描述它**实际检查的东西**：
+`id: so-high-value` 配 `when: unitPrice > 100000` 是**错的**——它读起来像"金额大就审批"，
+实际只对"单价超过 10 万"生效，10000 件 × ¥10（合计 ¥100,000）不会触发。
+这类"看着像检查、其实不检查"的条件比没有条件更危险：它让人以为已经被保护了。
+
 抽取到的每个标识符：
 
 - 无点：必须是 `approval[].entity` 的字段名
@@ -105,8 +119,9 @@ STRING      := '...' 或 "..."
 
 编译期对照这份静态目录（不查库——编译必须是确定性的）：
 
-`owner` / `admin` / `member` / `gm` / `finance-manager` / `purchasing-manager`
+`owner` / `admin` / `member` / `gm` / `finance-manager` / `purchasing-manager` / `sales-manager`
 
+`sales-manager` 是 change `add-minimal-autoparts-template` 的**加法式扩充**（未知角色仍拒）。
 不在目录里 → 冲突。要加角色，先改本文件再改编译器（一份判定）。
 
 ### 2.4 记账平衡（不做代数化简）
@@ -262,3 +277,69 @@ Schema 用 `additionalProperties: false` **加上**显式 `not`，让拒绝是�
 | Atomic Contract | `experience` / `flows` 的动作可引用已声明原子类型 |
 | Interaction Surface | `experience.json` 是决策输入；交互面是一次输出 |
 | License / Encryption | 本协议落地授权声明与 Ed25519 验签；加密仍属后续 |
+
+---
+
+## 7. 模板 = 什么（源码 vs 产物）
+
+change `add-minimal-autoparts-template` 把「包能交付」推进到「包能写入实体实例」。
+这一节写清目录、约束从哪来、以及运行时**明确不执行**的部分。
+
+### 7.1 源码与产物
+
+| 目录 | 是什么 | 谁写 |
+| --- | --- | --- |
+| `templates/<id>/` | 模板**源码**（进仓库、可评审）。默认路径 `BLUEPRINT_TEMPLATES_DIR`，否则仓库根 `templates/` | 作者；`deliver` **绝不改这里** |
+| `blueprints/` | 模板**产物**（`.erpkg`）。默认路径 `BLUEPRINT_PACKAGES_DIR` | `POST /:id/deliver` 一条命令产出 |
+
+`:id` 在 `deliver` 上指向 `templates/<id>/`；产出的包 id 仍是 `<blueprint>-<version>`
+（例如 `auto-parts-min-1.0.0`），因此既有的 `POST /:id/compile` / `GET /:id/manifest` / `POST /:id/load` 继续可用。
+
+### 7.2 交付顺序（先盖章，再签名）
+
+`design.md` 曾写「打包 → 盖章 → 写 license → **重新打包** → 签名」。重新打包会按目录重建清单，
+把 `stampCompiled` 写进去的 `compiled` 抹掉，于是清单无法同时留下 `compiled.irDigest` 与 `signature`。
+
+**唯一正确顺序**（写死在 `BlueprintService.deliver`，调用方不各自拼装）：
+
+```text
+1. 把 templates/<id>/ 复制到临时 staging（不改源码）
+2. 在 staging 写 license.json（经 blueprint-license.schema.json 校验）
+3. packBlueprint(staging, <packagesDir>/<blueprint>-<version>.erpkg)
+4. compileBlueprint(unpackBlueprint(pkg), registry) → irDigest
+5. stampCompiled(pkg, { irDigest, compiledAt })
+6. signPackage(pkg, BLUEPRINT_LICENSE_PRIVATE_KEY)   ← 签名必须在盖章之后
+```
+
+先签后编会让签名失效——这是有意的：编译结果变了就该重签。
+私钥来自 `BLUEPRINT_LICENSE_PRIVATE_KEY`；**未配置 → 抛错拒绝**（不能产出未签名制品）。
+
+### 7.3 约束来自模板校验，不来自数据库
+
+`blueprint_records` 是通用记录表：`data` 是 jsonb，**没有列约束**。
+写入链（装载 → 实体已声明 → 字段名已知 → 类型匹配 → reference 存在 → `rules.validation` 字面量比较 → 落库）
+在 API 里 fail-closed；**直连数据库写入不受这些约束**。
+需要硬约束时走「按语义生成物理表」那条线（另立变更）。
+
+未知字段一律拒（不忽略、不警告）。通用表放过未知字段，等于把校验变成抽查。
+
+### 7.4 本运行时明确不执行
+
+| 被声明 | 本运行时 |
+| --- | --- |
+| `rules.validation` | **执行**（字面量比较） |
+| `approval.when` | **不求值**。写入一条本会触发审批的记录仍然成功。要执行得先有表达式求值器（后续变更） |
+| `accounting` 分录 | **不过账** |
+| `flows.json` 状态推进 | **不执行**（编译期校验 DAG / 可达性；运行时不改记录状态） |
+
+写清「被声明 ≠ 被强制执行」，避免读文档的人以为审批/记账/流程已经在拦。
+
+### 7.5 缺口实证（T0，为什么必须有语义运行时）
+
+装载本身只证明「包合法、租户被授权、原子能绑定」。下列三项是实测，不是推测：
+
+1. `backend/src/blueprint` **没有**记录写入入口（只有 package / compile / load / manifest）。
+2. `rules-expression.ts` 对 `approval.when` **只抽取字段引用，不求值**。
+3. `wasm-modules/build/manifest.json` **只有 1 个原子**：`available-inventory`（tier A，abiVersion 1）。
+
+没有语义运行时，模板装载后没有可观察的业务行为——这就是本变更必须包含写入链的原因。

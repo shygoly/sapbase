@@ -1,0 +1,11 @@
+{
+  "blueprint": "auto-parts-min",
+  "version": "1.0.0",
+  "runtime": ">=1.0.0 <2.0.0",
+  "dependencies": [
+    {
+      "atomic": "available-inventory",
+      "version": "^1.0.0"
+    }
+  ]
+}

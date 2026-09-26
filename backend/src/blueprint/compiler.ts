@@ -34,6 +34,8 @@ export const PLATFORM_APPROVAL_ROLES = new Set([
   'gm',
   'finance-manager',
   'purchasing-manager',
+  // add-minimal-autoparts-template：加法式扩充，未知角色仍拒
+  'sales-manager',
 ])
 
 export type CompileErrorReason =
