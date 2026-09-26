@@ -120,6 +120,7 @@ describe('PermissionCheckerService', () => {
 
       const result = service.checkModulePermission(
         permissions,
+        'extend',
         'existing-module',
       )
 
@@ -133,7 +134,7 @@ describe('PermissionCheckerService', () => {
         },
       })
 
-      const result = service.checkModulePermission(permissions, 'other-module')
+      const result = service.checkModulePermission(permissions, 'extend', 'other-module')
 
       expect(result).toBe(false)
     })
@@ -145,7 +146,7 @@ describe('PermissionCheckerService', () => {
         },
       })
 
-      const result = service.checkModuleCreationPermission(permissions)
+      const result = service.checkModulePermission(permissions, 'create')
 
       expect(result).toBe(true)
     })
@@ -157,7 +158,7 @@ describe('PermissionCheckerService', () => {
         },
       })
 
-      const result = service.checkModuleCreationPermission(permissions)
+      const result = service.checkModulePermission(permissions, 'create')
 
       expect(result).toBe(false)
     })

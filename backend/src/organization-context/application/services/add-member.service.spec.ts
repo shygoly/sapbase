@@ -14,8 +14,8 @@ import { Organization } from '../../domain/entities/organization.entity'
 import { OrganizationMember, OrganizationRole } from '../../domain/entities/organization-member.entity'
 import { BusinessRuleViolation } from '../../domain/errors'
 import { MemberAddedEvent } from '../../domain/events'
-import { createMockEventPublisher, createMockRepository } from '../../../test/utils/test-helpers'
-import { OrganizationBuilder, OrganizationMemberBuilder } from '../../../test/utils/domain-builders'
+import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
+import { OrganizationBuilder, OrganizationMemberBuilder } from '../../../../test/utils/domain-builders'
 
 describe('AddMemberService', () => {
   let service: AddMemberService
@@ -63,6 +63,7 @@ describe('AddMemberService', () => {
         organizationId: 'org-1',
         userId: 'user-2',
         role: OrganizationRole.MEMBER,
+        addedById: 'user-1',
       }
 
       organizationRepository.findById.mockResolvedValue(organization)
@@ -85,6 +86,7 @@ describe('AddMemberService', () => {
         organizationId: 'org-999',
         userId: 'user-2',
         role: OrganizationRole.MEMBER,
+        addedById: 'user-1',
       }
 
       organizationRepository.findById.mockResolvedValue(null)
@@ -93,24 +95,26 @@ describe('AddMemberService', () => {
     })
 
     it('should throw error if member already exists', async () => {
-      const organization = new OrganizationBuilder()
-        .withId('org-1')
-        .build()
-
+      // 重复校验现在在**聚合内部**（Organization.validateCanAddMember）：把既有成员放进聚合，
+      // 而不是 mock 一次仓储查询 —— 旧写法测的是已经不存在的实现细节
       const existingMember = new OrganizationMemberBuilder()
         .withOrganizationId('org-1')
         .withUserId('user-2')
+        .build()
+
+      const organization = new OrganizationBuilder()
+        .withId('org-1')
+        .withMembers(existingMember)
         .build()
 
       const command = {
         organizationId: 'org-1',
         userId: 'user-2',
         role: OrganizationRole.MEMBER,
+        addedById: 'user-1',
       }
 
       organizationRepository.findById.mockResolvedValue(organization)
-      memberRepository.findByOrganizationAndUser.mockResolvedValue(existingMember)
-
       await expect(service.execute(command)).rejects.toThrow(
         BusinessRuleViolation,
       )

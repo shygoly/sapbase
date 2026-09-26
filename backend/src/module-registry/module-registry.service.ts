@@ -5,12 +5,23 @@ import {
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { ModuleRegistry, ModuleStatus, ModuleType } from './module-registry.entity'
 import { ModuleRelationship, RelationshipType } from './module-relationship.entity'
 import { ModuleCapability, CapabilityType } from './module-capability.entity'
 import { ModuleStatistics, HealthStatus } from './module-statistics.entity'
 import { ModuleConfiguration } from './module-configuration.entity'
 import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
+import { BlueprintService } from '../blueprint/blueprint.service'
+import { BLUEPRINT_META_FILE } from '../blueprint/packager'
+import type { BlueprintManifest } from '@speckit/shared-schemas'
+import {
+  buildMinimalBlueprint,
+  collectEntityNames,
+  parseAtomicDependencies,
+} from './blueprint-export'
 
 export interface CreateModuleRegistryDto {
   name: string
@@ -55,7 +66,79 @@ export class ModuleRegistryService {
     @InjectRepository(ModuleConfiguration)
     private configurationRepository: Repository<ModuleConfiguration>,
     private readonly atomicRegistry: AtomicRegistryService,
+    private readonly blueprints: BlueprintService,
   ) {}
+
+  /** 导出骨架的落盘根目录（未指定 `dir` 时用）。 */
+  private readonly exportRoot =
+    process.env.BLUEPRINT_EXPORT_DIR ?? join(tmpdir(), 'speckit-blueprints')
+
+  /**
+   * 把库里一条模块记录导出为**最小蓝图**并打成 `.erpkg`。
+   *
+   * 这是"模块定义 → 蓝图包"那一环：在此之前模块只是数据库里的一行，
+   * 无法导出、无法版本化、也无法在别处重建。
+   *
+   * 导出内容 = 模块**确实拥有**的东西：实体名（capability / `metadata.entities`）
+   * 与原子依赖（`dependsOnAtomics`）。原子依赖**逐条解析**，解析不到就拒绝导出
+   * —— 与发布时同一判据（元语不变量 4），否则等于交付一个"编译必然失败"的包。
+   */
+  async exportBlueprint(
+    moduleId: string,
+    organizationId: string,
+    options: { dir?: string; out?: string } = {},
+  ): Promise<{
+    dir: string
+    packagePath: string
+    manifest: BlueprintManifest
+    /** 舍弃的实体候选及原因（不静默丢弃）。 */
+    dropped: Array<{ name: string; reason: string }>
+  }> {
+    // 只用窄查询取需要的东西（模块行 + capabilities），不用 `findOne()` 的 8 个关系：
+    // 导出一份骨架不需要 aiModel / createdBy / statistics / configurations，
+    // 多 JOIN 一次就是多一份故障面与开销。
+    //
+    // 这条窄查询曾经是**必要的绕过**：`findOne()` 会 JOIN `createdBy`，而早期库的 `users`
+    // 表缺 `User` 实体声明的 `role` / `department` / `permissions` 列，查询直接报
+    // `column ... role does not exist`。该缺口已由 `1790600000000-AddUsersBaseline` 补上
+    // （空库建表 / 旧库补列），既有接口的回归见 `test/blueprint-pipeline.e2e-spec.ts`。
+    // 缺口修完后仍保留窄查询：这是**选择**，不再是绕过。
+    // 导出这条路径不该被它拖住 —— 但也不该假装它不存在，故在此写明。
+    const module = await this.moduleRegistryRepository.findOne({
+      where: { id: moduleId, organizationId },
+      relations: ['capabilities'],
+    })
+    if (!module) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found`)
+    }
+    const dependsOnAtomics = module.dependsOnAtomics ?? []
+
+    const { names, dropped } = collectEntityNames({
+      declared: module.metadata?.entities,
+      capabilities: (module.capabilities ?? []).map((capability) => capability.entity),
+    })
+    const dependencies = parseAtomicDependencies(dependsOnAtomics)
+    await this.assertAtomicDependencies(dependsOnAtomics)
+
+    const minimal = buildMinimalBlueprint({
+      name: module.name,
+      version: module.version,
+      entityNames: names,
+      dependencies,
+    })
+
+    const dir =
+      options.dir ?? join(this.exportRoot, `${minimal.meta.blueprint}-${minimal.meta.version}`)
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, BLUEPRINT_META_FILE), `${JSON.stringify(minimal.meta, null, 2)}\n`)
+    writeFileSync(
+      join(dir, 'semantic.json'),
+      `${JSON.stringify(minimal.semantic, null, 2)}\n`,
+    )
+
+    const packaged = this.blueprints.packageFrom(dir, options.out)
+    return { dir, packagePath: packaged.packagePath, manifest: packaged.manifest, dropped }
+  }
 
   /**
    * 发布前校验原子依赖（元语不变量 4：依赖不满足就不许发布）。

@@ -24,3 +24,4 @@ __exportStar(require("./role"), exports);
 __exportStar(require("./audit-log"), exports);
 __exportStar(require("./settings"), exports);
 __exportStar(require("./permissions"), exports);
+__exportStar(require("./blueprint"), exports);

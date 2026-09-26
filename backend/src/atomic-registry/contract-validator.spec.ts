@@ -8,7 +8,7 @@ import {
   validateAtomicContract,
   validateModuleManifest,
 } from './contract-validator'
-import { resolveSchemasDir } from './schema-loader'
+import { resolveSchemasDir } from '../common/protocol/schema-loader'
 
 /** 可用库存原子的真实契约（与 wasm-modules 的 ABI v1 对应）。 */
 const VALID_CONTRACT = {
@@ -74,6 +74,55 @@ describe('validateAtomicContract', () => {
     expect(validateAtomicContract(withContract({ cpuBudget: 5000 })).valid).toBe(
       true,
     )
+  })
+
+  // 闸 3（输出管控）的声明前提：判据见 docs/protocols/atomic-output-audit.md
+  it.each([['off'], ['standard'], ['strict']])('接受 outputAudit 档位 %s', (profile) => {
+    expect(validateAtomicContract(withContract({ outputAudit: profile })).valid).toBe(true)
+  })
+
+  it('未声明 outputAudit 时按默认档位处理（可选，不是必填）', () => {
+    expect((VALID_CONTRACT as Record<string, unknown>).outputAudit).toBeUndefined()
+    expect(validateAtomicContract(VALID_CONTRACT).valid).toBe(true)
+  })
+
+  it('拒绝未知的 outputAudit 档位', () => {
+    const result = validateAtomicContract(withContract({ outputAudit: 'paranoid' }))
+    expect(result.valid).toBe(false)
+    expect(result.errors.join('; ')).toContain('outputAudit')
+  })
+
+  it('接受声明可交换（commutative）的输出', () => {
+    const contract = withContract({
+      outputSchema: { ...VALID_CONTRACT.outputSchema, commutative: true },
+    })
+    expect(validateAtomicContract(contract).valid).toBe(true)
+  })
+
+  it('拒绝值域倒置的输出列（跨字段判据，Schema 表达不了）', () => {
+    const result = validateAtomicContract(
+      withContract({
+        outputSchema: {
+          columns: [{ name: 'available', type: 'i32', minimum: 100, maximum: 0 }],
+          total: { name: 'totalAvailable' },
+        },
+      }),
+    )
+    expect(result.valid).toBe(false)
+    expect(result.errors.join('; ')).toContain('minimum (100) 不得大于 maximum (0)')
+  })
+
+  it('拒绝汇总位与输出列同名（输出布局有歧义）', () => {
+    const result = validateAtomicContract(
+      withContract({
+        outputSchema: {
+          columns: [{ name: 'available', type: 'i32' }],
+          total: { name: 'available' },
+        },
+      }),
+    )
+    expect(result.valid).toBe(false)
+    expect(result.errors.join('; ')).toContain('与输出列同名')
   })
 
   it.each([

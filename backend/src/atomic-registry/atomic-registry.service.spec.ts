@@ -278,11 +278,131 @@ describe('AtomicRegistryService 状态流转', () => {
     expect(contracts.rows).toHaveLength(1)
     void implementations
 
+    // 闸 4：晋 built 需要闸 0 的源码预检报告 —— 证据是**平台记录**的，不接受随请求传入
+    await service.recordReleaseEvidence(impl.id as string, {
+      sourceGate: { language: 'rust', checks: ['no-build-rs'] },
+    })
     const promoted = await service.promoteImplementation(
       impl.id as string,
       AdmissionStatus.BUILT,
     )
     expect(promoted.status).toBe(AdmissionStatus.BUILT)
+  })
+
+  it('promoteImplementation 缺证据 → 拒绝，并逐条列出缺什么', async () => {
+    const { service } = build()
+    const saved = await service.createContract(contract())
+    const impl = await service.bindImplementation(saved.id, {
+      kind: AtomicImplementationKind.TYPESCRIPT,
+    })
+
+    try {
+      await service.promoteImplementation(impl.id as string, AdmissionStatus.BUILT)
+      throw new Error('本应被闸 4 拒绝')
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException)
+      expect((error as Error).message).toContain('EVIDENCE_MISSING')
+      expect((error as Error).message).toContain('sourceGate')
+    }
+  })
+
+  it('首次绑定不得直接落在可运行状态（闸 4 不允许绕过影子期）', async () => {
+    const { service } = build()
+    const saved = await service.createContract(contract())
+
+    await expect(
+      service.bindImplementation(saved.id, {
+        kind: AtomicImplementationKind.TYPESCRIPT,
+        status: AdmissionStatus.ACTIVE,
+      }),
+    ).rejects.toThrow(/绑定被闸 4 拒绝\[TRANSITION_NOT_ALLOWED\]/)
+  })
+
+  describe('闸 4：走完整条晋升链（经服务层，不是只测纯函数）', () => {
+    async function bindSubmitted() {
+      const { service } = build()
+      const saved = await service.createContract(contract())
+      const impl = await service.bindImplementation(saved.id, {
+        kind: AtomicImplementationKind.TYPESCRIPT,
+      })
+      return { service, id: impl.id as string }
+    }
+
+    it('逐级带证据 → 一路走到 active', async () => {
+      const { service, id } = await bindSubmitted()
+
+      await service.recordReleaseEvidence(id, {
+        sourceGate: { language: 'rust', checks: ['no-build-rs'] },
+      })
+      expect((await service.promoteImplementation(id, AdmissionStatus.BUILT)).status).toBe(
+        AdmissionStatus.BUILT,
+      )
+
+      await service.recordReleaseEvidence(id, {
+        staticGate: { byteLength: 265, checks: ['import=env.memory(min=2,max=1024)'] },
+        reproducibleBuildRef: 'repro:rust:1.95.0:abc',
+      })
+      expect((await service.promoteImplementation(id, AdmissionStatus.TESTED)).status).toBe(
+        AdmissionStatus.TESTED,
+      )
+
+      await service.recordReleaseEvidence(id, {
+        shadow: {
+          parallelWith: 'available-inventory@1.0.0',
+          startedAt: '2026-09-25T00:00:00Z',
+          observedInvocations: 5000,
+          differingResults: 0,
+        },
+      })
+      expect((await service.promoteImplementation(id, AdmissionStatus.SHADOW)).status).toBe(
+        AdmissionStatus.SHADOW,
+      )
+
+      await service.recordReleaseEvidence(id, {
+        canary: {
+          startedAt: '2026-09-25T02:00:00Z',
+          observedInvocations: 20000,
+          differingResults: 0,
+        },
+      })
+      expect((await service.promoteImplementation(id, AdmissionStatus.CANARY)).status).toBe(
+        AdmissionStatus.CANARY,
+      )
+      expect((await service.promoteImplementation(id, AdmissionStatus.ACTIVE)).status).toBe(
+        AdmissionStatus.ACTIVE,
+      )
+    })
+
+    it('影子记录是空的 → 卡在 tested，错误里说清缺什么', async () => {
+      const { service, id } = await bindSubmitted()
+      await service.recordReleaseEvidence(id, { sourceGate: {} })
+      await service.promoteImplementation(id, AdmissionStatus.BUILT)
+      await service.recordReleaseEvidence(id, {
+        staticGate: {},
+        reproducibleBuildRef: 'repro:rust:1.95.0:abc',
+      })
+      await service.promoteImplementation(id, AdmissionStatus.TESTED)
+
+      await expect(service.promoteImplementation(id, AdmissionStatus.SHADOW)).rejects.toThrow(
+        /shadow 记录/,
+      )
+    })
+
+    it('吊销不受闸 4 限制：没有任何证据也能吊销', async () => {
+      const { service, id } = await bindSubmitted()
+      expect((await service.promoteImplementation(id, AdmissionStatus.REVOKED)).status).toBe(
+        AdmissionStatus.REVOKED,
+      )
+    })
+
+    it('补录只能做一次（第二次说明已经补录过）', async () => {
+      const { service, id } = await bindSubmitted()
+      await service.grandfatherImplementation(id, { reason: '存量', decidedBy: 'ops' })
+      await expect(
+        service.grandfatherImplementation(id, { reason: '再补一次', decidedBy: 'ops' }),
+      ).rejects.toThrow(/已补录过/)
+      expect(await service.listGrandfathered()).toHaveLength(1)
+    })
   })
 })
 

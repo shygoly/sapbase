@@ -81,6 +81,16 @@ export class AtomicImplementation extends BaseEntity {
   @Column({ type: 'jsonb', nullable: true })
   staticGate: Record<string, unknown> | null
 
+  /**
+   * 闸 4 的证据（影子/灰度记录、一次性补录）。
+   *
+   * **必须是平台记录的列**，不能是请求体字段：闸 4 的全部意义就是"这条实现真的
+   * 走过影子期"，而能被调用方随手填的东西证明不了这件事。
+   * 形状与判据见 `shadow-release.ts`。
+   */
+  @Column({ type: 'jsonb', nullable: true })
+  releaseEvidence: Record<string, unknown> | null
+
   @Column({ type: 'varchar', length: 32, default: AdmissionStatus.SUBMITTED })
   status: AdmissionStatus
 }

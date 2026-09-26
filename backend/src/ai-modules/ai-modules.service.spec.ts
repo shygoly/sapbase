@@ -3,6 +3,10 @@ import { getRepositoryToken } from '@nestjs/typeorm'
 import { BadRequestException } from '@nestjs/common'
 import axios from 'axios'
 import { AIModulesService } from './ai-modules.service'
+import { WorkflowConverterService } from '../workflows/workflow-converter.service'
+import { WorkflowInstanceService } from '../workflows/workflow-instance.service'
+// 服务后来加了「AI 模块定义」仓储依赖（spec 没跟上就 DI 报错）
+import { AIModuleDefinition } from './ai-module-definition.entity'
 import { AIModule } from './ai-module.entity'
 import { AIModuleTest } from './ai-module-test.entity'
 import { AIModuleReview } from './ai-module-review.entity'
@@ -29,6 +33,10 @@ describe('AIModulesService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AIModulesService,
+        { provide: getRepositoryToken(AIModuleDefinition), useValue: {} },
+        // 服务后来还加了工作流转换器依赖
+        { provide: WorkflowConverterService, useValue: {} },
+        { provide: WorkflowInstanceService, useValue: {} },
         { provide: getRepositoryToken(AIModule), useValue: mockRepo },
         { provide: getRepositoryToken(AIModuleTest), useValue: mockRepo },
         { provide: getRepositoryToken(AIModuleReview), useValue: mockRepo },

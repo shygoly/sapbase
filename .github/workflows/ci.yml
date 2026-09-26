@@ -128,9 +128,20 @@ jobs:
     name: Apps (backend / speckit)
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # 首次把产品代码接入 CI：允许失败以便先暴露问题、不阻塞合并。
-    # 稳定后应改为 false。
-    continue-on-error: true
+    # 强制门禁（2026-09-25 转正，2026-09-25 修正描述）。
+    #
+    # 本 job **实际覆盖**：shared-schemas 构建 → 后端类型检查（nest build）→
+    # 后端**全部单元测试**（`npm run test --workspace backend`，实测 53 套件 / 492 用例）→
+    # 前端构建（next build）。
+    #
+    # 本 job **不覆盖** e2e：我们维护的三个 e2e（atomic-runtime / atomic-gates /
+    # blueprint-pipeline）需要真实 PostgreSQL 与已建表，跑在单独的 `e2e` job 里；
+    # `backend/test/` 下其余历史 e2e（auth / roles / departments / users / plugins /
+    # ai-module-lifecycle）既需要完整 AppModule 又会挂住，**不在任何 job 里**。
+    # 早先这里写着"全部单元/e2e 均通过"——那句话不成立，已改掉。
+    #
+    # 为什么要有下面那步 cargo build：单元测试里原子执行链默认走 wasmtime sidecar，
+    # 二进制不存在时测试会失败（不是跳过）。本机之所以绿，是因为本地已构建过它。
 
     steps:
       - name: Checkout
@@ -147,6 +158,10 @@ jobs:
       - name: Build shared schemas
         run: npm run build --workspace shared-schemas
 
+      - name: Build wasm-host sidecar
+        # 单元测试默认引擎（ATOMIC_ENGINE=wasmtime）需要这个二进制；不构建的话测试会红
+        run: cargo build --release --locked --manifest-path crates/wasm-host/Cargo.toml
+
       - name: Type-check backend
         run: npm run build --workspace backend
 
@@ -155,6 +170,68 @@ jobs:
 
       - name: Build frontend
         run: npm run build --workspace speckit
+
+  e2e:
+    name: E2E (real Postgres + real Wasm)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # 只跑**我们维护的三个** e2e；它们需要真实库与已建表。
+    # 建库走 squash 基线（scripts/rebuild-database.ts）—— 顺带让"从零重建"这条路径在 CI 里也被验证。
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: sapbase_rebuild
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared schemas
+        run: npm run build --workspace shared-schemas
+
+      - name: Build wasm-host sidecar
+        run: cargo build --release --locked --manifest-path crates/wasm-host/Cargo.toml
+
+      - name: Rebuild database from zero (squash baseline)
+        working-directory: backend
+        run: npx ts-node --transpile-only scripts/rebuild-database.ts --db=sapbase_rebuild
+
+      - name: Verify rebuilt schema matches entities
+        working-directory: backend
+        run: npx ts-node --transpile-only scripts/verify-from-zero.ts --db=sapbase_rebuild
+
+      - name: Run maintained e2e specs
+        working-directory: backend
+        run: |
+          npx jest --config ./test/jest-e2e.json --runInBand \
+            test/atomic-runtime.e2e-spec.ts \
+            test/atomic-gates.e2e-spec.ts \
+            test/blueprint-pipeline.e2e-spec.ts \
+            test/plugin-sandbox.e2e-spec.ts
 
   validate:
     name: Validate Components

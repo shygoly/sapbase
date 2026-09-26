@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { buildFixtureWasm } from '@speckit/wasm-modules'
 import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
+import { bindRunnableForTest } from '../atomic-registry/test-fixtures'
 import { AtomicContractStatus } from '../atomic-registry/atomic-contract.entity'
 import {
   AdmissionStatus,
@@ -145,12 +146,12 @@ async function buildRuntime(options: {
   const sha256 =
     options.sha256 ??
     (JSON.parse(readFileSync(REAL_MANIFEST, 'utf8')).modules[0].sha256 as string)
-  await registry.bindImplementation(savedContract.id, {
+  // 执行链用例：用闸 4 显式补录替代逐级晋升（准入路径另见 shadow-release.spec.ts）
+  await bindRunnableForTest(registry, savedContract.id, {
     kind: AtomicImplementationKind.WASM,
     moduleSha256: sha256,
     abiVersion: 1,
     tier: 'A' as never,
-    status: AdmissionStatus.ACTIVE,
   })
 
   const loader = new WasmModuleLoader(options.modulesDir ?? BUILD_DIR)
@@ -463,12 +464,11 @@ describe('执行预算（cpuBudget）传递链路', () => {
     })
     const sha256 = JSON.parse(readFileSync(REAL_MANIFEST, 'utf8')).modules[0]
       .sha256 as string
-    await registry.bindImplementation(contract.id, {
+    await bindRunnableForTest(registry, contract.id, {
       kind: AtomicImplementationKind.WASM,
       moduleSha256: sha256,
       abiVersion: 1,
       tier: 'A' as never,
-      status: AdmissionStatus.ACTIVE,
     })
 
     const engine = new CapturingEngine()

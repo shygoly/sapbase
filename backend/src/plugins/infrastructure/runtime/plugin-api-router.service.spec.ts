@@ -1,6 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { PluginApiRouterService } from './plugin-api-router.service'
 import { PluginRuntimeService } from './plugin-runtime.service'
+import { PluginContextProvider } from './plugin-context-provider.service'
+import { AuditLogsService } from '../../../audit-logs/audit-logs.service'
+import { PluginDatabaseAccessService } from '../database/plugin-database-access.service'
+import { PluginModuleIntegrationService } from '../../application/services/plugin-module-integration.service'
+import { DataSource } from 'typeorm'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { PluginPermissions } from '../../domain/entities/plugin-permission.entity'
+import { MODULE_REGISTRY_SERVICE } from '../../../ai-module-context/domain/services/tokens'
+import { PLUGIN_REPOSITORY } from '../../domain/repositories'
 import {
   PERMISSION_CHECKER,
   PLUGIN_EVENT_EMITTER,
@@ -14,12 +25,36 @@ describe('PluginApiRouterService - Permission Enforcement', () => {
   let service: PluginApiRouterService
   let runtimeService: PluginRuntimeService
   let permissionChecker: PermissionCheckerService
+  let pluginDir: string
 
   beforeEach(async () => {
+    // 插件现在跑在受限子进程里：需要一个**真实**的目录与入口文件
+    pluginDir = mkdtempSync(join(tmpdir(), 'speckit-router-plugin-'))
+    writeFileSync(
+      join(pluginDir, 'index.js'),
+      'module.exports = { handleTest: () => ({ ok: true }) }',
+    )
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PluginApiRouterService,
         PluginRuntimeService,
+        // PluginRuntimeService 后来新增了 context provider 依赖；spec 没跟上就会 DI 报错
+        PluginContextProvider,
+        { provide: AuditLogsService, useValue: { create: jest.fn().mockResolvedValue({}) } },
+        PluginDatabaseAccessService,
+        // 本 spec 只验证路由权限，数据库访问用占位（真连库会让单测依赖环境）
+        { provide: DataSource, useValue: {} },
+        {
+          provide: PLUGIN_REPOSITORY,
+          useValue: { findById: async () => null, findByName: async () => null, findAll: async () => [], save: async () => {}, delete: async () => {} },
+        },
+        // PluginModuleIntegrationService 需要模块注册表；本 spec 用最小替身
+        {
+          provide: MODULE_REGISTRY_SERVICE,
+          useValue: { create: async () => ({ id: 'stub' }), findOne: async () => null, register: async () => ({ id: 'stub' }) },
+        },
+
+        PluginModuleIntegrationService,
         {
           provide: PERMISSION_CHECKER,
           useClass: PermissionCheckerService,
@@ -34,6 +69,12 @@ describe('PluginApiRouterService - Permission Enforcement', () => {
     service = module.get<PluginApiRouterService>(PluginApiRouterService)
     runtimeService = module.get<PluginRuntimeService>(PluginRuntimeService)
     permissionChecker = module.get(PERMISSION_CHECKER)
+  })
+
+  afterEach(async () => {
+    // 起的子进程必须收掉，否则 Jest 不退出（也正因为如此，运行时实现了 OnModuleDestroy）
+    await runtimeService.onModuleDestroy()
+    rmSync(pluginDir, { recursive: true, force: true })
   })
 
   describe('Permission Enforcement', () => {
@@ -62,7 +103,7 @@ describe('PluginApiRouterService - Permission Enforcement', () => {
             ],
           },
         },
-        '/path',
+        pluginDir,
       )
 
       await runtimeService.loadPlugin(plugin)
@@ -90,15 +131,17 @@ describe('PluginApiRouterService - Permission Enforcement', () => {
     })
 
     it('should deny access to non-permitted endpoint', () => {
-      const pluginPermissions = {
+      // 权限必须是领域值对象（PluginPermissions）：传普通对象会让
+      // `permissions.hasApiAccess is not a function` —— 这曾是这个用例挂掉的原因
+      const pluginPermissions = PluginPermissions.fromManifest({
         api: {
           endpoints: ['/api/test'],
           methods: ['GET'],
         },
-      }
+      })
 
       const hasPermission = permissionChecker.checkApiPermission(
-        pluginPermissions as any,
+        pluginPermissions,
         '/api/unauthorized',
         'GET',
       )

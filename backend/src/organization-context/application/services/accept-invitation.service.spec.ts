@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { AcceptInvitationService } from './accept-invitation.service'
 import {
+  ORGANIZATION_REPOSITORY,
   INVITATION_REPOSITORY,
   ORGANIZATION_MEMBER_REPOSITORY,
   EVENT_PUBLISHER,
@@ -10,20 +11,27 @@ import type {
   IOrganizationMemberRepository,
 } from '../../domain/repositories'
 import type { IEventPublisher } from '../../domain/events'
-import { Invitation } from '../../domain/entities/invitation.entity'
+import { Invitation, InvitationStatus } from '../../domain/entities/invitation.entity'
 import { OrganizationRole } from '../../domain/entities/organization-member.entity'
 import { BusinessRuleViolation } from '../../domain/errors'
-import { createMockEventPublisher, createMockRepository } from '../../../test/utils/test-helpers'
-import { InvitationBuilder, OrganizationMemberBuilder } from '../../../test/utils/domain-builders'
+import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
+import {
+  InvitationBuilder,
+  OrganizationBuilder,
+  OrganizationMemberBuilder,
+} from '../../../../test/utils/domain-builders'
 
 describe('AcceptInvitationService', () => {
   let service: AcceptInvitationService
   let invitationRepository: jest.Mocked<IInvitationRepository>
   let memberRepository: jest.Mocked<IOrganizationMemberRepository>
+  let organizationRepository: ReturnType<typeof createMockRepository>
   let eventPublisher: jest.Mocked<IEventPublisher>
 
   beforeEach(async () => {
     const mockInvitationRepository = createMockRepository<IInvitationRepository>()
+    // 服务后来加了「接受邀请后补写组织侧记录」这一步
+    const mockOrganizationRepository = createMockRepository()
     const mockMemberRepository = createMockRepository<IOrganizationMemberRepository>()
     const mockEventPublisher = createMockEventPublisher()
 
@@ -39,6 +47,10 @@ describe('AcceptInvitationService', () => {
           useValue: mockMemberRepository,
         },
         {
+          provide: ORGANIZATION_REPOSITORY,
+          useValue: mockOrganizationRepository,
+        },
+        {
           provide: EVENT_PUBLISHER,
           useValue: mockEventPublisher,
         },
@@ -48,6 +60,7 @@ describe('AcceptInvitationService', () => {
     service = module.get<AcceptInvitationService>(AcceptInvitationService)
     invitationRepository = module.get(INVITATION_REPOSITORY)
     memberRepository = module.get(ORGANIZATION_MEMBER_REPOSITORY)
+    organizationRepository = module.get(ORGANIZATION_REPOSITORY)
     eventPublisher = module.get(EVENT_PUBLISHER)
   })
 
@@ -63,10 +76,15 @@ describe('AcceptInvitationService', () => {
       const command = {
         token: 'token-123',
         userId: 'user-1',
+        userEmail: 'user@example.com',
       }
 
       invitationRepository.findByToken.mockResolvedValue(invitation)
       memberRepository.findByOrganizationAndUser.mockResolvedValue(null)
+      // 服务现在要求组织存在才落成员（新增前置校验）
+      organizationRepository.findById.mockResolvedValue(
+        new OrganizationBuilder().withId('org-1').build(),
+      )
       invitationRepository.save.mockResolvedValue(undefined)
       memberRepository.save.mockResolvedValue(undefined)
 
@@ -75,7 +93,7 @@ describe('AcceptInvitationService', () => {
       expect(result).toBeDefined()
       expect(result.organizationId).toBe('org-1')
       expect(result.userId).toBe('user-1')
-      expect(invitation.isAccepted()).toBe(true)
+      expect(invitation.status).toBe(InvitationStatus.ACCEPTED)
       expect(memberRepository.save).toHaveBeenCalled()
     })
 
@@ -83,6 +101,7 @@ describe('AcceptInvitationService', () => {
       const command = {
         token: 'invalid-token',
         userId: 'user-1',
+        userEmail: 'user@example.com',
       }
 
       invitationRepository.findByToken.mockResolvedValue(null)
@@ -100,6 +119,7 @@ describe('AcceptInvitationService', () => {
       const command = {
         token: 'token-123',
         userId: 'user-1',
+        userEmail: 'user@example.com',
       }
 
       invitationRepository.findByToken.mockResolvedValue(invitation)
@@ -119,6 +139,7 @@ describe('AcceptInvitationService', () => {
       const command = {
         token: 'token-123',
         userId: 'user-1',
+        userEmail: 'user@example.com',
       }
 
       invitationRepository.findByToken.mockResolvedValue(invitation)
@@ -143,6 +164,7 @@ describe('AcceptInvitationService', () => {
       const command = {
         token: 'token-123',
         userId: 'user-1',
+        userEmail: 'user@example.com',
       }
 
       invitationRepository.findByToken.mockResolvedValue(invitation)

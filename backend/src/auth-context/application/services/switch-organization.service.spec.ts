@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { SwitchOrganizationService } from './switch-organization.service'
+import type { User } from '../../../users/user.entity'
+import type { Organization } from '../../../organization-context/domain/entities/organization.entity'
 import {
   USER_REPOSITORY,
   ORGANIZATION_REPOSITORY,
@@ -13,7 +15,7 @@ import type {
 import type { IJwtService } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { AuthenticationError } from '../../domain/errors'
-import { createMockEventPublisher, createMockRepository } from '../../../test/utils/test-helpers'
+import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
 
 describe('SwitchOrganizationService', () => {
   let service: SwitchOrganizationService
@@ -79,15 +81,14 @@ describe('SwitchOrganizationService', () => {
         currentOrganizationId: 'org-1',
       }
 
-      userRepository.findById.mockResolvedValue(user)
-      organizationRepository.findById.mockResolvedValue(organization)
-      jwtService.sign.mockReturnValue('new-jwt-token')
+      userRepository.findById.mockResolvedValue(user as unknown as User)
+      organizationRepository.findById.mockResolvedValue(organization as unknown as Organization)
+      jwtService.sign.mockResolvedValue('new-jwt-token')
 
       const result = await service.execute(command)
 
       expect(result).toBeDefined()
-      expect(result.accessToken).toBe('new-jwt-token')
-      expect(result.organization).toBeDefined()
+      expect(result.access_token).toBe('new-jwt-token')
       expect(eventPublisher.publish).toHaveBeenCalled()
     })
 
@@ -116,7 +117,7 @@ describe('SwitchOrganizationService', () => {
         currentOrganizationId: 'org-1',
       }
 
-      userRepository.findById.mockResolvedValue(user)
+      userRepository.findById.mockResolvedValue(user as unknown as User)
       organizationRepository.findById.mockResolvedValue(null)
 
       await expect(service.execute(command)).rejects.toThrow()

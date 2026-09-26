@@ -51,14 +51,51 @@ export class AuditLogEventHandler implements IEventHandler<any> {
     return event.moduleId || event.instanceId || event.organizationId || event.userId || null
   }
 
-  private sanitizeEventData(event: any): Record<string, any> {
-    const data: Record<string, any> = {}
-    for (const [key, value] of Object.entries(event)) {
-      // Exclude sensitive fields
-      if (key !== 'passwordHash' && key !== 'apiKey' && key !== 'token') {
-        data[key] = value
-      }
+  /**
+   * 敏感字段清单。
+   *
+   * 用**清单**而不是正则/猜测：审计是"事后唯一能还原发生过什么"的地方，
+   * 它既不能漏（漏一个就是明文落库），也不该误删（删多了就还原不出事实）。
+   *
+   * 2026-09-25 补入 `password` / `secret` / `authorization`：原清单只有
+   * `passwordHash` / `apiKey` / `token`，于是事件里带 `password` 会**明文写进审计** ——
+   * 这是 spec 早就断言、实现却没做到的一处（change: restore-green-backend-tests）。
+   */
+  private static readonly SENSITIVE_KEYS = new Set([
+    'password',
+    'passwordHash',
+    'apiKey',
+    'token',
+    'secret',
+    'authorization',
+  ])
+
+  private sanitizeEventData(event: unknown): Record<string, any> {
+    return AuditLogEventHandler.sanitize(event) as Record<string, any>
+  }
+
+  /**
+   * 递归剔除敏感键。
+   *
+   * 为什么要递归：事件载荷通常是 `{ type, data: { password } }` —— 只过滤顶层键的话，
+   * **嵌套的 `data.password` 会明文写进审计**。这正是本条 spec 一直断言、
+   * 而实现从未做到的那件事（change: restore-green-backend-tests）。
+   *
+   * 命中即整键剔除（而不是替换成 `[REDACTED]`）：审计里连键名都不该出现。
+   * 数组保持数组形状，避免把载荷结构改得看不出原样。
+   */
+  private static sanitize(value: unknown): unknown {
+    if (Array.isArray(value)) {
+      return value.map((item) => AuditLogEventHandler.sanitize(item))
     }
-    return data
+    if (value && typeof value === 'object') {
+      const out: Record<string, unknown> = {}
+      for (const [key, nested] of Object.entries(value)) {
+        if (AuditLogEventHandler.SENSITIVE_KEYS.has(key)) continue
+        out[key] = AuditLogEventHandler.sanitize(nested)
+      }
+      return out
+    }
+    return value
   }
 }

@@ -8,9 +8,12 @@ import {
   Param,
   Query,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
 import { ModuleRegistryService, CreateModuleRegistryDto, CreateCapabilityDto, CreateRelationshipDto } from './module-registry.service'
+import { BlueprintExportError } from './blueprint-export'
+import { PackageError } from '../blueprint/packager'
 import { Auth } from '../common/decorators/auth.decorator'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
@@ -94,6 +97,27 @@ export class ModuleRegistryController {
     // Verify module belongs to organization
     await this.moduleRegistryService.findOne(id, organizationId)
     return this.moduleRegistryService.getCapabilities(id)
+  }
+
+  @Post(':id/export-blueprint')
+  @ApiOperation({
+    summary: '把模块导出为最小蓝图包（骨架 → .erpkg）',
+    description: '实体名取自 capability / metadata.entities；原子依赖逐条解析，解析不到即拒',
+  })
+  async exportBlueprint(
+    @Param('id') id: string,
+    @Body() body: { dir?: string; out?: string },
+    @OrganizationId() organizationId: string,
+  ) {
+    try {
+      return await this.moduleRegistryService.exportBlueprint(id, organizationId, body ?? {})
+    } catch (error) {
+      // 导出失败的原因必须原样透出（命名/版本/依赖/无实体/打包），否则调用方只能猜
+      if (error instanceof BlueprintExportError || error instanceof PackageError) {
+        throw new BadRequestException({ message: error.message, reason: error.reason })
+      }
+      throw error
+    }
   }
 
   @Post(':id/capabilities')

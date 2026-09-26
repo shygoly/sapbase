@@ -45,6 +45,10 @@ marketing/
 !**/public/**/*.png
 !**/src/**/*.png
 
+# 插件集成测试的落盘产物（安装目录由 process.cwd() 决定，跑一次就生成）
+backend/plugins/
+backend/test-plugins/
+
 # 机器本地配置：Codex 项目级配置与钩子
 # （含指向本机 Keel checkout 的绝对路径，不适合共享；由各自按需启用）
 .codex/

@@ -186,7 +186,8 @@ async function seed() {
     // Update admin user with hashed password
     const adminUser = await userRepository.findOne({ where: { email: 'admin@example.com' } })
     if (adminUser) {
-      await userRepository.update(adminUser.id, { password: hashedPassword })
+      // 实体字段名是 passwordHash（不是 password）—— 旧写法是运行时静默失败的类型错误
+      await userRepository.update(adminUser.id, { passwordHash: hashedPassword })
       console.log('Updated admin user password')
     }
 

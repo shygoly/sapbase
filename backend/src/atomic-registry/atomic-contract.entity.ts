@@ -72,6 +72,16 @@ export class AtomicContract extends BaseEntity {
   @Column({ type: 'bigint', nullable: true })
   cpuBudget: string | null
 
+  /**
+   * 闸 3（输出管控）的档位：`off` / `standard` / `strict`。
+   *
+   * 它必须是**列**而不是塞进 `outputSchema`：档位说的是"这个原子的输出该被查多严"，
+   * 与输出布局是两件事；而且它要能被单独查询（"哪些契约还是 off" 是上线前的必查项）。
+   * 声明本身只进 Schema，判定在 `atomic-runtime/output-gate.ts`。
+   */
+  @Column({ type: 'varchar', length: 16, default: 'standard' })
+  outputAudit: 'off' | 'standard' | 'strict'
+
   @ManyToOne(() => Organization, { nullable: true })
   organization: Organization | null
 

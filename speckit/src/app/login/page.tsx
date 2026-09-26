@@ -31,7 +31,27 @@ const TEST_USERS: TestUser[] = [
   { email: 'accountant@example.com', password: '123456', name: 'Accountant User', role: 'Accountant' },
 ]
 
+/**
+ * Suspense 边界：Next 15 要求任何在预渲染期调用 `useSearchParams()` 的组件
+ * 必须被包在边界内，否则整页的静态预渲染会失败（构建时报
+ * "useSearchParams() should be wrapped in a suspense boundary"）。
+ * 这里保留静态外壳，只让真正读 query 的部分走边界。
+ */
 export default function LoginPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </React.Suspense>
+  )
+}
+
+function LoginForm() {
   const [selectedUser, setSelectedUser] = useState<string>('admin@example.com')
   const [email, setEmail] = useState('admin@example.com')
   const [password, setPassword] = useState('123456')

@@ -48,7 +48,7 @@ describe('PluginRepository', () => {
           version: '1.0.0',
           type: PluginType.INTEGRATION,
           status: PluginStatus.ACTIVE,
-          manifest: {},
+          manifest: { name: 'test-plugin', version: '1.0.0', type: PluginType.INTEGRATION, permissions: {}, entry: { backend: 'index.js' } },
           installPath: '/path',
         },
       ]
@@ -61,6 +61,7 @@ describe('PluginRepository', () => {
       expect(result[0].name).toBe('test-plugin')
       expect(mockOrmRepository.find).toHaveBeenCalledWith({
         where: { organizationId: orgId },
+        order: { createdAt: 'DESC' },
       })
     })
   })
@@ -128,9 +129,9 @@ describe('PluginRepository', () => {
 
       mockOrmRepository.save.mockResolvedValue(mockOrmPlugin)
 
-      const result = await repository.save(plugin)
+      // save 返回 void（仓库惯例）：断言『写下去了』，而不是『有返回值』
+      await repository.save(plugin)
 
-      expect(result).toBeDefined()
       expect(mockOrmRepository.save).toHaveBeenCalled()
     })
   })

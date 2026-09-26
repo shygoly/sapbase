@@ -40,14 +40,40 @@
 | **闸 0** 源码预检 | `src/source-gate.ts`，编译**之前** | `build.rs` / `[package].build` / `[build-dependencies]` / 非空依赖 / proc-macro / `.cargo/config` / npm 生命周期脚本 / 夹带 `node_modules` / `[workspace]` |
 | **闸 1** 静态白名单 | `src/wasm-binary.ts` + `src/static-gate.ts`，不运行就挡 | 非白名单导入（WASI / env 函数 / 表 / 全局 / tag）、start 段、共享内存、GC 类型、自定义内存或表、memory64、导出未授权符号、字节与内存页超限 |
 | **闸 2** 复现构建 | `scripts/admission.mjs` + `Dockerfile.builder` | 不可复现的产物（两个独立构建器哈希不一致即拒）、把 `rustc` 装进服务容器、带预构建 `target/` 蒙混过关、"只交 `.wasm`" |
-| 闸 3 输出管控 | 未移植 | 见上 |
-| 闸 4 影子发布 | 未移植 | 见上 |
+| 闸 3 输出管控 | **不在本包**（判据见 `docs/protocols/atomic-output-audit.md`，实现 `backend/src/atomic-runtime/output-gate.ts`） | 用输出通道夹带常量、输出随行序变化、值越界 |
+| 闸 4 影子发布 | **不在本包**（证据门见 `backend/src/atomic-registry/shadow-release.ts`） | 未经影子期直接上生产、凭一次请求跳级 |
+
 | **闸 5** 吊销 | `src/revocation.ts` | 已吊销模块继续执行；旧名单回放把吊销"撤销" |
+
+闸 3 / 闸 4 放在宿主侧而不是模块包，理由很直接：**静态的东西挡不住值的泄漏**，
+而发布编排属于控制面，不属于被审查的源码。本包为闸 3 提供了两个**对照夹具**（见下节）。
 
 核心不变量：
 
 > **Blueprint 固定的模块哈希必须由平台从提交的源码复现产出。**
 > 于是"只交二进制"的模块结构性地无法入册 —— 不是政策上拒绝，是复现不出哈希就签不了、固定不了。
+
+---
+
+### 闸 3 的对照夹具（`modules/leaky-*-rust`）
+
+为了让"闸 3 到底挡没挡住"有可对照的真相，本包内置两个**故意做手脚**的模块。
+它们在闸 0/1/2 眼里与生产模块**完全一样**（零能力、无导入、可复现构建），
+因此都会被放行 —— 这正是闸 3 存在的理由：
+
+| 夹具 | 原子类型 | 做什么手脚 | 应当被哪条判据拦下 |
+|---|---|---|---|
+| `leaky-output-bits-rust` | `leaky-output-bits` | `available[i] = 正确值 \| 0x5EC00000`（把编译进代码的常量塞进高位，汇总位保持干净） | O2 值域（判决）+ S1 常量位（信号） |
+| `leaky-order-channel-rust` | `leaky-order-channel` | `available[i] = 正确值 ^ (i << 16)`（把行下标塞进高位） | O4 批量-单条一致（判决）+ O5 置换不变（声明 `commutative` 后） |
+
+两条注意：
+
+1. 它们是**测试夹具，不是生产模块**。别在真实契约里绑定它们。
+2. 它们会出现在 `build/manifest.json` 里且 `tier: "A"` —— 这是刻意的：
+   闸 0/1/2 确实拦不住它们，写进来才能让"闸 3 拦住了"这句话可被复核。
+
+证据在 `scripts/leaky-fixtures.test.mjs`：既从源码复现构建证明它们过闸 0/1/2，
+也用真正的 WASM 引擎跑一遍证明它们**确实**在泄漏（常量藏在高位、批量与逐条结果不同）。
 
 ---
 
@@ -137,8 +163,11 @@ repro:  源码重建与入库字节逐字节一致
   代码。需要依赖须走 vendored + 白名单，另立变更。
 - **容器隔离强度取决于宿主 Docker 配置**（用户命名空间、seccomp profile）。构建环境应与生产
   控制面网络隔离，且不持有任何控制面凭据。
-- **闸 3 / 闸 4 未移植**，见上文。
-- **尚未与控制面 / Runtime 集成**：本包目前只提供"构建 → 准入 → 产物 + 清单"的能力，
-  还没有被 backend 调用，也没有宿主侧 Wasm 运行时（Wasmtime 等）来加载执行。
-  这部分属于新能力，按仓库的 OpenSpec 流程（`openspec/AGENTS.md`）需要先立 change proposal。
+- **闸 3 / 闸 4 不在本包**：闸 3 判据在 `docs/protocols/atomic-output-audit.md`、
+  实现在 `backend/src/atomic-runtime/output-gate.ts`；闸 4 的证据门在
+  `backend/src/atomic-registry/shadow-release.ts`。本包只提供闸 3 的对照夹具。
+- **已与运行时集成（模块侧这一半）**：`backend/src/atomic-registry` 导入本包的
+  `build/manifest.json`（**重算哈希，不采信自述**），`backend/src/atomic-runtime` 通过
+  Wasmtime sidecar（`crates/wasm-host`）执行这些产物。本包仍不负责"谁来加载"，
+  它只负责"这份代码能不能入册"。
 - **`build/manifest.json` 是准入记录，不是许可**：签名与许可由控制面负责（v3 设计文档 §11）。

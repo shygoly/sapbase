@@ -1,132 +1,61 @@
+/**
+ * 本文件在 2026-09-25 按**当前实现**重写过（change: restore-green-backend-tests）。
+ * 旧断言的 `isOwner()` / `isAdmin()` / `OrganizationRole.ADMIN` 在当前实现里都不存在
+ * （角色只有 OWNER / MEMBER），对应用例已删除并登记在 change 的 tasks.md。
+ */
 import { OrganizationMember, OrganizationRole } from './organization-member.entity'
-import { BusinessRuleViolation } from '../errors'
 
 describe('OrganizationMember (Domain Entity)', () => {
   describe('create', () => {
-    it('should create a member with valid data', () => {
-      const member = OrganizationMember.create(
+    it('should create a member with valid data（id 由仓储分配，故为空）', () => {
+      const member = OrganizationMember.create('org-1', 'user-1', OrganizationRole.MEMBER, 'inviter-1')
+
+      expect(member.id).toBe('')
+      expect(member.organizationId).toBe('org-1')
+      expect(member.userId).toBe('user-1')
+      expect(member.role).toBe(OrganizationRole.MEMBER)
+      expect(member.invitedById).toBe('inviter-1')
+    })
+
+    it('should create an owner member', () => {
+      const member = OrganizationMember.create('org-1', 'user-1', OrganizationRole.OWNER, 'inviter-1')
+
+      expect(member.role).toBe(OrganizationRole.OWNER)
+    })
+  })
+
+  describe('fromPersistence', () => {
+    it('should keep the id / invitedById / joinedAt it is given', () => {
+      const joinedAt = new Date('2026-01-01T00:00:00Z')
+      const member = OrganizationMember.fromPersistence(
         'member-1',
         'org-1',
         'user-1',
         OrganizationRole.MEMBER,
+        null,
+        joinedAt,
       )
 
       expect(member.id).toBe('member-1')
-      expect(member.organizationId).toBe('org-1')
-      expect(member.userId).toBe('user-1')
-      expect(member.role).toBe(OrganizationRole.MEMBER)
-    })
-
-    it('should create an owner member', () => {
-      const member = OrganizationMember.create(
-        'member-1',
-        'org-1',
-        'user-1',
-        OrganizationRole.OWNER,
-      )
-
-      expect(member.role).toBe(OrganizationRole.OWNER)
-      expect(member.isOwner()).toBe(true)
-    })
-
-    it('should create an admin member', () => {
-      const member = OrganizationMember.create(
-        'member-1',
-        'org-1',
-        'user-1',
-        OrganizationRole.ADMIN,
-      )
-
-      expect(member.role).toBe(OrganizationRole.ADMIN)
-      expect(member.isAdmin()).toBe(true)
+      expect(member.invitedById).toBeNull()
+      expect(member.joinedAt).toEqual(joinedAt)
     })
   })
 
   describe('updateRole', () => {
-    it('should update member role', () => {
-      const member = OrganizationMember.create(
+    it('should update the role in place', () => {
+      const member = OrganizationMember.fromPersistence(
         'member-1',
         'org-1',
         'user-1',
         OrganizationRole.MEMBER,
+        null,
+        new Date(),
       )
 
-      member.updateRole(OrganizationRole.ADMIN)
+      member.updateRole(OrganizationRole.OWNER)
 
-      expect(member.role).toBe(OrganizationRole.ADMIN)
-    })
-
-    it('should throw error if trying to remove last owner', () => {
-      const member = OrganizationMember.create(
-        'member-1',
-        'org-1',
-        'user-1',
-        OrganizationRole.OWNER,
-      )
-
-      // This should be checked at the application service level
-      // Domain entity just updates the role
-      member.updateRole(OrganizationRole.MEMBER)
-      expect(member.role).toBe(OrganizationRole.MEMBER)
-    })
-  })
-
-  describe('isOwner', () => {
-    it('should return true for owner role', () => {
-      const member = OrganizationMember.create(
-        'member-1',
-        'org-1',
-        'user-1',
-        OrganizationRole.OWNER,
-      )
-
-      expect(member.isOwner()).toBe(true)
-    })
-
-    it('should return false for non-owner roles', () => {
-      const member = OrganizationMember.create(
-        'member-1',
-        'org-1',
-        'user-1',
-        OrganizationRole.MEMBER,
-      )
-
-      expect(member.isOwner()).toBe(false)
-    })
-  })
-
-  describe('isAdmin', () => {
-    it('should return true for admin role', () => {
-      const member = OrganizationMember.create(
-        'member-1',
-        'org-1',
-        'user-1',
-        OrganizationRole.ADMIN,
-      )
-
-      expect(member.isAdmin()).toBe(true)
-    })
-
-    it('should return true for owner role (owners are admins)', () => {
-      const member = OrganizationMember.create(
-        'member-1',
-        'org-1',
-        'user-1',
-        OrganizationRole.OWNER,
-      )
-
-      expect(member.isAdmin()).toBe(true)
-    })
-
-    it('should return false for member role', () => {
-      const member = OrganizationMember.create(
-        'member-1',
-        'org-1',
-        'user-1',
-        OrganizationRole.MEMBER,
-      )
-
-      expect(member.isAdmin()).toBe(false)
+      expect(member.role).toBe(OrganizationRole.OWNER)
     })
   })
 })

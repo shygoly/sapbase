@@ -18,6 +18,8 @@ import { AtomicRegistryService } from '../atomic-registry/atomic-registry.servic
 import { AtomicExecutor } from './atomic-executor.service'
 import { AtomicRuntimeError, toHttpError } from './atomic-runtime.error'
 import { RevocationListService } from './revocation-list.service'
+import type { ReleaseEvidence } from '../atomic-registry/shadow-release'
+import { AdmissionStatus } from '../atomic-registry/atomic-implementation.entity'
 
 interface AuthedRequest {
   user?: {
@@ -81,6 +83,102 @@ export class AtomicRuntimeController {
     )
   }
 
+  @Post(':contractId/implementations')
+  @ApiOperation({
+    summary: '把实现绑定到契约（控制面动作；闸 4 在这里拦"直接绑成可运行状态"）',
+  })
+  async bindImplementation(
+    @Param('contractId') contractId: string,
+    @Body()
+    body: {
+      kind: 'typescript' | 'wasm'
+      moduleSha256?: string
+      abiVersion?: number
+      tier?: 'A' | 'B'
+      review?: Record<string, unknown>
+      reproducibleBuildRef?: string
+      sourceGate?: Record<string, unknown>
+      staticGate?: Record<string, unknown>
+      status?: AdmissionStatus
+    },
+  ) {
+    const impl = await this.registry.bindImplementation(contractId, body as never)
+    return {
+      id: impl.id,
+      status: impl.status,
+      moduleSha256: impl.moduleSha256,
+      releaseEvidence: impl.releaseEvidence,
+    }
+  }
+
+  @Post('implementations/:id/promote')
+  @ApiOperation({
+    summary: '推进准入状态（闸 4：逐级过、每级都要平台记录的证据）',
+  })
+  async promote(
+    @Param('id') id: string,
+    @Body() body: { to?: AdmissionStatus },
+  ) {
+    if (!body?.to) {
+      throw new HttpException(
+        { statusCode: 400, code: 'INVALID_INPUT', message: '缺少 to（目标准入状态）' },
+        400,
+      )
+    }
+    const impl = await this.registry.promoteImplementation(id, body.to)
+    return { id: impl.id, status: impl.status, releaseEvidence: impl.releaseEvidence }
+  }
+
+  @Post('implementations/:id/release-evidence')
+  @ApiOperation({
+    summary: '记录闸 4 证据（平台侧：影子/灰度运行结果），晋升判定只认这一列',
+  })
+  async recordReleaseEvidence(
+    @Param('id') id: string,
+    @Body() body: ReleaseEvidence,
+  ) {
+    const impl = await this.registry.recordReleaseEvidence(id, body ?? {})
+    return { id: impl.id, status: impl.status, releaseEvidence: impl.releaseEvidence }
+  }
+
+  @Post('implementations/:id/grandfather')
+  @ApiOperation({
+    summary: '一次性补录：把早于闸 4 的存量实现显式标记放行（必须写明理由与决定人）',
+  })
+  async grandfather(
+    @Param('id') id: string,
+    @Body() body: { reason?: string; decidedBy?: string; status?: AdmissionStatus },
+  ) {
+    if (!body?.reason || !body?.decidedBy) {
+      throw new HttpException(
+        {
+          statusCode: 400,
+          code: 'INVALID_INPUT',
+          message: '补录必须写明 reason 与 decidedBy（隐形的例外才是真正危险的东西）',
+        },
+        400,
+      )
+    }
+    const impl = await this.registry.grandfatherImplementation(id, {
+      reason: body.reason,
+      decidedBy: body.decidedBy,
+      status: body.status,
+    })
+    return { id: impl.id, status: impl.status, releaseEvidence: impl.releaseEvidence }
+  }
+
+  @Get('implementations/grandfathered')
+  @ApiOperation({ summary: '哪些实现是靠一次性补录放行的（上线后的必查项）' })
+  async grandfathered() {
+    const impls = await this.registry.listGrandfathered()
+    return impls.map((impl) => ({
+      id: impl.id,
+      status: impl.status,
+      moduleSha256: impl.moduleSha256,
+      releaseEvidence: impl.releaseEvidence,
+    }))
+  }
+
   @Post(':atomicType/invoke')
   // 调用是计算，不是创建资源：显式 200，避免 Nest 的 POST 默认 201
   @HttpCode(HttpStatus.OK)
@@ -133,6 +231,8 @@ export class AtomicRuntimeController {
         engine: result.engine,
         fuelUsed: result.fuelUsed,
         engineFallback: result.engineFallback,
+        // 闸 3 报告进审计：档位、逐条判定（含"未判"及原因）、信号、实际回合数
+        outputGate: result.outputGate,
         resourceId: undefined,
         status: 'success',
       })
@@ -172,6 +272,8 @@ export class AtomicRuntimeController {
       engine?: string
       fuelUsed?: number
       engineFallback?: boolean
+      /** 闸 3 判定报告（成功调用才有）。 */
+      outputGate?: unknown
     },
   ) {
     await this.auditLogs.create({
@@ -191,6 +293,7 @@ export class AtomicRuntimeController {
         ...(detail.engine ? { engine: detail.engine } : {}),
         ...(detail.fuelUsed !== undefined ? { fuelUsed: detail.fuelUsed } : {}),
         ...(detail.engineFallback ? { engineFallback: true } : {}),
+        ...(detail.outputGate ? { outputGate: detail.outputGate } : {}),
         ...(detail.reason ? { reason: detail.reason } : {}),
       },
     })

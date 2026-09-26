@@ -7,8 +7,5 @@
   "coverageDirectory": "./coverage/e2e",
   "testEnvironment": "node",
   "roots": ["<rootDir>/test"],
-  "moduleNameMapper": {
-    "^src/(.*)$": "<rootDir>/src/$1",
-    "^@speckit/wasm-modules$": "<rootDir>/../wasm-modules/dist/index.js"
-  }
+  "moduleNameMapper": { "^src/(.*)$": "<rootDir>/src/$1" }
 }

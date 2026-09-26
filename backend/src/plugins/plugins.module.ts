@@ -25,6 +25,7 @@ import { PluginEventEmitterService } from './infrastructure/events/plugin-event-
 import { PluginAuditLoggerService } from './infrastructure/audit/plugin-audit-logger.service'
 import { PluginSecurityValidatorService } from './infrastructure/security/plugin-security-validator.service'
 import { PluginsController } from './plugins.controller'
+import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 import { AIModuleContextModule } from '../ai-module-context/ai-module-context.module'
 
 @Module({
@@ -32,6 +33,8 @@ import { AIModuleContextModule } from '../ai-module-context/ai-module-context.mo
     TypeOrmModule.forFeature([PluginOrm]),
     ConfigModule,
     AIModuleContextModule,
+    // 能力拒绝/放行要落 audit_logs（与原子同一条出口）
+    AuditLogsModule,
   ],
   providers: [
     {

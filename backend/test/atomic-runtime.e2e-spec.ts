@@ -2,7 +2,7 @@
  * 端到端：**经真实 HTTP 接口**调用一个真实的 Wasm 原子，并核对审计落库。
  *
  * 前置：本地 PostgreSQL 已有 `sapbasic` 库，且原子注册表三张表已建
- * （`npx ts-node --transpile-only scripts/run-atomic-migration.ts`）。
+ * （`npx ts-node --transpile-only scripts/run-targeted-migration.ts --group=atomic`）。
  * 未满足时不硬失败，而是跳过并说明 —— 但那种跳过会在输出里明确写出来。
  */
 import { INestApplication } from '@nestjs/common'
@@ -21,6 +21,7 @@ import { OrganizationMember } from '../src/organizations/organization-member.ent
 import { AtomicRegistryModule } from '../src/atomic-registry/atomic-registry.module'
 import { AtomicRuntimeModule } from '../src/atomic-runtime/atomic-runtime.module'
 import { AtomicRegistryService } from '../src/atomic-registry/atomic-registry.service'
+import { bindRunnableForTest } from '../src/atomic-registry/test-fixtures'
 import { JwtAuthGuard } from '../src/auth/jwt-auth.guard'
 
 const ATOMIC_TYPE = 'e2e-available-inventory'
@@ -137,7 +138,7 @@ describe('原子运行时（e2e，真实 HTTP + 真实 Wasm）', () => {
 
   it('POST /api/atomic-contracts/:type/invoke 返回真实计算结果，并写入审计', async () => {
     if (!available) {
-      console.warn('跳过 e2e：本地库缺少原子注册表（先跑 scripts/run-atomic-migration.ts）')
+      console.warn('跳过 e2e：本地库缺少原子注册表（先跑 scripts/run-targeted-migration.ts --group=atomic）')
       return
     }
 
@@ -153,12 +154,11 @@ describe('原子运行时（e2e，真实 HTTP + 真实 Wasm）', () => {
     const registry = app.get(AtomicRegistryService)
     const contract = (await registry.list(ATOMIC_TYPE))[0]
     const sha256 = manifest().modules[0].sha256
-    await registry.bindImplementation(contract.id, {
+    await bindRunnableForTest(registry, contract.id, {
       kind: 'wasm' as never,
       moduleSha256: sha256,
       abiVersion: 1,
       tier: 'A' as never,
-      status: 'active' as never,
     })
 
     // 3) 调用（走 HTTP）
@@ -203,12 +203,11 @@ describe('原子运行时（e2e，真实 HTTP + 真实 Wasm）', () => {
     const contract = (await registry.list(ATOMIC_TYPE)).find(
       (c) => c.version === '2.0.0',
     )
-    await registry.bindImplementation(contract!.id, {
+    await bindRunnableForTest(registry, contract!.id, {
       kind: 'wasm' as never,
       moduleSha256: sha256,
       abiVersion: 1,
       tier: 'A' as never,
-      status: 'active' as never,
     })
 
     // 吊销名单通过查询参数注入不在本接口范围，这里直接验证：模块哈希被替换成不存在的
@@ -240,12 +239,11 @@ describe('原子运行时（e2e，真实 HTTP + 真实 Wasm）', () => {
     const contract = (await registry.list(ATOMIC_TYPE)).find(
       (c) => c.version === '3.0.0',
     )
-    await registry.bindImplementation(contract!.id, {
+    await bindRunnableForTest(registry, contract!.id, {
       kind: 'wasm' as never,
       moduleSha256: sha256,
       abiVersion: 1,
       tier: 'A' as never,
-      status: 'active' as never,
     })
 
     // e2e 身份不带任何 permissions

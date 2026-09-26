@@ -9,10 +9,12 @@ import { ModuleRegistryService } from './module-registry.service'
 import { ModuleRegistryController } from './module-registry.controller'
 import { AIContextController } from './ai-context.controller'
 import { AtomicRegistryModule } from '../atomic-registry/atomic-registry.module'
+import { BlueprintModule } from '../blueprint/blueprint.module'
 
 @Module({
   imports: [
     AtomicRegistryModule,
+    BlueprintModule,
     TypeOrmModule.forFeature([
       ModuleRegistry,
       ModuleRelationship,
