@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://sapbase.local/schemas/blueprint-semantic.schema.json",
   "title": "Blueprint Semantic Layer",
-  "description": "包内 semantic.json 的形状（业务对象、字段、关系、状态、迁移）。**跨字段判据**（初始态唯一、存在终态、无不可达态、迁移目标已声明）不在这里 —— 由编译器确定性判定，见 backend/src/blueprint/compiler.ts。",
+  "description": "包内 semantic.json 的形状（业务对象、字段、关系、状态、迁移）。**跨字段判据**（初始态唯一、存在终态、无不可达态、迁移目标已声明、主从双向一致、计算字段环、金额标记）不在这里 —— 由编译器确定性判定，见 backend/src/blueprint/compiler.ts。",
   "type": "object",
   "additionalProperties": false,
   "required": ["entities"],
@@ -24,15 +24,99 @@
               "properties": {
                 "name": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" },
                 "type": {
-                  "enum": ["text", "number", "decimal", "boolean", "date", "datetime", "i32", "reference"]
+                  "enum": ["text", "number", "decimal", "boolean", "date", "datetime", "i32", "reference", "enum"]
                 },
                 "required": { "type": "boolean" },
-                "reference": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" }
+                "reference": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+                "money": { "type": "boolean" },
+                "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+                "permissions": { "$ref": "#/$defs/fieldPermissions" },
+                "precision": { "type": "integer", "minimum": 1, "maximum": 38 },
+                "scale": { "type": "integer", "minimum": 0, "maximum": 38 },
+                "rounding": { "enum": ["half-up", "half-even"] },
+                "unique": { "type": "boolean" },
+                "values": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "computed": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["expr", "dependsOn"],
+                  "properties": {
+                    "expr": { "type": "string", "minLength": 1 },
+                    "dependsOn": {
+                      "type": "array",
+                      "items": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" }
+                    }
+                  }
+                },
+                "uom": { "$ref": "#/$defs/uom" },
+                "onDelete": { "enum": ["restrict", "setNull"] },
+                "default": true
               },
               "allOf": [
                 {
                   "if": { "properties": { "type": { "const": "reference" } }, "required": ["type"] },
                   "then": { "required": ["reference"] }
+                },
+                {
+                  "if": { "properties": { "type": { "const": "enum" } }, "required": ["type"] },
+                  "then": { "required": ["values"] }
+                },
+                {
+                  "if": { "properties": { "type": { "const": "text" } }, "required": ["type", "default"] },
+                  "then": { "properties": { "default": { "type": "string" } } }
+                },
+                {
+                  "if": { "properties": { "type": { "const": "number" } }, "required": ["type", "default"] },
+                  "then": { "properties": { "default": { "type": "number" } } }
+                },
+                {
+                  "if": { "properties": { "type": { "const": "decimal" } }, "required": ["type", "default"] },
+                  "then": {
+                    "properties": {
+                      "default": {
+                        "anyOf": [
+                          { "type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$" },
+                          { "type": "number" }
+                        ]
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": { "properties": { "type": { "const": "boolean" } }, "required": ["type", "default"] },
+                  "then": { "properties": { "default": { "type": "boolean" } } }
+                },
+                {
+                  "if": { "properties": { "type": { "const": "i32" } }, "required": ["type", "default"] },
+                  "then": { "properties": { "default": { "type": "integer" } } }
+                },
+                {
+                  "if": { "properties": { "type": { "const": "date" } }, "required": ["type", "default"] },
+                  "then": {
+                    "properties": {
+                      "default": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+                    }
+                  }
+                },
+                {
+                  "if": { "properties": { "type": { "const": "datetime" } }, "required": ["type", "default"] },
+                  "then": {
+                    "properties": {
+                      "default": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": { "properties": { "type": { "const": "enum" } }, "required": ["type", "default"] },
+                  "then": { "properties": { "default": { "type": "string", "minLength": 1 } } }
                 }
               ]
             }
@@ -46,7 +130,8 @@
               "properties": {
                 "name": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" },
                 "type": { "enum": ["belongsTo", "hasOne", "hasMany", "manyToMany"] },
-                "target": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" }
+                "target": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+                "cardinality": { "enum": ["one", "many"] }
               }
             }
           },
@@ -74,6 +159,101 @@
                 "from": { "type": "string", "minLength": 1 },
                 "to": { "type": "string", "minLength": 1 },
                 "rule": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" }
+          },
+          "parent": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["entity", "field"],
+            "properties": {
+              "entity": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+              "field": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" }
+            }
+          },
+          "rollups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["field", "over", "of", "fn"],
+              "properties": {
+                "field": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" },
+                "over": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+                "of": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" },
+                "fn": { "enum": ["sum", "count", "max", "min"] }
+              }
+            }
+          },
+          "numbering": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["field", "prefix", "width"],
+            "properties": {
+              "field": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" },
+              "prefix": { "type": "string", "minLength": 1 },
+              "dateFormat": { "enum": ["YYYYMMDD", "YYYYMM", "YYYY", "none"] },
+              "width": { "type": "integer", "minimum": 1, "maximum": 12 }
+            }
+          },
+          "ownership": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["field", "readAllPermission"],
+            "properties": {
+              "field": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" },
+              "readAllPermission": { "$ref": "#/$defs/dottedPermission" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "dottedPermission": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$"
+    },
+    "fieldPermissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "read": { "$ref": "#/$defs/dottedPermission" },
+        "write": { "$ref": "#/$defs/dottedPermission" }
+      }
+    },
+    "uom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base", "packs"],
+      "properties": {
+        "base": { "type": "string", "minLength": 1 },
+        "packs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "factor"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "factor": {
+                "oneOf": [
+                  { "type": "integer", "minimum": 1 },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["numerator", "denominator"],
+                    "properties": {
+                      "numerator": { "type": "integer", "minimum": 1 },
+                      "denominator": { "type": "integer", "minimum": 1 }
+                    }
+                  }
+                ]
               }
             }
           }

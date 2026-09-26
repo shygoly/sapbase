@@ -54,10 +54,11 @@ jobs:
         run: npm run wasm:test
 
       # 入库产物字节 = 清单哈希 = 源码重建哈希
+      # 不带参数 = 核对清单里的**每一个模块**（只核第一条会让新加的原子绕过复现闸）
       - name: Verify reproducible build
         env:
           WASM_BUILD_ISOLATION: host
-        run: npm run wasm:reproducible -- modules/available-inventory-rust
+        run: npm run wasm:reproducible
 
       # 产物与清单的变更必须进版本控制，否则运行时校验会失败
       - name: Ensure build artifacts are committed
@@ -245,7 +246,17 @@ jobs:
             test/atomic-runtime.e2e-spec.ts \
             test/atomic-gates.e2e-spec.ts \
             test/blueprint-pipeline.e2e-spec.ts \
-            test/plugin-sandbox.e2e-spec.ts
+            test/blueprint-delivery.e2e-spec.ts \
+            test/blueprint-delivery-template.e2e-spec.ts \
+            test/unique-index-db.e2e-spec.ts \
+            test/plugin-sandbox.e2e-spec.ts \
+            test/document-runtime.e2e-spec.ts \
+            test/decision-runtime.e2e-spec.ts \
+            test/db-constraints.e2e-spec.ts \
+            test/autoparts-atoms.e2e-spec.ts \
+            test/traceability-import.e2e-spec.ts \
+            test/upgrade-views.e2e-spec.ts \
+            test/currency-permissions.e2e-spec.ts
 
   validate:
     name: Validate Components

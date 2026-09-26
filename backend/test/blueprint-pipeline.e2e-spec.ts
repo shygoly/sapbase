@@ -68,6 +68,8 @@ describe('蓝图管线（e2e，真实模块 + 真实 Wasm 原子）', () => {
     exportDir = mkdtempSync(join(tmpdir(), 'speckit-e2e-export-'))
     // 必须在 BlueprintService 实例化之前设置：它的包目录在构造时确定
     process.env.BLUEPRINT_PACKAGES_DIR = packagesDir
+    // 本文件测管线（导出→编译→绑定），不是授权链；显式走开发豁免
+    process.env.BLUEPRINT_ALLOW_UNSIGNED = '1'
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -135,10 +137,12 @@ describe('蓝图管线（e2e，真实模块 + 真实 Wasm 原子）', () => {
       await dataSource.query(`DELETE FROM audit_logs WHERE metadata->>'atomicType' = $1`, [
         ATOMIC_TYPE,
       ])
+      await dataSource.query('DELETE FROM audit_logs WHERE "organizationId" = $1', [ORGANIZATION_ID])
       await dataSource.query('DELETE FROM organizations WHERE id = $1', [ORGANIZATION_ID])
     }
     await app?.close()
     delete process.env.BLUEPRINT_PACKAGES_DIR
+    delete process.env.BLUEPRINT_ALLOW_UNSIGNED
     for (const dir of [packagesDir, exportDir]) {
       if (dir) rmSync(dir, { recursive: true, force: true })
     }
