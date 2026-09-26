@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/interaction-plan.schema.json",
+  "title": "Interaction Plan",
+  "description": "**临时交互面**的结构化计划 —— formless ERP 的核心协议。智能体不生成 HTML，只生成这份计划；渲染器确定性执行。`blocks[].kind` 与 `actions[].kind` 是**封闭枚举**：渲染器遇到未知值 MUST 拒绝渲染整份计划（跳过未知部分等于让智能体悄悄决定不展示什么）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["plan", "surface", "title", "blocks", "actions", "trace", "needsConfirmation"],
+  "properties": {
+    "plan": { "const": "interaction-plan/v1" },
+    "surface": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "maxLength": 64,
+      "description": "临时交互面的标识（不是页面路由；用完即消失）"
+    },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "blocks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "oneOf": [
+          {
+            "title": "facts",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "items"],
+            "properties": {
+              "kind": { "const": "facts" },
+              "items": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 50,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["label", "value"],
+                  "properties": {
+                    "label": { "type": "string", "minLength": 1 },
+                    "value": { "type": ["string", "number", "boolean"] },
+                    "source": { "type": "string", "description": "这条事实来自哪个工具" }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "title": "lines",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "items"],
+            "properties": {
+              "kind": { "const": "lines" },
+              "items": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 200,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["label", "quantity"],
+                  "properties": {
+                    "label": { "type": "string", "minLength": 1 },
+                    "quantity": { "type": "number" },
+                    "unit": { "type": "string" },
+                    "reference": { "type": "string", "description": "参照（如上次采购价）" }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "title": "anomaly",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "severity", "message"],
+            "properties": {
+              "kind": { "const": "anomaly" },
+              "severity": { "enum": ["info", "warn", "danger"] },
+              "message": { "type": "string", "minLength": 1, "maxLength": 500 },
+              "detail": { "type": "string", "maxLength": 1000 }
+            }
+          },
+          {
+            "title": "table",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "columns", "rows"],
+            "properties": {
+              "kind": { "const": "table" },
+              "columns": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 12,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "rows": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "type": "array",
+                  "items": { "type": ["string", "number", "boolean", "null"] }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "oneOf": [
+          {
+            "title": "confirm",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "label", "tool"],
+            "properties": {
+              "kind": { "const": "confirm" },
+              "id": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "tool": { "type": "string", "description": "绑定一个契约内的工具；界面按钮不是随便的回调" },
+              "args": { "type": "object" }
+            }
+          },
+          {
+            "title": "edit",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "label", "fields"],
+            "properties": {
+              "kind": { "const": "edit" },
+              "id": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "fields": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          {
+            "title": "cancel",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "label"],
+            "properties": {
+              "kind": { "const": "cancel" },
+              "id": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 }
+            }
+          }
+        ]
+      }
+    },
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tools"],
+      "description": "依据：这份计划的事实来自哪些工具调用（可审计、可复现）",
+      "properties": {
+        "tools": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "intent": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "needsConfirmation": {
+      "type": "boolean",
+      "description": "是否包含需要用户确认的动作（渲染器据此决定要不要强调确认）"
+    }
+  }
+}
