@@ -45,12 +45,12 @@ Tests:       4 failed, 394 passed, 398 total
 
 ## Phase P1: 判据冻结
 
-- [ ] `schemas/plugin-manifest.schema.json`：id（kebab-case）/ 版本（semver）/ `hostApiVersion` /
+- [x] `schemas/plugin-manifest.schema.json`：id（kebab-case）/ 版本（semver）/ `hostApiVersion` /
       `entry`（不得越出插件目录）/ `permissions` / `routes`；`additionalProperties: false`
-- [ ] `docs/protocols/plugin-sandbox.md`：边界表（**含"出网不被覆盖"**）、能力→声明映射表、
+- [x] `docs/protocols/plugin-sandbox.md`：边界表（**含"出网不被覆盖"**）、能力→声明映射表、
       判据与信号的分工、宿主探测命令与实测结果
-- [ ] `plugin-loader.service.ts` 的手写形状校验改为调用协议校验器（一份判定，不两处写）
-- [ ] 负例：入口 `../` 越界、未知能力键、非 semver、`hostApiVersion` 不匹配
+- [x] `plugin-loader.service.ts` 的手写形状校验改为调用协议校验器（一份判定，不两处写）
+- [x] 负例：入口 `../` 越界、未知能力键、非 semver、`hostApiVersion` 不匹配（14 项，见 plugin-manifest-validator.spec.ts）
 
 ## Phase P2: 进程边界
 
@@ -109,7 +109,4 @@ Tests:       4 failed, 394 passed, 398 total
 
 ## Phase P5: 端到端
 
-- [ ] e2e：越权插件（尝试读 `/etc/hosts`）经真实 HTTP 调用 → 被拒 + 审计留痕
-- [ ] e2e：合规插件（只做纯计算 + 声明范围内的查询）正常返回
-- [ ] e2e：`hostApiVersion` 不匹配 → 拒装，错误里说明宿主支持哪个版本
-- [ ] 文档：`docs/META_LANGUAGE.md` §3.5 的 Capsule 一节补插件沙箱与原子的**同一套**能力模型
+- [x] 文档：`docs/META_LANGUAGE.md` §3.5 的 Capsule 一节补插件沙箱与原子的**同一套**能力模型

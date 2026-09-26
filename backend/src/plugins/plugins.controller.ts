@@ -11,12 +11,16 @@ import {
   UploadedFile,
   Param,
   BadRequestException,
+  Body,
+  HttpException,
+  NotFoundException,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { PluginLifecycleService } from './application/services/plugin-lifecycle.service'
 import { GetPluginsService } from './application/services/get-plugins.service'
+import { PluginRuntimeService } from './infrastructure/runtime/plugin-runtime.service'
 import { PluginRegistryService } from './application/services/plugin-registry.service'
 import { multerConfig } from '../common/storage/multer.config'
 import * as fs from 'fs/promises'
@@ -31,6 +35,7 @@ export class PluginsController {
     private readonly pluginLifecycleService: PluginLifecycleService,
     private readonly getPluginsService: GetPluginsService,
     private readonly pluginRegistryService: PluginRegistryService,
+    private readonly pluginRuntime: PluginRuntimeService,
   ) {}
 
   @Get()
@@ -109,6 +114,40 @@ export class PluginsController {
       name: plugin.name,
       status: plugin.status,
     }
+  }
+
+  @Post(':id/invoke')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '调用插件导出的处理函数（在受限子进程里执行；越权由能力中介拒绝）',
+  })
+  async invokePlugin(
+    @Param('id') id: string,
+    @Body() body: { handler?: string; args?: unknown[] },
+  ) {
+    if (!body?.handler) {
+      throw new BadRequestException('缺少 handler（插件导出的函数名）')
+    }
+
+    const runtime = this.pluginRuntime.getRuntime(id)
+    if (!runtime) {
+      throw new NotFoundException(`插件未激活或不存在：${id}`)
+    }
+
+    const result = await runtime.host.invoke(body.handler, body.args ?? [])
+    if (!result.ok) {
+      // 越权（ERR_ACCESS_DENIED）、超时、插件自身异常都到这里；一律 422 + 原因，
+      // **不静默返回空结果**（元语不变量 4：fail-closed）
+      throw new HttpException(
+        {
+          statusCode: 422,
+          code: result.error?.code ?? 'PLUGIN_INVOKE_FAILED',
+          message: result.error?.message ?? '插件调用失败',
+        },
+        422,
+      )
+    }
+    return { id, handler: body.handler, result: result.result }
   }
 
   @Post(':id/deactivate')

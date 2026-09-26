@@ -5,6 +5,9 @@ import { PluginContextProvider } from './plugin-context-provider.service'
 import { PluginDatabaseAccessService } from '../database/plugin-database-access.service'
 import { PluginModuleIntegrationService } from '../../application/services/plugin-module-integration.service'
 import { DataSource } from 'typeorm'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { PluginPermissions } from '../../domain/entities/plugin-permission.entity'
 import { MODULE_REGISTRY_SERVICE } from '../../../ai-module-context/domain/services/tokens'
 import { PLUGIN_REPOSITORY } from '../../domain/repositories'
@@ -21,8 +24,15 @@ describe('PluginApiRouterService - Permission Enforcement', () => {
   let service: PluginApiRouterService
   let runtimeService: PluginRuntimeService
   let permissionChecker: PermissionCheckerService
+  let pluginDir: string
 
   beforeEach(async () => {
+    // 插件现在跑在受限子进程里：需要一个**真实**的目录与入口文件
+    pluginDir = mkdtempSync(join(tmpdir(), 'speckit-router-plugin-'))
+    writeFileSync(
+      join(pluginDir, 'index.js'),
+      'module.exports = { handleTest: () => ({ ok: true }) }',
+    )
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PluginApiRouterService,
@@ -59,6 +69,12 @@ describe('PluginApiRouterService - Permission Enforcement', () => {
     permissionChecker = module.get(PERMISSION_CHECKER)
   })
 
+  afterEach(async () => {
+    // 起的子进程必须收掉，否则 Jest 不退出（也正因为如此，运行时实现了 OnModuleDestroy）
+    await runtimeService.onModuleDestroy()
+    rmSync(pluginDir, { recursive: true, force: true })
+  })
+
   describe('Permission Enforcement', () => {
     it('should allow access to permitted endpoint', async () => {
       const plugin = Plugin.create(
@@ -85,7 +101,7 @@ describe('PluginApiRouterService - Permission Enforcement', () => {
             ],
           },
         },
-        '/path',
+        pluginDir,
       )
 
       await runtimeService.loadPlugin(plugin)

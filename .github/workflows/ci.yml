@@ -230,7 +230,8 @@ jobs:
           npx jest --config ./test/jest-e2e.json --runInBand \
             test/atomic-runtime.e2e-spec.ts \
             test/atomic-gates.e2e-spec.ts \
-            test/blueprint-pipeline.e2e-spec.ts
+            test/blueprint-pipeline.e2e-spec.ts \
+            test/plugin-sandbox.e2e-spec.ts
 
   validate:
     name: Validate Components

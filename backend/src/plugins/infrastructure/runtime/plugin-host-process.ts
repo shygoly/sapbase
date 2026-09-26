@@ -49,6 +49,7 @@ export class PluginHostError extends Error {
     readonly code:
       | 'PERMISSION_MODEL_UNAVAILABLE'
       | 'HOST_ENTRY_MISSING'
+      | 'PLUGIN_DIR_MISSING'
       | 'SPAWN_FAILED'
       | 'TIMEOUT'
       | 'PROTOCOL_ERROR'
@@ -127,6 +128,12 @@ export class PluginHostProcess {
     // 用**真实路径**放行：macOS 的 tmpdir 是符号链接（/var → /private/var），
     // 而 Node 的权限模型按解析后的真实路径判 —— 只给符号链接路径会处处 ERR_ACCESS_DENIED。
     // 一条目录路径即可覆盖其下所有文件（含子目录），无需通配。
+    if (!existsSync(this.options.pluginDir)) {
+      throw new PluginHostError(
+        `插件目录不存在：${this.options.pluginDir}`,
+        'PLUGIN_DIR_MISSING',
+      )
+    }
     const pluginDir = realpathSync(this.options.pluginDir)
     const entryFile = resolve(pluginDir, this.options.entry)
     try {

@@ -1,6 +1,6 @@
 # 项目元语（Meta Language）
 
-> 版本：1.4
+> 版本：1.5
 > 日期：2026-09-25
 > 定位：本文件是 sapbase 的**基础定义层** —— 元模型、协议原语、执行原语、工程约定与术语真源。
 > 与设计文档的分工：设计文档回答"**要做什么**"，本文件回答"**用什么词、按什么不变量做、真源在哪**"。
@@ -111,6 +111,23 @@ run(in_off: i32, n: i32, out_off: i32) -> i32      // 0 = 成功
 - **Blueprint Capsule**：加密容器 + 授权边界的模板（可见层明文，Protected 层加密）
 - **Capability Capsule**：进一步与 License、Key、Runtime、设备/租户绑定
 - 核心等式：`模板文件 ≠ 可运行模板`；`文件 + License + Key + Runtime + 绑定 = 可运行`
+
+### 3.5.1 插件沙箱（与原子同一套能力模型）
+
+插件与本文件 §3.1–3.3 的原子**共用一套模型**，不是两套：
+
+| 维度 | 原子 | 插件 |
+| --- | --- | --- |
+| 边界 | 零能力 Wasm（无导入、无 IO） | 受限子进程（`node --permission`：fs / 子进程 / worker 被关） |
+| 声明 | `atomic-contract.schema.json` | `plugin-manifest.schema.json`（声明是能力的**唯一来源**） |
+| 判定 | 契约声明权限点 all-of | 清单声明 → 权限点 → **同一份** `missingPermissions` |
+| 失败 | fail-closed，不回退 | 同左（探测不到权限模型即拒，不退回同进程 `require`） |
+| 审计 | `atomic.invoke` | `plugin.invoke` / `plugin.capability.denied` |
+| 静态检查 | 闸 0/1/2 是判决（结构事实） | 源码文本扫描只是**信号**（可绕、会误报 → 无阻断权） |
+
+判据文本：[`protocols/plugin-sandbox.md`](./protocols/plugin-sandbox.md)。
+**已知边界（写在明面上）**：Node 的权限模型不覆盖出网 —— 平台能保证 fs/子进程/worker
+三条路被关死，网络需要部署层策略；在此之前只建议允许 Tier A 插件。
 
 ### 3.6 增量协议（Delta）
 
@@ -299,6 +316,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.5 | 2026-09-25 | 新增 §3.5.1「插件沙箱（与原子同一套能力模型）」：边界 / 声明 / 判定 / 失败 / 审计 / 静态检查六个维度逐项对照，并写明已知边界（Node 权限模型不覆盖出网） |
 | 1.4 | 2026-09-25 | §3.3 闸表补齐：闸 3（输出管控）与闸 4（影子发布）从 ❌ 改为 ✅ —— 闸 3 的判据文本在 `protocols/atomic-output-audit.md`、实现见 §3.8 同级的 `output-gate.ts`；闸 4 的证据门在 `atomic-registry/shadow-release.ts`。术语表补"输出管控判据 / 影子发布证据"两行 |
 | 1.3 | 2026-09-25 | 协议状态位推进：协议 2（Atomic Contract）📋 → ✅ 已冻结；协议 3（Blueprint Package）❌ → 🟡（包与 IR 已冻结，表单/规则/BOM/审批层待补）；协议 4 补加载链落点。新增 §3.8「Blueprint 编译与加载链」，术语表补 IR/编译记录/原子绑定/最小蓝图导出四行 |
 | 1.2 | 2026-09-24 | 补入口分层：新增 `speckit/AGENTS.md`、`backend/AGENTS.md` 两个作用域入口；`openspec/AGENTS.md` 的 Context Checklist 与 Stage 1 步骤纳入本文件；§5.2 补 Clerk 文档行并标注为待清理残留 |
