@@ -158,6 +158,13 @@ jobs:
       - name: Build shared schemas
         run: npm run build --workspace shared-schemas
 
+      - name: Build wasm-modules
+        # backend 直接 import '@speckit/wasm-modules'，而它 package.json 的 types/main 指向 dist/，
+        # 且 wasm-modules/.gitignore 忽略了 dist/ —— CI 必须显式构建，否则 nest build / e2e
+        # 会在 5 个文件上报 TS2307: Cannot find module '@speckit/wasm-modules'。
+        # （本机之所以看不出问题：工作区里恰好有构建过的 dist/。）
+        run: npm run build --workspace @speckit/wasm-modules
+
       - name: Build wasm-host sidecar
         # 单元测试默认引擎（ATOMIC_ENGINE=wasmtime）需要这个二进制；不构建的话测试会红
         run: cargo build --release --locked --manifest-path crates/wasm-host/Cargo.toml
@@ -212,6 +219,13 @@ jobs:
 
       - name: Build shared schemas
         run: npm run build --workspace shared-schemas
+
+      - name: Build wasm-modules
+        # backend 直接 import '@speckit/wasm-modules'，而它 package.json 的 types/main 指向 dist/，
+        # 且 wasm-modules/.gitignore 忽略了 dist/ —— CI 必须显式构建，否则 nest build / e2e
+        # 会在 5 个文件上报 TS2307: Cannot find module '@speckit/wasm-modules'。
+        # （本机之所以看不出问题：工作区里恰好有构建过的 dist/。）
+        run: npm run build --workspace @speckit/wasm-modules
 
       - name: Build wasm-host sidecar
         run: cargo build --release --locked --manifest-path crates/wasm-host/Cargo.toml
