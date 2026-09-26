@@ -222,7 +222,7 @@ describe('闸 3 在真实执行链上生效', () => {
     if (!ready) return
     const { executor } = await buildRuntime(
       'available-inventory',
-      contractFor({ outputAudit: 'off' }),
+      contractFor({ outputAudit: 'off', outputAuditReason: '测试夹具：验证 off 档位的执行路径' }),
     )
     const result = await executor.invoke({
       atomicType: 'gate-under-test',

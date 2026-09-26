@@ -1,7 +1,7 @@
 # 项目元语（Meta Language）
 
-> 版本：1.5
-> 日期：2026-09-25
+> 版本：1.7
+> 日期：2026-09-26
 > 定位：本文件是 sapbase 的**基础定义层** —— 元模型、协议原语、执行原语、工程约定与术语真源。
 > 与设计文档的分工：设计文档回答"**要做什么**"，本文件回答"**用什么词、按什么不变量做、真源在哪**"。
 > 任何新增设计、代码或文档，都应先在本文件的词汇与不变量里找到落点；找不到，说明元语需要扩展（走变更记录）。
@@ -52,9 +52,9 @@ $$
 | --- | --- | --- | --- | --- |
 | 1 | ERP Meta Model | 业务对象、字段、关系、状态、事件、能力、上下文、版本 | 🟡 部分 | 前端 Schema + `shared-schemas`；JSON Schema 权威源待建 |
 | 2 | Atomic Contract | 原子能力的输入输出、前后置条件、副作用、幂等、权限、错误、实现封装 | ✅ 已冻结 | `schemas/atomic-contract.schema.json`、`schemas/atomic-module-manifest.schema.json`；实现见 `openspec/specs/atomic-registry/` |
-| 3 | Blueprint Package | 完整 ERP 的语义/流程/规则/表单/BOM/审批/记账/分层/签名 | 🟡 包与 IR 已冻结 | `schemas/blueprint-package.schema.json`、`schemas/blueprint-ir.schema.json`；文本语法见 [`protocols/blueprint-ir.md`](./protocols/blueprint-ir.md)；表单/规则/BOM/审批层 Schema 待补（v1 逐文件不覆盖即拒） |
+| 3 | Blueprint Package | 完整 ERP 的语义/流程/规则/经验策略/授权/分层/签名；语义层落点含**主从结构 / 唯一性 / 金额精度** | 🟡 包 / IR / 规则 / 经验策略 / 授权已冻结 | `schemas/blueprint-{package,ir,rules,experience,license}.schema.json`；文本语法见 [`protocols/blueprint-ir.md`](./protocols/blueprint-ir.md)；交付与验签见 [`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md)。主从 / 唯一 / 金额见 §3.8.1。BOM 属 semantic、Form 不做层。未覆盖文件仍拒 |
 | 4 | Runtime SDK Contract | Blueprint 如何被本地 Runtime 加载、验证、编译、执行 | 🟡 加载链已实现 | 编译与加载见 3.8；执行链见 3.2、3.3。**待固化**：customer 本地 Runtime 侧的装载契约（runtime 范围协商、远端注册表） |
-| 5 | License / Encryption Protocol | 模块如何加密、授权、绑定客户、防二次销售 | ❌ 未开始 | 设计见 v3 §11 |
+| 5 | License / Encryption Protocol | 模块如何加密、授权、绑定客户、防二次销售 | 🟡 蓝图授权声明与 Ed25519 验签已落地 | `schemas/blueprint-license.schema.json`、`backend/src/blueprint/license.ts`；加密与模块级许可仍待（v3 §11） |
 
 ---
 
@@ -156,22 +156,25 @@ L3 验证层     Schema 验证、引用完整性、权限验证、可执行性�
 
 ### 3.8 Blueprint 编译与加载链（v1）
 
-从"作者的一堆文件"到"可执行计划"，四道关，**任一不过即拒**（无部分加载、无静默降级）：
+从"作者的一堆文件"到"可执行计划"，七道关，**任一不过即拒**（无部分加载、无静默降级）：
 
 ```text
-作者目录 ──packBlueprint──▶ .erpkg（包清单是包内唯一权威：逐文件 sha256 + 分层 + 依赖）
+作者目录 ──packBlueprint──▶ .erpkg（包清单是包内唯一权威：逐文件 sha256 + 分层 + 依赖 + 签名）
 .erpkg ──unpackBlueprint──▶ 内存结构（**永不落盘**：zip slip 最强的防线是没有写入机会）
 .erpkg ──compileBlueprint─▶ IR（逐文件 Schema → 依赖闭包 → 冲突检测 → IR 自检）
-.erpkg ──loadBlueprint────▶ 可执行计划（重编 → 比对 compiled.irDigest → 绑定原子实现）
+.erpkg ──loadBlueprint────▶ 可执行计划
+  1 完整性 → 2 编译 → 3 防漂移 → 4 license 形状 → 5 验签 → 6 授权匹配 → 7 绑定原子
 ```
 
 | 环节 | 落点 | 关键约定 |
 | --- | --- | --- |
 | 打包 / 解包 | `backend/src/blueprint/packager.ts` | 清单由**打包器生成**（不手写）；`.erpkg` 只读进内存 |
-| 编译 | `backend/src/blueprint/compiler.ts` | 未覆盖的文件**拒绝**（不跳过未知文件）；冲突只做**确定性判据** |
-| 加载 | `backend/src/blueprint/loader.ts` | 记录 `irDigest` 是**外部可写数据**，只用来与本次重编结果比对；不采信自述 |
+| 编译 | `backend/src/blueprint/compiler.ts` | 未覆盖的文件**拒绝**；规则/经验策略引用必须可解析；IR 摘要覆盖新两层 |
+| 加载 | `backend/src/blueprint/loader.ts` | 记录 `irDigest` 是**外部可写数据**，只用来与本次重编结果比对；授权门在装载器里 |
+| 验签 | `backend/src/blueprint/license.ts` | Ed25519；权威签名在 `manifest.signature`；未配置公钥即失败 |
 | 绑定 | `loader.resolveBindings` | 加载期就把 `moduleSha256` 定下来（"客户同意跑的那一份代码"），不留到第一次调用 |
 | 导出 | `backend/src/module-registry/blueprint-export.ts` | 模块记录 → 最小蓝图：只声明模块**确实拥有**的实体名与原子依赖，字段与生命周期**不编** |
+| 经验策略 | `experience.json` | **Experience Policy**：交互的决策输入，与 Interaction Surface（输出）配对 |
 
 两条容易被忽略的边界，写在协议里而不是实现者的默契里：
 
@@ -179,6 +182,16 @@ L3 验证层     Schema 验证、引用完整性、权限验证、可执行性�
    反过来，**实体关系图的环不判**——`Employee.manager` 自引用与 `Order.billingCustomer` 回指都是合法建模。
 2. **IR 双形态等价**。结构化 IR 与文本 IR 互相导出等价，且文本→结构→文本**逐字节一致**，可作 diff 基线
    （摘要 `compiled.irDigest` 就是文本形态的 sha256）。
+
+### 3.8.1 语义层三条落点（主从 / 唯一性 / 金额精度）
+
+这三条不是新协议，是协议 3 语义层已经能判定、并且已经落到运行时的结构事实：
+
+| 落点 | 声明 | 运行时 | 真源 |
+| --- | --- | --- | --- |
+| **主从结构** | 头实体 `children` + 行实体 `parent`（编译期双向一致） | 头 + 行一次提交，一件事务，失败全不落 | [`schemas/blueprint-semantic.schema.json`](../schemas/blueprint-semantic.schema.json)、[`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md) §7 / §12 |
+| **唯一性** | 字段 `unique: true` | **落到 DB 唯一索引**，键含 `blueprintId` + `organizationId`（按蓝图 / 按租户隔离） | 同上 schema；实现 `backend/src/semantic-runtime/unique-index.ts` |
+| **金额精度** | `decimal(p,s)` + `rounding`（`half-up` / `half-even`）；`money: true` 只能标在 decimal 上 | 定点整数小单位；**单一舍入点**（`roundTo`）；i32 小单位进原子；**禁止浮点** | 同上 schema；实现 [`backend/src/blueprint/money.ts`](../backend/src/blueprint/money.ts) |
 
 ---
 
@@ -239,7 +252,10 @@ workspaces：shared-schemas / speckit / backend / wasm-modules
 | 前端依赖实际版本 | [`TECH_STACK_v2.md`](./TECH_STACK_v2.md) | `speckit/README.md` 是上游模板原文，不可作依据 |
 | 包管理器与依赖安装 | [`PACKAGE_MANAGER.md`](./PACKAGE_MANAGER.md) | — |
 | Wasm 原子模块与准入门禁 | [`wasm-modules/README.md`](../wasm-modules/README.md) | — |
+| 汽配计算原子 ABI | [`protocols/autoparts-atoms.md`](./protocols/autoparts-atoms.md) | ATP / 价格 / 信用 / 换算 / 替代链；查库能力不做原子 |
 | Wasm 执行引擎（sidecar） | [`crates/wasm-host/`](../crates/wasm-host/) + openspec change `add-wasmtime-host` | V8 实现见 `backend/src/atomic-runtime/wasm-instance-pool.ts` |
+| 蓝图交付 / 授权 / 经验策略 | [`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md) | 分层、编译期判据、验签链、开发豁免 |
+| 蓝图 IR | [`protocols/blueprint-ir.md`](./protocols/blueprint-ir.md) | 结构 / 文本双形态 |
 | 变更提案与任务清单 | `openspec/changes/<change-id>/` | 按 OpenSpec 流程 |
 | Git 工作流 | [`openspec/GIT_WORKFLOW.md`](../openspec/GIT_WORKFLOW.md) | — |
 | 项目上下文（AI 助手入口） | [`openspec/project.md`](../openspec/project.md) | — |
@@ -295,6 +311,12 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 设计时模型 | Jev-like LLM | `DeltaGenerator`/`DeltaRepairer` | ❌ |
 | 运行时 AI | Agent Host | — | ❌ |
 | 模块注册表 | Module Registry | `backend/src/module-registry/` | ✅ |
+| 经验策略 | Experience Policy | `experience.json`；`schemas/blueprint-experience.schema.json` | ✅ |
+| 交互面 | Interaction Surface | `interaction-plan/v1`；`schemas/interaction-plan.schema.json` | 🟡 |
+| 蓝图授权声明 | Blueprint License | `license.json`；`manifest.signature`；`backend/src/blueprint/license.ts` | ✅ |
+| 主从结构 | Header-Line | `children` / `parent`；头行一件事务 | ✅ |
+| 唯一性 | Uniqueness | `unique: true` → DB 唯一索引（按租户/蓝图隔离） | ✅ |
+| 金额精度 | Money Precision | `decimal(p,s)` + `backend/src/blueprint/money.ts`；禁止浮点 | ✅ |
 
 ---
 
@@ -316,6 +338,8 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.7 | 2026-09-26 | 协议 3 / §3.8.1 / 术语表补「主从结构 / 唯一性 / 金额精度」三条语义层落点，真源指向 `schemas/blueprint-semantic.schema.json`、`docs/protocols/blueprint-delivery.md`、`backend/src/blueprint/money.ts` |
+| 1.6 | 2026-09-25 | 协议 3 补规则 / 经验策略 / 授权三层；协议 5 推进到 🟡（蓝图 Ed25519 验签落地，加密仍待）。§3.8 装载链改为七道关。术语表补 Experience Policy（与 Interaction Surface 配对）与 Blueprint License。交付判据见 `protocols/blueprint-delivery.md` |
 | 1.5 | 2026-09-25 | 新增 §3.5.1「插件沙箱（与原子同一套能力模型）」：边界 / 声明 / 判定 / 失败 / 审计 / 静态检查六个维度逐项对照，并写明已知边界（Node 权限模型不覆盖出网） |
 | 1.4 | 2026-09-25 | §3.3 闸表补齐：闸 3（输出管控）与闸 4（影子发布）从 ❌ 改为 ✅ —— 闸 3 的判据文本在 `protocols/atomic-output-audit.md`、实现见 §3.8 同级的 `output-gate.ts`；闸 4 的证据门在 `atomic-registry/shadow-release.ts`。术语表补"输出管控判据 / 影子发布证据"两行 |
 | 1.3 | 2026-09-25 | 协议状态位推进：协议 2（Atomic Contract）📋 → ✅ 已冻结；协议 3（Blueprint Package）❌ → 🟡（包与 IR 已冻结，表单/规则/BOM/审批层待补）；协议 4 补加载链落点。新增 §3.8「Blueprint 编译与加载链」，术语表补 IR/编译记录/原子绑定/最小蓝图导出四行 |

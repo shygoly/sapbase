@@ -38,12 +38,14 @@ describe('BlueprintController（B2）', () => {
   beforeEach(() => {
     packagesDir = mkdtempSync(join(tmpdir(), 'speckit-bp-pkgs-'))
     process.env.BLUEPRINT_PACKAGES_DIR = packagesDir
+    process.env.BLUEPRINT_ALLOW_UNSIGNED = '1'
     sourceDir = writeSourceDir()
     controller = new BlueprintController(new BlueprintService(registryStub))
   })
 
   afterEach(() => {
     delete process.env.BLUEPRINT_PACKAGES_DIR
+    delete process.env.BLUEPRINT_ALLOW_UNSIGNED
     rmSync(packagesDir, { recursive: true, force: true })
     rmSync(sourceDir, { recursive: true, force: true })
   })
@@ -181,6 +183,14 @@ describe('BlueprintController（B2）', () => {
     )
     // 写回记录后加载仍然成功（摘要自洽）
     await expect(controller.load('auto-parts-erp-2026.1.0')).resolves.toBeDefined()
+  })
+
+  it('deliver 请求含未知字段 → 400', async () => {
+    await expect(
+      controller.deliver('auto-parts-min', { grantedTo: ['org-b'], extra: true }),
+    ).rejects.toMatchObject({
+      response: { reason: 'unknown-field' },
+    })
   })
 
   it('加载失败 → 400 且带原因（ir-drift）', async () => {

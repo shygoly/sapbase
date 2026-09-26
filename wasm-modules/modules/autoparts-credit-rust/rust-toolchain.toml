@@ -1,0 +1,5 @@
+# 锁定工具链（闸 2 复现构建）：版本一变，产物哈希就变，必须重新走准入。
+[toolchain]
+channel = "1.95.0"
+targets = ["wasm32-unknown-unknown"]
+profile = "minimal"

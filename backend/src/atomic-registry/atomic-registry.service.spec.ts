@@ -407,18 +407,24 @@ describe('AtomicRegistryService 状态流转', () => {
 })
 
 describe('AtomicRegistryService.importManifest', () => {
+  const realModuleCount = () =>
+    (JSON.parse(readFileSync(REAL_MANIFEST, 'utf8')) as { modules: unknown[] })
+      .modules.length
+
   it('导入真实清单：重算哈希通过、闸 1 复检通过、落台账', async () => {
     if (!existsSync(REAL_MANIFEST)) return // 未构建 wasm 产物时跳过
     const { service, manifests } = build()
 
     const result = await service.importManifest(REAL_MANIFEST, 'test')
+    const expected = realModuleCount()
 
     expect(result.rejected).toEqual([])
-    expect(result.imported).toHaveLength(1)
+    // 条数跟清单走（P3 汽配原子入册后不再是 1），断言的是"清单里的每一条都过闸并落台账"
+    expect(result.imported).toHaveLength(expected)
     // 闸报告随导入结果一起返回，绑定实现时可直接写入 staticGate
     expect(result.imported[0].sha256).toMatch(/^[0-9a-f]{64}$/)
     expect(result.imported[0].staticGate).toBeTruthy()
-    expect(manifests.rows).toHaveLength(1)
+    expect(manifests.rows).toHaveLength(expected)
     // 台账存的是**实测**哈希与字节数，不是清单自述值
     const row = manifests.rows[0] as Record<string, unknown>
     const shipped = new Uint8Array(
@@ -431,13 +437,14 @@ describe('AtomicRegistryService.importManifest', () => {
   it('同哈希重复导入 → 幂等跳过，不产生重复台账', async () => {
     if (!existsSync(REAL_MANIFEST)) return
     const { service, manifests } = build()
+    const expected = realModuleCount()
 
     await service.importManifest(REAL_MANIFEST, 'test')
     const second = await service.importManifest(REAL_MANIFEST, 'test')
 
     expect(second.imported).toEqual([])
-    expect(second.skipped).toHaveLength(1)
-    expect(manifests.rows).toHaveLength(1)
+    expect(second.skipped).toHaveLength(expected)
+    expect(manifests.rows).toHaveLength(expected)
   })
 
   it('字节被篡改 → 该条目被拒且不落台账', async () => {
@@ -445,14 +452,16 @@ describe('AtomicRegistryService.importManifest', () => {
     const tempDir = mkdtempSync(join(tmpdir(), 'speckit-manifest-'))
     try {
       const original = JSON.parse(readFileSync(REAL_MANIFEST, 'utf8'))
-      const file = original.modules[0].file as string
+      // 只放第一条：本用例验的是"哈希不符即拒"，不是清单条数。
+      const single = { ...original, modules: [original.modules[0]] }
+      const file = single.modules[0].file as string
       copyFileSync(resolve(REAL_MANIFEST, '..', file), join(tempDir, file))
       // 改一个字节：哈希随之改变，但清单仍声明旧哈希
       const bytes = readFileSync(join(tempDir, file))
       bytes[bytes.length - 1] = bytes[bytes.length - 1] ^ 0xff
       writeFileSync(join(tempDir, file), bytes)
       const tamperedManifest = join(tempDir, 'manifest.json')
-      writeFileSync(tamperedManifest, JSON.stringify(original, null, 2))
+      writeFileSync(tamperedManifest, JSON.stringify(single, null, 2))
 
       const { service, manifests } = build()
       const result = await service.importManifest(tamperedManifest, 'test')

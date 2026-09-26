@@ -1,0 +1,56 @@
+{
+  "rules": "blueprint-rules/v1",
+  "validation": [
+    {
+      "id": "so-qty-positive",
+      "entity": "SalesOrder",
+      "field": "quantity",
+      "rule": "greaterThan",
+      "value": 0,
+      "message": "销售数量必须大于 0"
+    },
+    {
+      "id": "sol-qty-positive",
+      "entity": "SalesOrderLine",
+      "field": "quantity",
+      "rule": "greaterThan",
+      "value": 0,
+      "message": "行数量必须大于 0"
+    },
+    {
+      "id": "sol-price-nonneg",
+      "entity": "SalesOrderLine",
+      "field": "unitPrice",
+      "rule": "greaterOrEqual",
+      "value": 0,
+      "message": "单价不能为负"
+    },
+    {
+      "id": "part-no-required",
+      "entity": "Part",
+      "field": "partNo",
+      "rule": "required",
+      "message": "物料号不能为空"
+    }
+  ],
+  "approval": [
+    {
+      "id": "so-high-value",
+      "entity": "SalesOrder",
+      "when": "totalAmount > 100000",
+      "steps": [
+        { "role": "sales-manager" }
+      ]
+    }
+  ],
+  "accounting": [
+    {
+      "id": "so-shipped-ar",
+      "on": "SalesOrder.shipped",
+      "entries": [
+        { "account": "1122", "side": "debit", "amount": "$entity.totalAmount" },
+        { "account": "6001", "side": "credit", "amount": "$entity.totalAmount" }
+      ]
+    }
+  ]
+}

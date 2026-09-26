@@ -1,0 +1,36 @@
+{
+  "flows": [
+    {
+      "id": "SalesOrder",
+      "entity": "SalesOrder",
+      "steps": [
+        {
+          "id": "draft",
+          "on": "draft",
+          "next": ["confirmed"],
+          "actions": [{ "kind": "check", "atomic": "available-inventory" }]
+        },
+        {
+          "id": "confirmed",
+          "on": "confirmed",
+          "next": ["shipped"],
+          "actions": [
+            { "kind": "require-approval", "rule": "so-high-value" },
+            { "kind": "check", "atomic": "available-inventory" }
+          ]
+        },
+        {
+          "id": "shipped",
+          "on": "shipped",
+          "next": ["closed"],
+          "actions": [{ "kind": "check", "atomic": "available-inventory" }]
+        },
+        {
+          "id": "closed",
+          "on": "closed",
+          "actions": [{ "kind": "check", "atomic": "available-inventory" }]
+        }
+      ]
+    }
+  ]
+}

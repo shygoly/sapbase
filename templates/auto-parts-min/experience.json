@@ -1,0 +1,38 @@
+{
+  "experience": "blueprint-experience/v1",
+  "priority": [
+    {
+      "entity": "SalesOrder",
+      "fields": [
+        "customer",
+        "part",
+        "quantity",
+        "unitPrice"
+      ]
+    }
+  ],
+  "confirm": [
+    {
+      "action": "SalesOrder.confirmed",
+      "when": {
+        "field": "SalesOrder.quantity",
+        "op": "greaterThan",
+        "value": 100
+      }
+    }
+  ],
+  "automate": [
+    {
+      "action": "available-inventory"
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "sales-order.review",
+      "when": {
+        "entity": "SalesOrder",
+        "state": "draft"
+      }
+    }
+  ]
+}

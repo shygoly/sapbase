@@ -77,8 +77,20 @@ describe('validateAtomicContract', () => {
   })
 
   // 闸 3（输出管控）的声明前提：判据见 docs/protocols/atomic-output-audit.md
-  it.each([['off'], ['standard'], ['strict']])('接受 outputAudit 档位 %s', (profile) => {
-    expect(validateAtomicContract(withContract({ outputAudit: profile })).valid).toBe(true)
+  it.each([
+    ['off', { outputAuditReason: '行间依赖：逐行重放不成立（测试夹具）' }],
+    ['standard', {}],
+    ['strict', {}],
+  ])('接受 outputAudit 档位 %s', (profile, extra) => {
+    expect(
+      validateAtomicContract(withContract({ outputAudit: profile, ...extra })).valid,
+    ).toBe(true)
+  })
+
+  it('拒绝：off 不带理由（没有理由的 off 就是关闸的万能钥匙）', () => {
+    const result = validateAtomicContract(withContract({ outputAudit: 'off' }))
+    expect(result.valid).toBe(false)
+    expect(result.errors.join('; ')).toContain('outputAuditReason')
   })
 
   it('未声明 outputAudit 时按默认档位处理（可选，不是必填）', () => {

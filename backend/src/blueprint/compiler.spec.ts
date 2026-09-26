@@ -327,7 +327,7 @@ describe('detectConflicts（四类确定性判据）', () => {
     expect(detect(selfReference)).toEqual([])
   })
 
-  it('引用了 v1 未覆盖的规则层 → 悬空（明确报出来，而不是静默放过）', () => {
+  it('迁移引用了不存在的规则（含包内没有 rules.json）→ 仍然拒绝', () => {
     const withRule = {
       entities: [
         {
@@ -337,8 +337,43 @@ describe('detectConflicts（四类确定性判据）', () => {
       ],
     }
     expect(detect(withRule)).toEqual(
-      expect.arrayContaining([expect.stringContaining('引用了 v1 未覆盖的规则 CreditCheck')]),
+      expect.arrayContaining([expect.stringContaining('引用了不存在的规则 CreditCheck')]),
     )
+  })
+
+  it('迁移引用能在 rules.json validation[].id 解析到 → 不再视为悬空', () => {
+    const withRule = {
+      entities: [
+        {
+          ...VALID_SEMANTIC.entities[0],
+          transitions: [
+            { from: 'draft', to: 'submitted', rule: 'total-positive' },
+            { from: 'submitted', to: 'closed' },
+          ],
+        },
+        VALID_SEMANTIC.entities[1],
+      ],
+    }
+    const rules = {
+      rules: 'blueprint-rules/v1',
+      validation: [
+        {
+          id: 'total-positive',
+          entity: 'SalesOrder',
+          field: 'total',
+          rule: 'greaterThan',
+          value: 0,
+          message: '金额必须为正',
+        },
+      ],
+      approval: [],
+      accounting: [],
+    }
+    expect(
+      detectConflicts(withRule as never, { flows: [] }, [{ atomic: 'available-inventory', version: '^1.0.0' }], {
+        rules: rules as never,
+      }),
+    ).toEqual([])
   })
 })
 
@@ -360,5 +395,355 @@ describe('IR 双形态往返等价', () => {
     )
     expect(toIrText(parseIrText(irText) as never)).toBe(irText)
     expect(toIrText(ir)).toBe(irText)
+  })
+})
+
+const VALID_RULES = {
+  rules: 'blueprint-rules/v1',
+  validation: [
+    {
+      id: 'total-positive',
+      entity: 'SalesOrder',
+      field: 'total',
+      rule: 'greaterThan',
+      value: 0,
+      message: '金额必须为正',
+    },
+  ],
+  approval: [
+    {
+      id: 'high-value',
+      entity: 'SalesOrder',
+      when: 'total > 100000',
+      steps: [{ role: 'finance-manager' }],
+    },
+  ],
+  accounting: [
+    {
+      id: 'order-closed',
+      on: 'SalesOrder.submitted',
+      entries: [
+        { account: '1401', side: 'debit', amount: '$entity.total' },
+        { account: '2202', side: 'credit', amount: '$entity.total' },
+      ],
+    },
+  ],
+}
+
+const VALID_EXPERIENCE = {
+  experience: 'blueprint-experience/v1',
+  priority: [{ entity: 'SalesOrder', fields: ['total'] }],
+  confirm: [
+    {
+      action: 'SalesOrder.submitted',
+      when: { field: 'SalesOrder.total', op: 'greaterThan', value: 100000 },
+    },
+  ],
+  automate: [{ action: 'available-inventory' }],
+  surfaces: [{ id: 'sales-order.approval-needed', when: { entity: 'SalesOrder', state: 'submitted' } }],
+}
+
+describe('rules / experience 编译期判据', () => {
+  it('正例：规则与经验策略引用都能解析', async () => {
+    const result = await compileBlueprint(
+      unpacked({
+        'semantic.json': VALID_SEMANTIC,
+        'flows.json': VALID_FLOWS,
+        'rules.json': VALID_RULES,
+        'experience.json': VALID_EXPERIENCE,
+      }),
+      registry(),
+    )
+    expect(result.ir.rules?.count).toBe(3)
+    expect(result.ir.experience?.count).toBe(4)
+    expect(result.ir.rules?.digest).toMatch(/^sha256:[0-9a-f]{64}$/)
+    expect(result.irText).toContain('rules count=3 digest=')
+    expect(result.irText).toContain('experience count=4 digest=')
+    const parsed = parseIrText(toIrText(result.ir))
+    const { summary: _ignored, ...withoutSummary } = result.ir
+    expect(parsed).toEqual(withoutSummary)
+  })
+
+  it('没有 rules.json / experience.json 的包照旧能编译（新层可选）', async () => {
+    const result = await compileBlueprint(
+      unpacked({ 'semantic.json': VALID_SEMANTIC, 'flows.json': VALID_FLOWS }),
+      registry(),
+    )
+    expect(result.ir.rules).toBeUndefined()
+    expect(result.ir.experience).toBeUndefined()
+  })
+
+  it('license.json 被 Schema 覆盖，形状合法即可与其它层共存', async () => {
+    const result = await compileBlueprint(
+      unpacked({
+        'semantic.json': VALID_SEMANTIC,
+        'license.json': {
+          license: 'blueprint-license/v1',
+          grantedTo: [],
+          resell: false,
+          issuer: 'sapbase-platform',
+        },
+      }),
+      registry(),
+    )
+    expect(result.ir.entities).toHaveLength(2)
+  })
+
+  it('校验规则引用不存在的字段 → 指明是哪条规则的哪个引用', async () => {
+    const bad = {
+      ...VALID_RULES,
+      validation: [{ ...VALID_RULES.validation[0], field: 'ghostAmount' }],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({ 'semantic.json': VALID_SEMANTIC, 'flows.json': VALID_FLOWS, 'rules.json': bad }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      reason: 'conflict',
+      conflicts: expect.arrayContaining([
+        expect.stringContaining('校验规则 total-positive'),
+        expect.stringContaining('ghostAmount'),
+      ]),
+    })
+  })
+
+  it('审批 when 引用不存在的字段 / 语法非法 / 未知角色 → 拒', async () => {
+    const missingField = {
+      ...VALID_RULES,
+      approval: [{ ...VALID_RULES.approval[0], when: 'ghost > 1' }],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({
+          'semantic.json': VALID_SEMANTIC,
+          'flows.json': VALID_FLOWS,
+          'rules.json': missingField,
+        }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      conflicts: expect.arrayContaining([expect.stringContaining('ghost')]),
+    })
+
+    const badSyntax = {
+      ...VALID_RULES,
+      approval: [{ ...VALID_RULES.approval[0], when: 'total >> 1' }],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({
+          'semantic.json': VALID_SEMANTIC,
+          'flows.json': VALID_FLOWS,
+          'rules.json': badSyntax,
+        }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      conflicts: expect.arrayContaining([expect.stringContaining('表达式非法')]),
+    })
+
+    const unknownRole = {
+      ...VALID_RULES,
+      approval: [{ ...VALID_RULES.approval[0], steps: [{ role: 'intern' }] }],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({
+          'semantic.json': VALID_SEMANTIC,
+          'flows.json': VALID_FLOWS,
+          'rules.json': unknownRole,
+        }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      conflicts: expect.arrayContaining([expect.stringContaining('未知角色')]),
+    })
+  })
+
+  it('sales-manager 现在被接受；未知角色 intern 仍拒', async () => {
+    const accepted = {
+      ...VALID_RULES,
+      approval: [{ ...VALID_RULES.approval[0], steps: [{ role: 'sales-manager' }] }],
+    }
+    const result = await compileBlueprint(
+      unpacked({
+        'semantic.json': VALID_SEMANTIC,
+        'flows.json': VALID_FLOWS,
+        'rules.json': accepted,
+      }),
+      registry(),
+    )
+    expect(result.ir.blueprint).toBe('auto-parts-erp')
+
+    const stillUnknown = {
+      ...VALID_RULES,
+      approval: [{ ...VALID_RULES.approval[0], steps: [{ role: 'intern' }] }],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({
+          'semantic.json': VALID_SEMANTIC,
+          'flows.json': VALID_FLOWS,
+          'rules.json': stillUnknown,
+        }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      conflicts: expect.arrayContaining([expect.stringContaining('未知角色')]),
+    })
+  })
+
+  it('记账触发未声明事件 → 拒', async () => {
+    const bad = {
+      ...VALID_RULES,
+      accounting: [{ ...VALID_RULES.accounting[0], on: 'SalesOrder.received' }],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({ 'semantic.json': VALID_SEMANTIC, 'flows.json': VALID_FLOWS, 'rules.json': bad }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      conflicts: expect.arrayContaining([expect.stringContaining('未声明的事件 SalesOrder.received')]),
+    })
+  })
+
+  it('借贷字面量不相等 → 拒，且明细指出两侧的值', async () => {
+    const bad = {
+      ...VALID_RULES,
+      accounting: [
+        {
+          id: 'unbalanced',
+          on: 'SalesOrder.submitted',
+          entries: [
+            { account: '1401', side: 'debit', amount: 100 },
+            { account: '2202', side: 'credit', amount: 80 },
+          ],
+        },
+      ],
+    }
+    try {
+      await compileBlueprint(
+        unpacked({ 'semantic.json': VALID_SEMANTIC, 'flows.json': VALID_FLOWS, 'rules.json': bad }),
+        registry(),
+      )
+      throw new Error('本应被拒')
+    } catch (error) {
+      expect((error as CompileError).conflicts.join('\n')).toContain('借方 [100 = 100]')
+      expect((error as CompileError).conflicts.join('\n')).toContain('贷方 [80 = 80]')
+    }
+  })
+
+  it('借贷一侧字面量一侧引用 → 拒（不可静态判定），两侧值都在明细里', async () => {
+    const bad = {
+      ...VALID_RULES,
+      accounting: [
+        {
+          id: 'mixed',
+          on: 'SalesOrder.submitted',
+          entries: [
+            { account: '1401', side: 'debit', amount: '$entity.total' },
+            { account: '2202', side: 'credit', amount: 100 },
+          ],
+        },
+      ],
+    }
+    try {
+      await compileBlueprint(
+        unpacked({ 'semantic.json': VALID_SEMANTIC, 'flows.json': VALID_FLOWS, 'rules.json': bad }),
+        registry(),
+      )
+      throw new Error('本应被拒')
+    } catch (error) {
+      const detail = (error as CompileError).conflicts.join('\n')
+      expect(detail).toContain('$entity.total')
+      expect(detail).toContain('100')
+      expect(detail).toContain('不可静态判定')
+    }
+  })
+
+  it('记账金额引用不存在的字段 → 拒', async () => {
+    const bad = {
+      ...VALID_RULES,
+      accounting: [
+        {
+          id: 'ghost-amount',
+          on: 'SalesOrder.submitted',
+          entries: [
+            { account: '1401', side: 'debit', amount: '$entity.ghost' },
+            { account: '2202', side: 'credit', amount: '$entity.ghost' },
+          ],
+        },
+      ],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({ 'semantic.json': VALID_SEMANTIC, 'flows.json': VALID_FLOWS, 'rules.json': bad }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      conflicts: expect.arrayContaining([expect.stringContaining('ghost')]),
+    })
+  })
+
+  it('经验策略动作无法解析 → 拒', async () => {
+    const bad = {
+      ...VALID_EXPERIENCE,
+      automate: [{ action: 'inventory.recompute' }],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({
+          'semantic.json': VALID_SEMANTIC,
+          'flows.json': VALID_FLOWS,
+          'experience.json': bad,
+        }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      conflicts: expect.arrayContaining([
+        expect.stringContaining('inventory.recompute'),
+        expect.stringContaining('既不是已声明事件'),
+      ]),
+    })
+  })
+
+  it('经验策略 priority 引用不存在的字段 → 拒', async () => {
+    const bad = {
+      ...VALID_EXPERIENCE,
+      priority: [{ entity: 'SalesOrder', fields: ['supplier'] }],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({
+          'semantic.json': VALID_SEMANTIC,
+          'flows.json': VALID_FLOWS,
+          'experience.json': bad,
+        }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      conflicts: expect.arrayContaining([expect.stringContaining('supplier')]),
+    })
+  })
+
+  it('改 rules.json 的一个 value → irDigest 必变（防漂移的实质）', async () => {
+    const files = {
+      'semantic.json': VALID_SEMANTIC,
+      'flows.json': VALID_FLOWS,
+      'rules.json': VALID_RULES,
+    }
+    const first = await compileBlueprint(unpacked(files), registry())
+    const tweaked = {
+      ...VALID_RULES,
+      validation: [{ ...VALID_RULES.validation[0], value: 1 }],
+    }
+    const second = await compileBlueprint(
+      unpacked({ ...files, 'rules.json': tweaked }),
+      registry(),
+    )
+    expect(second.ir.rules?.digest).not.toBe(first.ir.rules?.digest)
+    expect(second.irDigest).not.toBe(first.irDigest)
   })
 })

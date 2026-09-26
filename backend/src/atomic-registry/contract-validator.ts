@@ -74,11 +74,17 @@ export function validateAtomicContract(
  * 放这里判定仍然只有一份（元语不变量 12），前端若需要则调用同一入口。
  */
 export function validateContractConsistency(
-  contract: unknown,
+  input: unknown,
 ): SchemaValidationResult {
   const errors: string[] = []
-  const output = (contract as { outputSchema?: { columns?: unknown; total?: unknown } })
-    ?.outputSchema
+  const contract = input as
+    | {
+        outputSchema?: { columns?: unknown; total?: unknown }
+        outputAudit?: string
+        outputAuditReason?: string
+      }
+    | undefined
+  const output = contract?.outputSchema
   const columns = Array.isArray(output?.columns)
     ? (output.columns as Array<{ name?: string; minimum?: number; maximum?: number }>)
     : []
@@ -90,6 +96,14 @@ export function validateContractConsistency(
         `outputSchema.columns.${name}: minimum (${minimum}) 不得大于 maximum (${maximum})`,
       )
     }
+  }
+
+  // 闸 3 降档必须给理由：`off` 是"不跑追加判据"，没有理由的 off 就是把闸关掉。
+  // 判据文本：docs/protocols/atomic-output-audit.md §3。
+  if (contract?.outputAudit === 'off' && !contract.outputAuditReason) {
+    errors.push(
+      'outputAuditReason: outputAudit 为 off 时必须写明理由（否则 off 就是关闸的万能钥匙）',
+    )
   }
 
   const totalName = (output?.total as { name?: string } | undefined)?.name

@@ -1,0 +1,19 @@
+[package]
+name = "speckit-atomic-autoparts-atp"
+version = "1.0.0"
+edition = "2021"
+# 汽配 ATP 原子：no_std、零依赖、零能力。
+# 依赖为空是刻意的 —— 任何依赖都可能自带 build.rs 或 proc-macro，
+# 会把"平台审查过这份源码"的承诺扩散到没审过的代码（闸 0 会直接拒）。
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+debug = false
+strip = true
+overflow-checks = false

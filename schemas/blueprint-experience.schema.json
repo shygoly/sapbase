@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/blueprint-experience.schema.json",
+  "title": "Blueprint Experience Policy",
+  "description": "包内 experience.json 的形状：经验策略只回答「什么重要 / 要确认 / 能自动 / 何时触发交互面」。禁止任何布局字段（layout / width / position / component / style / x / y / height / css / class / render）—— 拒绝是有意的，不是碰巧没定义。字段引用必须能解析到实体，因此 priority 用 {entity, fields[]}（design.md 里 priority: [\"supplier\"] 只是示意）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["experience", "priority", "confirm", "automate", "surfaces"],
+  "allOf": [{ "$ref": "#/$defs/forbidLayout" }],
+  "properties": {
+    "experience": { "const": "blueprint-experience/v1" },
+    "priority": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/priorityItem" }
+    },
+    "confirm": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/confirmItem" }
+    },
+    "automate": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/automateItem" }
+    },
+    "surfaces": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/surfaceItem" }
+    }
+  },
+  "$defs": {
+    "forbidLayout": {
+      "not": {
+        "anyOf": [
+          { "required": ["layout"] },
+          { "required": ["width"] },
+          { "required": ["position"] },
+          { "required": ["component"] },
+          { "required": ["style"] },
+          { "required": ["x"] },
+          { "required": ["y"] },
+          { "required": ["height"] },
+          { "required": ["css"] },
+          { "required": ["class"] },
+          { "required": ["render"] }
+        ]
+      }
+    },
+    "entityName": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Za-z0-9]*$"
+    },
+    "fieldName": {
+      "type": "string",
+      "pattern": "^[a-z][A-Za-z0-9]*$"
+    },
+    "actionRef": {
+      "type": "string",
+      "minLength": 1,
+      "description": "必须能解析为 flows.json 的 Entity.state 事件，或 manifest 已声明的原子类型"
+    },
+    "priorityItem": {
+      "allOf": [
+        { "$ref": "#/$defs/forbidLayout" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["entity", "fields"],
+          "properties": {
+            "entity": { "$ref": "#/$defs/entityName" },
+            "fields": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/fieldName" }
+            }
+          }
+        }
+      ]
+    },
+    "confirmWhen": {
+      "allOf": [
+        { "$ref": "#/$defs/forbidLayout" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["field", "op", "value"],
+          "properties": {
+            "field": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Za-z0-9]*\\.[a-z][A-Za-z0-9]*$"
+            },
+            "op": {
+              "enum": ["greaterThan", "lessThan", "equals", "notEquals"]
+            },
+            "value": {}
+          }
+        }
+      ]
+    },
+    "confirmItem": {
+      "allOf": [
+        { "$ref": "#/$defs/forbidLayout" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "when"],
+          "properties": {
+            "action": { "$ref": "#/$defs/actionRef" },
+            "when": { "$ref": "#/$defs/confirmWhen" }
+          }
+        }
+      ]
+    },
+    "automateItem": {
+      "allOf": [
+        { "$ref": "#/$defs/forbidLayout" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action"],
+          "properties": {
+            "action": { "$ref": "#/$defs/actionRef" }
+          }
+        }
+      ]
+    },
+    "surfaceItem": {
+      "allOf": [
+        { "$ref": "#/$defs/forbidLayout" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "when"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*)*$",
+              "description": "段内允许 kebab-case（purchase-order.approval-needed）；比「如 ^[a-z][a-z0-9]*(\\.[a-z][a-z0-9-]*)*$」多允许第一段连字符，否则协议正例非法"
+            },
+            "when": {
+              "allOf": [
+                { "$ref": "#/$defs/forbidLayout" },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["entity", "state"],
+                  "properties": {
+                    "entity": { "$ref": "#/$defs/entityName" },
+                    "state": {
+                      "type": "string",
+                      "pattern": "^[a-z][A-Za-z0-9]*$"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

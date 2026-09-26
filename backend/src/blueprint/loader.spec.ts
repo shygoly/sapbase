@@ -7,6 +7,9 @@ import { CompileError } from './compiler'
 import { buildExecutionPlan, LoadError, loadBlueprint } from './loader'
 import { BLUEPRINT_META_FILE, packBlueprint, stampCompiled, unpackBlueprint } from './packager'
 
+/** 既有用例测完整性 / 编译 / 防漂移 / 绑定，不是授权链；显式豁免授权门。 */
+const UNSIGNED = { allowUnsigned: true as const }
+
 /** 客户同意运行的那一份 Wasm 代码的哈希（真实值由宿主重算，这里只是形状）。 */
 const MODULE_SHA = 'b'.repeat(64)
 
@@ -100,7 +103,7 @@ describe('loadBlueprint（B4）', () => {
   })
 
   it('合法包 → 可执行计划：原子解析到具体版本与模块哈希，动作带绑定', async () => {
-    const loaded = await loadBlueprint(pkg, registry())
+    const loaded = await loadBlueprint(pkg, registry(), UNSIGNED)
 
     expect(loaded.plan.resolvedAtomics).toEqual([
       {
@@ -130,20 +133,20 @@ describe('loadBlueprint（B4）', () => {
   })
 
   it('未经编译的包（无 compiled 记录）仍可加载 —— v1 允许，但只有记录存在时才做漂移比对', async () => {
-    const loaded = await loadBlueprint(pkg, registry())
+    const loaded = await loadBlueprint(pkg, registry(), UNSIGNED)
     expect(loaded.manifest.compiled).toBeUndefined()
     expect(loaded.plan.irDigest).toMatch(/^sha256:[0-9a-f]{64}$/)
   })
 
   it('确定性：同一包重复加载得到同一 IR 摘要（否则 diff 基线不成立）', async () => {
-    const first = await loadBlueprint(pkg, registry())
-    const second = await loadBlueprint(pkg, registry())
+    const first = await loadBlueprint(pkg, registry(), UNSIGNED)
+    const second = await loadBlueprint(pkg, registry(), UNSIGNED)
     expect(first.plan.irDigest).toBe(second.plan.irDigest)
     expect(first.irText).toBe(second.irText)
   })
 
   it('compiled.irDigest 写回后，加载比对通过', async () => {
-    const first = await loadBlueprint(pkg, registry())
+    const first = await loadBlueprint(pkg, registry(), UNSIGNED)
     stampCompiled(pkg, {
       irDigest: first.plan.irDigest,
       compiledAt: '2026-09-25T00:00:00.000Z',
@@ -154,7 +157,7 @@ describe('loadBlueprint（B4）', () => {
     // 写回只改清单，不动被哈希覆盖的文件 —— 逐文件校验和仍然成立（能解包就说明了这一点）
     expect(manifest.files['semantic.json']).toBe(unpackBlueprint(pkg).manifest.files['semantic.json'])
 
-    const loaded = await loadBlueprint(pkg, registry())
+    const loaded = await loadBlueprint(pkg, registry(), UNSIGNED)
     expect(loaded.plan.irDigest).toBe(first.plan.irDigest)
   })
 
@@ -164,14 +167,14 @@ describe('loadBlueprint（B4）', () => {
       compiledAt: '2026-09-25T00:00:00.000Z',
     })
 
-    await expect(loadBlueprint(pkg, registry())).rejects.toMatchObject({
+    await expect(loadBlueprint(pkg, registry(), UNSIGNED)).rejects.toMatchObject({
       name: 'LoadError',
       reason: 'ir-drift',
     })
   })
 
   it('原子依赖不可满足 → 编译阶段即拒（dependency-unresolved），不部分加载', async () => {
-    await expect(loadBlueprint(pkg, registry({ resolved: false }))).rejects.toMatchObject({
+    await expect(loadBlueprint(pkg, registry({ resolved: false }), UNSIGNED)).rejects.toMatchObject({
       name: 'CompileError',
       reason: 'dependency-unresolved',
     })
@@ -179,7 +182,7 @@ describe('loadBlueprint（B4）', () => {
 
   it('Wasm 实现指认不出代码（无 moduleSha256）→ 拒绝（implementation-unbound）', async () => {
     await expect(
-      loadBlueprint(pkg, registry({ moduleSha256: null })),
+      loadBlueprint(pkg, registry({ moduleSha256: null }), UNSIGNED),
     ).rejects.toMatchObject({
       name: 'LoadError',
       reason: 'implementation-unbound',
@@ -248,7 +251,7 @@ describe('依赖种类', () => {
     const pkg = join(dir, 'with-blueprint-dep.erpkg')
     try {
       packBlueprint(dir, pkg)
-      const loaded = await loadBlueprint(pkg, registry())
+      const loaded = await loadBlueprint(pkg, registry(), UNSIGNED)
       expect(loaded.plan.resolvedAtomics.map((binding) => binding.atomic)).toEqual([
         'available-inventory',
       ])
@@ -267,11 +270,64 @@ describe('CompileError 与 LoadError 的分工', () => {
       // 包进一个 v1 协议没覆盖的文件 → 编译器拒绝（不跳过未知文件）
       writeFileSync(join(dir, 'extra.json'), JSON.stringify({ anything: true }))
       packBlueprint(dir, pkg)
-      await expect(loadBlueprint(pkg, registry())).rejects.toMatchObject({
+      await expect(loadBlueprint(pkg, registry(), UNSIGNED)).rejects.toMatchObject({
         name: 'CompileError',
         reason: 'uncovered-file',
       })
-      await expect(loadBlueprint(pkg, registry())).rejects.toBeInstanceOf(CompileError)
+      await expect(loadBlueprint(pkg, registry(), UNSIGNED)).rejects.toBeInstanceOf(CompileError)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('授权链（装载器）', () => {
+  it('缺 license.json 且未豁免 → license-missing，不产生计划', async () => {
+    const dir = writeSourceDir()
+    const pkg = join(dir, 'no-license.erpkg')
+    packBlueprint(dir, pkg)
+    try {
+      await expect(loadBlueprint(pkg, registry())).rejects.toMatchObject({
+        name: 'LoadError',
+        reason: 'license-missing',
+      })
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('开发豁免：未签名包装载成功并写出 blueprint.load.unsigned', async () => {
+    const dir = writeSourceDir()
+    const pkg = join(dir, 'unsigned.erpkg')
+    packBlueprint(dir, pkg)
+    try {
+      const loaded = await loadBlueprint(pkg, registry(), {
+        allowUnsigned: true,
+        env: { NODE_ENV: 'test' },
+      })
+      expect(loaded.audit).toEqual([
+        { action: 'blueprint.load.unsigned', detail: { reason: 'BLUEPRINT_ALLOW_UNSIGNED' } },
+      ])
+      expect(loaded.plan.irDigest).toMatch(/^sha256:[0-9a-f]{64}$/)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('生产环境开启未签名豁免 → unsigned-exemption-in-production', async () => {
+    const dir = writeSourceDir()
+    const pkg = join(dir, 'prod.erpkg')
+    packBlueprint(dir, pkg)
+    try {
+      await expect(
+        loadBlueprint(pkg, registry(), {
+          allowUnsigned: true,
+          env: { NODE_ENV: 'production', BLUEPRINT_ALLOW_UNSIGNED: '1' },
+        }),
+      ).rejects.toMatchObject({
+        name: 'LoadError',
+        reason: 'unsigned-exemption-in-production',
+      })
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
