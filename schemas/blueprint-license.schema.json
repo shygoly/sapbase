@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/blueprint-license.schema.json",
+  "title": "Blueprint License Declaration",
+  "description": "包内 license.json：授权声明文件（其 sha256 进 manifest.files）。权威签名在 manifest.signature，不在本文件——避免自指。本文件允许可选 signature 以便单文件阅读；若存在且与 manifest.signature 不一致，装载器 fail-closed 拒绝。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["license", "grantedTo", "resell", "issuer"],
+  "properties": {
+    "license": { "const": "blueprint-license/v1" },
+    "grantedTo": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "允许运行的租户。空数组 = 平台自用 / 不限制。"
+    },
+    "resell": {
+      "type": "boolean",
+      "description": "可否再销售的声明。装载器读取并透出，但不把它做成装载拒绝条件（装载时没有「这笔交易是否属于再销售」的上下文）。"
+    },
+    "expiresAt": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
+      "description": "可选到期时间，ISO-8601 UTC（须以 Z 结尾）"
+    },
+    "issuer": { "type": "string", "minLength": 1 },
+    "signature": {
+      "type": "string",
+      "minLength": 1,
+      "description": "可选；若存在必须与 manifest.signature 逐字节相同，否则拒"
+    }
+  }
+}

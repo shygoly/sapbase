@@ -291,3 +291,37 @@ export function stampCompiled(
   zip.writeZip(packagePath)
   return next
 }
+
+/**
+ * 把权威签名写回清单（不改被哈希覆盖的文件）。
+ * 必须在 stampCompiled 之后调用：compiled 也在签名覆盖范围内。
+ */
+export function stampSignature(packagePath: string, signature: string): BlueprintManifest {
+  let zip: AdmZip
+  try {
+    zip = new AdmZip(packagePath)
+  } catch (error) {
+    throw new PackageError(`不是合法 zip：${(error as Error).message}`, 'malformed-zip')
+  }
+  const entry = zip.getEntry(BLUEPRINT_MANIFEST_FILE)
+  if (!entry) {
+    throw new PackageError(`包内缺少 ${BLUEPRINT_MANIFEST_FILE}`, 'missing-manifest')
+  }
+
+  let manifest: BlueprintManifest
+  try {
+    manifest = JSON.parse(entry.getData().toString('utf8')) as BlueprintManifest
+  } catch (error) {
+    throw new PackageError(`清单解析失败：${(error as Error).message}`, 'missing-manifest')
+  }
+
+  const next: BlueprintManifest = { ...manifest, signature }
+  const check = validateBlueprintPackage(next)
+  if (!check.valid) {
+    throw new PackageError(`写入签名后清单不再合法：${check.errors.join('; ')}`, 'invalid-manifest')
+  }
+
+  zip.updateFile(BLUEPRINT_MANIFEST_FILE, Buffer.from(`${JSON.stringify(next, null, 2)}\n`))
+  zip.writeZip(packagePath)
+  return next
+}

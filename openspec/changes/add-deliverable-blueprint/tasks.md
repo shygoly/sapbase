@@ -22,48 +22,58 @@
 
 ## Phase D0: 现状与判定
 
-- [ ] 记录现状（实测）：单库共享 schema、12 个租户实体、Stripe 订阅、35 个固定页面中 6 个走运行时渲染
-- [ ] 收敛分层判定：**BOM 不做层**（属 `semantic.json` 的实体关系）；**Form 不做层**
+- [x] 记录现状（实测）：单库共享 schema、12 个租户实体、Stripe 订阅、35 个固定页面中 6 个走运行时渲染
+- [x] 收敛分层判定：**BOM 不做层**（属 `semantic.json` 的实体关系）；**Form 不做层**
       （与 `add-chat-first-erp` 的交互即时生成冲突）—— 两条都写进 design.md
 
 ## Phase D1: 协议冻结
 
-- [ ] `schemas/blueprint-rules.schema.json`：validation / approval / accounting 三类；
+- [x] `schemas/blueprint-rules.schema.json`：validation / approval / accounting 三类；
       `additionalProperties: false`；不允许"自由表达式求值"这类无法静态判定的字段
-- [ ] `schemas/blueprint-experience.schema.json`：priority / confirm / automate / surfaces；
+- [x] `schemas/blueprint-experience.schema.json`：priority / confirm / automate / surfaces；
       **禁止布局字段**（`layout` / `width` / `position` / `component` 一律非法）
-- [ ] `schemas/blueprint-license.schema.json`：grantedTo / resell / expiresAt / issuer / signature
-- [ ] `docs/protocols/blueprint-delivery.md`：分层表、编译期判据清单、验签链顺序、
+- [x] `schemas/blueprint-license.schema.json`：grantedTo / resell / expiresAt / issuer / signature
+- [x] `docs/protocols/blueprint-delivery.md`：分层表、编译期判据清单、验签链顺序、
       开发豁免的边界（豁免什么、不豁免什么、生产为什么必须拒绝）
-- [ ] 负例：未知 layer 键、借贷方向非法、expiresAt 形状非法、layout 字段、grantedTo 非数组
+- [x] 负例：未知 layer 键、借贷方向非法、expiresAt 形状非法、layout 字段、grantedTo 非数组
 
 ## Phase D2: 编译器接入
 
-- [ ] `FILE_SCHEMAS` 增两条（未覆盖文件仍拒 —— 这条不许放松）
-- [ ] 规则判据：entity/field/状态/事件引用必须存在；`steps[].role` 必须已知
-- [ ] 记账平衡：字面量要求借贷相等；引用要求左右同表达式（**不做代数化简**，写进协议）
-- [ ] experience 判据：`priority` 引用的字段存在；`confirm`/`automate` 引用的动作必须能找到；
+- [x] `FILE_SCHEMAS` 增两条（未覆盖文件仍拒 —— 这条不许放松）
+- [x] 规则判据：entity/field/状态/事件引用必须存在；`steps[].role` 必须已知
+- [x] 记账平衡：字面量要求借贷相等；引用要求左右同表达式（**不做代数化简**，写进协议）
+- [x] experience 判据：`priority` 引用的字段存在；`confirm`/`automate` 引用的动作必须能找到；
       `surfaces` 的标识合法
-- [ ] IR 摘要覆盖新层：改一行 `rules.json` → `irDigest` 变 → 防漂移能发现
-- [ ] jest：每条判据各有正例与负例
+- [x] IR 摘要覆盖新层：改一行 `rules.json` → `irDigest` 变 → 防漂移能发现
+- [x] jest：每条判据各有正例与负例
 
 ## Phase D3: 授权链
 
-- [ ] `backend/src/blueprint/license.ts`：`signManifest()` / `verifySignature()`（Ed25519，Node 内置）
-- [ ] 授权检查：`grantedTo` 含当前租户（空数组 = 平台自用）、`expiresAt` 未过期
-- [ ] 装载链顺序固定：完整性 → 编译 → 防漂移 → 授权形状 → 验签 → 授权匹配 → 绑定
-- [ ] 开发豁免：`BLUEPRINT_ALLOW_UNSIGNED`（只豁免授权链）+ 审计 `blueprint.load.unsigned` +
+- [x] `backend/src/blueprint/license.ts`：`signManifest()` / `verifySignature()`（Ed25519，Node 内置）
+- [x] 授权检查：`grantedTo` 含当前租户（空数组 = 平台自用）、`expiresAt` 未过期
+- [x] 装载链顺序固定：完整性 → 编译 → 防漂移 → 授权形状 → 验签 → 授权匹配 → 绑定
+- [x] 开发豁免：`BLUEPRINT_ALLOW_UNSIGNED`（只豁免授权链）+ 审计 `blueprint.load.unsigned` +
       `NODE_ENV=production` 下**忽略并报错**
-- [ ] jest：篡改文件 / 篡改 license / 跨租户 / 过期 / 缺签名 / 生产下开豁免 —— 各自被拒
+- [x] jest：篡改文件 / 篡改 license / 跨租户 / 过期 / 缺签名 / 生产下开豁免 —— 各自被拒
 
 ## Phase D4: 交付验证（关键判据）
 
-- [ ] e2e：租户 A 导出 → 写 license（grantedTo 含 B）→ 签名 → 租户 B 装载 → 运行成功
-- [ ] e2e 反例：改 grantedTo 不重签 → 签名失效拒；未授权租户装载 → 拒；过期 → 拒
-- [ ] 记录可复现证据：命令 + 输出（含"未改一行代码"的证明：两次装载走同一入口）
+- [x] e2e：租户 A 导出 → 写 license（grantedTo 含 B）→ 签名 → 租户 B 装载 → 运行成功
+- [x] e2e 反例：改 grantedTo 不重签 → 签名失效拒；未授权租户装载 → 拒；过期 → 拒
+- [x] 记录可复现证据：命令 + 输出（含"未改一行代码"的证明：两次装载走同一入口）
 
 ## Phase D5: 文档与回归
 
-- [ ] `docs/META_LANGUAGE.md`：补 `Experience Policy`（与 Interaction Surface 配对）
-- [ ] `docs/protocols/blueprint-ir.md`：IR 现在覆盖五层，兼容性规则更新
-- [ ] 全量回归：单元 + e2e + wasm-modules + tsc + lint + `openspec validate --strict`
+- [x] `docs/META_LANGUAGE.md`：补 `Experience Policy`（与 Interaction Surface 配对）
+- [x] `docs/protocols/blueprint-ir.md`：IR 现在覆盖五层，兼容性规则更新
+- [x] 全量回归：单元 + e2e + wasm-modules + tsc + lint + `openspec validate --strict`
+
+## 已知边界（记在案，不假装已解决）
+
+| # | 边界 | 现状与理由 | 建议 |
+| --- | --- | --- | --- |
+| 1 | 交付 e2e 沿用仓库既有约定：库表缺失时 `console.warn` 后**跳过** | 本次独立复跑**未跳过**（已核验无 skip 输出），但这条路径是"假绿"入口：环境不满足时会静默变成通过 | 后续把 e2e 的跳过改为**硬失败**（或至少在 CI 里禁止跳过），另立变更 |
+| 2 | `resell` 不在装载门里 | 装载时没有"这笔交易是否再销售"的上下文；强制点在订单/市场线（见 `blueprint-delivery.md` §5.4） | 市场线做出来时补上强制点与判据 |
+| 3 | PROTECTED 层仍是明文 | 本变更只做签名与授权绑定；加密强度依赖授权模型先存在 | 下一个变更：Capsule 加密与密钥分发 |
+| 4 | ESLint 门未覆盖 `.ts` | 根 `eslint.config.js` 只有 JS 配置、无 TS parser —— **既有状况**，非本次引入 | 单独修 ESLint 配置；本次以 `tsc` 作为类型闸 |
+| 5 | 签名与编译盖章的先后 | `compiled` 在签名覆盖范围内 → 必须**先盖章后签名**；先签后编签名失效（有意） | 已写进 `blueprint-delivery.md` §5.1；调用方按此顺序 |

@@ -4,18 +4,37 @@ import type {
   BlueprintIr,
   BlueprintIrAction,
   BlueprintIrEvent,
+  BlueprintIrLayerDigest,
 } from '@speckit/shared-schemas'
 import { Validator, type IJSONSchemaValidationError } from 'jsonschema'
 import { loadSchema } from '../common/protocol/schema-loader'
 import { BLUEPRINT_MANIFEST_FILE, type UnpackedBlueprint } from './packager'
 import { validateBlueprintIr } from './blueprint-validator'
 import { type AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
+import { canonicalizeJson } from './canonical-json'
+import { parseRestrictedExpression } from './rules-expression'
 
 /** v1 有 Schema 覆盖的包内文件。**未列出的文件一律拒绝编译**（"缺 Schema 就不跳过"）。 */
 const FILE_SCHEMAS: Record<string, string> = {
   'semantic.json': 'blueprint-semantic.schema.json',
   'flows.json': 'blueprint-flows.schema.json',
+  'rules.json': 'blueprint-rules.schema.json',
+  'experience.json': 'blueprint-experience.schema.json',
+  'license.json': 'blueprint-license.schema.json',
 }
+
+/**
+ * 审批步骤的平台已知角色。编译必须确定性，所以对照静态目录而不是查库。
+ * 要加角色，先改 docs/protocols/blueprint-delivery.md §2.3，再改这里（一份判定）。
+ */
+export const PLATFORM_APPROVAL_ROLES = new Set([
+  'owner',
+  'admin',
+  'member',
+  'gm',
+  'finance-manager',
+  'purchasing-manager',
+])
 
 export type CompileErrorReason =
   | 'uncovered-file'
@@ -54,6 +73,54 @@ interface FlowsFile {
       actions: BlueprintIrAction[]
     }>
   }>
+}
+
+interface ValidationRule {
+  id: string
+  entity: string
+  field: string
+  rule: string
+  value?: unknown
+  message: string
+}
+
+interface ApprovalRule {
+  id: string
+  entity: string
+  when: string
+  steps: Array<{ role: string }>
+}
+
+interface AccountingEntry {
+  account: string
+  side: 'debit' | 'credit'
+  amount: number | string
+}
+
+interface AccountingRule {
+  id: string
+  on: string
+  entries: AccountingEntry[]
+}
+
+export interface RulesFile {
+  rules: string
+  validation: ValidationRule[]
+  approval: ApprovalRule[]
+  accounting: AccountingRule[]
+}
+
+export interface ExperienceFile {
+  experience: string
+  priority: Array<{ entity: string; fields: string[] }>
+  confirm: Array<{ action: string; when: { field: string; op: string; value: unknown } }>
+  automate: Array<{ action: string }>
+  surfaces: Array<{ id: string; when: { entity: string; state: string } }>
+}
+
+export interface DetectConflictsExtras {
+  rules?: RulesFile
+  experience?: ExperienceFile
 }
 
 let validator: Validator | undefined
@@ -107,6 +174,8 @@ export async function compileBlueprint(
 
   const semantic = jsonFiles.get('semantic.json') as { entities: SemanticEntity[] }
   const flows = (jsonFiles.get('flows.json') as FlowsFile | undefined) ?? { flows: [] }
+  const rules = jsonFiles.get('rules.json') as RulesFile | undefined
+  const experience = jsonFiles.get('experience.json') as ExperienceFile | undefined
 
   // ── 2. 依赖闭包（原子走注册表解析；不可满足即拒）──────────────────
   const resolvedDependencies: string[] = []
@@ -132,7 +201,10 @@ export async function compileBlueprint(
   }
 
   // ── 3. 冲突检测（只做确定性判据）────────────────────────────────
-  const conflicts = detectConflicts(semantic, flows, manifest.dependencies ?? [])
+  const conflicts = detectConflicts(semantic, flows, manifest.dependencies ?? [], {
+    rules,
+    experience,
+  })
   if (conflicts.length > 0) {
     throw new CompileError(`蓝图存在 ${conflicts.length} 处冲突`, 'conflict', conflicts)
   }
@@ -150,6 +222,8 @@ export async function compileBlueprint(
     })),
     events: buildEvents(flows),
     dependencies: resolvedDependencies,
+    ...(rules ? { rules: layerDigest(rules) } : {}),
+    ...(experience ? { experience: layerDigest(experience) } : {}),
     summary: {
       entities: semantic.entities.length,
       events: flows.flows.reduce((count, flow) => count + flow.steps.length, 0),
@@ -197,6 +271,7 @@ export function detectConflicts(
   semantic: { entities: SemanticEntity[] },
   flows: FlowsFile,
   dependencies: Array<Record<string, string>>,
+  extras: DetectConflictsExtras = {},
 ): string[] {
   const conflicts: string[] = []
   const entityNames = semantic.entities.map((entity) => entity.name)
@@ -253,10 +328,13 @@ export function detectConflicts(
         }
       }
       if (transition.rule) {
-        // v1 没有 rule 层 Schema（rules.json 不在覆盖范围），因此规则引用一律视为悬空
-        conflicts.push(
-          `悬空引用：${entity.name} 的迁移 ${transition.from}→${transition.to} 引用了 v1 未覆盖的规则 ${transition.rule}`,
-        )
+        // 闸只加严：rules.json 已覆盖，但 id 必须能在 validation[] 里解析到；没有该文件也拒
+        const validationIds = new Set((extras.rules?.validation ?? []).map((rule) => rule.id))
+        if (!validationIds.has(transition.rule)) {
+          conflicts.push(
+            `悬空引用：${entity.name} 的迁移 ${transition.from}→${transition.to} 引用了不存在的规则 ${transition.rule}`,
+          )
+        }
       }
     }
 
@@ -323,7 +401,228 @@ export function detectConflicts(
     }
   }
 
+  const declaredEvents = buildEvents(flows).map((event) => event.on)
+  if (extras.rules) {
+    conflicts.push(...detectRuleConflicts(semantic.entities, extras.rules, declaredEvents))
+  }
+  if (extras.experience) {
+    conflicts.push(
+      ...detectExperienceConflicts(semantic.entities, extras.experience, declaredEvents, declaredAtomics),
+    )
+  }
+
   return conflicts
+}
+
+function fieldNamesOf(
+  entities: SemanticEntity[],
+  entityName: string,
+): string[] | null {
+  const entity = entities.find((candidate) => candidate.name === entityName)
+  return entity ? entity.fields.map((field) => field.name) : null
+}
+
+function stateNamesOf(
+  entities: SemanticEntity[],
+  entityName: string,
+): string[] | null {
+  const entity = entities.find((candidate) => candidate.name === entityName)
+  return entity ? entity.states.map((state) => state.name) : null
+}
+
+function detectRuleConflicts(
+  entities: SemanticEntity[],
+  rules: RulesFile,
+  declaredEvents: string[],
+): string[] {
+  const conflicts: string[] = []
+
+  for (const rule of rules.validation) {
+    const fields = fieldNamesOf(entities, rule.entity)
+    if (!fields) {
+      conflicts.push(`悬空引用：校验规则 ${rule.id} 引用了不存在的实体 ${rule.entity}`)
+      continue
+    }
+    if (!fields.includes(rule.field)) {
+      conflicts.push(
+        `悬空引用：校验规则 ${rule.id} 引用了 ${rule.entity} 上不存在的字段 ${rule.field}`,
+      )
+    }
+  }
+
+  for (const rule of rules.approval) {
+    const fields = fieldNamesOf(entities, rule.entity)
+    if (!fields) {
+      conflicts.push(`悬空引用：审批规则 ${rule.id} 引用了不存在的实体 ${rule.entity}`)
+    }
+    const parsed = parseRestrictedExpression(rule.when)
+    if (!parsed.ok) {
+      conflicts.push(`表达式非法：审批规则 ${rule.id} 的 when「${rule.when}」${parsed.error}`)
+    } else {
+      for (const ident of parsed.identifiers) {
+        if (ident.includes('.')) {
+          const [entityName, fieldName] = ident.split('.')
+          const targetFields = fieldNamesOf(entities, entityName)
+          if (!targetFields) {
+            conflicts.push(
+              `悬空引用：审批规则 ${rule.id} 的 when 引用了不存在的实体 ${entityName}`,
+            )
+          } else if (!targetFields.includes(fieldName)) {
+            conflicts.push(
+              `悬空引用：审批规则 ${rule.id} 的 when 引用了 ${entityName} 上不存在的字段 ${fieldName}`,
+            )
+          }
+        } else if (fields && !fields.includes(ident)) {
+          conflicts.push(
+            `悬空引用：审批规则 ${rule.id} 的 when 引用了 ${rule.entity} 上不存在的字段 ${ident}`,
+          )
+        }
+      }
+    }
+    for (const step of rule.steps) {
+      if (!PLATFORM_APPROVAL_ROLES.has(step.role)) {
+        conflicts.push(`未知角色：审批规则 ${rule.id} 的步骤角色 ${step.role} 不在平台已知角色目录`)
+      }
+    }
+  }
+
+  for (const rule of rules.accounting) {
+    if (!declaredEvents.includes(rule.on)) {
+      conflicts.push(`悬空引用：记账规则 ${rule.id} 触发于未声明的事件 ${rule.on}`)
+    }
+    const balance = checkAccountingBalance(rule)
+    if (balance) conflicts.push(balance)
+  }
+
+  return conflicts
+}
+
+function formatAmounts(entries: AccountingEntry[]): string {
+  return entries.map((entry) => String(entry.amount)).join(', ')
+}
+
+function isLiteralAmount(amount: number | string): boolean {
+  if (typeof amount === 'number') return Number.isFinite(amount)
+  return /^-?\d+(\.\d+)?$/.test(amount)
+}
+
+function literalValue(amount: number | string): number {
+  return typeof amount === 'number' ? amount : Number(amount)
+}
+
+/**
+ * 平衡只做能做的那一半：字面量比合计、引用比表达式字符串多重集合。
+ * 不做代数化简；一侧字面量一侧引用直接拒。错信息必须带上两侧的具体值。
+ */
+function checkAccountingBalance(rule: AccountingRule): string | null {
+  const debits = rule.entries.filter((entry) => entry.side === 'debit')
+  const credits = rule.entries.filter((entry) => entry.side === 'credit')
+  const debitText = formatAmounts(debits)
+  const creditText = formatAmounts(credits)
+
+  if (debits.length === 0 || credits.length === 0) {
+    return `记账不平衡：规则 ${rule.id} 借方 [${debitText}] 贷方 [${creditText}]`
+  }
+
+  const allLiteral = rule.entries.every((entry) => isLiteralAmount(entry.amount))
+  const allReference = rule.entries.every((entry) => !isLiteralAmount(entry.amount))
+
+  if (allLiteral) {
+    const debitSum = debits.reduce((sum, entry) => sum + literalValue(entry.amount), 0)
+    const creditSum = credits.reduce((sum, entry) => sum + literalValue(entry.amount), 0)
+    if (debitSum !== creditSum) {
+      return `记账不平衡：规则 ${rule.id} 借方 [${debitText} = ${debitSum}] 贷方 [${creditText} = ${creditSum}]`
+    }
+    return null
+  }
+
+  if (allReference) {
+    const debitExprs = debits.map((entry) => String(entry.amount)).sort()
+    const creditExprs = credits.map((entry) => String(entry.amount)).sort()
+    if (debitExprs.join('\0') !== creditExprs.join('\0')) {
+      return `记账不平衡：规则 ${rule.id} 借方 [${debitText}] 贷方 [${creditText}]`
+    }
+    return null
+  }
+
+  return `记账不平衡：规则 ${rule.id} 借方 [${debitText}] 贷方 [${creditText}]（一侧字面量一侧引用，不可静态判定）`
+}
+
+function detectExperienceConflicts(
+  entities: SemanticEntity[],
+  experience: ExperienceFile,
+  declaredEvents: string[],
+  declaredAtomics: Set<string>,
+): string[] {
+  const conflicts: string[] = []
+
+  for (const item of experience.priority) {
+    const fields = fieldNamesOf(entities, item.entity)
+    if (!fields) {
+      conflicts.push(`悬空引用：经验策略 priority 引用了不存在的实体 ${item.entity}`)
+      continue
+    }
+    for (const field of item.fields) {
+      if (!fields.includes(field)) {
+        conflicts.push(
+          `悬空引用：经验策略 priority 引用了 ${item.entity} 上不存在的字段 ${field}`,
+        )
+      }
+    }
+  }
+
+  const resolveAction = (action: string, where: string): void => {
+    if (declaredEvents.includes(action) || declaredAtomics.has(action)) return
+    conflicts.push(
+      `悬空引用：经验策略 ${where} 的动作 ${action} 既不是已声明事件 Entity.state，也不是清单里的原子类型`,
+    )
+  }
+
+  for (const item of experience.confirm) {
+    resolveAction(item.action, 'confirm')
+    const [entityName, fieldName] = item.when.field.split('.')
+    const fields = fieldNamesOf(entities, entityName)
+    if (!fields) {
+      conflicts.push(`悬空引用：经验策略 confirm.when 引用了不存在的实体 ${entityName}`)
+    } else if (!fields.includes(fieldName)) {
+      conflicts.push(
+        `悬空引用：经验策略 confirm.when 引用了 ${entityName} 上不存在的字段 ${fieldName}`,
+      )
+    }
+  }
+
+  for (const item of experience.automate) {
+    resolveAction(item.action, 'automate')
+  }
+
+  for (const item of experience.surfaces) {
+    const states = stateNamesOf(entities, item.when.entity)
+    if (!states) {
+      conflicts.push(`悬空引用：经验策略 surfaces ${item.id} 引用了不存在的实体 ${item.when.entity}`)
+    } else if (!states.includes(item.when.state)) {
+      conflicts.push(
+        `悬空引用：经验策略 surfaces ${item.id} 引用了 ${item.when.entity} 上不存在的状态 ${item.when.state}`,
+      )
+    }
+  }
+
+  return conflicts
+}
+
+function layerDigest(layer: unknown): BlueprintIrLayerDigest {
+  const count = countLayerItems(layer)
+  const digest = `sha256:${createHash('sha256').update(canonicalizeJson(layer)).digest('hex')}`
+  return { count, digest }
+}
+
+function countLayerItems(layer: unknown): number {
+  if (!layer || typeof layer !== 'object') return 0
+  const record = layer as Record<string, unknown>
+  const keys = ['validation', 'approval', 'accounting', 'priority', 'confirm', 'automate', 'surfaces']
+  return keys.reduce((sum, key) => {
+    const value = record[key]
+    return sum + (Array.isArray(value) ? value.length : 0)
+  }, 0)
 }
 
 function duplicates(values: string[]): string[] {
@@ -387,6 +686,12 @@ export function toIrText(ir: BlueprintIr): string {
   for (const dependency of ir.dependencies) {
     lines.push(`depends ${dependency}`)
   }
+  if (ir.rules) {
+    lines.push(`rules count=${ir.rules.count} digest=${ir.rules.digest}`)
+  }
+  if (ir.experience) {
+    lines.push(`experience count=${ir.experience.count} digest=${ir.experience.digest}`)
+  }
   return `${lines.join('\n')}\n`
 }
 
@@ -413,6 +718,8 @@ export function parseIrText(text: string): Omit<BlueprintIr, 'summary'> {
   const entities: BlueprintIr['entities'] = []
   const events: BlueprintIrEvent[] = []
   const dependencies: string[] = []
+  let rules: BlueprintIr['rules']
+  let experience: BlueprintIr['experience']
 
   for (const raw of lines) {
     const line = raw.trimEnd()
@@ -446,6 +753,13 @@ export function parseIrText(text: string): Omit<BlueprintIr, 'summary'> {
       dependencies.push(trimmed.slice('depends '.length))
       continue
     }
+    const layer = trimmed.match(/^(rules|experience) count=(\d+) digest=(sha256:[0-9a-f]{64})$/)
+    if (layer) {
+      const digest = { count: Number(layer[2]), digest: layer[3] }
+      if (layer[1] === 'rules') rules = digest
+      else experience = digest
+      continue
+    }
     if (line.startsWith('  ')) {
       const event = events[events.length - 1]
       if (!event) throw new CompileError(`动作不属于任何事件：${trimmed}`, 'conflict')
@@ -464,6 +778,8 @@ export function parseIrText(text: string): Omit<BlueprintIr, 'summary'> {
     entities,
     events,
     dependencies,
+    ...(rules ? { rules } : {}),
+    ...(experience ? { experience } : {}),
   }
 }
 

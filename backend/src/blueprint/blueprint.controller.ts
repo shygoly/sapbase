@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { CurrentUser } from '../auth/current-user.decorator'
 import { BlueprintService } from './blueprint.service'
 import { PackageError } from './packager'
 import { CompileError } from './compiler'
@@ -85,9 +86,12 @@ export class BlueprintController {
   @Post(':id/load')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '加载蓝图包为可执行计划（fail-closed：任一校验不过即拒）' })
-  async load(@Param('id') id: string) {
+  async load(
+    @Param('id') id: string,
+    @CurrentUser() user?: { organizationId?: string },
+  ) {
     try {
-      return await this.blueprints.load(id)
+      return await this.blueprints.load(id, { tenantId: user?.organizationId })
     } catch (error) {
       if (error instanceof LoadError) {
         throw new BadRequestException({ message: error.message, reason: error.reason })

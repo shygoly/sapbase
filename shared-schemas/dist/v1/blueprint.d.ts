@@ -77,11 +77,21 @@ export interface BlueprintIr {
     events: BlueprintIrEvent[];
     /** 编译时**实际解析到的**依赖版本 */
     dependencies: string[];
+    /** 规则层摘要（可选：没有 rules.json 的包缺省）。只加可选字段，仍属 v1。 */
+    rules?: BlueprintIrLayerDigest;
+    /** 经验策略层摘要（可选：没有 experience.json 的包缺省） */
+    experience?: BlueprintIrLayerDigest;
     summary?: {
         entities?: number;
         events?: number;
         files?: number;
     };
+}
+/** 一层业务定义的确定性摘要：count 给人看，digest 防"改一行值 count 却不变"。 */
+export interface BlueprintIrLayerDigest {
+    count: number;
+    /** `sha256:<64 hex>`，对该层规范化 JSON 计算 */
+    digest: string;
 }
 /** 编译结果：IR 双形态 + 依赖清单 + 内容摘要。 */
 export interface BlueprintCompileResult {

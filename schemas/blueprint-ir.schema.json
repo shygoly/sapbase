@@ -74,6 +74,8 @@
       "items": { "type": "string", "minLength": 1 },
       "description": "解析后的依赖引用（如 available-inventory@1.0.0）—— 记录编译时实际解析到的版本"
     },
+    "rules": { "$ref": "#/$defs/layerDigest" },
+    "experience": { "$ref": "#/$defs/layerDigest" },
     "summary": {
       "type": "object",
       "additionalProperties": false,
@@ -81,6 +83,18 @@
         "entities": { "type": "integer", "minimum": 0 },
         "events": { "type": "integer", "minimum": 0 },
         "files": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "layerDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "digest"],
+      "description": "可选层摘要。digest 对该层规范化 JSON 做 sha256，不只放 count。",
+      "properties": {
+        "count": { "type": "integer", "minimum": 0 },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
       }
     }
   }

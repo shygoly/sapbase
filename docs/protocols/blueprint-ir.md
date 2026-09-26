@@ -22,7 +22,9 @@ blueprint.ir.txt    文本形态   —— 审计、代码评审、diff 用
 
 ## 2. 文本形态语法（v1）
 
-文本形态是四条语句的线性序列。行首无缩进为顶层语句，缩进两空格为从属动作。
+文本形态是顶层语句的线性序列。行首无缩进为顶层语句，缩进两空格为从属动作。
+IR **覆盖五层**：semantic（entity 行）、flows（on 行）、dependencies（depends 行）、
+以及可选的 rules / experience 摘要行。没有后两层文件的包，对应行缺省。
 
 ### 2.1 头部
 
@@ -69,6 +71,17 @@ depends inventory-core@2.0.0
 
 记录**编译时实际解析到的版本**（不是范围）—— 加载时据此判断依赖漂移。
 
+### 2.5 规则与经验策略摘要（可选）
+
+```text
+rules count=3 digest=sha256:<64hex>
+experience count=4 digest=sha256:<64hex>
+```
+
+- `count` 是该层条目总数；`digest` 是该层规范化 JSON 的 sha256
+- **不要只放 count**：改一个 `value` 时 count 不变，digest 必须变，否则防漂移漏判
+- 只加可选字段，按 §5 仍属 `blueprint-ir/v1`，不新建 v2
+
 ## 3. 结构形态（权威）
 
 见 `schemas/blueprint-ir.schema.json`。要点：
@@ -77,12 +90,14 @@ depends inventory-core@2.0.0
 - `events[].actions[].kind` 决定必填字段（`check` → `atomic`、`require-approval` → `rule`、`post-accounting` → `entry`），由 Schema 的 `allOf/if-then` 强制
 - `dependencies[]` 是**解析后**的引用字符串
 - `summary` 是派生信息（对象数/事件数/文件数），不参与等价性判断
+- `rules` / `experience` 是可选层摘要（`{ count, digest }`）；缺省等于该层不在包内
 
 ## 4. 与其它协议的关系
 
 | 协议 | 关系 |
 | --- | --- |
 | Blueprint Package | IR 由包编译而来；IR 摘要写入编译记录，加载时比对以防漂移 |
+| Blueprint Delivery | `rules.json` / `experience.json` 的确定性摘要写入本协议，使改一行业务定义必变 `irDigest` |
 | Atomic Contract | IR 里的 `atomic:<type>@<range>` 由 `AtomicRegistryService.resolve` 解析 |
 | Runtime SDK Contract | Runtime 只接受通过校验的 IR；不收包内的原始 JSON |
 

@@ -1,12 +1,12 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common'
 import { existsSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import type { BlueprintManifest } from '@speckit/shared-schemas'
+import type { BlueprintCompileResult, BlueprintManifest } from '@speckit/shared-schemas'
 import { packBlueprint, readBlueprintMeta, stampCompiled, unpackBlueprint } from './packager'
 import { compileBlueprint } from './compiler'
-import { loadBlueprint, type LoadedBlueprint } from './loader'
+import { loadBlueprint, type BlueprintAuditRecord, type LoadedBlueprint } from './loader'
 import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
-import type { BlueprintCompileResult } from '@speckit/shared-schemas'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 
 /**
  * 蓝图包服务（v1 的"注册表"就是**一个目录**）。
@@ -22,7 +22,10 @@ export class BlueprintService {
     process.env.BLUEPRINT_PACKAGES_DIR ??
     resolve(__dirname, '../../../blueprints')
 
-  constructor(private readonly atomicRegistry: AtomicRegistryService) {}
+  constructor(
+    private readonly atomicRegistry: AtomicRegistryService,
+    @Optional() private readonly auditLogs?: AuditLogsService,
+  ) {}
 
   /** 打包目录为 `.erpkg`（不指定 out 时落到包目录，名字由 id + 版本决定）。 */
   packageFrom(
@@ -105,7 +108,31 @@ export class BlueprintService {
   }
 
   /** 加载蓝图包 → 可执行计划（fail-closed：任一校验不过即拒）。 */
-  async load(id: string): Promise<LoadedBlueprint> {
-    return loadBlueprint(this.packagePathOf(id), this.atomicRegistry)
+  async load(id: string, options: { tenantId?: string } = {}): Promise<LoadedBlueprint> {
+    const loaded = await loadBlueprint(this.packagePathOf(id), this.atomicRegistry, {
+      tenantId: options.tenantId,
+      env: process.env,
+    })
+    await this.persistAudit(loaded.audit, options.tenantId)
+    return loaded
+  }
+
+  /** 装载器是纯函数，审计记录由这里落库到既有 AuditLogsService。 */
+  private async persistAudit(audit: BlueprintAuditRecord[], tenantId?: string): Promise<void> {
+    if (!this.auditLogs || !tenantId) return
+    for (const record of audit) {
+      try {
+        await this.auditLogs.create({
+          action: record.action,
+          resource: 'blueprint',
+          actor: 'blueprint-loader',
+          status: 'success',
+          organizationId: tenantId,
+          metadata: record.detail,
+        })
+      } catch (error) {
+        this.logger.warn(`蓝图审计落库失败：${(error as Error).message}`)
+      }
+    }
   }
 }

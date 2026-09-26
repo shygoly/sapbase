@@ -38,12 +38,14 @@ describe('BlueprintController（B2）', () => {
   beforeEach(() => {
     packagesDir = mkdtempSync(join(tmpdir(), 'speckit-bp-pkgs-'))
     process.env.BLUEPRINT_PACKAGES_DIR = packagesDir
+    process.env.BLUEPRINT_ALLOW_UNSIGNED = '1'
     sourceDir = writeSourceDir()
     controller = new BlueprintController(new BlueprintService(registryStub))
   })
 
   afterEach(() => {
     delete process.env.BLUEPRINT_PACKAGES_DIR
+    delete process.env.BLUEPRINT_ALLOW_UNSIGNED
     rmSync(packagesDir, { recursive: true, force: true })
     rmSync(sourceDir, { recursive: true, force: true })
   })
