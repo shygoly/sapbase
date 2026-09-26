@@ -75,5 +75,5 @@
 | 1 | 交付 e2e 沿用仓库既有约定：库表缺失时 `console.warn` 后**跳过** | 本次独立复跑**未跳过**（已核验无 skip 输出），但这条路径是"假绿"入口：环境不满足时会静默变成通过 | 后续把 e2e 的跳过改为**硬失败**（或至少在 CI 里禁止跳过），另立变更 |
 | 2 | `resell` 不在装载门里 | 装载时没有"这笔交易是否再销售"的上下文；强制点在订单/市场线（见 `blueprint-delivery.md` §5.4） | 市场线做出来时补上强制点与判据 |
 | 3 | PROTECTED 层仍是明文 | 本变更只做签名与授权绑定；加密强度依赖授权模型先存在 | 下一个变更：Capsule 加密与密钥分发 |
-| 4 | ESLint 门未覆盖 `.ts` | 根 `eslint.config.js` 只有 JS 配置、无 TS parser —— **既有状况**，非本次引入 | 单独修 ESLint 配置；本次以 `tsc` 作为类型闸 |
+| 4 | ESLint 门未覆盖 `.ts` | 根 `eslint.config.js` 无 `files` 作用域、也无 TS parser，`npx eslint <file>.ts` 只给 1 条 "File ignored" 警告（0 errors）。**且 CI 从不跑 `npm run lint`**（CI 的 lint job 只跑 markdownlint）—— 所以这是**既有状况**，不是本次引入，也不是当前门禁 | 单独修 ESLint 配置（加 TS parser 与 files 作用域）；在那之前以 `tsc` 作为类型闸 |
 | 5 | 签名与编译盖章的先后 | `compiled` 在签名覆盖范围内 → 必须**先盖章后签名**；先签后编签名失效（有意） | 已写进 `blueprint-delivery.md` §5.1；调用方按此顺序 |
