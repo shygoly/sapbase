@@ -95,9 +95,17 @@ Tests:       4 failed, 394 passed, 398 total
 
 ## Phase P4: 扫描降级为信号
 
-- [ ] `plugin-security-validator` 命中改为写审计信号（`plugin.security.signal`），不再阻断
-- [ ] 测试证明降级是对的：把模块名拼接起来绕开正则的插件，**仍被 P2 的边界拦住**
-- [ ] 协议文本写明：可绕过 / 会误报的检查不该有阻断权（与闸 3 的 S1 同一条原则）
+- [x] `plugin-security-validator` 的文本命中原先走 `errors`（`isValid=false` → 安装被拦）。
+      现在独立成 `signals`，**不计入 `isValid`**；结构事实（包过大、声明的入口不在包里）仍是判决
+- [x] `plugin-lifecycle` 只把 signals 写审计，不阻断
+- [x] 测试证明降级是对的：把模块名拼成 `require('child_' + 'process')` 的插件
+      扫描器**完全看不见**（`signals` 为空）—— 所以扫描不能有阻断权；
+      而它仍然越不了权，因为 P2 的子进程边界会拒（`plugin-host-process.spec.ts` 三条实测）
+- [x] 协议文本已写明这条原则（§3，与闸 3 的 S1 同源）
+
+> **P4 证据（2026-09-25）**：`jest src/plugins` → **71 passed**。改动点：`eval()` /
+> `Function constructor` / `child_process require` 三条旧用例从"应拒绝"改为
+> "不阻断但出信号"；新增一条"拼接可绕过扫描"的用例把这条局限钉在测试里。
 
 ## Phase P5: 端到端
 

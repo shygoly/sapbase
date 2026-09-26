@@ -73,10 +73,10 @@ export class PluginLifecycleService {
       )
     }
 
-    // Log warnings if any
-    if (securityResult.warnings.length > 0) {
+    // 安全**信号**（源码文本扫描）：只写审计，不阻断 —— 能绕过/会误报的检查不该有阻断权
+    if ((securityResult.signals ?? []).length > 0) {
       console.warn(
-        `Security warnings for plugin ${manifest.name}: ${securityResult.warnings.join('; ')}`,
+        `Security signals for plugin ${manifest.name}: ${securityResult.signals.join('; ')}`,
       )
     }
 

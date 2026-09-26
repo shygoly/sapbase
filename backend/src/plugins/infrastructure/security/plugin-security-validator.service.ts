@@ -6,8 +6,19 @@ import type { PluginManifest } from '../../domain/entities/plugin.entity'
 
 export interface SecurityValidationResult {
   isValid: boolean
+  /** 判决项：结构事实（包过大、声明的入口不在包里…）—— 命中即拒。 */
   errors: string[]
+  /** 兼容字段：与 signals 同源（旧调用方读 warnings）。 */
   warnings: string[]
+  /**
+   * **信号**：源码文本扫描的命中。
+   *
+   * 它们不参与判决（`isValid` 不看它们），原因是这类检查**可绕也会误报**：
+   * 拼接出来的模块名绕得过去，注释里的例子又会命中。能绕过的检查不该有阻断权 ——
+   * 真正的边界是 `plugin-host-process` 的 `node --permission` 子进程。
+   * 见 docs/protocols/plugin-sandbox.md §3。
+   */
+  signals: string[]
 }
 
 /**
@@ -87,6 +98,7 @@ export class PluginSecurityValidatorService {
   ): Promise<SecurityValidationResult> {
     const errors: string[] = []
     const warnings: string[] = []
+    const signals: string[] = []
 
     try {
       // Check ZIP file size
@@ -137,7 +149,7 @@ export class PluginSecurityValidatorService {
         // Scan code files for dangerous patterns
         if (this.isCodeFile(entry.entryName)) {
           const content = entry.getData().toString('utf-8')
-          this.scanCodeContent(entry.entryName, content, errors, warnings)
+          this.scanCodeContent(entry.entryName, content, signals)
         }
       }
 
@@ -156,7 +168,8 @@ export class PluginSecurityValidatorService {
       return {
         isValid: errors.length === 0,
         errors,
-        warnings,
+        warnings: [...warnings, ...signals],
+        signals,
       }
     } catch (error) {
       this.logger.error('Security validation failed:', error)
@@ -165,6 +178,7 @@ export class PluginSecurityValidatorService {
         isValid: false,
         errors,
         warnings,
+        signals,
       }
     }
   }
@@ -233,18 +247,13 @@ export class PluginSecurityValidatorService {
   private scanCodeContent(
     fileName: string,
     content: string,
-    errors: string[],
-    warnings: string[],
+    signals: string[],
   ): void {
     for (const check of this.DANGEROUS_PATTERNS) {
-      const matches = content.match(check.pattern)
-      if (matches) {
-        const message = `${check.description} found in ${fileName}`
-        if (check.severity === 'error') {
-          errors.push(message)
-        } else {
-          warnings.push(message)
-        }
+      if (content.match(check.pattern)) {
+        // 只写信号：命中不等于"这个插件会作恶"（注释与字符串都会命中），
+        // 也不等于"没命中就安全"（拼接能绕）。它有用，但没有阻断权。
+        signals.push(`[signal] ${check.description} found in ${fileName}`)
       }
     }
   }
