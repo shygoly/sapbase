@@ -3,6 +3,9 @@
 //
 // blueprint_records 例外：DDL 只有一份（semantic-runtime/blueprint-record.ddl.ts），
 // 追加在末尾以便 organizations 已存在，三处（迁移 / 基线 / e2e）共用。
+import { BLUEPRINT_APPROVALS_DDL } from '../semantic-runtime/blueprint-approval.ddl'
+import { BLUEPRINT_DOC_COUNTERS_DDL } from '../semantic-runtime/blueprint-doc-counter.ddl'
+import { BLUEPRINT_JOURNAL_ENTRIES_DDL } from '../semantic-runtime/blueprint-journal-entry.ddl'
 import { BLUEPRINT_RECORDS_DDL } from '../semantic-runtime/blueprint-record.ddl'
 
 export const SCHEMA_BASELINE_SQL: string[] = [
@@ -582,4 +585,7 @@ export const SCHEMA_BASELINE_SQL: string[] = [
   `ALTER TABLE ONLY public.ai_module_tests
     ADD CONSTRAINT "FK_f8c1a6e482e1f543783a95451c6" FOREIGN KEY ("moduleId") REFERENCES public.ai_modules(id) ON DELETE CASCADE`,
   ...BLUEPRINT_RECORDS_DDL,
+  ...BLUEPRINT_DOC_COUNTERS_DDL,
+  ...BLUEPRINT_APPROVALS_DDL,
+  ...BLUEPRINT_JOURNAL_ENTRIES_DDL,
 ]

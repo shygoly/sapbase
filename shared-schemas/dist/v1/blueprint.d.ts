@@ -77,6 +77,12 @@ export interface BlueprintIr {
     events: BlueprintIrEvent[];
     /** 编译时**实际解析到的**依赖版本 */
     dependencies: string[];
+    /**
+     * 语义层内容摘要（可选：只加可选字段，仍属 v1）。
+     * count = 实体数；digest = canonicalizeJson(semantic.json) 的 sha256。
+     * 没有它时，改字段 type/unique/precision/computed.expr 不会变 irDigest。
+     */
+    semantic?: BlueprintIrLayerDigest;
     /** 规则层摘要（可选：没有 rules.json 的包缺省）。只加可选字段，仍属 v1。 */
     rules?: BlueprintIrLayerDigest;
     /** 经验策略层摘要（可选：没有 experience.json 的包缺省） */

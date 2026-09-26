@@ -35,6 +35,181 @@
           "exports=run(func)+abi_version(func|global)[+memory]"
         ]
       }
+    },
+    {
+      "atomicType": "autoparts-atp",
+      "file": "autoparts-atp-ce0beb26b6d7.wasm",
+      "tier": "A",
+      "abiVersion": 1,
+      "sha256": "ce0beb26b6d71a3bc4033e52af381f1e4a8e34bcd81d42ffe509542df65b9238",
+      "sizeBytes": 583,
+      "compiler": {
+        "name": "rust",
+        "version": "1.95.0"
+      },
+      "language": "rust",
+      "reproducibleBuildRef": "repro:rust:1.95.0:ce0beb26b6d71a3bc4033e52af381f1e4a8e34bcd81d42ffe509542df65b9238",
+      "staticGate": {
+        "byteLength": 583,
+        "memoryPages": {
+          "min": 2,
+          "max": 1024
+        },
+        "exports": [
+          "abi_version",
+          "run",
+          "__data_end",
+          "__heap_base"
+        ],
+        "abiVersionExportKind": "function",
+        "checks": [
+          "byteLength<=2097152",
+          "no-start-section",
+          "features:no-tag/no-gc/no-table/no-own-memory",
+          "import=env.memory(min=2,max=1024)",
+          "exports=run(func)+abi_version(func|global)[+memory]"
+        ]
+      }
+    },
+    {
+      "atomicType": "autoparts-price",
+      "file": "autoparts-price-42fdb03531ec.wasm",
+      "tier": "A",
+      "abiVersion": 1,
+      "sha256": "42fdb03531ecd85a81d88f11d91639b424bd49b221edf85e8fd717faace0103c",
+      "sizeBytes": 473,
+      "compiler": {
+        "name": "rust",
+        "version": "1.95.0"
+      },
+      "language": "rust",
+      "reproducibleBuildRef": "repro:rust:1.95.0:42fdb03531ecd85a81d88f11d91639b424bd49b221edf85e8fd717faace0103c",
+      "staticGate": {
+        "byteLength": 473,
+        "memoryPages": {
+          "min": 2,
+          "max": 1024
+        },
+        "exports": [
+          "abi_version",
+          "run",
+          "__data_end",
+          "__heap_base"
+        ],
+        "abiVersionExportKind": "function",
+        "checks": [
+          "byteLength<=2097152",
+          "no-start-section",
+          "features:no-tag/no-gc/no-table/no-own-memory",
+          "import=env.memory(min=2,max=1024)",
+          "exports=run(func)+abi_version(func|global)[+memory]"
+        ]
+      }
+    },
+    {
+      "atomicType": "autoparts-credit",
+      "file": "autoparts-credit-70fda62c124c.wasm",
+      "tier": "A",
+      "abiVersion": 1,
+      "sha256": "70fda62c124c09786bdbe234a0b96a997bb46eac4c82c58b5f4f25ca86179b73",
+      "sizeBytes": 426,
+      "compiler": {
+        "name": "rust",
+        "version": "1.95.0"
+      },
+      "language": "rust",
+      "reproducibleBuildRef": "repro:rust:1.95.0:70fda62c124c09786bdbe234a0b96a997bb46eac4c82c58b5f4f25ca86179b73",
+      "staticGate": {
+        "byteLength": 426,
+        "memoryPages": {
+          "min": 2,
+          "max": 1024
+        },
+        "exports": [
+          "abi_version",
+          "run",
+          "__data_end",
+          "__heap_base"
+        ],
+        "abiVersionExportKind": "function",
+        "checks": [
+          "byteLength<=2097152",
+          "no-start-section",
+          "features:no-tag/no-gc/no-table/no-own-memory",
+          "import=env.memory(min=2,max=1024)",
+          "exports=run(func)+abi_version(func|global)[+memory]"
+        ]
+      }
+    },
+    {
+      "atomicType": "autoparts-uom-convert",
+      "file": "autoparts-uom-convert-855f54a3f123.wasm",
+      "tier": "A",
+      "abiVersion": 1,
+      "sha256": "855f54a3f1230235173922e323ce86ad79b3acecd49bec229e24b97ad858c89f",
+      "sizeBytes": 452,
+      "compiler": {
+        "name": "rust",
+        "version": "1.95.0"
+      },
+      "language": "rust",
+      "reproducibleBuildRef": "repro:rust:1.95.0:855f54a3f1230235173922e323ce86ad79b3acecd49bec229e24b97ad858c89f",
+      "staticGate": {
+        "byteLength": 452,
+        "memoryPages": {
+          "min": 2,
+          "max": 1024
+        },
+        "exports": [
+          "abi_version",
+          "run",
+          "__data_end",
+          "__heap_base"
+        ],
+        "abiVersionExportKind": "function",
+        "checks": [
+          "byteLength<=2097152",
+          "no-start-section",
+          "features:no-tag/no-gc/no-table/no-own-memory",
+          "import=env.memory(min=2,max=1024)",
+          "exports=run(func)+abi_version(func|global)[+memory]"
+        ]
+      }
+    },
+    {
+      "atomicType": "autoparts-supersession",
+      "file": "autoparts-supersession-dfa16b7b8768.wasm",
+      "tier": "A",
+      "abiVersion": 1,
+      "sha256": "dfa16b7b87683225c0d4d4c77b665528fbb704c1703694bc9cf36f8134456481",
+      "sizeBytes": 396,
+      "compiler": {
+        "name": "rust",
+        "version": "1.95.0"
+      },
+      "language": "rust",
+      "reproducibleBuildRef": "repro:rust:1.95.0:dfa16b7b87683225c0d4d4c77b665528fbb704c1703694bc9cf36f8134456481",
+      "staticGate": {
+        "byteLength": 396,
+        "memoryPages": {
+          "min": 2,
+          "max": 1024
+        },
+        "exports": [
+          "abi_version",
+          "run",
+          "__data_end",
+          "__heap_base"
+        ],
+        "abiVersionExportKind": "function",
+        "checks": [
+          "byteLength<=2097152",
+          "no-start-section",
+          "features:no-tag/no-gc/no-table/no-own-memory",
+          "import=env.memory(min=2,max=1024)",
+          "exports=run(func)+abi_version(func|global)[+memory]"
+        ]
+      }
     }
   ]
 }

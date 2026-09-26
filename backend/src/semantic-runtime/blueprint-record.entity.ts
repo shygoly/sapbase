@@ -25,4 +25,12 @@ export class BlueprintRecord extends TenantAwareEntity {
 
   @Column({ type: 'jsonb' })
   data: Record<string, unknown>
+
+  /** 实体初始状态；P1 之前的旧行可为 NULL，读取/迁移时回落到初始态。 */
+  @Column({ type: 'varchar', nullable: true })
+  state?: string
+
+  /** 迁移上的乐观锁。 */
+  @Column({ type: 'int', default: 1 })
+  version: number
 }

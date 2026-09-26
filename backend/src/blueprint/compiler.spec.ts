@@ -663,6 +663,30 @@ describe('rules / experience 编译期判据', () => {
     }
   })
 
+  it('记账金额引用不存在的字段 → 拒', async () => {
+    const bad = {
+      ...VALID_RULES,
+      accounting: [
+        {
+          id: 'ghost-amount',
+          on: 'SalesOrder.submitted',
+          entries: [
+            { account: '1401', side: 'debit', amount: '$entity.ghost' },
+            { account: '2202', side: 'credit', amount: '$entity.ghost' },
+          ],
+        },
+      ],
+    }
+    await expect(
+      compileBlueprint(
+        unpacked({ 'semantic.json': VALID_SEMANTIC, 'flows.json': VALID_FLOWS, 'rules.json': bad }),
+        registry(),
+      ),
+    ).rejects.toMatchObject({
+      conflicts: expect.arrayContaining([expect.stringContaining('ghost')]),
+    })
+  })
+
   it('经验策略动作无法解析 → 拒', async () => {
     const bad = {
       ...VALID_EXPERIENCE,

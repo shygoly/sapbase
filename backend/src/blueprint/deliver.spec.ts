@@ -80,6 +80,12 @@ describe('BlueprintService.deliver', () => {
     ).rejects.toMatchObject({ reason: 'missing-private-key' })
   })
 
+  it('省略 grantedTo → 拒（升级不能自动继承旧授权）', async () => {
+    await expect(service.deliver('auto-parts-min', {} as never)).rejects.toMatchObject({
+      reason: 'invalid-license',
+    })
+  })
+
   it('未知模板 → missing-template', async () => {
     await expect(
       service.deliver('does-not-exist', { grantedTo: ['org-b'] }),

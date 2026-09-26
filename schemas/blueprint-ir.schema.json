@@ -74,6 +74,7 @@
       "items": { "type": "string", "minLength": 1 },
       "description": "解析后的依赖引用（如 available-inventory@1.0.0）—— 记录编译时实际解析到的版本"
     },
+    "semantic": { "$ref": "#/$defs/layerDigest" },
     "rules": { "$ref": "#/$defs/layerDigest" },
     "experience": { "$ref": "#/$defs/layerDigest" },
     "summary": {

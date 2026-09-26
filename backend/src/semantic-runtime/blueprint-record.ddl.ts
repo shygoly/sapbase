@@ -20,6 +20,8 @@ export const BLUEPRINT_RECORDS_DDL: string[] = [
     "blueprintVersion" character varying NOT NULL,
     entity character varying NOT NULL,
     data jsonb NOT NULL,
+    state character varying,
+    version integer DEFAULT 1 NOT NULL,
     CONSTRAINT "PK_blueprint_records" PRIMARY KEY (id)
 )`,
   `CREATE INDEX IF NOT EXISTS idx_blueprint_records_blueprint_entity_org
@@ -33,4 +35,7 @@ export const BLUEPRINT_RECORDS_DDL: string[] = [
         FOREIGN KEY ("organizationId") REFERENCES public.organizations(id);
     END IF;
   END $$`,
+  // 存量库：CREATE IF NOT EXISTS 空跑，这两条 ALTER 补列。空库：CREATE 已含列，ALTER 空跑。
+  `ALTER TABLE public.blueprint_records ADD COLUMN IF NOT EXISTS state character varying`,
+  `ALTER TABLE public.blueprint_records ADD COLUMN IF NOT EXISTS version integer DEFAULT 1 NOT NULL`,
 ]

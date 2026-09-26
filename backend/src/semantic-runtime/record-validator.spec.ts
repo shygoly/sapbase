@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
+  materializeDefaults,
   validateRecord,
   type SemanticEntity,
   type ValidationRule,
@@ -118,6 +119,47 @@ describe('validateRecord（六道链各一正一负）', () => {
     })
   })
 
+  it('decimal 接受小数串；"-0.0001" 被 greaterOrEqual 0 拒', () => {
+    const fields: SemanticEntity[] = [
+      {
+        name: 'Line',
+        fields: [
+          {
+            name: 'unitPrice',
+            type: 'decimal',
+            scale: 4,
+          },
+        ],
+      },
+    ]
+    const rules: ValidationRule[] = [
+      {
+        id: 'sol-price-nonneg',
+        entity: 'Line',
+        field: 'unitPrice',
+        rule: 'greaterOrEqual',
+        value: 0,
+        message: '单价不能为负',
+      },
+    ]
+    const ok = validateRecord({
+      entities: fields,
+      validation: rules,
+      entity: 'Line',
+      data: { unitPrice: '20.0000' },
+      existingRefs: new Set(),
+    })
+    expect(ok).toEqual({ ok: true })
+    const bad = validateRecord({
+      entities: fields,
+      validation: rules,
+      entity: 'Line',
+      data: { unitPrice: '-0.0001' },
+      existingRefs: new Set(),
+    })
+    expect(bad).toMatchObject({ ok: false, reason: 'validation-failed', ruleId: 'sol-price-nonneg' })
+  })
+
   it('审批条件不被执行：高单价写入仍通过（when 不求值）', () => {
     const result = check(
       'SalesOrder',
@@ -125,5 +167,51 @@ describe('validateRecord（六道链各一正一负）', () => {
       ['Customer:c1', 'Part:p1'],
     )
     expect(result).toEqual({ ok: true })
+  })
+})
+
+describe('materializeDefaults（读路径补默认值）', () => {
+  const entity: SemanticEntity = {
+    name: 'Part',
+    fields: [
+      { name: 'partNo', type: 'text', required: true },
+      { name: 'countryOfOrigin', type: 'text', required: false, default: 'CN' },
+      { name: 'note', type: 'text', required: true },
+    ],
+  }
+
+  it('只补声明了 default 且记录里缺少的字段', () => {
+    expect(materializeDefaults(entity, { partNo: 'P-1' })).toEqual({
+      partNo: 'P-1',
+      countryOfOrigin: 'CN',
+    })
+  })
+
+  it('已有值不覆盖；不补 required 且无 default 的字段', () => {
+    expect(materializeDefaults(entity, { partNo: 'P-1', countryOfOrigin: 'JP' })).toEqual({
+      partNo: 'P-1',
+      countryOfOrigin: 'JP',
+    })
+    const missingRequired = materializeDefaults(entity, { partNo: 'P-1' })
+    expect(missingRequired.note).toBeUndefined()
+  })
+
+  it('负例：写入缺 required 即使有 default 仍拒（default 不绕过必填）', () => {
+    const result = validateRecord({
+      entities: [
+        {
+          name: 'Part',
+          fields: [
+            { name: 'partNo', type: 'text', required: true },
+            { name: 'origin', type: 'text', required: true, default: 'CN' },
+          ],
+        },
+      ],
+      validation: [],
+      entity: 'Part',
+      data: { partNo: 'P-1' },
+      existingRefs: new Set(),
+    })
+    expect(result).toMatchObject({ ok: false, reason: 'type-mismatch', field: 'origin' })
   })
 })

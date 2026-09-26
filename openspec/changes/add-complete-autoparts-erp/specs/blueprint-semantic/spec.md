@@ -85,3 +85,33 @@ MUST NOT 只依赖应用层判重（并发下"先查后写"会双双通过）。
 **When** 声明该关系基数为多
 **Then** 编译 SHALL 通过
 **And** 一个零件被多个供应商引用 SHALL 成为可能
+
+### Requirement: Declarative Field Defaults
+
+字段 SHALL 可声明默认值；默认值 MUST 只影响**读取与升级路径**，
+MUST NOT 在读取时改写存储（读不改写），MUST NOT 让非空约束被绕过。
+
+#### Scenario: 缺字段的旧行按默认值呈现
+
+**Given** 字段 `currency` 声明默认值 `CNY`，而某条旧行没有该字段
+**When** 读取该行
+**Then** 返回的 `currency` SHALL 为 `CNY`
+**And** 存储中的该行 SHALL 保持原样（未被写回）
+
+#### Scenario: 默认值类型与字段类型不符被拒
+
+**Given** 数值字段声明默认值 `"abc"`
+**When** 校验该模板
+**Then** 校验 SHALL 失败并指明字段与类型
+
+### Requirement: Declarative Rollups
+
+头实体的汇总字段 SHALL 可声明为对其行实体的聚合（如 `totalAmount = sum(lines.amount)`）；
+该依赖 MUST 被显式声明与校验，MUST NOT 退化成模板作者之间的隐性约定。
+
+#### Scenario: 声明汇总字段
+
+**Given** 订单头声明 `totalAmount` 为行金额之和
+**When** 编译该模板
+**Then** 编译 SHALL 通过，且该字段的依赖（行实体与其金额字段）SHALL 被记录
+**And** 依赖不存在或成环时 SHALL 编译失败

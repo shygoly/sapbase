@@ -16,6 +16,7 @@ describe('SemanticRuntimeService 落库闸', () => {
   let save: jest.Mock
   let find: jest.Mock
   let load: jest.Mock
+  let query: jest.Mock
   let service: SemanticRuntimeService
 
   beforeEach(() => {
@@ -23,12 +24,20 @@ describe('SemanticRuntimeService 落库闸', () => {
     packBlueprint(TEMPLATE_DIR, join(packagesDir, 'auto-parts-min-1.0.0.erpkg'))
     save = jest.fn(async (row: Record<string, unknown>) => ({ id: 'new-id', ...row }))
     find = jest.fn(async () => [])
+    query = jest.fn(async () => [])
     load = jest.fn(async () => ({
       manifest: { blueprint: 'auto-parts-min', version: '1.0.0' },
     }))
+    const repo = { create: (row: unknown) => row, save, find }
+    const manager = { getRepository: () => repo, query }
     service = new SemanticRuntimeService(
       { load, packagesDirectory: () => packagesDir } as never,
-      { create: (row: unknown) => row, save, find } as never,
+      repo as never,
+      {
+        transaction: async (fn: (m: typeof manager) => unknown) => fn(manager),
+        query,
+      } as never,
+      { create: jest.fn().mockResolvedValue({}) } as never,
     )
   })
 

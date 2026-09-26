@@ -56,8 +56,11 @@
 
 ## Impact
 
-- 受影响规格：`blueprint-semantic`（新增能力）、`document-runtime`（新增能力）、
-  `autoparts-capabilities`（新增能力）；`semantic-runtime` / `blueprint-delivery` 为 MODIFIED
+- 受影响规格（**以实际 delta 为准**，实施后校准过）：
+  · 新增能力：`blueprint-semantic`、`document-runtime`、`autoparts-capabilities`
+  · `semantic-runtime`：**MODIFIED**（"运行时声明未执行的部分"这条已过时——
+    审批与记账现在**执行**了）+ ADDED（审批执行/记账与运行时平衡/DB 约束落库/范围权限）
+  · `blueprint-delivery`：ADDED（模板升级保数据、升级后重签、货币是类型的一部分、内置查询视图）
 - 受影响代码：`schemas/`、`backend/src/semantic-runtime/`、新增 `backend/src/document-runtime/`、
   `wasm-modules/modules/`（新增若干原子）、`templates/auto-parts-min/` → `templates/auto-parts/`
 - **不放松任何既有闸**：所有新增能力都走既有的契约/权限/审计/闸门；新增原子必须过闸 0/1/2/5

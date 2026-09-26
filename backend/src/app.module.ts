@@ -22,6 +22,9 @@ import { PluginsModule } from './plugins/plugins.module'
 import { AtomicRuntimeModule } from './atomic-runtime/atomic-runtime.module'
 import { BlueprintModule } from './blueprint/blueprint.module'
 import { SemanticRuntimeModule } from './semantic-runtime/semantic-runtime.module'
+import { BlueprintApproval } from './semantic-runtime/blueprint-approval.entity'
+import { BlueprintDocCounter } from './semantic-runtime/blueprint-doc-counter.entity'
+import { BlueprintJournalEntry } from './semantic-runtime/blueprint-journal-entry.entity'
 import { BlueprintRecord } from './semantic-runtime/blueprint-record.entity'
 import { User } from './users/user.entity'
 import { Organization } from './organizations/organization.entity'
@@ -105,6 +108,9 @@ try {
         WorkflowAutoSuggestionLog,
         PluginOrm,
         BlueprintRecord,
+        BlueprintDocCounter,
+        BlueprintApproval,
+        BlueprintJournalEntry,
       ],
       synchronize: true,
       logging: process.env.NODE_ENV === 'development',

@@ -40,13 +40,41 @@ export async function checkReproducible({ sourceDir, atomicType } = {}) {
   return { entry, shippedHash, manifestPath: MANIFEST_PATH };
 }
 
+/**
+ * 默认核对**清单里的每一个模块**，而不是只看第一条。
+ *
+ * 为什么：只核第一条时，"新加一个原子"可以悄悄绕过复现闸 —— 入库字节只要和清单自洽，
+ * 就没有任何东西证明它真的能从这份源码、这把工具链重建出来。
+ * 目录约定与 `modules/` 一致（`<atomicType>-rust`）；没有对应源码目录的模块明确跳过并说明，
+ * 不静默放过。
+ */
 async function main() {
   const sourceDir = process.argv[2];
-  const { entry } = await checkReproducible({ sourceDir });
-  console.log(
-    `reproducible: ${entry.file} sha256=${entry.sha256}` +
-      `（入库字节一致${sourceDir ? "，源码重建逐字节一致" : ""}，只导入 env.memory）`,
-  );
+  if (sourceDir) {
+    const { entry } = await checkReproducible({ sourceDir });
+    console.log(
+      `reproducible: ${entry.file} sha256=${entry.sha256}` +
+        `（入库字节一致，源码重建逐字节一致，只导入 env.memory）`,
+    );
+    return;
+  }
+
+  const manifest = readManifest();
+  let verified = 0;
+  let skipped = 0;
+  for (const entry of manifest.modules) {
+    const dir = join("modules", `${entry.atomicType}-rust`);
+    if (!existsSync(dir)) {
+      skipped += 1;
+      console.log(`skip: ${entry.atomicType}（没有源码目录 ${dir}，只核入库字节与清单自洽）`);
+      await checkReproducible({ atomicType: entry.atomicType });
+      continue;
+    }
+    await checkReproducible({ sourceDir: dir, atomicType: entry.atomicType });
+    verified += 1;
+    console.log(`reproducible: ${entry.file} sha256=${entry.sha256}（源码重建逐字节一致）`);
+  }
+  console.log(`reproducible: 共 ${manifest.modules.length} 个模块，源码重建核对 ${verified} 个，跳过 ${skipped} 个`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

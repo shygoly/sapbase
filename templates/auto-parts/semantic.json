@@ -1,0 +1,166 @@
+{
+  "entities": [
+    {
+      "name": "Part",
+      "fields": [
+        { "name": "partNo", "type": "text", "unique": true, "required": true },
+        { "name": "name", "type": "text" },
+        {
+          "name": "unitCost",
+          "type": "decimal",
+          "money": true,
+          "currency": "CNY",
+          "permissions": { "read": "inventory.cost.read", "write": "inventory.cost.write" }
+        },
+        { "name": "unit", "type": "enum", "values": ["piece", "set", "box"] },
+        {
+          "name": "packSize",
+          "type": "i32",
+          "uom": {
+            "base": "piece",
+            "packs": [{ "name": "box", "factor": 12 }]
+          }
+        },
+        { "name": "countryOfOrigin", "type": "text", "required": false, "default": "CN" }
+      ],
+      "relations": [
+        { "name": "bomLines", "type": "hasMany", "target": "Part", "cardinality": "many" }
+      ],
+      "states": [
+        { "name": "active", "initial": true },
+        { "name": "obsolete", "final": true }
+      ],
+      "transitions": [{ "from": "active", "to": "obsolete" }]
+    },
+    {
+      "name": "Supplier",
+      "fields": [
+        { "name": "name", "type": "text" },
+        { "name": "creditDays", "type": "number" }
+      ],
+      "states": [
+        { "name": "active", "initial": true },
+        { "name": "blocked", "final": true }
+      ],
+      "transitions": [{ "from": "active", "to": "blocked" }]
+    },
+    {
+      "name": "Customer",
+      "fields": [
+        { "name": "name", "type": "text" },
+        { "name": "creditLimit", "type": "number" }
+      ],
+      "states": [
+        { "name": "active", "initial": true },
+        { "name": "suspended", "final": true }
+      ],
+      "transitions": [{ "from": "active", "to": "suspended" }]
+    },
+    {
+      "name": "SalesOrder",
+      "fields": [
+        { "name": "customer", "type": "reference", "reference": "Customer" },
+        { "name": "quantity", "type": "number" },
+        { "name": "number", "type": "text", "unique": true, "required": true },
+        {
+          "name": "totalAmount",
+          "type": "decimal",
+          "money": true,
+          "currency": "CNY",
+          "precision": 18,
+          "scale": 4,
+          "rounding": "half-up"
+        },
+        { "name": "owner", "type": "text", "required": false }
+      ],
+      "rollups": [
+        { "field": "totalAmount", "over": "SalesOrderLine", "of": "amount", "fn": "sum" }
+      ],
+      "numbering": { "field": "number", "prefix": "SO-", "dateFormat": "YYYYMMDD", "width": 4 },
+      "ownership": { "field": "owner", "readAllPermission": "sales.order.readall" },
+      "children": ["SalesOrderLine"],
+      "states": [
+        { "name": "draft", "initial": true },
+        { "name": "confirmed" },
+        { "name": "shipped" },
+        { "name": "closed", "final": true }
+      ],
+      "transitions": [
+        { "from": "draft", "to": "confirmed" },
+        { "from": "confirmed", "to": "shipped" },
+        { "from": "shipped", "to": "closed" }
+      ]
+    },
+    {
+      "name": "SalesOrderLine",
+      "fields": [
+        { "name": "order", "type": "reference", "reference": "SalesOrder", "required": true },
+        { "name": "part", "type": "reference", "reference": "Part", "required": true, "onDelete": "restrict" },
+        { "name": "quantity", "type": "number", "required": true },
+        {
+          "name": "unitPrice",
+          "type": "decimal",
+          "money": true,
+          "currency": "CNY",
+          "precision": 18,
+          "scale": 4,
+          "rounding": "half-up",
+          "required": true
+        },
+        {
+          "name": "amount",
+          "type": "decimal",
+          "money": true,
+          "currency": "CNY",
+          "computed": {
+            "expr": "quantity * unitPrice",
+            "dependsOn": ["quantity", "unitPrice"]
+          }
+        }
+      ],
+      "parent": { "entity": "SalesOrder", "field": "order" },
+      "states": [
+        { "name": "draft", "initial": true },
+        { "name": "closed", "final": true }
+      ],
+      "transitions": [{ "from": "draft", "to": "closed" }]
+    },
+    {
+      "name": "StockItem",
+      "fields": [
+        { "name": "quantity", "type": "i32" },
+        { "name": "reserved", "type": "i32" },
+        { "name": "inTransit", "type": "i32", "required": false, "default": 0 },
+        { "name": "part", "type": "reference", "reference": "Part", "onDelete": "setNull" }
+      ],
+      "states": [
+        { "name": "inStock", "initial": true },
+        { "name": "depleted", "final": true }
+      ],
+      "transitions": [{ "from": "inStock", "to": "depleted" }]
+    },
+    {
+      "name": "Batch",
+      "fields": [
+        { "name": "batchNo", "type": "text", "required": true, "unique": true },
+        { "name": "part", "type": "reference", "reference": "Part", "required": true },
+        { "name": "order", "type": "reference", "reference": "SalesOrder", "required": true },
+        { "name": "quantity", "type": "i32", "required": true },
+        { "name": "shippedOn", "type": "date", "required": true }
+      ],
+      "states": [{ "name": "shipped", "initial": true, "final": true }]
+    },
+    {
+      "name": "Fitment",
+      "fields": [
+        { "name": "part", "type": "reference", "reference": "Part", "required": true },
+        { "name": "make", "type": "text", "required": true },
+        { "name": "model", "type": "text", "required": true },
+        { "name": "yearFrom", "type": "i32", "required": true },
+        { "name": "yearTo", "type": "i32", "required": true },
+        { "name": "position", "type": "enum", "values": ["front", "rear", "left", "right"], "required": true }
+      ],
+      "states": [{ "name": "active", "initial": true, "final": true }]
+    }
+  ]
+}
