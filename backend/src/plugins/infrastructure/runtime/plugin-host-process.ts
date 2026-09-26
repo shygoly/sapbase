@@ -34,7 +34,8 @@ export interface PluginHostOptions {
     capability?: string
     allowed?: boolean
     reason?: string
-  }) => void
+    status?: 'success' | 'failure'
+  }) => void | Promise<void>
 }
 
 export interface HostInvokeResult {
@@ -155,7 +156,9 @@ export class PluginHostProcess {
     }
 
     const lines = createInterface({ input: this.child.stdout })
-    lines.on('line', (line) => this.onLine(line))
+    lines.on('line', (line) => {
+      void this.onLine(line)
+    })
     this.child.on('exit', (code, signal) => {
       this.exited = `code=${code ?? 'null'} signal=${signal ?? 'null'}`
       for (const [, resolvePending] of this.pending) {
@@ -243,7 +246,7 @@ export class PluginHostProcess {
     return this.options.nodeBinary ?? process.execPath
   }
 
-  private onLine(line: string): void {
+  private async onLine(line: string): Promise<void> {
     const trimmed = line.trim()
     if (!trimmed) return
     let message: Record<string, unknown>
@@ -267,11 +270,19 @@ export class PluginHostProcess {
     const resolvePending = this.pending.get(Number(message.id))
     if (!resolvePending) return
     this.pending.delete(Number(message.id))
-    resolvePending({
-      ok: message.ok === true,
-      result: message.result,
-      error: message.error as { message: string; code?: string } | undefined,
+
+    const ok = message.ok === true
+    const error = message.error as { message: string; code?: string } | undefined
+    // 调用成功与失败都留痕：越权被**子进程边界**拦下时（ERR_ACCESS_DENIED）走的就是这条 ——
+    // 它不经过能力中介，所以不能只指望 plugin.capability.denied 那种事件
+    // **先留痕，再应答**：审计写完才让调用方拿到结果 —— 否则"被拒了但查不到"
+    // 这种竞态会让留痕变成运气
+    await this.options.onAudit?.({
+      action: ok ? 'plugin.invoke' : 'plugin.invoke.failed',
+      status: ok ? 'success' : 'failure',
+      reason: error ? `${error.code ?? 'ERROR'}: ${error.message}` : undefined,
     })
+    resolvePending({ ok, result: message.result, error })
   }
 
   private async handleCapability(
@@ -281,7 +292,7 @@ export class PluginHostProcess {
   ): Promise<void> {
     const denial = this.options.authorize?.(capability, args) ?? null
     if (denial) {
-      this.options.onAudit?.({
+      await this.options.onAudit?.({
         action: 'plugin.capability.denied',
         capability,
         allowed: false,
@@ -293,7 +304,7 @@ export class PluginHostProcess {
 
     try {
       const result = await this.options.executeCapability?.(capability, args)
-      this.options.onAudit?.({ action: 'plugin.capability.allowed', capability, allowed: true })
+      await this.options.onAudit?.({ action: 'plugin.capability.allowed', capability, allowed: true })
       this.replyCapability(id, true, result)
     } catch (error) {
       const message = (error as Error).message

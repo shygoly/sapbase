@@ -181,7 +181,9 @@ describe('能力中介：判定权在平台', () => {
       authorize: (_capability, args) =>
         args.table === 'orders' ? null : '缺少声明：database.tables 不含 ' + String(args.table),
       executeCapability: async () => ({ ok: true }),
-      onAudit: (event) => audits.push(event),
+      onAudit: (event) => {
+        audits.push(event)
+      },
     })
     hosts.push(host)
     await host.start()
@@ -220,7 +222,9 @@ describe('与能力中介对接（判定来自 broker，不是测试里的假审
         database: { tables: ['orders'], operations: ['read'] },
       }),
       executeCapability: async (_capability, args) => ({ table: args.table, rows: [] }),
-      onAudit: (event) => audits.push(event),
+      onAudit: (event) => {
+        audits.push(event)
+      },
     })
     hosts.push(host)
     await host.start()

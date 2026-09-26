@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { PluginApiRouterService } from './plugin-api-router.service'
 import { PluginRuntimeService } from './plugin-runtime.service'
 import { PluginContextProvider } from './plugin-context-provider.service'
+import { AuditLogsService } from '../../../audit-logs/audit-logs.service'
 import { PluginDatabaseAccessService } from '../database/plugin-database-access.service'
 import { PluginModuleIntegrationService } from '../../application/services/plugin-module-integration.service'
 import { DataSource } from 'typeorm'
@@ -39,6 +40,7 @@ describe('PluginApiRouterService - Permission Enforcement', () => {
         PluginRuntimeService,
         // PluginRuntimeService 后来新增了 context provider 依赖；spec 没跟上就会 DI 报错
         PluginContextProvider,
+        { provide: AuditLogsService, useValue: { create: jest.fn().mockResolvedValue({}) } },
         PluginDatabaseAccessService,
         // 本 spec 只验证路由权限，数据库访问用占位（真连库会让单测依赖环境）
         { provide: DataSource, useValue: {} },

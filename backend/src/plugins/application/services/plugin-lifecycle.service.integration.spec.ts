@@ -8,6 +8,7 @@ import { PluginLoaderService } from '../../infrastructure/services/plugin-loader
 import { DependencyResolverService } from '../../infrastructure/services/dependency-resolver.service'
 import { PluginRuntimeService } from '../../infrastructure/runtime/plugin-runtime.service'
 import { PluginContextProvider } from '../../infrastructure/runtime/plugin-context-provider.service'
+import { AuditLogsService } from '../../../audit-logs/audit-logs.service'
 import { PluginEventEmitterService } from '../../infrastructure/events/plugin-event-emitter.service'
 import { PluginSecurityValidatorService } from '../../infrastructure/security/plugin-security-validator.service'
 import { PluginDatabaseAccessService } from '../../infrastructure/database/plugin-database-access.service'
@@ -136,6 +137,8 @@ describe('PluginLifecycleService (Integration)', () => {
         PermissionCheckerService,
         PluginRuntimeService,
         PluginContextProvider,
+        // 插件能力审计走 audit_logs（本 spec 用替身）
+        { provide: AuditLogsService, useValue: { create: jest.fn().mockResolvedValue({}) } },
         PluginEventEmitterService,
         PluginSecurityValidatorService,
         PluginDatabaseAccessService,

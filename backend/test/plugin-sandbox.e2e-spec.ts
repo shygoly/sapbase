@@ -162,6 +162,8 @@ describe('插件沙箱（e2e，真实 HTTP + 真实受限子进程）', () => {
 
   afterAll(async () => {
     if (dataSource?.isInitialized && available) {
+      // 顺序要紧：审计行引用组织（现在真的会写审计了），必须先删审计再删组织
+      await dataSource.query('DELETE FROM audit_logs WHERE "organizationId" = $1', [ORGANIZATION_ID])
       await dataSource.query('DELETE FROM plugins WHERE "organizationId" = $1', [ORGANIZATION_ID])
       await dataSource.query('DELETE FROM organizations WHERE id = $1', [ORGANIZATION_ID])
     }
@@ -214,6 +216,20 @@ describe('插件沙箱（e2e，真实 HTTP + 真实受限子进程）', () => {
     expect(denied.body.code).toBe('ERR_ACCESS_DENIED')
     // 拒绝就是拒绝：没有任何"结果"字段被返回
     expect(denied.body.result).toBeUndefined()
+
+    // **留痕**：越权尝试必须落进 audit_logs（只打日志不算 —— 日志会轮转，也查不了"哪个插件做过什么"）
+    const logs = await dataSource.query(
+      `SELECT action, status, metadata FROM audit_logs
+        WHERE resource = 'plugin' AND "resourceId" = $1`,
+      [plugin.id],
+    )
+    const rows = logs as Array<{ action: string; status: string; metadata: Record<string, unknown> }>
+    // 这条越权是被**子进程边界**拦的（不是能力中介），所以留痕是"调用失败"
+    const failure = rows.find((row) => row.action === 'plugin.invoke.failed')
+    expect(failure).toBeDefined()
+    expect(failure?.status).toBe('failure')
+    expect(failure?.metadata.pluginName).toBe('leaky-plugin')
+    expect(String(failure?.metadata.reason)).toContain('ERR_ACCESS_DENIED')
   }, 60000)
 
   it('hostApiVersion 不匹配 → 拒装（协议先于能力生效）', async () => {

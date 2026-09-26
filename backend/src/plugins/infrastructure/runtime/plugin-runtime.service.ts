@@ -5,6 +5,7 @@ import type { Plugin } from '../../domain/entities/plugin.entity'
 import type { IPluginContext } from '../../domain/services/i-plugin-context'
 import { PluginContextProvider } from './plugin-context-provider.service'
 import { PluginHostProcess } from './plugin-host-process'
+import { AuditLogsService } from '../../../audit-logs/audit-logs.service'
 import { createAuthorizer } from '../security/plugin-capability-broker'
 
 export interface PluginRuntime {
@@ -56,7 +57,10 @@ export class PluginRuntimeService implements OnModuleDestroy {
   private readonly logger = new Logger(PluginRuntimeService.name)
   private readonly activePlugins = new Map<string, PluginRuntime>()
 
-  constructor(private readonly contextProvider: PluginContextProvider) {}
+  constructor(
+    private readonly contextProvider: PluginContextProvider,
+    private readonly auditLogs: AuditLogsService,
+  ) {}
 
   /**
    * 激活插件：**在受限子进程里**把它跑起来。
@@ -135,15 +139,30 @@ export class PluginRuntimeService implements OnModuleDestroy {
           `宿主尚未提供 ${capability} 的执行器（本变更只做边界与能力中介）`,
         )
       },
-      onAudit: (event) => {
-        // 审计出口：拒绝与放行都留痕（真正的落库由 AuditLogsService 那条线接）
-        if (event.allowed === false) {
-          this.logger.warn(
-            `插件 ${plugin.name} 能力被拒：${event.capability}（${event.reason}）`,
-          )
-        } else if (event.action) {
-          this.logger.log(`插件 ${plugin.name} ${event.action} ${event.capability ?? ''}`)
-        }
+      onAudit: async (event) => {
+        // 审计出口与原子同一条：能力拒绝与放行**都落 audit_logs**。
+        // 只打日志不算留痕 —— 日志会轮转、也查不了"哪个插件做过什么"。
+        // 返回 promise：宿主会等它写完再应答（先留痕，再返回结果）
+        await this.auditLogs
+          .create({
+            action: event.action,
+            resource: 'plugin',
+            resourceId: plugin.id,
+            actor: 'plugin-host',
+            status: event.status ?? (event.allowed === false ? 'failure' : 'success'),
+            organizationId: plugin.organizationId,
+            metadata: {
+              pluginName: plugin.name,
+              pluginVersion: plugin.version,
+              capability: event.capability,
+              allowed: event.allowed,
+              reason: event.reason,
+            },
+          })
+          .catch((error: Error) => {
+            // 审计写失败也要说一声，只是不能因此把插件调用炸掉（原子那条线同样处理）
+            this.logger.error(`插件 ${plugin.name} 审计写入失败：${error.message}`)
+          })
       },
     })
   }
