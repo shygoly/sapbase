@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/agent-tool.schema.json",
+  "title": "Agent Tool Contract",
+  "description": "智能体工具的契约。**智能体只能用契约里的工具**：未声明的能力在运行时不存在（与插件沙箱、原子契约同一条原则）。形状借鉴 ~/projects/guangfa/validation 的 contracts/tools.json，并按本项目的权限/审计模型对齐。跨字段判据（写操作必须要求确认等）由校验器负责，见 backend/src/chat/agent-tool-validator.ts。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description", "parameters", "permission", "write", "confirmation"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)+$",
+      "maxLength": 64,
+      "description": "工具标识（snake_case，如 erp_atomic_invoke）——与工具契约文件里的键一致"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "用途说明。这是智能体选择工具的依据，必须说清「什么时候用」"
+    },
+    "parameters": {
+      "type": "object",
+      "description": "参数的 JSON Schema（形状可校验 —— 智能体不能传幻觉字段）",
+      "required": ["type"],
+      "properties": { "type": { "const": "object" } }
+    },
+    "permission": {
+      "type": "string",
+      "pattern": "^tool:[a-z0-9-]+(:[a-z0-9-]+)+$",
+      "description": "调用该工具所需的权限点（如 tool:atomic:invoke）。缺权限即拒，与原子契约同一套判定"
+    },
+    "write": {
+      "type": "boolean",
+      "description": "是否改动数据。为 true 时 confirmation 必须是 required"
+    },
+    "confirmation": {
+      "enum": ["none", "required"],
+      "description": "写操作的确认策略。v1 写操作一律 required；none 只允许用于读操作"
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 60000,
+      "default": 5000,
+      "description": "超时。工具不能挂死会话"
+    },
+    "untrustedResult": {
+      "type": "boolean",
+      "default": false,
+      "description": "结果里含外部文本（文件/网页/邮件）。为 true 时编排器把结果当**数据而非指令**，防提示注入"
+    },
+    "sensitiveArgs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "default": [],
+      "description": "敏感参数名：审计里必须脱敏（复用审计的脱敏清单机制）"
+    },
+    "agentInvocable": {
+      "type": "boolean",
+      "default": true,
+      "description": "是否允许智能体调用。为 false 时该工具只供控制面/人工使用"
+    },
+    "allowedAgents": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$|^[a-z][a-z0-9-]*\\*$" },
+      "uniqueItems": true,
+      "description": "允许调用它的智能体（`main` / `emp-*` 之类）。缺省表示不限制"
+    }
+  }
+}
