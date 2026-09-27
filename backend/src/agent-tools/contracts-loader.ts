@@ -82,6 +82,14 @@ export function assertToolCatalog(catalog: unknown): ToolCatalog {
           '（清单是协议面：平台支持什么；permissions 表才是组织授予了什么）',
       )
     }
+    // fail-closed：v1 没有"智能体身份"这个概念，没有任何地方能拿它做判定。
+    // 接受一个判不了的字段，等于让契约作者以为"我已经限制了谁不能调" —— 那是假的安全感。
+    // 要么去掉它，要么等引入智能体身份后再放开。
+    if (tool.allowedAgents && tool.allowedAgents.length > 0) {
+      throw new Error(
+        `tools[${index}].allowedAgents: v1 没有智能体身份，声明了也执行不了（判据不存在就不接受声明）`,
+      )
+    }
   })
   return parsed
 }

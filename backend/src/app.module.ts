@@ -27,6 +27,7 @@ import { OutboxEvent } from './outbox/outbox-event.entity'
 import { NotificationsModule } from './notifications/notifications.module'
 import { NotificationRecord } from './notifications/notification.entity'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
+import { ChatModule } from './chat/chat.module'
 import { AgentConfirmationToken } from './agent-tools/confirmation-token.entity'
 import { SemanticRuntimeModule } from './semantic-runtime/semantic-runtime.module'
 import { BlueprintApproval } from './semantic-runtime/blueprint-approval.entity'
@@ -150,6 +151,7 @@ try {
     OutboxModule,
     NotificationsModule,
     AgentToolsModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [],

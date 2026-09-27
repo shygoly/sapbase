@@ -82,6 +82,15 @@ describe('契约加载（负例）', () => {
     ).toThrow(/工具名重复/)
   })
 
+  it('allowedAgents 声明 → 拒（v1 没有智能体身份，判不了的字段不接受）', () => {
+    expect(() =>
+      assertToolCatalog({
+        version: 1,
+        tools: [{ ...READ_TOOL, allowedAgents: ['main'] }],
+      }),
+    ).toThrow(/allowedAgents/)
+  })
+
   it('SPECKIT_CONTRACTS_DIR 指向非法契约时加载失败', () => {
     const dir = mkdtempSync(join(tmpdir(), 'agent-tools-'))
     writeFileSync(

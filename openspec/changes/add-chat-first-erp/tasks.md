@@ -98,11 +98,35 @@
 
 ## Phase C3: 编排
 
-- [ ] `backend/src/chat/`：`IntentParser` 接缝 + v1 确定性实现 + `ToolSelector`（只从契约里选）
-- [ ] Plan 生成器：工具结果 → blocks（facts/lines/anomaly/trace），写操作 → actions（confirm/edit/cancel）
-- [ ] 拒绝路径：意图匹配不到工具 → 明确回复"没有这个能力"（而不是让 LLM 编一个）
-- [ ] jest：一句话 → 工具序列 → plan 合法；匹配不到 → 明确拒绝
-- [ ] `POST /chat/message`：会话入口（把编排结果交给 C4/C5；没有它，前端与端到端无从调用）
+- [x] `backend/src/chat/`：`IntentParser` 接缝 + v1 确定性实现 + `ToolSelector`（只从契约里选）
+- [x] Plan 生成器：工具结果 → blocks（`facts`/`lines`/`anomaly`/`table` —— 以冻结 schema 的封闭枚举为准；
+      `trace` 是顶层字段，不是 block 类型），写操作 → actions（`confirm`/`edit`/`cancel`）
+- [x] 拒绝路径：意图匹配不到工具 → 明确回复"没有这个能力"（而不是让 LLM 编一个）
+- [x] jest：一句话 → 工具序列 → plan 合法；匹配不到 → 明确拒绝
+- [x] `POST /chat/message`：会话入口（把编排结果交给 C4/C5；没有它，前端与端到端无从调用）
+
+> **C3 证据（2026-09-27）**：`npm run build --workspace backend` → nest build 0 error。
+> `cd backend && npx jest src/chat --runInBand` → **6 passed / 60 passed**
+> （含 C1 的 25 例协议校验；本轮新增：规则表对真契约、指向不存在工具加载即抛、
+> 10 条中文说法映射、抽不到 id → null、读计划过 `validateInteractionPlan`、
+> 写计划不执行且 `confirm`+args+`needsConfirmation: true`、空蓝图列表仍合法、
+> 未知工具名抛错、编排一句话 → plan、匹配不到 → refusal「没有这个能力」、
+> 越权上抛 `ForbiddenException`、写工具 `invoke` 0 次）。
+> `npm run test --workspace backend` → **Test Suites: 104 passed, 104 total / Tests: 870 passed, 870 total**
+> （838 基线 + 本轮 32 例；只增不减）。
+> `rebuild-database --db=sapbase_rebuild` → `已重建 sapbase_rebuild：40 张表`。
+> `verify-from-zero --db=sapbase_rebuild` → `✅ 从零重建成功：实体与库无结构差异（另有 3 处默认值写法差异）`。
+> `DO_NOT_TRACK=1 POSTHOG_DISABLED=1 openspec validate add-chat-first-erp --strict` → `Change 'add-chat-first-erp' is valid`。
+> C4 前端 / C5 编排 e2e **未勾**：本轮不做渲染器与真 HTTP 确认链；LLM 适配器只留 `INTENT_PARSER` 接缝。
+>
+> **复核修正（同日）**：冻结契约里的 `agentInvocable` 与 `allowedAgents`，原先**谁都没判** ——
+> `agentInvocable: false` 声明了也照样被编排器选中；`allowedAgents` 更是判不了（v1 没有"智能体身份"
+> 这个概念）。两者都会给契约作者一种"我已经限制了谁不能调"的**假安全感**。现已：
+> `CatalogToolSelector.select()` 尊重 `agentInvocable === false`（编排器就是智能体那道门，
+> LLM 适配器提出的意图也要从这里过）；契约加载对 `allowedAgents` **fail-closed**
+> （判不了的字段不接受声明）。补 `tool-selector.spec.ts`（4 例）+ 加载负例 1 例。
+> 复核后重跑（最终状态）：`jest src/chat` → **7 套件 / 64 例**；
+> 全量单测 → **105 套件 / 875 例**；`nest build` 0 error；`verify-from-zero` 零结构差异。
 
 > **C3 的两条硬约束（写代码前先认下来）**：
 > 1. **拒绝不是 plan**。`interaction-plan.schema.json` 的 `trace.tools` 是 `minItems: 1`，
