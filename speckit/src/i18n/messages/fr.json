@@ -49,7 +49,8 @@
     "workflows": "Flux de travail",
     "aiModules": "Modules IA",
     "moduleRegistry": "Registre des modules",
-    "auditLogs": "Journaux d'audit"
+    "auditLogs": "Journaux d'audit",
+    "chat": "Discussion"
   },
   "organizations": {
     "title": "Organisations",
@@ -148,6 +149,25 @@
     "noNotifications": "Aucune notification",
     "markAllRead": "Tout marquer comme lu",
     "unread": "non lues"
+  },
+  "chat": {
+    "title": "Discussion",
+    "description": "Décrivez une intention. Les surfaces d'interaction n'existent que dans cette session.",
+    "placeholder": "Décrivez ce que vous voulez faire…",
+    "send": "Envoyer",
+    "empty": "Aucun message pour le moment.",
+    "sending": "Envoi…",
+    "sendFailed": "Impossible d'envoyer le message",
+    "planRejected": "Ce plan ne peut pas être rendu",
+    "unknownKind": "Type inconnu : {{kind}}",
+    "confirming": "Confirmation…",
+    "confirmFailed": "La confirmation a échoué",
+    "invokeResult": "Résultat",
+    "editFields": "Champs éditables",
+    "editNoSubmit": "v1 affiche seulement ces champs. Il n'y a pas de chemin d'envoi.",
+    "ephemeralNote": "Surface temporaire — ce n'est pas une page, elle n'est pas dans la navigation et n'est pas enregistrable.",
+    "missingToken": "Les outils d'écriture ne peuvent pas être invoqués sans jeton de confirmation.",
+    "trace": "Trace"
   },
   "errors": {
     "generic": "Une erreur s'est produite",

@@ -49,7 +49,8 @@
     "workflows": "工作流",
     "aiModules": "AI 模块",
     "moduleRegistry": "模块注册表",
-    "auditLogs": "审计日志"
+    "auditLogs": "审计日志",
+    "chat": "对话"
   },
   "organizations": {
     "title": "组织",
@@ -148,6 +149,25 @@
     "noNotifications": "没有通知",
     "markAllRead": "全部标记为已读",
     "unread": "未读"
+  },
+  "chat": {
+    "title": "对话",
+    "description": "描述一个意图。交互面只存在于这次会话里。",
+    "placeholder": "描述你想做的事…",
+    "send": "发送",
+    "empty": "还没有消息。",
+    "sending": "发送中…",
+    "sendFailed": "消息发送失败",
+    "planRejected": "这份计划无法渲染",
+    "unknownKind": "未知类型：{{kind}}",
+    "confirming": "确认中…",
+    "confirmFailed": "确认失败",
+    "invokeResult": "结果",
+    "editFields": "可编辑字段",
+    "editNoSubmit": "v1 只展示这些字段，没有提交路径。",
+    "ephemeralNote": "临时交互面 —— 不是页面、不进导航、不能收藏。",
+    "missingToken": "写工具没有确认令牌就不能调用。",
+    "trace": "依据"
   },
   "errors": {
     "generic": "发生错误",

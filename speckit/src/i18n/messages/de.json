@@ -49,7 +49,8 @@
     "workflows": "Workflows",
     "aiModules": "KI-Module",
     "moduleRegistry": "Modul-Register",
-    "auditLogs": "Audit-Protokolle"
+    "auditLogs": "Audit-Protokolle",
+    "chat": "Chat"
   },
   "organizations": {
     "title": "Organisationen",
@@ -148,6 +149,25 @@
     "noNotifications": "Keine Benachrichtigungen",
     "markAllRead": "Alle als gelesen markieren",
     "unread": "ungelesen"
+  },
+  "chat": {
+    "title": "Chat",
+    "description": "Beschreiben Sie eine Absicht. Interaktionsflächen existieren nur in dieser Sitzung.",
+    "placeholder": "Beschreiben Sie, was Sie tun möchten…",
+    "send": "Senden",
+    "empty": "Noch keine Nachrichten.",
+    "sending": "Senden…",
+    "sendFailed": "Nachricht konnte nicht gesendet werden",
+    "planRejected": "Dieser Plan kann nicht gerendert werden",
+    "unknownKind": "Unbekannter Typ: {{kind}}",
+    "confirming": "Bestätigen…",
+    "confirmFailed": "Bestätigung fehlgeschlagen",
+    "invokeResult": "Ergebnis",
+    "editFields": "Bearbeitbare Felder",
+    "editNoSubmit": "v1 zeigt diese Felder nur an. Es gibt keinen Sendepfad.",
+    "ephemeralNote": "Temporäre Interaktionsfläche — keine Seite, nicht in der Navigation, nicht speicherbar.",
+    "missingToken": "Schreibwerkzeuge können ohne Bestätigungstoken nicht aufgerufen werden.",
+    "trace": "Spur"
   },
   "errors": {
     "generic": "Ein Fehler ist aufgetreten",

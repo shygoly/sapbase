@@ -49,7 +49,8 @@
     "workflows": "ワークフロー",
     "aiModules": "AI モジュール",
     "moduleRegistry": "モジュールレジストリ",
-    "auditLogs": "監査ログ"
+    "auditLogs": "監査ログ",
+    "chat": "チャット"
   },
   "organizations": {
     "title": "組織",
@@ -148,6 +149,25 @@
     "noNotifications": "通知はありません",
     "markAllRead": "すべて既読にする",
     "unread": "未読"
+  },
+  "chat": {
+    "title": "チャット",
+    "description": "意図を書いてください。インタラクション面はこのセッション内にだけ存在します。",
+    "placeholder": "やりたいことを書いてください…",
+    "send": "送信",
+    "empty": "まだメッセージはありません。",
+    "sending": "送信中…",
+    "sendFailed": "メッセージを送信できませんでした",
+    "planRejected": "このプランは描画できません",
+    "unknownKind": "未知の種類：{{kind}}",
+    "confirming": "確認中…",
+    "confirmFailed": "確認に失敗しました",
+    "invokeResult": "結果",
+    "editFields": "編集可能な項目",
+    "editNoSubmit": "v1 ではこれらの項目を表示するだけです。送信経路はありません。",
+    "ephemeralNote": "一時的なインタラクション面 — ページではなく、ナビにも載らず、ブックマークもできません。",
+    "missingToken": "書き込みツールは確認トークンなしでは呼び出せません。",
+    "trace": "根拠"
   },
   "errors": {
     "generic": "エラーが発生しました",

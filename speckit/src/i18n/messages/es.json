@@ -49,7 +49,8 @@
     "workflows": "Flujos de trabajo",
     "aiModules": "Módulos de IA",
     "moduleRegistry": "Registro de módulos",
-    "auditLogs": "Registros de auditoría"
+    "auditLogs": "Registros de auditoría",
+    "chat": "Chat"
   },
   "organizations": {
     "title": "Organizaciones",
@@ -148,6 +149,25 @@
     "noNotifications": "No hay notificaciones",
     "markAllRead": "Marcar todas como leídas",
     "unread": "no leídas"
+  },
+  "chat": {
+    "title": "Chat",
+    "description": "Describe una intención. Las superficies de interacción solo existen en esta sesión.",
+    "placeholder": "Describe lo que quieres hacer…",
+    "send": "Enviar",
+    "empty": "Aún no hay mensajes.",
+    "sending": "Enviando…",
+    "sendFailed": "No se pudo enviar el mensaje",
+    "planRejected": "Este plan no se puede renderizar",
+    "unknownKind": "Tipo desconocido: {{kind}}",
+    "confirming": "Confirmando…",
+    "confirmFailed": "La confirmación falló",
+    "invokeResult": "Resultado",
+    "editFields": "Campos editables",
+    "editNoSubmit": "v1 solo muestra estos campos. No hay ruta de envío.",
+    "ephemeralNote": "Superficie temporal — no es una página, no está en la navegación y no se puede guardar.",
+    "missingToken": "Las herramientas de escritura no se pueden invocar sin un token de confirmación.",
+    "trace": "Rastro"
   },
   "errors": {
     "generic": "Ocurrió un error",

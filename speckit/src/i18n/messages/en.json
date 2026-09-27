@@ -49,7 +49,8 @@
     "workflows": "Workflows",
     "aiModules": "AI Modules",
     "moduleRegistry": "Module Registry",
-    "auditLogs": "Audit Logs"
+    "auditLogs": "Audit Logs",
+    "chat": "Chat"
   },
   "organizations": {
     "title": "Organizations",
@@ -148,6 +149,25 @@
     "noNotifications": "No notifications",
     "markAllRead": "Mark all as read",
     "unread": "unread"
+  },
+  "chat": {
+    "title": "Chat",
+    "description": "Describe an intent. Interaction surfaces exist only in this session.",
+    "placeholder": "Describe what you want to do…",
+    "send": "Send",
+    "empty": "No messages yet.",
+    "sending": "Sending…",
+    "sendFailed": "Could not send the message",
+    "planRejected": "This plan cannot be rendered",
+    "unknownKind": "Unknown kind: {{kind}}",
+    "confirming": "Confirming…",
+    "confirmFailed": "Confirmation failed",
+    "invokeResult": "Result",
+    "editFields": "Editable fields",
+    "editNoSubmit": "v1 shows these fields only. There is no submit path.",
+    "ephemeralNote": "Temporary interaction surface — not a page, not in navigation, not bookmarkable.",
+    "missingToken": "Write tools cannot be invoked without a confirmation token.",
+    "trace": "Trace"
   },
   "errors": {
     "generic": "An error occurred",

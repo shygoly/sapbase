@@ -141,9 +141,40 @@
 
 ## Phase C4: 前端
 
-- [ ] `speckit/src/features/chat/`：会话流 + 交互面卡片（无固定表单/页面）
-- [ ] `speckit/src/core/interaction/`：Plan 渲染器（按 kind 分派到既有 UI 原子）
-- [ ] 未知 kind → 拒绝渲染整个 plan 并提示（fail-closed）
+- [x] `speckit/src/features/chat/`：会话流 + 交互面卡片（无固定表单/页面）
+- [x] `speckit/src/core/interaction/`：Plan 渲染器（按 kind 分派到既有 UI 原子）
+- [x] 未知 kind → 拒绝渲染整个 plan 并提示（fail-closed）
+
+> **C4 证据（2026-09-27）**：`npm run build --workspace speckit` → **exit 0**，
+> 构建产物含 `/[locale]/dashboard/chat` 路由。
+> · 会话流 `features/chat/` 调 `POST /api/chat/message`：`kind:'refusal'` 只出助手文本（不渲染卡片）；
+> `kind:'plan'` 出 `PlanRenderer` 卡片。
+> · 渲染器 `core/interaction/plan-renderer.tsx`：`facts`→键值、`lines`→table、`anomaly`→Alert
+> （按 severity 定语气）、`table`→table；动作 `confirm`/`edit`/`cancel` 分派到既有 UI 原子。
+> · **fail-closed**：渲染前先过纯函数 `decidePlanRenderable(plan)`；`ok:false` 时**只**渲染拒绝提示，
+> 不画任何 block（渲染过程中再遇未知块同样整份拒绝，双重保险）。
+> · 判定与渲染分离：`core/interaction/plan-decision.ts` **零 React/DOM/网络依赖**，
+> 便于独立复核（speckit 没有测试运行器，本轮不新增依赖）。复核方用
+> `npx tsc … --outDir /tmp/c4check` + `node` 亲自跑了 5 类输入，真实输出：
+> 合法 plan → `{"ok":true}`；未知 block `html` → `ok:false` 且 reason 说出封闭枚举
+> `facts / lines / anomaly / table`；未知 action `delete` → `ok:false`（枚举
+> `confirm / edit / cancel`）；`confirm` 缺 `tool` → `ok:false`；`blocks` 非数组 → `ok:false`。
+> · 写动作：`agentToolsApi.confirmThenInvoke` 先 `confirm` 拿令牌再 `invoke`；
+> `invoke()` **强制要求非空 `confirmationToken`**，没有令牌直接抛错 —— 客户端也堵住了
+> "无令牌调写工具"这条路。
+> · **临时交互面**：`core/interaction/surface.ts` 显式 `navigable: false` / `href: null` /
+> `lifetime: session-only`；确认或取消后从会话流里移除。**没有** `/chat/[surface]` 路由，
+> 交互面不可收藏、不可直接到达。会话页本身在导航里（否则人找不到入口），
+> 但交互面不在——这两条约束不冲突。
+> · 未改 `core/page-model`（按 design 向后兼容保留）；未新增 npm 依赖；未碰 `backend/`。
+> · i18n 文案按既有约定补齐 8 个语言文件。
+>
+> **复核修正（同日）**：`design.md` 的 plan 示例有两处与冻结 schema 不符 ——
+> block 里写了 `"kind": "trace"`（`trace` 其实是**顶层**字段，block 的封闭枚举是
+> `facts/lines/anomaly/table`），`confirm` 动作上写了 schema 里不存在的 `requiresConfirmation`。
+> 已按 `schemas/interaction-plan.schema.json` 改正，并补上示例里缺的顶层 `trace`
+> （schema 的 `required` 里有它）。修正后的示例已用 `JSON.parse` 校验：
+> 7 个必填字段齐、block 四种 kind、action 三种 kind 全在封闭枚举内。
 
 ## Phase C5: 端到端
 

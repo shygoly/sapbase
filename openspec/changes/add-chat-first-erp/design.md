@@ -75,13 +75,14 @@ erp_module_export         写   导出最小蓝图包（产生文件 → 需要�
     { "kind": "facts",    "items": [{ "label": "供应商", "value": "宁波华兴" }] },
     { "kind": "lines",    "items": [{ "label": "铜材", "quantity": 50, "unit": "吨" }] },
     { "kind": "anomaly",  "severity": "warn", "message": "本次价格比上次高 8.7%" },
-    { "kind": "trace",    "tools": ["erp_atomic_invoke:available-inventory"] }
+    { "kind": "table",    "columns": ["可用量"], "rows": [[120]] }
   ],
   "actions": [
-    { "kind": "confirm", "id": "confirm", "label": "确认下单", "tool": "erp_purchase_order_create", "requiresConfirmation": true },
+    { "kind": "confirm", "id": "confirm", "label": "确认下单", "tool": "erp_purchase_order_create" },
     { "kind": "edit",    "id": "edit-price", "label": "改价格", "fields": ["price"] },
     { "kind": "cancel",  "id": "cancel", "label": "算了" }
   ],
+  "trace": { "tools": ["erp_atomic_invoke:available-inventory"], "intent": "下采购单" },
   "needsConfirmation": true
 }
 ```

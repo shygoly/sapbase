@@ -16,6 +16,8 @@ export { moduleRegistryApi } from './module-registry.api'
 export { pluginsApi } from './plugins.api'
 export { atomicApi } from './atomic.api'
 export { systemApi } from './system.api'
+export { chatApi } from './chat.api'
+export { agentToolsApi } from './agent-tools.api'
 export { apiClient, httpClient } from './client'
 
 // Export types

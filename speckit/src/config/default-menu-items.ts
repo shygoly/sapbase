@@ -13,6 +13,13 @@ export const defaultMenuItems: UnifiedMenuItem[] = [
     order: 1,
   },
   {
+    id: 'chat',
+    label: 'Chat',
+    path: '/dashboard/chat',
+    icon: 'dashboard',
+    order: 2,
+  },
+  {
     id: 'crm',
     label: 'CRM管理',
     icon: 'users',

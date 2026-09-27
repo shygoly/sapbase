@@ -42,6 +42,14 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Chat',
+    url: '/dashboard/chat',
+    icon: 'page',
+    isActive: false,
+    shortcut: ['c', 'c'],
+    items: []
+  },
+  {
     title: 'Workspaces',
     url: '/dashboard/workspaces',
     icon: 'workspace',
