@@ -264,7 +264,8 @@ jobs:
             test/ai-blueprint.e2e-spec.ts \
             test/agent-tools.e2e-spec.ts \
             test/user-serialization.e2e-spec.ts \
-            test/role-permissions.e2e-spec.ts
+            test/role-permissions.e2e-spec.ts \
+            test/chat-first-erp.e2e-spec.ts
 
   validate:
     name: Validate Components

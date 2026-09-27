@@ -1,6 +1,6 @@
 # 项目元语（Meta Language）
 
-> 版本：1.12
+> 版本：1.13
 > 日期：2026-09-27
 > 定位：本文件是 sapbase 的**基础定义层** —— 元模型、协议原语、执行原语、工程约定与术语真源。
 > 与设计文档的分工：设计文档回答"**要做什么**"，本文件回答"**用什么词、按什么不变量做、真源在哪**"。
@@ -193,6 +193,14 @@ L3 验证层     Schema 验证、引用完整性、权限验证、可执行性�
 | **唯一性** | 字段 `unique: true` | **落到 DB 唯一索引**，键含 `blueprintId` + `organizationId`（按蓝图 / 按租户隔离） | 同上 schema；实现 `backend/src/semantic-runtime/unique-index.ts` |
 | **金额精度** | `decimal(p,s)` + `rounding`（`half-up` / `half-even`）；`money: true` 只能标在 decimal 上 | 定点整数小单位；**单一舍入点**（`roundTo`）；i32 小单位进原子；**禁止浮点** | 同上 schema；实现 [`backend/src/blueprint/money.ts`](../backend/src/blueprint/money.ts) |
 
+### 3.9 Interaction Surface（临时交互面）
+
+它不是页面、也不是表单，而是**一次意图的可视化投影**。确认或取消后即消失，不进入任何导航结构。
+
+判据：任何"需要被记住位置、能被收藏、能通过 URL 直接到达"的东西**不是** Interaction Surface。
+
+真源：[`protocols/chat-erp.md`](./protocols/chat-erp.md)。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -343,6 +351,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.13 | 2026-09-27 | 新增 §3.9「Interaction Surface（临时交互面）」：一次意图的可视化投影，确认或取消后即消失。真源见 `protocols/chat-erp.md` |
 | 1.12 | 2026-09-27 | §5.2「建议迁移」真源补夜间生产者。见 `protocols/record-transition.md` §2.1 |
 | 1.11 | 2026-09-26 | §5.2 补最小可观测真源。见 `protocols/observability.md`（明确不做 OTel/Prometheus） |
 | 1.10 | 2026-09-26 | §5.2 补通知 / 审批待办真源。见 `protocols/notifications.md` |

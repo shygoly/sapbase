@@ -147,6 +147,35 @@
 
 ## Phase C5: 端到端
 
-- [ ] e2e：一句话 → 工具调用 → plan → 确认令牌 → 写操作 → 审计可查
-- [ ] e2e：越权/未声明能力 → 明确拒绝且留痕
-- [ ] 文档：`docs/META_LANGUAGE.md` 补 `Interaction Surface` 这一条元语（§3.9 或并入 §3.5.1）
+- [x] e2e：一句话 → 工具调用 → plan → 确认令牌 → 写操作 → 审计可查
+- [x] e2e：越权/未声明能力 → 明确拒绝且留痕
+- [x] 文档：`docs/META_LANGUAGE.md` 补 `Interaction Surface` 这一条元语（§3.9 或并入 §3.5.1）
+
+> **C5 证据（2026-09-27）**：`backend/test/chat-first-erp.e2e-spec.ts`（真 Postgres，最小
+> TestingModule 装 `AgentToolsModule` + `ChatModule`）。
+> `DB_NAME=sapbase_rebuild jest --verbose test/chat-first-erp.e2e-spec.ts` → **5 passed / 5 total**：
+> · 读路径：「列出模块」→ `kind=plan`、plan 过 `validateInteractionPlan {valid:true}`、
+> `trace.tools` 非空、`needsConfirmation=false`；
+> · 写路径：「把模块 X 导出为最小蓝图包」→ `kind=plan`、`needsConfirmation=true`、
+> `confirm.tool=erp_module_export` 且**导出目录仍为空**（未执行）→ `confirm` 200 且库行
+> `consumedAt IS NULL` → `invoke` 200、目录出现产物、库行 `consumedAt` 非空 →
+> **同一 token 再 invoke 403** → `audit_logs` 里恰好 1 条 `chat.tool.invoked`/`success`，
+> `metadata.tool=erp_module_export`、`argsDigest` 64 位；
+> · 未声明能力：「把订单删了」→ `kind=refusal`、文案含「没有这个能力」、**审计行数不增**；
+> · 越权：缺 `tool:module:export` → confirm 后 invoke 403、错误写明该权限点、0 条成功审计；
+> · 无令牌 → 403 且孤立目录仍为空。
+> 导出落盘只走 `mkdtempSync` 临时目录（`BLUEPRINT_EXPORT_DIR` / `BLUEPRINT_PACKAGES_DIR`），
+> `afterAll` 清理，**没有写进仓库**。
+> 该 spec 已追加进 `ci.yml` 的 e2e 清单（末尾一行，未重排）。
+> `docs/META_LANGUAGE.md`：新增 `### 3.9 Interaction Surface（临时交互面）`
+> （§3.8.1 之后、§4 之前，未重编号），版本 1.12 → 1.13，§8 追加一行，真源指向
+> `docs/protocols/chat-erp.md`。
+> 复核方实测：`nest build` 0 error；全量单测 108 套件 / 896 例；`verify-from-zero` 零结构差异；
+> `openspec validate add-chat-first-erp --strict` 通过。
+>
+> **复核发现（与本变更无关的既有问题，另行处理）**：整条 e2e 清单按顺序跑时，
+> `traceability-import` 的两条批次追溯用例各卡 60s 超时；**重建库后单独跑该 spec 7/7 全绿**。
+> 该 spec 用 guard 替身、不走登录、不读 User，与本轮任何改动都无交集 —— 是**顺序/数据量敏感**
+> 的既有问题，之前因为它走 `deliver` 失败 skip 而没暴露。
+> 另有 `document-runtime` / `currency-permissions` / `outbox` 三条在从零空库上走既有 skip
+> （缺 `available-inventory` active 契约）。
