@@ -10,7 +10,8 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  // 默认不加载；只有凭据读取路径显式取
+  @Column({ type: 'varchar', length: 255, nullable: true, select: false })
   passwordHash: string
 
   @Column({ type: 'varchar', length: 255, default: 'user' })

@@ -20,7 +20,9 @@ export class UsersService {
       ...createUserDto,
       passwordHash: hashedPassword,
     })
-    return this.usersRepository.save(user)
+    const saved = await this.usersRepository.save(user)
+    // save() 把刚写入的摘要留在内存对象上；按通用读取返回，让 select: false 生效
+    return this.findOne(saved.id)
   }
 
   async findAll(
@@ -61,9 +63,12 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({
-      where: { email },
-    })
+    // 这是凭据读取路径，全仓唯一允许取摘要的地方
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.passwordHash')
+      .where('user.email = :email', { email })
+      .getOne()
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {

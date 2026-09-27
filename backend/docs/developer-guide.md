@@ -372,6 +372,8 @@ await BaseCrudHelper.removeById(
 
 ## Authentication & Authorization
 
+用户响应永不含凭据材料。边界在读取层（`User.passwordHash` 的 `select: false`），口令摘要只由 `UsersService.findByEmail` 显式取出。
+
 ### Using @Auth Decorator
 
 ```typescript

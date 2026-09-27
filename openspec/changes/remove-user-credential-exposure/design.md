@@ -43,6 +43,14 @@
 这是"能让危险的东西不存在，就不要靠策略去拦"的直接应用：不是"记得别输出它"，
 而是"它压根不在内存里"。
 
+**例外：写回路径（实现阶段发现的缺口）。** `select: false` 只管**读**。
+`UsersService.create` 里 `repository.create({ ...dto, passwordHash: hashed })` → `save()`
+返回的是**内存对象**，摘要仍在上面，`POST /users` 会原样把它吐出去。
+因此 `create` 在 `save()` 之后按通用读取（`findOne(saved.id)`）返回，
+让同一条边界对写回路径也成立。
+（本设计初稿写的是"唯一改动点是 `select: false`"，漏了这条 —— 已由 S1 的实现与
+e2e 的 `POST /users` 断言补上。）
+
 ### 决策 2：放弃"`@Exclude()` + 全局 `ClassSerializerInterceptor`"方案
 
 先前考虑过这条（实体标 `@Exclude()`，`main.ts` 挂全局拦截器）。放弃的理由：
