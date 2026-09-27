@@ -65,6 +65,21 @@
 > 复核后重跑：`jest src/agent-tools` → 3 套件 / 20 例；全量单测 **99 套件 / 837 例**；
 > `verify-from-zero` → 零结构差异，新表 `agent_confirmation_tokens` 已计入（39 张实体表）。
 
+## Phase C2.5: 授权路径与工具面 e2e（C2 收口）
+
+> 为什么插在这里：C2 让工具面复用既有权限系统（`missingPermissions`），但**既有权限系统
+> 根本授予不了权限** —— `users.permissions` 列存在、JWT 也读它，可是 users 的 DTO 不收这个
+> 字段，于是没有任何 API 路径能给一个用户 `tool:*`。工具面再对，也没人能真正调用它。
+> 另外"令牌一次性"目前只有单测里的 SQL 文本级证明，缺真库证明。两件事都得在 C3 之前关掉，
+> 否则 C5 的端到端无从谈起。
+
+- [ ] 授权路径：`CreateUserDto` / `UpdateUserDto` 接受可选 `permissions: string[]`（校验 + 文档），
+      让既有的 Admin/Manager 守卫写路径能授予权限点（含 `tool:*`）
+- [ ] 授权路径的证据：真库往返（simple-array 往返一致）+ 非法取值被拒的负例
+- [ ] `backend/test/agent-tools.e2e-spec.ts`：真 Postgres 跑工具面 —— 未知工具 / 越权（写明缺哪条）/
+      写工具无令牌 / **令牌真库一次性消费（二次消费必拒）** / 参数摘要不匹配 / 过期 / 成功落审计
+- [ ] 新表 DDL 的第三处消费：e2e `beforeAll` 幂等应用；并把该 spec 加进 `ci.yml` 的 e2e 清单
+
 ## Phase C3: 编排
 
 - [ ] `backend/src/chat/`：`IntentParser` 接缝 + v1 确定性实现 + `ToolSelector`（只从契约里选）
