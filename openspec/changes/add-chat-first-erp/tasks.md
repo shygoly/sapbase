@@ -102,6 +102,18 @@
 - [ ] Plan 生成器：工具结果 → blocks（facts/lines/anomaly/trace），写操作 → actions（confirm/edit/cancel）
 - [ ] 拒绝路径：意图匹配不到工具 → 明确回复"没有这个能力"（而不是让 LLM 编一个）
 - [ ] jest：一句话 → 工具序列 → plan 合法；匹配不到 → 明确拒绝
+- [ ] `POST /chat/message`：会话入口（把编排结果交给 C4/C5；没有它，前端与端到端无从调用）
+
+> **C3 的两条硬约束（写代码前先认下来）**：
+> 1. **拒绝不是 plan**。`interaction-plan.schema.json` 的 `trace.tools` 是 `minItems: 1`，
+>    所以"没有这个能力"**不可能**表达成合法的 `interaction-plan/v1`。编排结果是判别联合
+>    （plan | refusal），拒绝时**不**过 `validateInteractionPlan`，也**不**编一个工具出来。
+> 2. **触发词不能进工具契约**。`agent-tool.schema.json` 是 `additionalProperties: false` 且已冻结，
+>    所以 v1 的确定性规则表放在编排器里，且**加载时校验每条规则的目标工具 ∈ 契约**
+>    —— 规则是候选，契约是裁决（这才是"ToolSelector 只从契约里选"）。
+>
+> 另：`actions` 也是 `minItems: 1`，所以**读**工具的计划也要带一个动作（`cancel`），
+> `needsConfirmation: false`；**写**工具的计划带 `confirm`（绑工具 + args），`needsConfirmation: true`。
 
 ## Phase C4: 前端
 
