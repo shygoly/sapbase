@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt'
 import { UsersService } from '../users/users.service'
 import { OrganizationsService } from '../organizations/organizations.service'
 import { User } from '../users/user.entity'
+import { EffectivePermissionsService } from '../roles/effective-permissions.service'
 
 export interface JwtPayload {
   sub: string
@@ -19,6 +20,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private organizationsService: OrganizationsService,
+    private effectivePermissions: EffectivePermissionsService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -43,11 +45,17 @@ export class AuthService {
       selectedOrgId = organizations[0].id
     }
 
+    const permissions = await this.effectivePermissions.resolve({
+      role: user.role,
+      directPermissions: user.permissions || [],
+      organizationId: selectedOrgId,
+    })
+
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
-      permissions: user.permissions || [],
+      permissions,
       organizationId: selectedOrgId,
     }
 
@@ -58,7 +66,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
-        permissions: user.permissions || [],
+        permissions,
       },
       organizations,
       currentOrganizationId: selectedOrgId,
@@ -74,11 +82,17 @@ export class AuthService {
     // Verify user has access to organization
     await this.organizationsService.findOne(organizationId, userId)
 
+    const permissions = await this.effectivePermissions.resolve({
+      role: user.role,
+      directPermissions: user.permissions || [],
+      organizationId,
+    })
+
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
-      permissions: user.permissions || [],
+      permissions,
       organizationId,
     }
 

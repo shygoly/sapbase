@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
 import { AuthService } from './auth.service'
+import { EffectivePermissionsService } from '../roles/effective-permissions.service'
 
 // 密码比对走 bcrypt.compare：不 mock 的话 validateUser 永远返回 null
 jest.mock('bcrypt')
@@ -9,11 +10,14 @@ import { UsersService } from '../users/users.service'
 // 实体构造是私有的：替身用 cast（change: restore-green-backend-tests）
 import type { User } from '../users/user.entity'
 import { OrganizationsService } from '../organizations/organizations.service'
+import { RolesService } from '../roles/roles.service'
 
 describe('AuthService', () => {
   let service: AuthService
   let usersService: UsersService
   let jwtService: JwtService
+  let organizationsService: OrganizationsService
+  let rolesService: { findByName: jest.Mock }
 
   const mockUser = {
     id: '1',
@@ -37,6 +41,7 @@ describe('AuthService', () => {
           provide: UsersService,
           useValue: {
             findByEmail: jest.fn(),
+            findOne: jest.fn(),
           },
         },
         // 服务后来加了「登录时带出用户组织、必要时自动选中」这一步
@@ -44,6 +49,11 @@ describe('AuthService', () => {
           provide: OrganizationsService,
           useValue: { findAll: jest.fn().mockResolvedValue([]), findOne: jest.fn() },
         },
+        {
+          provide: RolesService,
+          useValue: { findByName: jest.fn().mockResolvedValue(null) },
+        },
+        EffectivePermissionsService,
         {
           provide: JwtService,
           useValue: {
@@ -58,6 +68,8 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService)
     usersService = module.get<UsersService>(UsersService)
     jwtService = module.get<JwtService>(JwtService)
+    organizationsService = module.get<OrganizationsService>(OrganizationsService)
+    rolesService = module.get(RolesService)
   })
 
   describe('validateUser', () => {
@@ -135,6 +147,68 @@ describe('AuthService', () => {
       // 响应里的 user 是**脱敏后的摘要**（不含 passwordHash / dataScope）
       expect(result.user.email).toBe('test@example.com')
       expect(result.user).not.toHaveProperty('passwordHash')
+    })
+
+    it('直授 ∪ 角色 → JWT 与响应都是并集（不是覆盖，也不是只取角色）', async () => {
+      jest.spyOn(jwtService, 'sign').mockReturnValue(mockJwtToken)
+      jest.spyOn(organizationsService, 'findAll').mockResolvedValue([{ id: 'org-1' }] as never)
+      rolesService.findByName.mockResolvedValue({
+        permissions: ['role:read', 'role:list'],
+      })
+      const withDirect = {
+        ...mockUser,
+        role: 'clerk',
+        permissions: ['direct:write'],
+      }
+
+      const result = await service.login(withDirect as unknown as User)
+
+      const expected = ['role:read', 'role:list', 'direct:write']
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: 'clerk',
+          permissions: expected,
+          organizationId: 'org-1',
+        }),
+      )
+      expect(result.user.permissions).toEqual(expected)
+      expect(result.user.role).toBe('clerk')
+      expect(rolesService.findByName).toHaveBeenCalledWith('clerk', 'org-1')
+    })
+  })
+
+  describe('switchOrganization', () => {
+    it('与 login 签发同一份有效权限，role 字段不变', async () => {
+      jest.spyOn(jwtService, 'sign').mockReturnValue(mockJwtToken)
+      jest.spyOn(organizationsService, 'findAll').mockResolvedValue([{ id: 'org-1' }] as never)
+      jest.spyOn(organizationsService, 'findOne').mockResolvedValue({ id: 'org-1' } as never)
+      jest.spyOn(usersService, 'findOne').mockResolvedValue({
+        ...mockUser,
+        role: 'clerk',
+        permissions: ['direct:write'],
+      } as unknown as User)
+      rolesService.findByName.mockResolvedValue({
+        permissions: ['role:read', 'role:list'],
+      })
+
+      const loginResult = await service.login(
+        {
+          ...mockUser,
+          role: 'clerk',
+          permissions: ['direct:write'],
+        } as unknown as User,
+        'org-1',
+      )
+      const switchResult = await service.switchOrganization('1', 'org-1')
+
+      const loginPayload = (jwtService.sign as jest.Mock).mock.calls[0][0]
+      const switchPayload = (jwtService.sign as jest.Mock).mock.calls[1][0]
+      expect(loginPayload.permissions).toEqual(['role:read', 'role:list', 'direct:write'])
+      expect(switchPayload.permissions).toEqual(loginPayload.permissions)
+      expect(switchPayload.role).toBe('clerk')
+      expect(loginPayload.role).toBe('clerk')
+      expect(loginResult.user.role).toBe('clerk')
+      expect(switchResult.access_token).toBe(mockJwtToken)
     })
   })
 

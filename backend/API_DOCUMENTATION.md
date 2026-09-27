@@ -54,6 +54,8 @@ Authorization: Bearer <your-jwt-token>
 
 Get token via `/api/auth/login` endpoint.
 
+会话权限点是访问控制行为（不是展示字段）：组织内同名 active 角色 ∪ 用户直授。
+
 ### API Versioning
 
 API versioning is supported via header:

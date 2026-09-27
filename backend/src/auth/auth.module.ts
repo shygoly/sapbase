@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { UsersModule } from '../users/users.module'
 import { OrganizationsModule } from '../organizations/organizations.module'
+import { RolesModule } from '../roles/roles.module'
 import { AuthService } from './auth.service'
 import { AuthController } from './auth.controller'
 import { JwtStrategy } from './jwt.strategy'
@@ -13,6 +14,7 @@ import { AuthContextModule } from '../auth-context/auth-context.module'
     AuthContextModule,
     UsersModule,
     OrganizationsModule,
+    RolesModule,
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',

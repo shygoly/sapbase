@@ -263,7 +263,8 @@ jobs:
             test/notifications-inbox.e2e-spec.ts \
             test/ai-blueprint.e2e-spec.ts \
             test/agent-tools.e2e-spec.ts \
-            test/user-serialization.e2e-spec.ts
+            test/user-serialization.e2e-spec.ts \
+            test/role-permissions.e2e-spec.ts
 
   validate:
     name: Validate Components

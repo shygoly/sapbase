@@ -8,12 +8,12 @@ import {
   ORGANIZATION_REPOSITORY,
   EVENT_PUBLISHER,
 } from '../../domain/repositories'
-import { JWT_SERVICE, PASSWORD_SERVICE } from '../../domain/services'
+import { JWT_SERVICE, PASSWORD_SERVICE, EFFECTIVE_PERMISSIONS_RESOLVER } from '../../domain/services'
 import type {
   IUserRepository,
   IOrganizationRepository,
 } from '../../domain/repositories'
-import type { IJwtService, IPasswordService } from '../../domain/services'
+import type { IJwtService, IPasswordService, IEffectivePermissionsResolver } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { AuthenticationError } from '../../domain/errors'
 import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
@@ -25,6 +25,7 @@ describe('LoginService', () => {
   let jwtService: jest.Mocked<IJwtService>
   let passwordService: jest.Mocked<IPasswordService>
   let eventPublisher: jest.Mocked<IEventPublisher>
+  let effectivePermissionsResolver: jest.Mocked<IEffectivePermissionsResolver>
 
   beforeEach(async () => {
     const mockUserRepository = createMockRepository<IUserRepository>()
@@ -38,6 +39,9 @@ describe('LoginService', () => {
       hash: jest.fn(),
     }
     const mockEventPublisher = createMockEventPublisher()
+    const mockEffectivePermissionsResolver = {
+      resolve: jest.fn(),
+    }
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -62,6 +66,10 @@ describe('LoginService', () => {
           provide: EVENT_PUBLISHER,
           useValue: mockEventPublisher,
         },
+        {
+          provide: EFFECTIVE_PERMISSIONS_RESOLVER,
+          useValue: mockEffectivePermissionsResolver,
+        },
       ],
     }).compile()
 
@@ -71,6 +79,7 @@ describe('LoginService', () => {
     jwtService = module.get(JWT_SERVICE)
     passwordService = module.get(PASSWORD_SERVICE)
     eventPublisher = module.get(EVENT_PUBLISHER)
+    effectivePermissionsResolver = module.get(EFFECTIVE_PERMISSIONS_RESOLVER)
   })
 
   describe('execute', () => {
@@ -100,6 +109,7 @@ describe('LoginService', () => {
         organization as unknown as Organization,
       ])
       jwtService.sign.mockResolvedValue('jwt-token')
+      effectivePermissionsResolver.resolve.mockResolvedValue([])
 
       const result = await service.execute(command)
 
@@ -169,6 +179,107 @@ describe('LoginService', () => {
       ])
 
       await expect(service.execute(command)).rejects.toThrow()
+    })
+
+    it('签发的 payload 与响应 user.permissions 都是有效权限（角色 ∪ 直授）', async () => {
+      const user = {
+        id: 'user-1',
+        email: 'user@example.com',
+        passwordHash: 'hashed-password',
+        name: 'Test User',
+        role: 'clerk',
+        permissions: ['direct:write'],
+      }
+      const organization = { id: 'org-1', name: 'Test Org', slug: 'org-1' }
+      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
+      passwordService.compare.mockResolvedValue(true)
+      organizationRepository.findAll.mockResolvedValue([
+        organization as unknown as Organization,
+      ])
+      jwtService.sign.mockResolvedValue('jwt-token')
+      effectivePermissionsResolver.resolve.mockResolvedValue(['role:read', 'direct:write'])
+
+      const result = await service.execute({
+        email: 'user@example.com',
+        password: 'password123',
+        organizationId: 'org-1',
+      })
+
+      expect(effectivePermissionsResolver.resolve).toHaveBeenCalledWith({
+        role: 'clerk',
+        directPermissions: ['direct:write'],
+        organizationId: 'org-1',
+      })
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: 'clerk',
+          permissions: ['role:read', 'direct:write'],
+          organizationId: 'org-1',
+        }),
+      )
+      expect(result.user.permissions).toEqual(['role:read', 'direct:write'])
+      expect(result.user.role).toBe('clerk')
+      expect(result.access_token).toBe('jwt-token')
+    })
+
+    it('解析器抛错时只留直授且登录仍然成功', async () => {
+      const user = {
+        id: 'user-1',
+        email: 'user@example.com',
+        passwordHash: 'hashed-password',
+        name: 'Test User',
+        role: 'clerk',
+        permissions: ['direct:keep'],
+      }
+      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
+      passwordService.compare.mockResolvedValue(true)
+      organizationRepository.findAll.mockResolvedValue([
+        { id: 'org-1', name: 'Org', slug: 'org' } as unknown as Organization,
+      ])
+      jwtService.sign.mockResolvedValue('jwt-token')
+      effectivePermissionsResolver.resolve.mockRejectedValue(new Error('role lookup failed'))
+
+      const result = await service.execute({
+        email: 'user@example.com',
+        password: 'password123',
+        organizationId: 'org-1',
+      })
+
+      expect(result.access_token).toBe('jwt-token')
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ permissions: ['direct:keep'] }),
+      )
+      expect(result.user.permissions).toEqual(['direct:keep'])
+    })
+
+    it('解析器返回空时只留直授且登录仍然成功', async () => {
+      const user = {
+        id: 'user-1',
+        email: 'user@example.com',
+        passwordHash: 'hashed-password',
+        name: 'Test User',
+        role: 'inactive-clerk',
+        permissions: ['direct:keep'],
+      }
+      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
+      passwordService.compare.mockResolvedValue(true)
+      organizationRepository.findAll.mockResolvedValue([
+        { id: 'org-1', name: 'Org', slug: 'org' } as unknown as Organization,
+      ])
+      jwtService.sign.mockResolvedValue('jwt-token')
+      effectivePermissionsResolver.resolve.mockResolvedValue([])
+
+      const result = await service.execute({
+        email: 'user@example.com',
+        password: 'password123',
+        organizationId: 'org-1',
+      })
+
+      expect(result.access_token).toBe('jwt-token')
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ permissions: ['direct:keep'] }),
+      )
+      expect(result.user.permissions).toEqual(['direct:keep'])
     })
   })
 })

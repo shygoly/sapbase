@@ -5,13 +5,14 @@ import type { IUserRepository } from '../../domain/repositories'
 import type { IOrganizationRepository } from '../../domain/repositories'
 import type { IPasswordService } from '../../domain/services'
 import type { IJwtService } from '../../domain/services'
+import type { IEffectivePermissionsResolver } from '../../domain/services'
 import type { JwtPayload } from '../../domain/value-objects'
 import {
   USER_REPOSITORY,
   ORGANIZATION_REPOSITORY,
   EVENT_PUBLISHER,
 } from '../../domain/repositories'
-import { JWT_SERVICE, PASSWORD_SERVICE } from '../../domain/services'
+import { JWT_SERVICE, PASSWORD_SERVICE, EFFECTIVE_PERMISSIONS_RESOLVER } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { UserLoggedInEvent } from '../../domain/events'
 
@@ -47,6 +48,8 @@ export class LoginService {
     private readonly jwtService: IJwtService,
     @Inject(EVENT_PUBLISHER)
     private readonly eventPublisher: IEventPublisher,
+    @Inject(EFFECTIVE_PERMISSIONS_RESOLVER)
+    private readonly effectivePermissionsResolver: IEffectivePermissionsResolver,
   ) {}
 
   async execute(command: LoginCommand): Promise<LoginResult> {
@@ -79,12 +82,18 @@ export class LoginService {
       throw new AuthenticationError('User does not have access to the specified organization')
     }
 
+    const permissions = await this.resolvePermissions(
+      user.role,
+      user.permissions || [],
+      selectedOrgId,
+    )
+
     // Build JWT payload
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
-      permissions: user.permissions || [],
+      permissions,
       organizationId: selectedOrgId,
     }
 
@@ -103,7 +112,7 @@ export class LoginService {
         name: user.name,
         email: user.email,
         role: user.role,
-        permissions: user.permissions || [],
+        permissions,
       },
       organizations: organizations.map((org) => ({
         id: org.id,
@@ -111,6 +120,23 @@ export class LoginService {
         slug: org.slug,
       })),
       currentOrganizationId: selectedOrgId,
+    }
+  }
+
+  private async resolvePermissions(
+    role: string,
+    directPermissions: readonly string[],
+    organizationId?: string,
+  ): Promise<string[]> {
+    try {
+      const resolved = await this.effectivePermissionsResolver.resolve({
+        role,
+        directPermissions,
+        organizationId,
+      })
+      return resolved.length > 0 ? resolved : [...directPermissions]
+    } catch {
+      return [...directPermissions]
     }
   }
 }

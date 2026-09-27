@@ -1,18 +1,16 @@
 import { Injectable } from '@nestjs/common'
-import { GetOrganizationService } from '../../../organization-context/application/services/get-organization.service'
 import { OrganizationsService } from '../../../organizations/organizations.service'
 import type { IOrganizationRepository, Organization } from '../../domain/repositories'
 
 @Injectable()
 export class OrganizationRepository implements IOrganizationRepository {
   constructor(
-    private readonly getOrganizationService: GetOrganizationService,
-    private readonly organizationsService: OrganizationsService, // Use old service for findAll
+    private readonly organizationsService: OrganizationsService,
   ) {}
 
   async findById(id: string, userId: string): Promise<Organization | null> {
     try {
-      const organization = await this.getOrganizationService.get(id, userId)
+      const organization = await this.organizationsService.findOne(id, userId)
       return {
         id: organization.id,
         name: organization.name,

@@ -27,6 +27,12 @@ export class RolesService {
     })
   }
 
+  async findByName(name: string, organizationId: string): Promise<Role | null> {
+    return this.rolesRepository.findOne({
+      where: { name, organizationId, status: 'active' },
+    })
+  }
+
   async findOne(id: string, organizationId: string): Promise<Role> {
     const role = await this.rolesRepository.findOne({
       where: { id, organizationId },

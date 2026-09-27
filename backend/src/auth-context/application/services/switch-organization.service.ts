@@ -3,13 +3,14 @@ import { AuthenticationError } from '../../domain/errors'
 import type { IUserRepository } from '../../domain/repositories'
 import type { IOrganizationRepository } from '../../domain/repositories'
 import type { IJwtService } from '../../domain/services'
+import type { IEffectivePermissionsResolver } from '../../domain/services'
 import type { JwtPayload } from '../../domain/value-objects'
 import {
   USER_REPOSITORY,
   ORGANIZATION_REPOSITORY,
   EVENT_PUBLISHER,
 } from '../../domain/repositories'
-import { JWT_SERVICE } from '../../domain/services'
+import { JWT_SERVICE, EFFECTIVE_PERMISSIONS_RESOLVER } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { OrganizationSwitchedEvent } from '../../domain/events'
 
@@ -30,6 +31,8 @@ export class SwitchOrganizationService {
     private readonly jwtService: IJwtService,
     @Inject(EVENT_PUBLISHER)
     private readonly eventPublisher: IEventPublisher,
+    @Inject(EFFECTIVE_PERMISSIONS_RESOLVER)
+    private readonly effectivePermissionsResolver: IEffectivePermissionsResolver,
   ) {}
 
   async execute(command: SwitchOrganizationCommand): Promise<{ access_token: string }> {
@@ -48,12 +51,18 @@ export class SwitchOrganizationService {
       throw new AuthenticationError('User does not have access to the specified organization')
     }
 
+    const permissions = await this.resolvePermissions(
+      user.role,
+      user.permissions || [],
+      command.organizationId,
+    )
+
     // Build JWT payload
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
-      permissions: user.permissions || [],
+      permissions,
       organizationId: command.organizationId,
     }
 
@@ -71,5 +80,22 @@ export class SwitchOrganizationService {
     )
 
     return { access_token }
+  }
+
+  private async resolvePermissions(
+    role: string,
+    directPermissions: readonly string[],
+    organizationId?: string,
+  ): Promise<string[]> {
+    try {
+      const resolved = await this.effectivePermissionsResolver.resolve({
+        role,
+        directPermissions,
+        organizationId,
+      })
+      return resolved.length > 0 ? resolved : [...directPermissions]
+    } catch {
+      return [...directPermissions]
+    }
   }
 }
