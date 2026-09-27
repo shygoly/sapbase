@@ -26,16 +26,38 @@
 
 ## Phase W0: 收敛准备（清点与止血）
 
-- [ ] 清点旧工作流的**全部调用点**：前端（`admin/workflows` 5 组件 + `workflows.api.ts`）、
-      后端内部、定时任务、种子脚本 —— 输出一份清单进本 change
-- [ ] `workflow_definitions / workflow_instances / workflow_history` 导出脚本
-      （JSON 导出 + 行数核对），落到 `backend/scripts/`
-- [ ] 确认旧树的**用户可见能力清单**（定义 CRUD / 启动 / 迁移 / 历史 / 建议迁移 / 状态图 / 自动迁移）
+- [x] 清点旧工作流的**全部调用点**：前端（`admin/workflows` + `workflows.api.ts`）、
+      后端内部、定时任务、种子脚本 —— 清单在 `w0-inventory.md`（`rg` 扫出，附复现命令）
+      实测：前端 8 个文件（1 page + 6 组件 + 1 api 客户端）、后端 7 处、13 条 HTTP 路由、4 张表
+- [x] 旧表导出脚本（JSON 导出 + 行数核对）：`backend/scripts/export-workflow-legacy.ts`
+      —— **四张表**（计划里漏了 `workflow_auto_suggestion_logs`）；只读 SELECT；
+      产出 `manifest.json`（每表的行数 / 字节数 / sha256）+ 表缺失时**退出码 1**（不做"看起来成功"的导出）。
+      证据（2026-09-27，库 `sapbasic`）：`workflow_definitions` 1 行 / `instances` 0 / `history` 0 /
+      `auto_suggestion_logs` 0；重复运行 sha256 一致；对 `postgres` 库（无表）退出码 = 1
+- [x] 确认旧树的**用户可见能力清单**（定义 CRUD / 启动 / 迁移 / 历史 / 建议迁移 / 状态图 / 自动迁移）
+      —— 见 `w0-inventory.md` §6。**关键结论：13 条路由里只有 `transition` 一条在蓝图侧已存在**，
+      W1 是"补 12 条路由的能力"而不是"换个数据源"，这是 W3 之前不许删代码的量化理由
+
+> W0 查实的三条（已写进 `w0-inventory.md`，影响 W1 排期与做法）：
+> ① `workflows.controller.ts` 的两个 Controller **分属两棵树**，其中 `/workflow-instances`
+> 的构造函数**同时注入两棵树各 5 个服务**（`WorkflowInstanceService` 与 `ExecuteTransitionService`
+> 在同一个类里）→ W1 必须**按接口逐个**接线，不能"换数据源"整体切；
+> ② 自动迁移 job 活着的只有一个（`workflow-context`），`workflows/workflow-auto-transition.job.ts`
+> 是**无导入者的死文件** —— 但它带 `@Cron('0 2 * * *')`，接进模块就会让自动迁移跑两遍
+> （W0 初稿写成"双跑期会各跑一次"，已更正）；
+> ③ `ai-module-context/.../workflow.service.ts` 是第二棵树的消费者之一（**不是**唯一出口），
+> W3 摘除前同样要换源。
 
 ## Phase W1: 双跑（新接口补齐旧前端所需）
 
+- [ ] **W1-0 止血**（用户已确认要做）：删掉 `backend/src/workflows/workflow-auto-transition.job.ts`
+      —— 它**没有任何导入者**，但带着 `@Cron('0 2 * * *')`；谁把它接进模块，当天的自动迁移就会跑两遍。
+      同时加一条护栏（单测：全仓 `@Cron('0 2 * * *')` 的自动迁移 job 有且只有一个来源），
+      让"再长出一个 job"不可能悄悄发生
 - [ ] 蓝图接口补：按实例读迁移历史、按实体+状态列实例、建议迁移（只读，不改状态）
 - [ ] **对拍测试**：同一份流程定义下，旧接口与新接口的实例/历史读出一致
+      —— 注意 `/workflow-instances` 那个 Controller 是**混血**（同时注入两棵树的服务），
+      对拍要**按接口**做，不能按 Controller 做
 - [ ] 审计用 `source` 字段区分两条路径（双跑期不分裂审计）
 
 ## Phase W2: 前端切换
