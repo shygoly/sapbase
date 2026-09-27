@@ -38,16 +38,26 @@
       —— 见 `w0-inventory.md` §6。**关键结论：13 条路由里只有 `transition` 一条在蓝图侧已存在**，
       W1 是"补 12 条路由的能力"而不是"换个数据源"，这是 W3 之前不许删代码的量化理由
 
-> W0 新发现的两条（已写进 `w0-inventory.md`，影响 W1 排期）：
-> ① `workflows` 与 `workflow-context` 各有一个**同名、同 `@Cron('0 2 * * *')`** 的
-> auto-transition job —— 双跑期同一实例会被迁移两次，W1 对拍前必须先摘掉一个；
-> ② `ai-module-context/infrastructure/external/workflow.service.ts` 是**第二棵树唯一的功能出口**
-> （给 AI 拼状态上下文），W3 摘除前必须先给它换源。
+> W0 查实的三条（已写进 `w0-inventory.md`，影响 W1 排期与做法）：
+> ① `workflows.controller.ts` 的两个 Controller **分属两棵树**，其中 `/workflow-instances`
+> 的构造函数**同时注入两棵树各 5 个服务**（`WorkflowInstanceService` 与 `ExecuteTransitionService`
+> 在同一个类里）→ W1 必须**按接口逐个**接线，不能"换数据源"整体切；
+> ② 自动迁移 job 活着的只有一个（`workflow-context`），`workflows/workflow-auto-transition.job.ts`
+> 是**无导入者的死文件** —— 但它带 `@Cron('0 2 * * *')`，接进模块就会让自动迁移跑两遍
+> （W0 初稿写成"双跑期会各跑一次"，已更正）；
+> ③ `ai-module-context/.../workflow.service.ts` 是第二棵树的消费者之一（**不是**唯一出口），
+> W3 摘除前同样要换源。
 
 ## Phase W1: 双跑（新接口补齐旧前端所需）
 
+- [ ] **W1-0 止血**（用户已确认要做）：删掉 `backend/src/workflows/workflow-auto-transition.job.ts`
+      —— 它**没有任何导入者**，但带着 `@Cron('0 2 * * *')`；谁把它接进模块，当天的自动迁移就会跑两遍。
+      同时加一条护栏（单测：全仓 `@Cron('0 2 * * *')` 的自动迁移 job 有且只有一个来源），
+      让"再长出一个 job"不可能悄悄发生
 - [ ] 蓝图接口补：按实例读迁移历史、按实体+状态列实例、建议迁移（只读，不改状态）
 - [ ] **对拍测试**：同一份流程定义下，旧接口与新接口的实例/历史读出一致
+      —— 注意 `/workflow-instances` 那个 Controller 是**混血**（同时注入两棵树的服务），
+      对拍要**按接口**做，不能按 Controller 做
 - [ ] 审计用 `source` 字段区分两条路径（双跑期不分裂审计）
 
 ## Phase W2: 前端切换
