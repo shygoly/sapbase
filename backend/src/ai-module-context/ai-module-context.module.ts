@@ -17,20 +17,17 @@ import { PublishModuleService } from './application/services/publish-module.serv
 import { GeneratePatchService } from './application/services/generate-patch.service'
 import { SubmitReviewService } from './application/services/submit-review.service'
 import { GetModuleService } from './application/services/get-module.service'
-import { AI_MODEL_SERVICE, MODULE_REGISTRY_SERVICE, WORKFLOW_SERVICE } from './domain/services'
+import { AI_MODEL_SERVICE, MODULE_REGISTRY_SERVICE } from './domain/services'
 import { AIModelService } from './infrastructure/external/ai-model.service'
 import { ModuleRegistryServiceAdapter } from './infrastructure/external/module-registry.service'
-import { WorkflowService } from './infrastructure/external/workflow.service'
 import { AIModelsModule } from '../ai-models/ai-models.module'
 import { ModuleRegistryModule } from '../module-registry/module-registry.module'
-import { WorkflowContextModule } from '../workflow-context/workflow-context.module'
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([AIModule, AIModuleTest, AIModuleReview]),
     AIModelsModule,
     ModuleRegistryModule,
-    WorkflowContextModule,
   ],
   providers: [
     {
@@ -53,14 +50,9 @@ import { WorkflowContextModule } from '../workflow-context/workflow-context.modu
       provide: MODULE_REGISTRY_SERVICE,
       useClass: ModuleRegistryServiceAdapter,
     },
-    {
-      provide: WORKFLOW_SERVICE,
-      useClass: WorkflowService,
-    },
     AIModuleRepository,
     AIModelService,
     ModuleRegistryServiceAdapter,
-    WorkflowService,
     CreateModuleService,
     PublishModuleService,
     GeneratePatchService,
@@ -75,7 +67,6 @@ import { WorkflowContextModule } from '../workflow-context/workflow-context.modu
     GetModuleService,
     AI_MODEL_SERVICE,
     MODULE_REGISTRY_SERVICE,
-    WORKFLOW_SERVICE,
     EVENT_PUBLISHER,
   ],
 })

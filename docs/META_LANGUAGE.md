@@ -1,7 +1,7 @@
 # 项目元语（Meta Language）
 
-> 版本：1.7
-> 日期：2026-09-26
+> 版本：1.12
+> 日期：2026-09-27
 > 定位：本文件是 sapbase 的**基础定义层** —— 元模型、协议原语、执行原语、工程约定与术语真源。
 > 与设计文档的分工：设计文档回答"**要做什么**"，本文件回答"**用什么词、按什么不变量做、真源在哪**"。
 > 任何新增设计、代码或文档，都应先在本文件的词汇与不变量里找到落点；找不到，说明元语需要扩展（走变更记录）。
@@ -33,8 +33,8 @@ $$
 | $O$ | Object 实体实例 | 必需 | 后端实体（`backend/src/**/*.entity.ts`） |
 | $R$ | Relation 对象关系 | 必需 | `ObjectSchema.relations` |
 | $\Phi$ | Constraint / Policy / Behavior | 必需 | `FieldDefinition.validation`、`backend/src/permissions`、规则（待统一） |
-| $\Sigma$ | State 状态机 | 渐进 | `backend/src/workflows/`、Patch DSL 的 `state` scope |
-| $\Lambda$ | Event 领域事件 | 渐进 | `backend/src/common/events/` |
+| $\Sigma$ | State 状态机 | 渐进 | 蓝图 `flows.json` + `semantic-runtime` 记录迁移；旧 `workflow_*` 四表只读归档（见 [`protocols/workflow-consolidation.md`](./protocols/workflow-consolidation.md)） |
+| $\Lambda$ | Event 领域事件 | 渐进 | 跨进程：outbox（见 [`protocols/outbox.md`](./protocols/outbox.md)）；进程内：`backend/src/common/events/` |
 | $\Gamma$ | Capability 能力 | 渐进 | `backend/src/module-registry/module-capability.entity.ts`、原子契约（提案中） |
 | $\Tau$ | Time 生效时间与生命周期 | 渐进 | 各实体的 `createdAt/updatedAt`；生命周期语义待补 |
 | $V$ | Version 版本与迁移 | 渐进 | `ObjectSchema.version`、`backend/src/migrations/` |
@@ -246,7 +246,7 @@ workspaces：shared-schemas / speckit / backend / wasm-modules
 | 后端 Base Object 模式 | [`backend/docs/architecture/base-object-pattern.md`](../backend/docs/architecture/base-object-pattern.md) | 实体基类约定 |
 | AI 模块的数据与安全 | [`backend/docs/ai-modules-database-and-security.md`](../backend/docs/ai-modules-database-and-security.md) | — |
 | 后端开发指南 | [`backend/docs/developer-guide.md`](../backend/docs/developer-guide.md) | — |
-| 工作流引擎 | [`backend/src/workflows/README.md`](../backend/src/workflows/README.md) | 代码就近文档 |
+| 工作流引擎（已退场） | [`protocols/workflow-consolidation.md`](./protocols/workflow-consolidation.md) | 旧树已删；能力去向与归档在此登记 |
 | 前端运行时总体设计（历史） | [`通用_erp_前端运行时_speckit_v_1 (1).md`](<../通用_erp_前端运行时_speckit_v_1 (1).md>) | 根目录；理念来源 |
 | 当前 vs 目标技术栈差距 | [`TECH_STACK_GAP.md`](./TECH_STACK_GAP.md) | — |
 | 前端依赖实际版本 | [`TECH_STACK_v2.md`](./TECH_STACK_v2.md) | `speckit/README.md` 是上游模板原文，不可作依据 |
@@ -256,6 +256,11 @@ workspaces：shared-schemas / speckit / backend / wasm-modules
 | Wasm 执行引擎（sidecar） | [`crates/wasm-host/`](../crates/wasm-host/) + openspec change `add-wasmtime-host` | V8 实现见 `backend/src/atomic-runtime/wasm-instance-pool.ts` |
 | 蓝图交付 / 授权 / 经验策略 | [`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md) | 分层、编译期判据、验签链、开发豁免 |
 | 蓝图 IR | [`protocols/blueprint-ir.md`](./protocols/blueprint-ir.md) | 结构 / 文本双形态 |
+| 记录迁移历史 / 建议迁移 / `metadata.source` | [`protocols/record-transition.md`](./protocols/record-transition.md) | 读语义、只读契约、夜间建议生产者、双跑期审计来源 |
+| 旧工作流退场 / 只读归档 | [`protocols/workflow-consolidation.md`](./protocols/workflow-consolidation.md) | 410 墓碑、逐条退场理由、四表归档、净损失与回归时机 |
+| Outbox（跨进程事件） | [`protocols/outbox.md`](./protocols/outbox.md) | 事件形状 / 幂等键 / 投递语义 / 重试；进程内总线不走此协议 |
+| 最小可观测（结构化日志） | [`protocols/observability.md`](./protocols/observability.md) | 不做 OTel/Prometheus；N3 只做结构化日志 + 投递失败可定位 |
+| 通知 / 审批待办 | [`protocols/notifications.md`](./protocols/notifications.md) | 持久化通知、两层去重、角色→用户、`GET /inbox` |
 | 变更提案与任务清单 | `openspec/changes/<change-id>/` | 按 OpenSpec 流程 |
 | Git 工作流 | [`openspec/GIT_WORKFLOW.md`](../openspec/GIT_WORKFLOW.md) | — |
 | 项目上下文（AI 助手入口） | [`openspec/project.md`](../openspec/project.md) | — |
@@ -338,6 +343,11 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.12 | 2026-09-27 | §5.2「建议迁移」真源补夜间生产者。见 `protocols/record-transition.md` §2.1 |
+| 1.11 | 2026-09-26 | §5.2 补最小可观测真源。见 `protocols/observability.md`（明确不做 OTel/Prometheus） |
+| 1.10 | 2026-09-26 | §5.2 补通知 / 审批待办真源。见 `protocols/notifications.md` |
+| 1.9 | 2026-09-26 | §5.2 补 Outbox 真源；$\Lambda$ 落点改为跨进程 outbox + 进程内 EventBus。见 `protocols/outbox.md` |
+| 1.8 | 2026-09-26 | §5.2 补「旧工作流退场 / 只读归档」真源；$\Sigma$ 落点改为蓝图 flows + 记录迁移，旧 `workflow_*` 四表只读归档。见 `protocols/workflow-consolidation.md` |
 | 1.7 | 2026-09-26 | 协议 3 / §3.8.1 / 术语表补「主从结构 / 唯一性 / 金额精度」三条语义层落点，真源指向 `schemas/blueprint-semantic.schema.json`、`docs/protocols/blueprint-delivery.md`、`backend/src/blueprint/money.ts` |
 | 1.6 | 2026-09-25 | 协议 3 补规则 / 经验策略 / 授权三层；协议 5 推进到 🟡（蓝图 Ed25519 验签落地，加密仍待）。§3.8 装载链改为七道关。术语表补 Experience Policy（与 Interaction Surface 配对）与 Blueprint License。交付判据见 `protocols/blueprint-delivery.md` |
 | 1.5 | 2026-09-25 | 新增 §3.5.1「插件沙箱（与原子同一套能力模型）」：边界 / 声明 / 判定 / 失败 / 审计 / 静态检查六个维度逐项对照，并写明已知边界（Node 权限模型不覆盖出网） |

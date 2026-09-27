@@ -5,57 +5,66 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import {
-  WorkflowInstance,
-  WorkflowHistory,
+  RecordEnvelope,
+  TransitionHistoryEntry,
   SuggestedTransition,
-} from '@/lib/api/workflows.api'
-import { workflowsApi } from '@/lib/api/workflows.api'
+  blueprintsApi,
+} from '@/lib/api/blueprints.api'
 import { WorkflowTransitionButtons } from './workflow-transition-buttons'
 import { WorkflowHistoryTimeline } from './workflow-history-timeline'
 import { Button } from '@/components/ui/button'
-import { Clock, User, Package, Sparkles } from 'lucide-react'
+import { Clock, Package, Sparkles } from 'lucide-react'
+import { useTranslation } from '@/i18n'
 
 interface WorkflowInstanceViewerProps {
-  instance: WorkflowInstance
+  packageId: string
+  entity: string
+  record: RecordEnvelope
   onClose?: () => void
 }
 
-export function WorkflowInstanceViewer({ instance, onClose: _onClose }: WorkflowInstanceViewerProps) {
+export function WorkflowInstanceViewer({
+  packageId,
+  entity,
+  record,
+  onClose: _onClose,
+}: WorkflowInstanceViewerProps) {
   void _onClose
-  const [history, setHistory] = useState<WorkflowHistory[]>([])
+  const t = useTranslation()
+  const [history, setHistory] = useState<TransitionHistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentInstance, setCurrentInstance] = useState<WorkflowInstance>(instance)
+  const [current, setCurrent] = useState<RecordEnvelope>(record)
   const [suggestions, setSuggestions] = useState<SuggestedTransition[]>([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
 
   useEffect(() => {
     loadHistory()
-    loadInstanceDetails()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run when instance.id changes
-  }, [instance.id])
+    loadRecord()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 按记录 id 重载
+  }, [packageId, entity, record.id])
 
   const loadHistory = async () => {
     try {
-      const data = await workflowsApi.getHistory(instance.id)
+      const data = await blueprintsApi.getHistory(packageId, entity, record.id)
       setHistory(data)
-    } catch (error) {
-      // error already surfaced via UI
+    } catch {
+      // 错误已由 toast / 空态呈现
     }
   }
 
-  const loadInstanceDetails = async () => {
+  const loadRecord = async () => {
     try {
-      const data = await workflowsApi.getInstance(instance.id)
-      setCurrentInstance(data)
-    } catch (error) {
-      // error already surfaced via UI
+      const data = await blueprintsApi.getRecord(packageId, entity, record.id)
+      setCurrent(data)
+    } catch {
+      // 错误已由 toast / 空态呈现
     } finally {
       setLoading(false)
     }
   }
 
   const handleTransitionSuccess = () => {
-    loadInstanceDetails()
+    loadRecord()
     loadHistory()
     setSuggestions([])
   }
@@ -64,107 +73,72 @@ export function WorkflowInstanceViewer({ instance, onClose: _onClose }: Workflow
     setSuggestionsLoading(true)
     setSuggestions([])
     try {
-      const data = await workflowsApi.getSuggestedTransitions(
-        instance.id,
-        currentInstance.context,
-      )
+      const data = await blueprintsApi.getSuggestedTransitions(packageId, entity, record.id)
       setSuggestions(data)
-    } catch (error) {
-      // error already surfaced via UI
+    } catch {
+      // 错误已由 toast / 空态呈现
     } finally {
       setSuggestionsLoading(false)
     }
   }
 
-  const handleSuggestedTransition = async (toState: string) => {
-    try {
-      await workflowsApi.executeTransition(instance.id, { toState })
-      handleTransitionSuccess()
-    } catch (error) {
-      // error already surfaced via UI
-    }
-  }
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      running: 'default',
-      completed: 'secondary',
-      failed: 'destructive',
-      cancelled: 'outline',
-    }
-    return <Badge variant={variants[status] || 'outline'}>{status}</Badge>
-  }
-
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>
+    return <div className="text-center py-8">{t('workflows.loading')}</div>
   }
 
   return (
     <div className="space-y-6">
-      {/* Instance Info */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Instance Information</CardTitle>
-              <CardDescription>Workflow instance details and current status</CardDescription>
+              <CardTitle>{t('workflows.recordDetails')}</CardTitle>
+              <CardDescription>{t('workflows.recordDetailsHint')}</CardDescription>
             </div>
-            {getStatusBadge(currentInstance.status)}
+            {current.state && <Badge variant="outline">{current.state}</Badge>}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Entity Type</div>
+              <div className="text-sm font-medium text-muted-foreground">{t('workflows.entity')}</div>
               <div className="flex items-center gap-2 mt-1">
                 <Package className="h-4 w-4" />
-                <span className="font-medium">{currentInstance.entityType}</span>
+                <span className="font-medium">{current.entity}</span>
               </div>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Entity ID</div>
-              <div className="font-mono text-sm mt-1">{currentInstance.entityId}</div>
+              <div className="text-sm font-medium text-muted-foreground">{t('workflows.recordId')}</div>
+              <div className="font-mono text-sm mt-1">{current.id}</div>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Current State</div>
+              <div className="text-sm font-medium text-muted-foreground">{t('workflows.currentState')}</div>
               <Badge variant="outline" className="mt-1">
-                {currentInstance.currentState}
+                {current.state ?? '-'}
               </Badge>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Started At</div>
-              <div className="flex items-center gap-2 mt-1">
-                <Clock className="h-4 w-4" />
-                <span>{new Date(currentInstance.startedAt).toLocaleString()}</span>
-              </div>
+              <div className="text-sm font-medium text-muted-foreground">{t('workflows.version')}</div>
+              <div className="mt-1">{current.version}</div>
             </div>
-            {currentInstance.completedAt && (
+            {current.createdAt && (
               <div>
-                <div className="text-sm font-medium text-muted-foreground">Completed At</div>
+                <div className="text-sm font-medium text-muted-foreground">{t('workflows.startedAt')}</div>
                 <div className="flex items-center gap-2 mt-1">
                   <Clock className="h-4 w-4" />
-                  <span>{new Date(currentInstance.completedAt).toLocaleString()}</span>
-                </div>
-              </div>
-            )}
-            {currentInstance.startedById && (
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Started By</div>
-                <div className="flex items-center gap-2 mt-1">
-                  <User className="h-4 w-4" />
-                  <span>{currentInstance.startedById}</span>
+                  <span>{new Date(current.createdAt).toLocaleString()}</span>
                 </div>
               </div>
             )}
           </div>
 
-          {currentInstance.context && Object.keys(currentInstance.context).length > 0 && (
+          {current.data && Object.keys(current.data).length > 0 && (
             <>
               <Separator />
               <div>
-                <div className="text-sm font-medium text-muted-foreground mb-2">Context</div>
+                <div className="text-sm font-medium text-muted-foreground mb-2">{t('workflows.recordData')}</div>
                 <pre className="text-xs bg-muted p-3 rounded-lg overflow-auto">
-                  {JSON.stringify(currentInstance.context, null, 2)}
+                  {JSON.stringify(current.data, null, 2)}
                 </pre>
               </div>
             </>
@@ -172,77 +146,40 @@ export function WorkflowInstanceViewer({ instance, onClose: _onClose }: Workflow
         </CardContent>
       </Card>
 
-      {/* AI suggested next steps */}
-      {currentInstance.status === 'running' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              AI 推荐
-            </CardTitle>
-            <CardDescription>
-              Get AI-recommended next transitions for this instance
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={loadSuggestions}
-              disabled={suggestionsLoading}
-            >
-              {suggestionsLoading ? 'Loading…' : 'Get AI suggestions'}
-            </Button>
-            {suggestions.length > 0 && (
-              <ul className="space-y-2">
-                {suggestions.map((s) => (
-                  <li
-                    key={s.toState}
-                    className="flex items-center justify-between rounded-lg border p-3"
-                  >
-                    <div>
-                      <span className="font-medium">{s.toState}</span>
-                      {s.reason && (
-                        <p className="text-sm text-muted-foreground mt-1">{s.reason}</p>
-                      )}
-                    </div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleSuggestedTransition(s.toState)}
-                    >
-                      Go
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Available Transitions */}
-      {currentInstance.status === 'running' && currentInstance.availableTransitions && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Transitions</CardTitle>
-            <CardDescription>Execute state transitions for this workflow instance</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <WorkflowTransitionButtons
-              instance={currentInstance}
-              availableTransitions={currentInstance.availableTransitions}
-              onTransition={handleTransitionSuccess}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* History Timeline */}
       <Card>
         <CardHeader>
-          <CardTitle>Execution History</CardTitle>
-          <CardDescription>Chronological record of all workflow transitions</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            {t('workflows.suggested')}
+          </CardTitle>
+          <CardDescription>{t('workflows.suggestedHint')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadSuggestions}
+            disabled={suggestionsLoading}
+          >
+            {suggestionsLoading ? t('workflows.loading') : t('workflows.getSuggestions')}
+          </Button>
+          {suggestions.length > 0 && (
+            <WorkflowTransitionButtons
+              packageId={packageId}
+              entity={entity}
+              recordId={current.id}
+              version={current.version}
+              suggestions={suggestions}
+              onTransition={handleTransitionSuccess}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('workflows.history')}</CardTitle>
+          <CardDescription>{t('workflows.historyHint')}</CardDescription>
         </CardHeader>
         <CardContent>
           <WorkflowHistoryTimeline history={history} />

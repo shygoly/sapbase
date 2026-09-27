@@ -92,6 +92,17 @@
    报表/看板、单据输出（PDF/Excel）、出站集成、数据范围、可观测性栈、部署形态、
    多币种汇率/时区、市场结算、搜索/图/向量、移动端。每项都写明**触发条件**，
    而不是"以后再说"。
+6. **止血**：无导入者的 `workflows/workflow-auto-transition.job.ts` 随旧树删除。
+   护栏改为源码扫描：`backend/src` 里 `@Cron('0 2 * * *')` 恰好一处，且该类只出现在
+   一个模块的 `providers` 里。
+7. **`start` / `cancel` 走语义对齐，不新增动作**：创建记录即启动；取消是迁到模板声明的
+   `final` 状态。前端 `workflow-instance-list` 已按此实现。
+8. **保留建议迁移，并换上夜间生产者**（2026-09-27 确认「cron 需要」）：
+   按需接口 `GET /blueprints/:id/records/:entity/:recordId/suggested-transitions` 保留。
+   每天 02:00 的 cron 调用同一个 `listSuggestedTransitions`，把第一条建议追加进
+   `blueprint_suggestion_logs`，不改记录状态。旧 `workflow_auto_suggestion_logs`
+   仍只读归档（外键指向已归档的 `workflow_instances`）。准入是语义实体上的可选
+   `autoSuggest`（缺省关闭）。
 
 ## Out of Scope
 

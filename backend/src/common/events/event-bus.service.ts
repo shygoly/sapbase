@@ -78,6 +78,24 @@ export class EventBusService implements IEventPublisher, OnModuleInit {
   }
 
   /**
+   * 按 topic 列出已注册订阅者（outbox 投递器用；不含 `*`）。
+   */
+  listSubscribers(topic: string): Array<IEventHandler<unknown>> {
+    return [...(this.handlers.get(topic) || [])]
+  }
+
+  /**
+   * 按 topic 同步调用订阅者。失败抛出（与 publishSync 吞错不同）。
+   * 只匹配精确 topic，不调用 subscribeAll 的通配订阅。
+   */
+  async dispatchToSubscribers(topic: string, payload: unknown): Promise<void> {
+    const handlers = this.listSubscribers(topic)
+    for (const handler of handlers) {
+      await handler.handle({ topic, payload })
+    }
+  }
+
+  /**
    * Unsubscribe a handler from an event type.
    */
   unsubscribe<T>(eventName: string, handler: IEventHandler<T>): void {

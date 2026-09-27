@@ -29,6 +29,8 @@ import { unpackBlueprint } from '../src/blueprint/packager'
 import { SemanticRuntimeModule } from '../src/semantic-runtime/semantic-runtime.module'
 import { BLUEPRINT_APPROVALS_DDL } from '../src/semantic-runtime/blueprint-approval.ddl'
 import { BLUEPRINT_DOC_COUNTERS_DDL } from '../src/semantic-runtime/blueprint-doc-counter.ddl'
+import { OUTBOX_DDL } from '../src/outbox/outbox.ddl'
+import { NOTIFICATIONS_DDL } from '../src/notifications/notification.ddl'
 import { BLUEPRINT_JOURNAL_ENTRIES_DDL } from '../src/semantic-runtime/blueprint-journal-entry.ddl'
 import { BLUEPRINT_RECORDS_DDL } from '../src/semantic-runtime/blueprint-record.ddl'
 import { JwtAuthGuard } from '../src/auth/jwt-auth.guard'
@@ -153,6 +155,12 @@ describe('最小汽配模板交付（e2e）', () => {
         await dataSource.query(statement)
       }
       for (const statement of BLUEPRINT_JOURNAL_ENTRIES_DDL) {
+        await dataSource.query(statement)
+      }
+      for (const statement of OUTBOX_DDL) {
+        await dataSource.query(statement)
+      }
+      for (const statement of NOTIFICATIONS_DDL) {
         await dataSource.query(statement)
       }
     } catch (error) {

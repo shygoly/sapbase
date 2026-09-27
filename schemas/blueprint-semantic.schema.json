@@ -15,6 +15,10 @@
         "required": ["name", "fields", "states"],
         "properties": {
           "name": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+          "autoSuggest": {
+            "type": "boolean",
+            "description": "夜间建议生产者的准入。缺省关闭：未声明的实体不写建议日志。"
+          },
           "fields": {
             "type": "array",
             "items": {

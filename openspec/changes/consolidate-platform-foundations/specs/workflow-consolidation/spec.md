@@ -48,3 +48,25 @@ MUST NOT 为 AI 产物另建一条协议或交付路径。
 **When** 转换
 **Then** 产物 SHALL NOT 含 `rules.json`
 **And** MUST NOT 生成占位规则
+
+### Requirement: Nightly Suggestion Producer
+
+平台 MUST 在每天 02:00 为声明了 `autoSuggest` 的非终态蓝图记录产生建议。
+建议 MUST 来自与按需接口相同的组装（`listSuggestedTransitions`）。
+生产者 MUST 只追加建议日志，MUST NOT 改变记录状态、版本或审计行。
+未声明 `autoSuggest` 的实体 MUST NOT 产生日志。
+`@Cron('0 2 * * *')` 在 `backend/src` MUST 恰好出现一处，且该类 MUST 只注册进一个模块。
+
+#### Scenario: 标了准入的非终态记录写入一条建议
+
+**Given** 实体声明 `autoSuggest` 且记录不在终态
+**When** 夜间任务运行且存在至少一条合法建议
+**Then** SHALL 追加一行建议日志，目标状态为建议列表的第一条
+**And** 记录的 state 与 version MUST 不变
+**And** MUST NOT 调用迁移入口
+
+#### Scenario: 未准入、已终态或没有建议
+
+**Given** 实体未声明 `autoSuggest`，或记录已在终态，或建议列表为空
+**When** 夜间任务运行
+**Then** SHALL NOT 写入建议日志

@@ -12,7 +12,7 @@
 | 开发者指南 | [`docs/developer-guide.md`](./docs/developer-guide.md) |
 | 实体基类约定（Base Object） | [`docs/architecture/base-object-pattern.md`](./docs/architecture/base-object-pattern.md) |
 | AI 模块的数据与安全 | [`docs/ai-modules-database-and-security.md`](./docs/ai-modules-database-and-security.md) |
-| 工作流引擎 | [`src/workflows/README.md`](./src/workflows/README.md) |
+| 工作流引擎（已退场） | [`../docs/protocols/workflow-consolidation.md`](../docs/protocols/workflow-consolidation.md) |
 | API 文档 / 测试覆盖 / WebSocket / 文件上传 / Redis | [`API_DOCUMENTATION.md`](./API_DOCUMENTATION.md)、[`TEST_COVERAGE.md`](./TEST_COVERAGE.md)、[`WEBSOCKET.md`](./WEBSOCKET.md)、[`FILE_UPLOAD_SETUP.md`](./FILE_UPLOAD_SETUP.md)、[`REDIS_INTEGRATION.md`](./REDIS_INTEGRATION.md) |
 
 ## 本目录约定

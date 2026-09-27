@@ -18,6 +18,8 @@ import { BLUEPRINT_APPROVALS_DDL } from '../src/semantic-runtime/blueprint-appro
 import { BLUEPRINT_DOC_COUNTERS_DDL } from '../src/semantic-runtime/blueprint-doc-counter.ddl'
 import { BLUEPRINT_JOURNAL_ENTRIES_DDL } from '../src/semantic-runtime/blueprint-journal-entry.ddl'
 import { BLUEPRINT_RECORDS_DDL } from '../src/semantic-runtime/blueprint-record.ddl'
+import { OUTBOX_DDL } from '../src/outbox/outbox.ddl'
+import { NOTIFICATIONS_DDL } from '../src/notifications/notification.ddl'
 import { JwtAuthGuard } from '../src/auth/jwt-auth.guard'
 
 const ORGANIZATION_ID = '88888888-8888-8888-8888-888888888888'
@@ -108,6 +110,8 @@ describe('判定执行（P2 e2e）', () => {
       for (const statement of BLUEPRINT_DOC_COUNTERS_DDL) await dataSource.query(statement)
       for (const statement of BLUEPRINT_APPROVALS_DDL) await dataSource.query(statement)
       for (const statement of BLUEPRINT_JOURNAL_ENTRIES_DDL) await dataSource.query(statement)
+      for (const statement of OUTBOX_DDL) await dataSource.query(statement)
+      for (const statement of NOTIFICATIONS_DDL) await dataSource.query(statement)
     } catch (error) {
       available = false
       console.warn(`跳过 e2e：本地库不可用（${(error as Error).message}）`)
@@ -163,6 +167,15 @@ describe('判定执行（P2 e2e）', () => {
         ORGANIZATION_ID,
       ])
       await dataSource.query('DELETE FROM audit_logs WHERE "organizationId" = $1', [ORGANIZATION_ID])
+      await dataSource
+        .query(
+          `DELETE FROM outbox_deliveries WHERE "eventId" IN (SELECT id FROM outbox_events WHERE "organizationId" = $1)`,
+          [ORGANIZATION_ID],
+        )
+        .catch(() => undefined)
+      await dataSource
+        .query(`DELETE FROM outbox_events WHERE "organizationId" = $1`, [ORGANIZATION_ID])
+        .catch(() => undefined)
       await dataSource.query('DELETE FROM organizations WHERE id = $1', [ORGANIZATION_ID])
     }
     await app?.close()

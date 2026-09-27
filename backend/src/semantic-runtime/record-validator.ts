@@ -40,6 +40,8 @@ export interface SemanticEntity {
   parent?: { entity: string; field: string }
   states?: Array<{ name: string; initial?: boolean; final?: boolean }>
   transitions?: Array<{ from: string; to: string; rule?: string }>
+  /** 夜间建议生产者的准入。缺省关闭。 */
+  autoSuggest?: boolean
   numbering?: SemanticNumberingDecl
   rollups?: Array<{ field: string; over: string; of: string; fn: 'sum' | 'count' | 'max' | 'min' }>
   ownership?: { field: string; readAllPermission: string }

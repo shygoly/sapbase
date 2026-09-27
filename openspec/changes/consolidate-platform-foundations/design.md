@@ -24,7 +24,7 @@ semantic-runtime（留）  blueprint_records = 蓝图实例；状态字段与流
 | 迁移（`/workflows/:id/transition`） | `POST .../records/:entity/:id/transition` | 已存在；非法迁移拒绝 |
 | 迁移历史（`/workflows/:id/history`） | 迁移审计 + 历史读回接口 | 审计可查，且能按实例读回序列 |
 | AI 建议迁移（`suggested-transitions`） | 保留为**建议**（不改状态） | 建议与执行分离，建议不落库状态 |
-| 自动迁移（`@Cron` job） | 平台调度 + 蓝图条件 | 定时任务只调用同一迁移入口 |
+| 夜间建议（`@Cron`） | 平台调度 + 同一条建议入口 | 只调用 `listSuggestedTransitions`，写入 `blueprint_suggestion_logs`，不改状态 |
 | 状态图 / 时间线（前端） | chat-first 交互面 + 现有只读接口 | 见 §1.3 |
 
 ### 1.3 收敛顺序（先双跑，再删）

@@ -103,6 +103,29 @@ describe('EventBusService', () => {
     })
   })
 
+  describe('dispatchToSubscribers', () => {
+    it('按 topic 精确调用，失败抛出，不碰通配订阅', async () => {
+      const named = new TestEventHandler()
+      const wildcard = new TestEventHandler()
+      service.subscribe('blueprint.record.transitioned', named)
+      service.subscribeAll(wildcard)
+
+      await service.dispatchToSubscribers('blueprint.record.transitioned', { recordId: 'r1' })
+      expect(named.handledEvents).toHaveLength(1)
+      expect(wildcard.handledEvents).toHaveLength(0)
+
+      const failing: IEventHandler<unknown> = {
+        handle: async () => {
+          throw new Error('subscriber-boom')
+        },
+      }
+      service.subscribe('blueprint.record.transitioned', failing)
+      await expect(
+        service.dispatchToSubscribers('blueprint.record.transitioned', { recordId: 'r1' }),
+      ).rejects.toThrow('subscriber-boom')
+    })
+  })
+
   describe('getStats', () => {
     it('should return statistics', () => {
       const stats = service.getStats()

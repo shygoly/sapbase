@@ -10,8 +10,6 @@ import { AIModelsService } from '../ai-models/ai-models.service'
 import { ModuleRegistryService } from '../module-registry/module-registry.service'
 import { ModuleType, ModuleStatus } from '../module-registry/module-registry.entity'
 import { CapabilityType } from '../module-registry/module-capability.entity'
-import { WorkflowConverterService } from '../workflows/workflow-converter.service'
-import { WorkflowInstanceService } from '../workflows/workflow-instance.service'
 import { getDefinitionStepPrompt } from './definition-step-prompts'
 import { DEFINITION_STEP_IDS } from './definition-step-prompts'
 import { normalizeStep3ForSave } from './step3-normalizer'
@@ -30,8 +28,6 @@ export class AIModulesService {
     private aiModuleDefinitionRepository: Repository<AIModuleDefinition>,
     private aiModelsService: AIModelsService,
     private moduleRegistryService: ModuleRegistryService,
-    private workflowConverterService: WorkflowConverterService,
-    private workflowInstanceService: WorkflowInstanceService,
   ) {}
 
   async findAll(organizationId: string, status?: AIModuleStatus): Promise<AIModule[]> {
@@ -90,17 +86,10 @@ export class AIModulesService {
       throw new BadRequestException('No active AI model configured')
     }
 
-    let userContent = `Generate a Patch DSL JSON for: ${naturalLanguagePrompt}`
-    if (entityType && entityId) {
-      const workflowContext = await this.buildWorkflowStateContext(
-        entityType,
-        entityId,
-        organizationId,
-      )
-      if (workflowContext) {
-        userContent += `\n\n${workflowContext}`
-      }
-    }
+    // 旧工作流状态上下文已随桥退场；entityType/entityId 保留签名兼容，回归时机见 workflow-consolidation.md
+    void entityType
+    void entityId
+    const userContent = `Generate a Patch DSL JSON for: ${naturalLanguagePrompt}`
 
     try {
       // Generate patch using AI model
@@ -147,28 +136,6 @@ export class AIModulesService {
         `Failed to generate patch: ${error instanceof Error ? error.message : 'Unknown error'}`,
       )
     }
-  }
-
-  /**
-   * Build a short workflow state context string for entity-related AI calls (Phase 7).
-   */
-  private async buildWorkflowStateContext(
-    entityType: string,
-    entityId: string,
-    organizationId: string,
-  ): Promise<string | null> {
-    const instance = await this.workflowInstanceService.findByEntity(
-      entityType,
-      entityId,
-      organizationId,
-    )
-    if (!instance?.workflowDefinition) return null
-    const wf = instance.workflowDefinition
-    const nextStates = (wf.transitions || [])
-      .filter((t: any) => t.from === instance.currentState)
-      .map((t: any) => t.to)
-    const nextStr = nextStates.length ? nextStates.join(', ') : 'none'
-    return `Current workflow state: ${instance.currentState}. Workflow: ${wf.name}. Possible next states: ${nextStr}.`
   }
 
   /**
@@ -708,75 +675,13 @@ export class AIModulesService {
     module.publishedAt = new Date()
 
     // Register module in module registry
-    const registryEntry = await this.registerModule(module)
-
-    // Auto-create workflow from step3_stateFlow if present
-    const definition = await this.getDefinition(moduleId)
-    if (definition?.step3_stateFlow) {
-      try {
-        // Extract entity type from step1_objectModel or use module name
-        const entityType = this.extractEntityType(definition.step1_objectModel) || module.name
-
-        // Create or update workflow
-        const existingWorkflow = await this.workflowConverterService['workflowDefinitionService']
-          .findByEntityType(entityType, organizationId)
-          .catch(() => null)
-
-        let workflow
-        if (existingWorkflow) {
-          workflow = await this.workflowConverterService.updateWorkflowFromStateFlow(
-            existingWorkflow.id,
-            definition.step3_stateFlow,
-            entityType,
-            module.name,
-            organizationId,
-          )
-        } else {
-          workflow = await this.workflowConverterService.createWorkflowFromStateFlow(
-            definition.step3_stateFlow,
-            entityType,
-            module.name,
-            organizationId,
-          )
-        }
-
-        // Update module registry metadata with workflow ID
-        if (registryEntry) {
-          await this.moduleRegistryService.update(registryEntry.id, {
-            metadata: {
-              ...registryEntry.metadata,
-              workflowId: workflow.id,
-            },
-          }, organizationId)
-        }
-      } catch (error) {
-        // Log error but don't fail publish
-        console.error('Failed to create workflow from stateFlow:', error)
-      }
-    }
+    await this.registerModule(module)
 
     // Publish pipeline (Validator → Dry Run → Apply → Versioned Save) runs in frontend
     // when patch is applied via PatchManager.applyPatch(); patchContent is normalized
     // with patchId, timestamp, actor for protocol compatibility.
 
     return this.aiModuleRepository.save(module)
-  }
-
-  private extractEntityType(objectModel: Record<string, any> | null): string | null {
-    if (!objectModel || !objectModel.entities) {
-      return null
-    }
-
-    // Get first entity name from objectModel
-    const entities = objectModel.entities
-    if (Array.isArray(entities) && entities.length > 0) {
-      return entities[0].name || entities[0].entityName
-    } else if (typeof entities === 'object') {
-      const firstKey = Object.keys(entities)[0]
-      return firstKey || null
-    }
-
-    return null
   }
 
   private async registerModule(module: AIModule): Promise<import('../module-registry/module-registry.entity').ModuleRegistry> {

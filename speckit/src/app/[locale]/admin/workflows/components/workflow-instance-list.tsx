@@ -14,7 +14,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Eye, X } from 'lucide-react'
-import { workflowsApi, WorkflowInstance } from '@/lib/api/workflows.api'
+import {
+  blueprintsApi,
+  RecordEnvelope,
+  SemanticEntity,
+} from '@/lib/api/blueprints.api'
 import { WorkflowInstanceViewer } from './workflow-instance-viewer'
 import {
   Dialog,
@@ -24,71 +28,91 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
+import { useTranslation } from '@/i18n'
 
-export function WorkflowInstanceList() {
-  const [instances, setInstances] = useState<WorkflowInstance[]>([])
+interface WorkflowInstanceListProps {
+  packageId: string
+  entity: string
+  semantic: SemanticEntity
+}
+
+function finalTargetsFrom(semantic: SemanticEntity, from?: string): string[] {
+  const finals = new Set(semantic.states.filter((state) => state.final).map((state) => state.name))
+  return semantic.transitions
+    .filter((item) => (!from || item.from === from) && finals.has(item.to))
+    .map((item) => item.to)
+}
+
+export function WorkflowInstanceList({ packageId, entity, semantic }: WorkflowInstanceListProps) {
+  const t = useTranslation()
+  const [records, setRecords] = useState<RecordEnvelope[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [selectedInstance, setSelectedInstance] = useState<WorkflowInstance | null>(null)
+  const [selected, setSelected] = useState<RecordEnvelope | null>(null)
   const [viewerOpen, setViewerOpen] = useState(false)
-  const [filters, setFilters] = useState({
-    workflowDefinitionId: '',
-    entityType: '',
-    entityId: '',
-  })
+  const [stateFilter, setStateFilter] = useState('')
+  const [recordIdFilter, setRecordIdFilter] = useState('')
 
   useEffect(() => {
-    loadInstances()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run when filters change
-  }, [filters])
+    loadRecords()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 筛选变化时重载
+  }, [packageId, entity, stateFilter])
 
-  const loadInstances = async () => {
+  const loadRecords = async () => {
     try {
       setLoading(true)
-      const data = await workflowsApi.getInstances(
-        filters.workflowDefinitionId || undefined,
-        filters.entityType || undefined,
-        filters.entityId || undefined,
-      )
-      setInstances(data)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to load workflow instances')
+      const page = await blueprintsApi.listRecords(packageId, entity, {
+        state: stateFilter || undefined,
+        page: 1,
+        pageSize: 50,
+      })
+      setRecords(page.items ?? [])
+      setTotal(page.total ?? 0)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : t('workflows.loadFailed')
+      toast.error(message)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleViewInstance = (instance: WorkflowInstance) => {
-    setSelectedInstance(instance)
+  const visible = recordIdFilter
+    ? records.filter((row) => row.id.includes(recordIdFilter))
+    : records
+
+  const handleView = (row: RecordEnvelope) => {
+    setSelected(row)
     setViewerOpen(true)
   }
 
-  const handleCancelInstance = async (instanceId: string) => {
-    if (!confirm('Cancel this workflow instance?')) return
+  const handleCancel = async (row: RecordEnvelope) => {
+    if (!confirm(t('workflows.cancelConfirm'))) return
 
     try {
-      await workflowsApi.cancelInstance(instanceId)
-      toast.success('Workflow instance cancelled')
-      loadInstances()
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to cancel instance')
+      const suggestions = await blueprintsApi.getSuggestedTransitions(packageId, entity, row.id)
+      const finals = new Set(semantic.states.filter((state) => state.final).map((state) => state.name))
+      const target = suggestions.find((item) => finals.has(item.to))
+      if (!target) {
+        toast.error(t('workflows.cancelFailed'))
+        return
+      }
+      await blueprintsApi.executeTransition(packageId, entity, row.id, {
+        to: target.to,
+        expectedVersion: row.version,
+      })
+      toast.success(t('workflows.cancelSuccess'))
+      loadRecords()
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : t('workflows.cancelFailed')
+      toast.error(message)
     }
-  }
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      running: 'default',
-      completed: 'secondary',
-      failed: 'destructive',
-      cancelled: 'outline',
-    }
-    return <Badge variant={variants[status] || 'outline'}>{status}</Badge>
   }
 
   if (loading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">Loading instances...</div>
+          <div className="text-muted-foreground">{t('workflows.loading')}</div>
         </CardContent>
       </Card>
     )
@@ -98,113 +122,101 @@ export function WorkflowInstanceList() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Workflow Instances</CardTitle>
-          <CardDescription>View and manage active workflow instances</CardDescription>
+          <CardTitle>{t('workflows.instances')}</CardTitle>
+          <CardDescription>
+            {entity} · {total}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Filters */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div>
-              <Input
-                placeholder="Entity Type"
-                value={filters.entityType}
-                onChange={(e) => setFilters({ ...filters, entityType: e.target.value })}
-              />
-            </div>
-            <div>
-              <Input
-                placeholder="Entity ID"
-                value={filters.entityId}
-                onChange={(e) => setFilters({ ...filters, entityId: e.target.value })}
-              />
-            </div>
-            <div>
-              <Input
-                placeholder="Workflow Definition ID"
-                value={filters.workflowDefinitionId}
-                onChange={(e) => setFilters({ ...filters, workflowDefinitionId: e.target.value })}
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <Input
+              placeholder={t('workflows.state')}
+              value={stateFilter}
+              onChange={(e) => setStateFilter(e.target.value)}
+            />
+            <Input
+              placeholder={t('workflows.recordId')}
+              value={recordIdFilter}
+              onChange={(e) => setRecordIdFilter(e.target.value)}
+            />
           </div>
 
-          {/* Table */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Entity</TableHead>
-                  <TableHead>Current State</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Started At</TableHead>
-                  <TableHead>Started By</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('workflows.entity')}</TableHead>
+                  <TableHead>{t('workflows.currentState')}</TableHead>
+                  <TableHead>{t('workflows.version')}</TableHead>
+                  <TableHead>{t('workflows.startedAt')}</TableHead>
+                  <TableHead className="text-right">{t('workflows.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {instances.length === 0 ? (
+                {visible.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      No workflow instances found
+                    <TableCell colSpan={5} className="text-center py-8">
+                      {t('workflows.noRecords')}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  instances.map((instance) => (
-                    <TableRow key={instance.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{instance.entityType}</div>
-                          <div className="text-sm text-muted-foreground">{instance.entityId}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{instance.currentState}</Badge>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(instance.status)}</TableCell>
-                      <TableCell>
-                        {new Date(instance.startedAt).toLocaleString()}
-                      </TableCell>
-                      <TableCell>{instance.startedById || '-'}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewInstance(instance)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                          {instance.status === 'running' && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleCancelInstance(instance.id)}
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Cancel
+                  visible.map((row) => {
+                    const canCancel = finalTargetsFrom(semantic, row.state).length > 0
+                    return (
+                      <TableRow key={row.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{row.entity}</div>
+                            <div className="text-sm text-muted-foreground">{row.id}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{row.state ?? '-'}</Badge>
+                        </TableCell>
+                        <TableCell>{row.version}</TableCell>
+                        <TableCell>
+                          {row.createdAt ? new Date(row.createdAt).toLocaleString() : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => handleView(row)}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              {t('workflows.view')}
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            {canCancel ? (
+                              <Button variant="destructive" size="sm" onClick={() => handleCancel(row)}>
+                                <X className="h-4 w-4 mr-1" />
+                                {t('workflows.cancel')}
+                              </Button>
+                            ) : (
+                              <span className="sr-only">{t('workflows.cancelHidden')}</span>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
           </div>
+          {!visible.some((row) => finalTargetsFrom(semantic, row.state).length > 0) && visible.length > 0 && (
+            <p className="text-sm text-muted-foreground mt-3">{t('workflows.cancelHidden')}</p>
+          )}
         </CardContent>
       </Card>
 
-      {/* Instance Viewer Dialog */}
       <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Workflow Instance Details</DialogTitle>
-            <DialogDescription>View workflow instance status and history</DialogDescription>
+            <DialogTitle>{t('workflows.recordDetails')}</DialogTitle>
+            <DialogDescription>{t('workflows.recordDetailsHint')}</DialogDescription>
           </DialogHeader>
-          {selectedInstance && (
+          {selected && (
             <WorkflowInstanceViewer
-              instance={selectedInstance}
+              packageId={packageId}
+              entity={entity}
+              record={selected}
               onClose={() => setViewerOpen(false)}
             />
           )}

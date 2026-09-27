@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Optional } from '@nestjs/common'
 import { BusinessRuleViolation } from '../../domain/errors'
 import type { IAIModuleRepository } from '../../domain/repositories'
 import type { IAIModelService } from '../../domain/services'
@@ -23,8 +23,10 @@ export class GeneratePatchService {
     private readonly moduleRepository: IAIModuleRepository,
     @Inject(AI_MODEL_SERVICE)
     private readonly aiModelService: IAIModelService,
+    // 端口保留作接缝；旧适配器已删，缺实现时没有工作流上下文
+    @Optional()
     @Inject(WORKFLOW_SERVICE)
-    private readonly workflowService: IWorkflowService,
+    private readonly workflowService: IWorkflowService | null,
     @Inject(EVENT_PUBLISHER)
     private readonly eventPublisher: IEventPublisher,
   ) {}
@@ -36,7 +38,7 @@ export class GeneratePatchService {
     }
 
     let context: string | undefined
-    if (command.entityType && command.entityId) {
+    if (this.workflowService && command.entityType && command.entityId) {
       const workflowContext = await this.workflowService.getWorkflowContext(
         command.entityType,
         command.entityId,

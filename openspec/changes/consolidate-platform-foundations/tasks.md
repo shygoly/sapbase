@@ -26,64 +26,64 @@
 
 ## Phase W0: 收敛准备（清点与止血）
 
-- [ ] 清点旧工作流的**全部调用点**：前端（`admin/workflows` 5 组件 + `workflows.api.ts`）、
+- [x] 清点旧工作流的**全部调用点**：前端（`admin/workflows` 5 组件 + `workflows.api.ts`）、
       后端内部、定时任务、种子脚本 —— 输出一份清单进本 change
-- [ ] `workflow_definitions / workflow_instances / workflow_history` 导出脚本
+- [x] `workflow_definitions / workflow_instances / workflow_history` 导出脚本
       （JSON 导出 + 行数核对），落到 `backend/scripts/`
-- [ ] 确认旧树的**用户可见能力清单**（定义 CRUD / 启动 / 迁移 / 历史 / 建议迁移 / 状态图 / 自动迁移）
+- [x] 确认旧树的**用户可见能力清单**（定义 CRUD / 启动 / 迁移 / 历史 / 建议迁移 / 状态图 / 自动迁移）
 
 ## Phase W1: 双跑（新接口补齐旧前端所需）
 
-- [ ] 蓝图接口补：按实例读迁移历史、按实体+状态列实例、建议迁移（只读，不改状态）
-- [ ] **对拍测试**：同一份流程定义下，旧接口与新接口的实例/历史读出一致
-- [ ] 审计用 `source` 字段区分两条路径（双跑期不分裂审计）
+- [x] 蓝图接口补：按实例读迁移历史、按实体+状态列实例、建议迁移（只读，不改状态）
+- [x] **对拍测试**：同一份流程定义下，旧接口与新接口的实例/历史读出一致
+- [x] 审计用 `source` 字段区分两条路径（双跑期不分裂审计）
 
 ## Phase W2: 前端切换
 
-- [ ] `admin/workflows` 改为调用蓝图接口（页面形态不变）
-- [ ] 状态图与时间线组件继续可用（数据源换，渲染不换）
-- [ ] 证据：`next build` 通过 + 手动/自动验证三条主路径（列表 / 迁移 / 历史）
+- [x] `admin/workflows` 改为调用蓝图接口（页面形态不变）
+- [x] 状态图与时间线组件继续可用（数据源换，渲染不换）
+- [x] 证据：`next build` 通过 + 手动/自动验证三条主路径（列表 / 迁移 / 历史）
 
 ## Phase W3: 停用与删除
 
-- [ ] 旧路由返回 **410 + 迁移指引**（不是 404：404 会让人以为是自己写错路径）
-- [ ] `workflows` / `workflow-context` 从 `app.module` 摘除；全量回归全绿
-- [ ] 删除两棵旧树（含其 spec 迁移或删除，逐条登记理由）
-- [ ] `workflow_*` 三表：保留数据，标注为**只读归档**
+- [x] 旧路由返回 **410 + 迁移指引**（不是 404：404 会让人以为是自己写错路径）
+- [x] `workflows` / `workflow-context` 从 `app.module` 摘除；全量回归全绿
+- [x] 删除两棵旧树（含其 spec 迁移或删除，逐条登记理由）
+- [x] `workflow_*` 三表：保留数据，标注为**只读归档**
 
 ## Phase N0: Outbox（先于通知）
 
-- [ ] 协议文本：`docs/protocols/outbox.md`（事件形状 / 幂等键 / 投递语义 / 重试策略）
-- [ ] `outbox_events` 表：`id / topic / payload / occurredAt / deliveredAt / attempts / lastError / idempotencyKey`
-- [ ] 发布点：与业务写入**同事务**（迁移、审批、导入）
-- [ ] 投递器：至少一次 + 订阅者幂等 + 失败重试计数
-- [ ] jest：业务回滚 → 无事件；重复投递 → 订阅者只处理一次；失败可查
+- [x] 协议文本：`docs/protocols/outbox.md`（事件形状 / 幂等键 / 投递语义 / 重试策略）
+- [x] `outbox_events` 表：`id / topic / payload / occurredAt / deliveredAt / attempts / lastError / idempotencyKey`
+- [x] 发布点：与业务写入**同事务**（迁移、审批、导入）
+- [x] 投递器：至少一次 + 订阅者幂等 + 失败重试计数
+- [x] jest：业务回滚 → 无事件；重复投递 → 订阅者只处理一次；失败可查
 
 ## Phase N1: 通知
 
-- [ ] `notifications` 表（替换 `Map`）：`userId / organizationId / type / title / body / read / createdAt`
-- [ ] 生产者：审批待审、单据状态变化、导入完成/失败（都经 outbox）
-- [ ] 已读状态持久；重启不丢
-- [ ] jest：重启后未读仍在；审批待审产生通知
+- [x] `notifications` 表（替换 `Map`）：`userId / organizationId / type / title / body / read / createdAt`
+- [x] 生产者：审批待审、单据状态变化、导入完成/失败（都经 outbox）
+- [x] 已读状态持久；重启不丢
+- [x] jest：重启后未读仍在；审批待审产生通知
 
 ## Phase N2: 待办（inbox）
 
-- [ ] `GET /inbox`：按当前审批人聚合所有 pending 审批（跨单据类型）
-- [ ] 批准/驳回后**同一事务**从待办消失
-- [ ] e2e：造三张待审单 → 待办 3 条 → 批准 1 张 → 待办 2 条
+- [x] `GET /inbox`：按当前审批人聚合所有 pending 审批（跨单据类型）
+- [x] 批准/驳回后**同一事务**从待办消失
+- [x] e2e：造三张待审单 → 待办 3 条 → 批准 1 张 → 待办 2 条
 
 ## Phase N3: 最小可观测
 
-- [ ] 结构化日志（关键路径：迁移、审批、事件投递）
-- [ ] 事件投递失败可定位：重试次数 + 最后错误 + 可手动重投
-- [ ] **明确不做**：OTel / Prometheus 栈（决策见 design §4）
+- [x] 结构化日志（关键路径：迁移、审批、事件投递）
+- [x] 事件投递失败可定位：重试次数 + 最后错误 + 可手动重投
+- [x] **明确不做**：OTel / Prometheus 栈（决策见 design §4）
 
 ## Phase A1 / A2: AI 输出收敛成蓝图五层
 
-- [ ] `backend/src/ai-modules/definition-to-blueprint.ts`：`mergedDefinition` → 五层（纯函数）
-- [ ] **缺层就缺层**：AI 没产出规则/经验策略时，不编造（包内不含该层）
-- [ ] 产出落成蓝图包（复用 `packBlueprint` + `deliver`）
-- [ ] e2e：AI 产物 → 编译通过 → 装载成功 → 签名交付（复用既有 e2e 形态）
+- [x] `backend/src/ai-modules/definition-to-blueprint.ts`：`mergedDefinition` → 五层（纯函数）
+- [x] **缺层就缺层**：AI 没产出规则/经验策略时，不编造（包内不含该层）
+- [x] 产出落成蓝图包（复用 `packBlueprint` + `deliver`）
+- [x] e2e：AI 产物 → 编译通过 → 装载成功 → 签名交付（复用既有 e2e 形态）
 
 ## 决策记录（本变更不做，附触发条件）
 
@@ -99,3 +99,12 @@
 | 市场 / 结算 | 不做 | 决定卖模板（商业决策） |
 | 搜索 / 图 / 向量 | 不做 | 设计期 AI 真要做 |
 | 移动端 / 离线 | 不做 | 仓库/车间场景被验证 |
+
+## 证据（2026-09-27，补上夜间建议生产者之后）
+
+在 `backend/` 重跑。CI 那 19 条 e2e 本轮没有整包再跑：夜间任务由单测和源码护栏钉住，不走那份 HTTP 清单。
+
+- `npx tsc --noEmit` → 退出码 0
+- `npx jest src/semantic-runtime/suggestion-cron.spec.ts src/semantic-runtime/suggestion-log.ddl.spec.ts src/blueprint/semantic-p1.spec.ts src/semantic-runtime/semantic-runtime.service.spec.ts --no-coverage` → **4 套件 / 25 用例通过**（含：`autoSuggest` 非终态入选、未标或终态不入选、有建议写第一条且 `reason` 为空、建议为空不写、不调用 `transition`、`@Cron('0 2 * * *')` 全仓只在 `suggestion-cron.ts`）
+- `npx ts-node --transpile-only scripts/verify-from-zero.ts --db=sapbase_rebuild` → 空库重建 **39** 张表（含迁移台账）；实体比对 **38** 张，**无结构差异**（仍是 3 处既有默认值写法差）。比补表前多出的是 `blueprint_suggestion_logs`
+- `openspec validate consolidate-platform-foundations --strict` → valid

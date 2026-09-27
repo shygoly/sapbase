@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { WorkflowInstance } from '@/lib/api/workflows.api'
-import { workflowsApi } from '@/lib/api/workflows.api'
+import { blueprintsApi, SuggestedTransition } from '@/lib/api/blueprints.api'
 import { toast } from 'sonner'
 import { Loader2, AlertCircle } from 'lucide-react'
 import {
@@ -12,95 +11,95 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useTranslation } from '@/i18n'
 
 interface WorkflowTransitionButtonsProps {
-  instance: WorkflowInstance
-  availableTransitions: Array<{
-    transition: {
-      from: string
-      to: string
-      guard?: string
-      action?: string
-    }
-    guardPassed: boolean
-    guardError?: string
-  }>
+  packageId: string
+  entity: string
+  recordId: string
+  version?: number
+  suggestions: SuggestedTransition[]
   onTransition?: () => void
   disabled?: boolean
 }
 
 export function WorkflowTransitionButtons({
-  instance,
-  availableTransitions,
+  packageId,
+  entity,
+  recordId,
+  version,
+  suggestions,
   onTransition,
   disabled = false,
 }: WorkflowTransitionButtonsProps) {
+  const t = useTranslation()
   const [transitioning, setTransitioning] = useState<string | null>(null)
 
-  const handleTransition = async (toState: string) => {
+  const handleTransition = async (to: string) => {
     if (transitioning) return
 
     try {
-      setTransitioning(toState)
-      await workflowsApi.executeTransition(instance.id, {
-        toState,
-        entity: {}, // Could pass entity data here
+      setTransitioning(to)
+      await blueprintsApi.executeTransition(packageId, entity, recordId, {
+        to,
+        expectedVersion: version,
       })
-      toast.success(`Transitioned to "${toState}"`)
+      toast.success(t('workflows.transitionSuccess', { to }))
       if (onTransition) {
         onTransition()
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to execute transition')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : t('workflows.transitionFailed')
+      toast.error(message)
     } finally {
       setTransitioning(null)
     }
   }
 
-  if (availableTransitions.length === 0) {
+  if (suggestions.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-4">
-        No available transitions from current state
+        {t('workflows.noAvailableTransitions')}
       </div>
     )
   }
 
   return (
     <div className="flex flex-wrap gap-2">
-      {availableTransitions.map((item, index) => {
-        const { transition, guardPassed, guardError } = item
-        const isTransitioning = transitioning === transition.to
-        const isDisabled = disabled || isTransitioning || !guardPassed
+      {suggestions.map((item) => {
+        const isTransitioning = transitioning === item.to
+        const isDisabled = disabled || isTransitioning || item.requiresApproval
 
         const button = (
           <Button
-            key={index}
-            variant={guardPassed ? 'default' : 'outline'}
-            onClick={() => handleTransition(transition.to)}
+            key={item.to}
+            variant={item.requiresApproval ? 'outline' : 'default'}
+            onClick={() => handleTransition(item.to)}
             disabled={isDisabled}
           >
             {isTransitioning ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Transitioning...
+                {t('workflows.transitioning')}
               </>
             ) : (
-              <>
-                {transition.from} → {transition.to}
-              </>
+              item.to
             )}
           </Button>
         )
 
-        if (!guardPassed && guardError) {
+        if (item.requiresApproval) {
+          const hint = item.pendingApproval
+            ? t('workflows.pendingApproval', { role: item.pendingApproval.role })
+            : t('workflows.requiresApproval')
           return (
-            <TooltipProvider key={index}>
+            <TooltipProvider key={item.to}>
               <Tooltip>
                 <TooltipTrigger asChild>{button}</TooltipTrigger>
                 <TooltipContent>
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
-                    <span>{guardError}</span>
+                    <span>{hint}</span>
                   </div>
                 </TooltipContent>
               </Tooltip>

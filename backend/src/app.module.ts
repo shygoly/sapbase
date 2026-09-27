@@ -17,15 +17,21 @@ import { ModuleRegistryModule } from './module-registry/module-registry.module'
 import { SystemModule } from './system/system.module'
 import { OrganizationsModule } from './organizations/organizations.module'
 import { CacheModule } from './cache/cache.module'
-import { WorkflowsModule } from './workflows/workflows.module'
+import { LegacyWorkflowGoneModule } from './legacy-workflow-gone/legacy-workflow-gone.module'
 import { PluginsModule } from './plugins/plugins.module'
 import { AtomicRuntimeModule } from './atomic-runtime/atomic-runtime.module'
 import { BlueprintModule } from './blueprint/blueprint.module'
+import { OutboxModule } from './outbox/outbox.module'
+import { OutboxDelivery } from './outbox/outbox-delivery.entity'
+import { OutboxEvent } from './outbox/outbox-event.entity'
+import { NotificationsModule } from './notifications/notifications.module'
+import { NotificationRecord } from './notifications/notification.entity'
 import { SemanticRuntimeModule } from './semantic-runtime/semantic-runtime.module'
 import { BlueprintApproval } from './semantic-runtime/blueprint-approval.entity'
 import { BlueprintDocCounter } from './semantic-runtime/blueprint-doc-counter.entity'
 import { BlueprintJournalEntry } from './semantic-runtime/blueprint-journal-entry.entity'
 import { BlueprintRecord } from './semantic-runtime/blueprint-record.entity'
+import { BlueprintSuggestionLog } from './semantic-runtime/suggestion-log.entity'
 import { User } from './users/user.entity'
 import { Organization } from './organizations/organization.entity'
 import { OrganizationMember } from './organizations/organization-member.entity'
@@ -47,10 +53,10 @@ import { ModuleRelationship } from './module-registry/module-relationship.entity
 import { ModuleCapability } from './module-registry/module-capability.entity'
 import { ModuleStatistics } from './module-registry/module-statistics.entity'
 import { ModuleConfiguration } from './module-registry/module-configuration.entity'
-import { WorkflowDefinition } from './workflows/workflow-definition.entity'
-import { WorkflowInstance } from './workflows/workflow-instance.entity'
-import { WorkflowHistory } from './workflows/workflow-history.entity'
-import { WorkflowAutoSuggestionLog } from './workflows/workflow-auto-suggestion-log.entity'
+import { WorkflowDefinition } from './workflow-archive/workflow-definition.entity'
+import { WorkflowInstance } from './workflow-archive/workflow-instance.entity'
+import { WorkflowHistory } from './workflow-archive/workflow-history.entity'
+import { WorkflowAutoSuggestionLog } from './workflow-archive/workflow-auto-suggestion-log.entity'
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
 import { LoggerMiddleware } from './common/middleware/logger.middleware'
 import { EventBusModule } from './common/events/event-bus.module'
@@ -108,9 +114,13 @@ try {
         WorkflowAutoSuggestionLog,
         PluginOrm,
         BlueprintRecord,
+        BlueprintSuggestionLog,
         BlueprintDocCounter,
         BlueprintApproval,
         BlueprintJournalEntry,
+        OutboxEvent,
+        OutboxDelivery,
+        NotificationRecord,
       ],
       synchronize: true,
       logging: process.env.NODE_ENV === 'development',
@@ -129,11 +139,13 @@ try {
     ModuleRegistryModule,
     SystemModule,
     OrganizationsModule,
-    WorkflowsModule,
+    LegacyWorkflowGoneModule,
     PluginsModule,
     AtomicRuntimeModule,
     BlueprintModule,
     SemanticRuntimeModule,
+    OutboxModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [],

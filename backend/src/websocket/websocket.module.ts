@@ -1,10 +1,10 @@
-import { Module, forwardRef } from '@nestjs/common'
+import { Module } from '@nestjs/common'
 import { JwtModule } from '@nestjs/jwt'
 import { AppWebSocketGateway } from './websocket.gateway'
-import { NotificationService } from './services/notification.service'
 import { CollaborationService } from './services/collaboration.service'
 import { UsersModule } from '../users/users.module'
 import { OrganizationsModule } from '../organizations/organizations.module'
+import { NotificationsModule } from '../notifications/notifications.module'
 
 /**
  * WebSocket module for real-time features:
@@ -17,8 +17,9 @@ import { OrganizationsModule } from '../organizations/organizations.module'
     JwtModule.register({}),
     UsersModule,
     OrganizationsModule,
+    NotificationsModule,
   ],
-  providers: [AppWebSocketGateway, NotificationService, CollaborationService],
-  exports: [AppWebSocketGateway, NotificationService, CollaborationService],
+  providers: [AppWebSocketGateway, CollaborationService],
+  exports: [AppWebSocketGateway, CollaborationService, NotificationsModule],
 })
 export class WebSocketModule {}

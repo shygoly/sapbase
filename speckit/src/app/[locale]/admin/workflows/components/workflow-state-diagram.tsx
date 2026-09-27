@@ -11,18 +11,18 @@ import {
   type NodeTypes,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { WorkflowDefinition, WorkflowState, WorkflowTransition } from '@/lib/api/workflows.api'
+import { SemanticEntity, SemanticState, SemanticTransition } from '@/lib/api/blueprints.api'
+import { useTranslation } from '@/i18n'
 
 interface WorkflowStateDiagramProps {
-  workflow: WorkflowDefinition
+  entity: Pick<SemanticEntity, 'states' | 'transitions'>
   currentState?: string
   onStateClick?: (state: string) => void
-  onTransitionClick?: (transition: WorkflowTransition) => void
+  onTransitionClick?: (transition: SemanticTransition) => void
   interactive?: boolean
 }
 
-// Custom node component for states
-function StateNode({ data }: { data: { state: WorkflowState; isCurrent: boolean } }) {
+function StateNode({ data }: { data: { state: SemanticState; isCurrent: boolean } }) {
   const { state, isCurrent } = data
   const isInitial = state.initial
   const isFinal = state.final
@@ -51,17 +51,16 @@ const nodeTypes: NodeTypes = {
 }
 
 export function WorkflowStateDiagram({
-  workflow,
+  entity,
   currentState,
   onStateClick,
   onTransitionClick,
   interactive = true,
 }: WorkflowStateDiagramProps) {
+  const t = useTranslation()
   const { nodes, edges } = useMemo(() => {
-    // Calculate layout positions
-    const stateNodes: Node[] = workflow.states.map((state, index) => {
-      // Simple grid layout
-      const cols = Math.ceil(Math.sqrt(workflow.states.length))
+    const stateNodes: Node[] = entity.states.map((state, index) => {
+      const cols = Math.ceil(Math.sqrt(entity.states.length))
       const row = Math.floor(index / cols)
       const col = index % cols
       const x = col * 200 + 100
@@ -79,22 +78,20 @@ export function WorkflowStateDiagram({
       }
     })
 
-    const transitionEdges: Edge[] = workflow.transitions.map((transition, index) => ({
+    const transitionEdges: Edge[] = entity.transitions.map((transition, index) => ({
       id: `edge-${index}`,
       source: transition.from,
       target: transition.to,
-      label: transition.guard ? `[${transition.guard}]` : '',
       type: 'smoothstep',
       animated: currentState === transition.from,
       style: {
-        stroke: transition.guard ? '#888' : '#333',
+        stroke: '#333',
         strokeWidth: 2,
       },
     }))
 
     return { nodes: stateNodes, edges: transitionEdges }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- interactive is display-only
-  }, [workflow, currentState])
+  }, [entity, currentState, interactive])
 
   const handleNodeClick = (_event: React.MouseEvent, node: Node) => {
     if (onStateClick) {
@@ -104,8 +101,8 @@ export function WorkflowStateDiagram({
 
   const handleEdgeClick = (_event: React.MouseEvent, edge: Edge) => {
     if (onTransitionClick) {
-      const transition = workflow.transitions.find(
-        (t) => t.from === edge.source && t.to === edge.target,
+      const transition = entity.transitions.find(
+        (item) => item.from === edge.source && item.to === edge.target,
       )
       if (transition) {
         onTransitionClick(transition)
@@ -113,10 +110,10 @@ export function WorkflowStateDiagram({
     }
   }
 
-  if (!workflow.states || workflow.states.length === 0) {
+  if (!entity.states || entity.states.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 border rounded-lg bg-muted/50">
-        <p className="text-muted-foreground">No states defined</p>
+        <p className="text-muted-foreground">{t('workflows.noStates')}</p>
       </div>
     )
   }
