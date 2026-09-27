@@ -26,6 +26,8 @@ import { OutboxDelivery } from './outbox/outbox-delivery.entity'
 import { OutboxEvent } from './outbox/outbox-event.entity'
 import { NotificationsModule } from './notifications/notifications.module'
 import { NotificationRecord } from './notifications/notification.entity'
+import { AgentToolsModule } from './agent-tools/agent-tools.module'
+import { AgentConfirmationToken } from './agent-tools/confirmation-token.entity'
 import { SemanticRuntimeModule } from './semantic-runtime/semantic-runtime.module'
 import { BlueprintApproval } from './semantic-runtime/blueprint-approval.entity'
 import { BlueprintDocCounter } from './semantic-runtime/blueprint-doc-counter.entity'
@@ -121,6 +123,7 @@ try {
         OutboxEvent,
         OutboxDelivery,
         NotificationRecord,
+        AgentConfirmationToken,
       ],
       synchronize: true,
       logging: process.env.NODE_ENV === 'development',
@@ -146,6 +149,7 @@ try {
     SemanticRuntimeModule,
     OutboxModule,
     NotificationsModule,
+    AgentToolsModule,
   ],
   controllers: [],
   providers: [],

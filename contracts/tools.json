@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "tools": [
+    {
+      "name": "erp_blueprint_list",
+      "description": "当用户要查看这个企业有哪些业务蓝图包时使用：列出已登记的蓝图包（id、文件名、清单）。不改任何业务数据。",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "permission": "tool:blueprint:read",
+      "write": false,
+      "confirmation": "none",
+      "timeoutMs": 5000,
+      "untrustedResult": false,
+      "sensitiveArgs": []
+    },
+    {
+      "name": "erp_blueprint_manifest",
+      "description": "当用户要看某个蓝图包的版本、依赖与分层时使用：读取指定包的清单。需要包 id（文件名去掉 .erpkg）。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "蓝图包 id（文件名去掉 .erpkg）"
+          }
+        },
+        "required": ["id"],
+        "additionalProperties": false
+      },
+      "permission": "tool:blueprint:read",
+      "write": false,
+      "confirmation": "none",
+      "timeoutMs": 5000,
+      "untrustedResult": false,
+      "sensitiveArgs": []
+    },
+    {
+      "name": "erp_blueprint_compile",
+      "description": "当用户要把蓝图包编译成可执行 IR 时使用：编译指定包。不改业务数据，只产生编译记录（v1 按读处理）。不写回包内清单 —— 声明 write=false 就必须真的不写。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "蓝图包 id"
+          }
+        },
+        "required": ["id"],
+        "additionalProperties": false
+      },
+      "permission": "tool:blueprint:compile",
+      "write": false,
+      "confirmation": "none",
+      "timeoutMs": 20000,
+      "untrustedResult": false,
+      "sensitiveArgs": []
+    },
+    {
+      "name": "erp_atomic_invoke",
+      "description": "当用户要跑一个已登记的原子计算或查询时使用：按契约在沙箱内执行。v1 只放行 calculation/query 类原子，不跑写入型。需要 atomicType，可选 version/records/timeoutMs。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "atomicType": {
+            "type": "string",
+            "minLength": 1,
+            "description": "原子类型（契约里的 atomicType）"
+          },
+          "version": {
+            "type": "string",
+            "description": "版本范围，缺省为 *"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": { "type": "number" }
+            },
+            "description": "输入行；字段名对应契约 inputSchema 投影"
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "本次调用超时（毫秒）"
+          }
+        },
+        "required": ["atomicType"],
+        "additionalProperties": false
+      },
+      "permission": "tool:atomic:invoke",
+      "write": false,
+      "confirmation": "none",
+      "timeoutMs": 20000,
+      "untrustedResult": false,
+      "sensitiveArgs": []
+    },
+    {
+      "name": "erp_module_list",
+      "description": "当用户要查看当前组织登记了哪些业务模块时使用：列出模块注册表。组织上下文来自调用方身份，不从参数传入。",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "permission": "tool:module:read",
+      "write": false,
+      "confirmation": "none",
+      "timeoutMs": 5000,
+      "untrustedResult": false,
+      "sensitiveArgs": []
+    },
+    {
+      "name": "erp_module_export",
+      "description": "当用户要把某个模块导出为最小蓝图包文件时使用：产生文件，属于写操作，必须先由人确认。需要模块 id，可选导出目录 dir 与输出路径 out。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "模块 id"
+          },
+          "dir": {
+            "type": "string",
+            "description": "导出目录（服务器路径）"
+          },
+          "out": {
+            "type": "string",
+            "description": "输出 .erpkg 路径"
+          }
+        },
+        "required": ["id"],
+        "additionalProperties": false
+      },
+      "permission": "tool:module:export",
+      "write": true,
+      "confirmation": "required",
+      "timeoutMs": 30000,
+      "untrustedResult": false,
+      "sensitiveArgs": []
+    }
+  ]
+}

@@ -44,11 +44,26 @@
 
 ## Phase C2: 工具面
 
-- [ ] `contracts/tools.json`：首批工具（蓝图 list/manifest/compile、原子 invoke、模块 list/export）
-- [ ] `backend/src/agent-tools/`：契约加载与校验（形状 + 权限点存在性）
-- [ ] 调用链：契约 → 权限 all-of（复用 `missingPermissions`）→ 审计（复用 `audit_logs`）→ 执行
-- [ ] 写操作：`confirmation` 为 required 时，无令牌即拒；令牌由平台在用户确认后签发（一次性、绑定工具与参数摘要）
-- [ ] jest：越权被拒并写明缺哪条权限；写工具无令牌被拒；成功调用落审计；未知工具 → 明确错误
+- [x] `contracts/tools.json`：首批工具（蓝图 list/manifest/compile、原子 invoke、模块 list/export）
+- [x] `backend/src/agent-tools/`：契约加载与校验（形状 + 权限点存在性）
+- [x] 调用链：契约 → 权限 all-of（复用 `missingPermissions`）→ 审计（复用 `audit_logs`）→ 执行
+- [x] 写操作：`confirmation` 为 required 时，无令牌即拒；令牌由平台在用户确认后签发（一次性、绑定工具与参数摘要）
+- [x] jest：越权被拒并写明缺哪条权限；写工具无令牌被拒；成功调用落审计；未知工具 → 明确错误
+
+> **C2 证据（2026-09-27）**：`npm run build --workspace backend` → nest build 0 error。
+> `npx jest src/agent-tools --runInBand` → **3 passed / 20 passed**（未知工具「没有这个能力」且不审计；越权写出 `tool:blueprint:read`；写工具无令牌/摘要不匹配/已消费拒；成功调用恰好一条 `chat.tool.invoked`）。
+> `npm run test --workspace backend` → **Test Suites: 99 passed, 99 total / Tests: 837 passed, 837 total**。
+> `rebuild-database --db=sapbase_rebuild` → `已重建 sapbase_rebuild：40 张表`。
+> `verify-from-zero --db=sapbase_rebuild` → `✅ 从零重建成功：实体与库无结构差异`。
+> `DO_NOT_TRACK=1 POSTHOG_DISABLED=1 openspec validate add-chat-first-erp --strict` → `Change 'add-chat-first-erp' is valid`。
+>
+> **复核修正（同日）**：`erp_blueprint_compile` 原本暴露了 `stamp`，而 `stamp: true` 会把 IR 摘要
+> **写回包内清单** —— 那是 `write: false` 契约下的一条无人确认的写通道（正是 §2 要禁掉的那种）。
+> 已从契约参数表里**移除** `stamp`，并在调用点硬编码 `{ stamp: false }`：让能力不存在，
+> 而不是"传了也不生效"（执行约定 3）。补回归用例
+> `erp_blueprint_compile 声明为读（write=false）时，stamp 这条写通道必须不存在`。
+> 复核后重跑：`jest src/agent-tools` → 3 套件 / 20 例；全量单测 **99 套件 / 837 例**；
+> `verify-from-zero` → 零结构差异，新表 `agent_confirmation_tokens` 已计入（39 张实体表）。
 
 ## Phase C3: 编排
 

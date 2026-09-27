@@ -185,3 +185,22 @@ export function validateToolCatalog(catalog: unknown): ProtocolValidation {
 
   return { valid: errors.length === 0, errors }
 }
+
+/**
+ * 用工具契约里的 `parameters`（JSON Schema）校验一次调用的参数。
+ *
+ * 判定只有这一份：编排器与 HTTP 入口都调它，不另写第二套形状检查。
+ * 错误信息指向具体参数路径（例如多传了 additionalProperties 之外的字段）。
+ */
+export function validateToolArguments(
+  tool: { parameters?: unknown },
+  args: unknown,
+): ProtocolValidation {
+  const schema = tool?.parameters
+  if (!schema || typeof schema !== 'object') {
+    return { valid: false, errors: ['parameters: 工具契约缺少可校验的参数 Schema'] }
+  }
+  const shape = getValidator().validate(args, schema as Record<string, unknown>)
+  if (!shape.valid) return { valid: false, errors: errorsOf(shape.errors) }
+  return { valid: true, errors: [] }
+}

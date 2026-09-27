@@ -3,6 +3,7 @@
 import {
   validateAgentTool,
   validateInteractionPlan,
+  validateToolArguments,
   validateToolCatalog,
 } from './chat-protocol-validator'
 
@@ -135,5 +136,33 @@ describe('工具契约文件（白名单整体）', () => {
 
   it('拒绝：契约文件版本不认识', () => {
     expect(validateToolCatalog({ version: 2, tools: [VALID_TOOL] }).valid).toBe(false)
+  })
+})
+
+describe('工具参数形状（validateToolArguments）', () => {
+  const tool = {
+    name: 'erp_blueprint_manifest',
+    parameters: {
+      type: 'object',
+      properties: { id: { type: 'string', minLength: 1 } },
+      required: ['id'],
+      additionalProperties: false,
+    },
+  }
+
+  it('接受契约内的参数', () => {
+    expect(validateToolArguments(tool, { id: 'pack-1' })).toEqual({ valid: true, errors: [] })
+  })
+
+  it('拒绝：多传 additionalProperties 之外的字段，并指向参数路径', () => {
+    const result = validateToolArguments(tool, { id: 'pack-1', extra: true })
+    expect(result.valid).toBe(false)
+    expect(result.errors.join('; ')).toMatch(/extra/)
+  })
+
+  it('拒绝：缺必填参数，并指向参数路径', () => {
+    const result = validateToolArguments(tool, {})
+    expect(result.valid).toBe(false)
+    expect(result.errors.join('; ')).toMatch(/id/)
   })
 })
