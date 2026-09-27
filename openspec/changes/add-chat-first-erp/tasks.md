@@ -73,12 +73,28 @@
 > 另外"令牌一次性"目前只有单测里的 SQL 文本级证明，缺真库证明。两件事都得在 C3 之前关掉，
 > 否则 C5 的端到端无从谈起。
 
-- [ ] 授权路径：`CreateUserDto` / `UpdateUserDto` 接受可选 `permissions: string[]`（校验 + 文档），
+- [x] 授权路径：`CreateUserDto` / `UpdateUserDto` 接受可选 `permissions: string[]`（校验 + 文档），
       让既有的 Admin/Manager 守卫写路径能授予权限点（含 `tool:*`）
-- [ ] 授权路径的证据：真库往返（simple-array 往返一致）+ 非法取值被拒的负例
-- [ ] `backend/test/agent-tools.e2e-spec.ts`：真 Postgres 跑工具面 —— 未知工具 / 越权（写明缺哪条）/
+- [x] 授权路径的证据：真库往返（simple-array 往返一致）+ 非法取值被拒的负例
+- [x] `backend/test/agent-tools.e2e-spec.ts`：真 Postgres 跑工具面 —— 未知工具 / 越权（写明缺哪条）/
       写工具无令牌 / **令牌真库一次性消费（二次消费必拒）** / 参数摘要不匹配 / 过期 / 成功落审计
-- [ ] 新表 DDL 的第三处消费：e2e `beforeAll` 幂等应用；并把该 spec 加进 `ci.yml` 的 e2e 清单
+- [x] 新表 DDL 的第三处消费：e2e `beforeAll` 幂等应用；并把该 spec 加进 `ci.yml` 的 e2e 清单
+
+> **C2.5 证据（2026-09-27）**：`npm run build --workspace backend` → nest build 0 error。
+> `npm run test --workspace backend` → **Test Suites: 99 passed, 99 total / Tests: 838 passed, 838 total**
+> （838 = 本轮的 837 + 复核补的 1 条「非空 `user.permissions` 原样进 JWT payload」：
+> 授予之后工具面读的是 JWT 里的 permissions，这一段是「授予 → 能调用工具」之间的桥，
+> 而原有用例只覆盖「字段缺失 → `[]`」的回退路径）。
+> `rebuild-database --db=sapbase_rebuild` → `已重建 sapbase_rebuild：40 张表`。
+> `verify-from-zero --db=sapbase_rebuild` → `✅ 从零重建成功：实体与库无结构差异（另有 3 处默认值写法差异）`。
+> `DB_NAME=sapbase_rebuild jest test/agent-tools.e2e-spec.ts` → **12 passed / 12 total**
+> （契约 6 工具；未知工具 404 且不审计；越权写出 `tool:module:export`；无令牌不落文件；
+> confirm 后库行 `consumedAt IS NULL`；invoke 后 `consumedAt` 非空且二次 403；摘要不匹配 / 过期 403；
+> 成功恰好一条 `chat.tool.invoked`/`success`；失败带 `reason`；PUT `permissions` simple-array 往返
+> `tool:module:read,tool:module:export`；字符串/`[123]` → 400）。
+> 相邻回归 `notifications-inbox` + `outbox`：套件绿（空库 deliver 缺原子契约，沿用既有 skip）。
+> `DO_NOT_TRACK=1 POSTHOG_DISABLED=1 openspec validate add-chat-first-erp --strict` → `Change 'add-chat-first-erp' is valid`。
+> C5 编排 e2e **未勾**：本轮不做 IntentParser / Plan / 确认编排。
 
 ## Phase C3: 编排
 

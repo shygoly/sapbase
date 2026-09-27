@@ -108,6 +108,25 @@ describe('AuthService', () => {
       })
     })
 
+    it('把用户的权限点原样放进签发的 payload（授予 → 能调用工具之间的那段桥）', async () => {
+      jest.spyOn(jwtService, 'sign').mockReturnValue(mockJwtToken)
+      const withPermissions = {
+        ...mockUser,
+        permissions: ['tool:module:read', 'tool:module:export'],
+      }
+
+      const result = await service.login(withPermissions as unknown as User)
+
+      // 缺了这一段，users.permissions 授了也白授：工具面读的是 JWT 里的 permissions。
+      // 现有用例只覆盖「字段缺失 → []」的回退路径，这里钉住非空数组原样透传。
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          permissions: ['tool:module:read', 'tool:module:export'],
+        }),
+      )
+      expect(result.user.permissions).toEqual(['tool:module:read', 'tool:module:export'])
+    })
+
     it('should include user data in response', async () => {
       jest.spyOn(jwtService, 'sign').mockReturnValue(mockJwtToken)
 

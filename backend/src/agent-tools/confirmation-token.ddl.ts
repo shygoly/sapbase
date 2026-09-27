@@ -4,7 +4,7 @@
  * 三处消费同一份：
  *   1. 增量迁移 `1791500000000-CreateAgentConfirmationTokens`
  *   2. 空库基线 `SCHEMA_BASELINE_SQL`
- *   3. e2e `beforeAll` 幂等应用（C5 再挂）
+ *   3. e2e `beforeAll` 幂等应用（`test/agent-tools.e2e-spec.ts`）
  *
  * 外键 / 主键名用 TypeORM DefaultNamingStrategy 哈希
  * （`new DefaultNamingStrategy().primaryKeyName / foreignKeyName`）。
