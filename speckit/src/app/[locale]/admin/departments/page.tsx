@@ -14,9 +14,11 @@ import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { DepartmentsList } from './components/departments-list'
 import { CreateDepartmentDialog } from './components/create-department-dialog'
+import { EditDepartmentDialog } from './components/edit-department-dialog'
 import { TableSkeleton } from '@/components/loading-skeleton'
 import { PageRuntime, type PageModel } from '@/components/runtime'
 import { CollectionRuntime, type CollectionModel } from '@/components/runtime'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 // PageModel schema
 const DepartmentsPageModel: PageModel = {
@@ -40,6 +42,10 @@ export default function DepartmentsPage() {
   const [pageSize] = useState(10)
   const [total, setTotal] = useState(0)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null)
+  const [departmentToDelete, setDepartmentToDelete] = useState<string | null>(null)
   const notification = useNotification()
 
   // Fetch departments
@@ -70,15 +76,34 @@ export default function DepartmentsPage() {
   }
 
   const handleDeleteDepartment = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this department?')) return
+    setDepartmentToDelete(id)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDeleteDepartment = async () => {
+    if (!departmentToDelete) return
 
     try {
-      await departmentsApi.delete(id)
+      await departmentsApi.delete(departmentToDelete)
       notification.success('Department deleted successfully')
       await fetchDepartments()
     } catch (error) {
       notification.error('Failed to delete department')
+    } finally {
+      setDepartmentToDelete(null)
     }
+  }
+
+  const handleEditDepartment = (department: Department) => {
+    setSelectedDepartment(department)
+    setShowEditDialog(true)
+  }
+
+  const handleUpdateDepartment = async () => {
+    setShowEditDialog(false)
+    setSelectedDepartment(null)
+    await fetchDepartments()
+    notification.success('Department updated successfully')
   }
 
   const pageHeaderAction = (
@@ -105,6 +130,7 @@ export default function DepartmentsPage() {
               pageSize={pageSize}
               onPageChange={setPage}
               onDelete={handleDeleteDepartment}
+              onEdit={handleEditDepartment}
             />
           )}
         </CollectionRuntime>
@@ -114,6 +140,26 @@ export default function DepartmentsPage() {
           open={showCreateDialog}
           onOpenChange={setShowCreateDialog}
           onSuccess={handleCreateDepartment}
+        />
+
+        {/* Edit Department Dialog */}
+        <EditDepartmentDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onSuccess={handleUpdateDepartment}
+          department={selectedDepartment}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onConfirm={confirmDeleteDepartment}
+          title="Delete Department"
+          description="Are you sure you want to delete this department? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
         />
       </div>
     </PageRuntime>

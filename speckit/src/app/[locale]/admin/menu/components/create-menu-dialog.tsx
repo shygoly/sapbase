@@ -41,6 +41,8 @@ const ICON_OPTIONS = [
   'lock',
 ]
 
+const NO_PARENT_VALUE = '__NO_PARENT__'
+
 export function CreateMenuDialog({
   onClose,
   onCreate,
@@ -53,7 +55,7 @@ export function CreateMenuDialog({
     icon: '',
     visible: true,
     order: 0,
-    parentId: '',
+    parentId: NO_PARENT_VALUE,
     permissions: [] as string[],
   })
 
@@ -66,7 +68,11 @@ export function CreateMenuDialog({
 
     try {
       setLoading(true)
-      await onCreate(formData)
+      const payload = {
+        ...formData,
+        parentId: formData.parentId === NO_PARENT_VALUE ? undefined : formData.parentId,
+      }
+      await onCreate(payload)
     } finally {
       setLoading(false)
     }
@@ -150,7 +156,7 @@ export function CreateMenuDialog({
                 <SelectValue placeholder="No parent (top-level)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No parent (top-level)</SelectItem>
+                <SelectItem value={NO_PARENT_VALUE}>No parent (top-level)</SelectItem>
                 {parentItems.map((item) => (
                   <SelectItem key={item.id} value={item.id}>
                     {item.label}

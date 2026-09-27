@@ -6,17 +6,20 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { usersApi } from '@/lib/api'
-import { User } from '@/lib/api/types'
+import { usersApi, departmentsApi } from '@/lib/api'
+import { User, Department } from '@/lib/api/types'
 import { useNotification } from '@/core/ui/ui-hooks'
 import { PermissionGuard } from '@/core/auth/permission-guard'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { UsersList } from './components/users-list'
 import { CreateUserDialog } from './components/create-user-dialog'
+import { EditUserDialog } from './components/edit-user-dialog'
+import { ChangePasswordDialog } from './components/change-password-dialog'
 import { TableSkeleton } from '@/components/loading-skeleton'
 import { PageRuntime, type PageModel } from '@/components/runtime'
 import { CollectionRuntime, type CollectionModel } from '@/components/runtime'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 // PageModel schema - defines page structure and permissions
 const UsersPageModel: PageModel = {
@@ -36,11 +39,18 @@ const UsersCollectionModel: CollectionModel = {
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [departments, setDepartments] = useState<Department[]>([])
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [total, setTotal] = useState(0)
   const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [userToDelete, setUserToDelete] = useState<string | null>(null)
   const notification = useNotification()
 
   // Fetch users
@@ -63,6 +73,19 @@ export default function UsersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run on page, pageSize, search change
   }, [page, pageSize, search])
 
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const result = await departmentsApi.findAll(1, 1000)
+        setDepartments(result.data)
+      } catch (error) {
+        notification.error('Failed to load departments')
+      }
+    }
+    fetchDepartments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleCreateUser = async () => {
     setShowCreateDialog(false)
     await fetchUsers()
@@ -70,15 +93,43 @@ export default function UsersPage() {
   }
 
   const handleDeleteUser = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return
+    setUserToDelete(id)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return
 
     try {
-      await usersApi.delete(id)
+      await usersApi.delete(userToDelete)
       notification.success('User deleted successfully')
       await fetchUsers()
     } catch (error) {
       notification.error('Failed to delete user')
+    } finally {
+      setUserToDelete(null)
     }
+  }
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user)
+    setShowEditDialog(true)
+  }
+
+  const handleUpdateUser = async () => {
+    setShowEditDialog(false)
+    setSelectedUser(null)
+    await fetchUsers()
+  }
+
+  const handleChangePassword = (user: User) => {
+    setSelectedUser(user)
+    setShowChangePasswordDialog(true)
+  }
+
+  const handlePasswordChanged = async () => {
+    setShowChangePasswordDialog(false)
+    setSelectedUser(null)
   }
 
   // Page header action button
@@ -99,10 +150,13 @@ export default function UsersPage() {
           <input
             type="text"
             placeholder="Search users..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setPage(1)
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setSearch(searchInput)
+                setPage(1)
+              }
             }}
             className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -121,6 +175,9 @@ export default function UsersPage() {
               onPageChange={setPage}
               onPageSizeChange={setPageSize}
               onDelete={handleDeleteUser}
+              onEdit={handleEditUser}
+              onChangePassword={handleChangePassword}
+              departments={departments}
             />
           )}
         </CollectionRuntime>
@@ -130,6 +187,36 @@ export default function UsersPage() {
           open={showCreateDialog}
           onOpenChange={setShowCreateDialog}
           onSuccess={handleCreateUser}
+          departments={departments}
+        />
+
+        {/* Edit User Dialog */}
+        <EditUserDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onSuccess={handleUpdateUser}
+          user={selectedUser}
+          departments={departments}
+        />
+
+        {/* Change Password Dialog */}
+        <ChangePasswordDialog
+          open={showChangePasswordDialog}
+          onOpenChange={setShowChangePasswordDialog}
+          onSuccess={handlePasswordChanged}
+          user={selectedUser}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onConfirm={confirmDeleteUser}
+          title="Delete User"
+          description="Are you sure you want to delete this user? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
         />
       </div>
     </PageRuntime>

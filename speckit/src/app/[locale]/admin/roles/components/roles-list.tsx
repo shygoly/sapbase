@@ -22,9 +22,10 @@ import { Trash2, Edit2 } from 'lucide-react'
 interface RolesListProps {
   roles: Role[]
   onDelete: (id: string) => void
+  onEdit: (role: Role) => void
 }
 
-export function RolesList({ roles, onDelete }: RolesListProps) {
+export function RolesList({ roles, onDelete, onEdit }: RolesListProps) {
   const canDelete = usePermission('roles:delete')
   const canUpdate = usePermission('roles:update')
 
@@ -87,7 +88,11 @@ export function RolesList({ roles, onDelete }: RolesListProps) {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     {canUpdate && (
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(role)}
+                      >
                         <Edit2 className="h-4 w-4" />
                       </Button>
                     )}

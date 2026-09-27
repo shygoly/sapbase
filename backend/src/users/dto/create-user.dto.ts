@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsEnum, IsArray, MinLength } from 'class-validator'
+import { IsString, IsEmail, IsOptional, IsEnum, IsArray, MinLength, IsUUID } from 'class-validator'
 import { UserStatus } from '@speckit/shared-schemas'
 
 export class CreateUserDto {
@@ -13,12 +13,12 @@ export class CreateUserDto {
   password: string
 
   @IsOptional()
-  @IsString()
-  role?: string
+  @IsUUID()
+  roleId?: string
 
   @IsOptional()
-  @IsString()
-  department?: string
+  @IsUUID()
+  departmentId?: string
 
   @IsOptional()
   @IsEnum(UserStatus)

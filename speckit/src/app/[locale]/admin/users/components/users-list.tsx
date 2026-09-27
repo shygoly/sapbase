@@ -5,7 +5,7 @@
 'use client'
 
 import React from 'react'
-import { User } from '@/lib/api/types'
+import { User, Department } from '@/lib/api/types'
 import { usePermission } from '@/core/auth/permission-hooks'
 import {
   Table,
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, Edit2 } from 'lucide-react'
+import { Trash2, Edit2, KeyRound } from 'lucide-react'
 
 interface UsersListProps {
   users: User[]
@@ -27,6 +27,9 @@ interface UsersListProps {
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
   onDelete: (id: string) => void
+  onEdit: (user: User) => void
+  onChangePassword: (user: User) => void
+  departments: Department[]
 }
 
 export function UsersList({
@@ -37,6 +40,9 @@ export function UsersList({
   onPageChange,
   onPageSizeChange,
   onDelete,
+  onEdit,
+  onChangePassword,
+  departments,
 }: UsersListProps) {
   void onPageSizeChange // reserved for future use
   const canDelete = usePermission('users:delete')
@@ -56,6 +62,14 @@ export function UsersList({
         return 'bg-gray-100 text-gray-800'
     }
   }
+
+  const departmentMap = React.useMemo(() => {
+    const map = new Map<string, string>()
+    departments.forEach((dept) => {
+      map.set(dept.id, dept.name)
+    })
+    return map
+  }, [departments])
 
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white">
@@ -85,9 +99,11 @@ export function UsersList({
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{user.role}</Badge>
+                    <Badge variant="outline">{user.roleName || '-'}</Badge>
                   </TableCell>
-                  <TableCell>{user.department || '-'}</TableCell>
+                  <TableCell>
+                    {user.departmentId ? departmentMap.get(user.departmentId) || user.departmentName || '-' : '-'}
+                  </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(user.status)}>
                       {user.status}
@@ -96,8 +112,13 @@ export function UsersList({
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {canUpdate && (
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(user)}>
                           <Edit2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canUpdate && (
+                        <Button variant="ghost" size="sm" onClick={() => onChangePassword(user)}>
+                          <KeyRound className="h-4 w-4" />
                         </Button>
                       )}
                       {canDelete && (

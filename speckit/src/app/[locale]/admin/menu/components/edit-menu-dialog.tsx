@@ -42,6 +42,8 @@ const ICON_OPTIONS = [
   'lock',
 ]
 
+const NO_PARENT_VALUE = '__NO_PARENT__'
+
 export function EditMenuDialog({
   item,
   onClose,
@@ -55,7 +57,7 @@ export function EditMenuDialog({
     icon: item.icon || '',
     visible: item.visible,
     order: item.order,
-    parentId: item.parent?.id || '',
+    parentId: item.parent?.id || NO_PARENT_VALUE,
     permissions: item.permissions || [],
   })
 
@@ -68,7 +70,11 @@ export function EditMenuDialog({
 
     try {
       setLoading(true)
-      await onUpdate(item.id, formData)
+      const payload = {
+        ...formData,
+        parentId: formData.parentId === NO_PARENT_VALUE ? undefined : formData.parentId,
+      }
+      await onUpdate(item.id, payload)
     } finally {
       setLoading(false)
     }
@@ -152,7 +158,7 @@ export function EditMenuDialog({
                 <SelectValue placeholder="No parent (top-level)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No parent (top-level)</SelectItem>
+                <SelectItem value={NO_PARENT_VALUE}>No parent (top-level)</SelectItem>
                 {parentItems.map((i) => (
                   <SelectItem key={i.id} value={i.id}>
                     {i.label}
