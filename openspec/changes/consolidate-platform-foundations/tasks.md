@@ -26,11 +26,23 @@
 
 ## Phase W0: 收敛准备（清点与止血）
 
-- [ ] 清点旧工作流的**全部调用点**：前端（`admin/workflows` 5 组件 + `workflows.api.ts`）、
-      后端内部、定时任务、种子脚本 —— 输出一份清单进本 change
-- [ ] `workflow_definitions / workflow_instances / workflow_history` 导出脚本
-      （JSON 导出 + 行数核对），落到 `backend/scripts/`
-- [ ] 确认旧树的**用户可见能力清单**（定义 CRUD / 启动 / 迁移 / 历史 / 建议迁移 / 状态图 / 自动迁移）
+- [x] 清点旧工作流的**全部调用点**：前端（`admin/workflows` + `workflows.api.ts`）、
+      后端内部、定时任务、种子脚本 —— 清单在 `w0-inventory.md`（`rg` 扫出，附复现命令）
+      实测：前端 8 个文件（1 page + 6 组件 + 1 api 客户端）、后端 7 处、13 条 HTTP 路由、4 张表
+- [x] 旧表导出脚本（JSON 导出 + 行数核对）：`backend/scripts/export-workflow-legacy.ts`
+      —— **四张表**（计划里漏了 `workflow_auto_suggestion_logs`）；只读 SELECT；
+      产出 `manifest.json`（每表的行数 / 字节数 / sha256）+ 表缺失时**退出码 1**（不做"看起来成功"的导出）。
+      证据（2026-09-27，库 `sapbasic`）：`workflow_definitions` 1 行 / `instances` 0 / `history` 0 /
+      `auto_suggestion_logs` 0；重复运行 sha256 一致；对 `postgres` 库（无表）退出码 = 1
+- [x] 确认旧树的**用户可见能力清单**（定义 CRUD / 启动 / 迁移 / 历史 / 建议迁移 / 状态图 / 自动迁移）
+      —— 见 `w0-inventory.md` §6。**关键结论：13 条路由里只有 `transition` 一条在蓝图侧已存在**，
+      W1 是"补 12 条路由的能力"而不是"换个数据源"，这是 W3 之前不许删代码的量化理由
+
+> W0 新发现的两条（已写进 `w0-inventory.md`，影响 W1 排期）：
+> ① `workflows` 与 `workflow-context` 各有一个**同名、同 `@Cron('0 2 * * *')`** 的
+> auto-transition job —— 双跑期同一实例会被迁移两次，W1 对拍前必须先摘掉一个；
+> ② `ai-module-context/infrastructure/external/workflow.service.ts` 是**第二棵树唯一的功能出口**
+> （给 AI 拼状态上下文），W3 摘除前必须先给它换源。
 
 ## Phase W1: 双跑（新接口补齐旧前端所需）
 
