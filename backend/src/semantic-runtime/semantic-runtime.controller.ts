@@ -29,6 +29,16 @@ type RuntimeUser = {
 export class SemanticRuntimeController {
   constructor(private readonly runtime: SemanticRuntimeService) {}
 
+  @Get(':id/semantic')
+  @ApiOperation({ summary: '读已装载模板的语义声明（实体/状态/迁移；不含字段）' })
+  async semantic(@Param('id') id: string, @CurrentUser() user?: RuntimeUser) {
+    try {
+      return await this.runtime.semantic(id, user?.organizationId ?? '')
+    } catch (error) {
+      toHttpException(error)
+    }
+  }
+
   @Get(':id/traceability/batch/:code')
   @ApiOperation({ summary: '按批次号反向查询相关单据与客户（未知批次 200 + found:false）' })
   async traceBatch(
@@ -143,6 +153,21 @@ export class SemanticRuntimeController {
     }
   }
 
+  @Get(':id/records/:entity/:recordId')
+  @ApiOperation({ summary: '按租户读回单条记录（与列表同一套后处理；找不到/他租 404）' })
+  async read(
+    @Param('id') id: string,
+    @Param('entity') entity: string,
+    @Param('recordId') recordId: string,
+    @CurrentUser() user?: RuntimeUser,
+  ) {
+    try {
+      return await this.runtime.read(id, entity, recordId, user?.organizationId ?? '', user)
+    } catch (error) {
+      toHttpException(error)
+    }
+  }
+
   @Post(':id/records/:entity/:recordId/transition')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '执行模板声明的状态迁移（非法迁移拒，状态不变）' })
@@ -162,6 +187,46 @@ export class SemanticRuntimeController {
         user?.organizationId ?? '',
         user?.id ?? user?.userId,
         user,
+      )
+    } catch (error) {
+      toHttpException(error)
+    }
+  }
+
+  @Get(':id/records/:entity/:recordId/history')
+  @ApiOperation({ summary: '按实例读迁移历史（来自 audit_logs；无历史 200 + []）' })
+  async history(
+    @Param('id') id: string,
+    @Param('entity') entity: string,
+    @Param('recordId') recordId: string,
+    @CurrentUser() user?: RuntimeUser,
+  ) {
+    try {
+      return await this.runtime.listTransitionHistory(
+        id,
+        entity,
+        recordId,
+        user?.organizationId ?? '',
+      )
+    } catch (error) {
+      toHttpException(error)
+    }
+  }
+
+  @Get(':id/records/:entity/:recordId/suggested-transitions')
+  @ApiOperation({ summary: '建议迁移（只读：不改 state/version，不写审计）' })
+  async suggestedTransitions(
+    @Param('id') id: string,
+    @Param('entity') entity: string,
+    @Param('recordId') recordId: string,
+    @CurrentUser() user?: RuntimeUser,
+  ) {
+    try {
+      return await this.runtime.listSuggestedTransitions(
+        id,
+        entity,
+        recordId,
+        user?.organizationId ?? '',
       )
     } catch (error) {
       toHttpException(error)

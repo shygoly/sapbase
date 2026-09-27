@@ -7,6 +7,9 @@ import { BLUEPRINT_APPROVALS_DDL } from '../semantic-runtime/blueprint-approval.
 import { BLUEPRINT_DOC_COUNTERS_DDL } from '../semantic-runtime/blueprint-doc-counter.ddl'
 import { BLUEPRINT_JOURNAL_ENTRIES_DDL } from '../semantic-runtime/blueprint-journal-entry.ddl'
 import { BLUEPRINT_RECORDS_DDL } from '../semantic-runtime/blueprint-record.ddl'
+import { OUTBOX_DDL } from '../outbox/outbox.ddl'
+import { NOTIFICATIONS_DDL } from '../notifications/notification.ddl'
+import { SUGGESTION_LOG_DDL } from '../semantic-runtime/suggestion-log.ddl'
 
 export const SCHEMA_BASELINE_SQL: string[] = [
   `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`,
@@ -588,4 +591,7 @@ export const SCHEMA_BASELINE_SQL: string[] = [
   ...BLUEPRINT_DOC_COUNTERS_DDL,
   ...BLUEPRINT_APPROVALS_DDL,
   ...BLUEPRINT_JOURNAL_ENTRIES_DDL,
+  ...OUTBOX_DDL,
+  ...NOTIFICATIONS_DDL,
+  ...SUGGESTION_LOG_DDL,
 ]

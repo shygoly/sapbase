@@ -1,8 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { DataSource, EntityManager, Repository } from 'typeorm'
+import { randomUUID } from 'node:crypto'
+import { DataSource, EntityManager, In, Repository } from 'typeorm'
 import { join } from 'node:path'
+import { AuditLog } from '../audit-logs/audit-log.entity'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
+import { logApprove, logImportMaster, logTransition } from '../common/logging/structured-logger'
 import { evaluateCondition } from '../blueprint/expression-evaluator'
 import { BlueprintService } from '../blueprint/blueprint.service'
 import { CompileError } from '../blueprint/compiler'
@@ -13,6 +16,7 @@ import { AccountingError, assertBalanced, generateEntries, type AccountingRuleDe
 import {
   applyApprove,
   buildPendingSteps,
+  currentPendingStep,
   isFullyApproved,
   toChainView,
   type ApprovalChainView,
@@ -30,7 +34,20 @@ import {
   type DocumentEntity,
 } from './document-writer'
 import { buildEvalContext } from './eval-context'
-import { assertRecordStateDeclared, assertTransitionLegal } from './record-transition'
+import {
+  assembleSuggestedTransitions,
+  assembleTransitionHistory,
+  TRANSITION_AUDIT_ACTION,
+  TRANSITION_AUDIT_SOURCE_BLUEPRINT,
+  type ApprovalJudgement,
+  type SuggestedTransitionItem,
+  type TransitionHistoryItem,
+} from './record-history'
+import { allowedTargetsOf, assertRecordStateDeclared, assertTransitionLegal } from './record-transition'
+import {
+  selectAutoSuggestTargets,
+  type AutoSuggestTarget,
+} from './suggestion-targets'
 import { deleteRecordWithIntegrity } from './record-delete'
 import {
   filterSql,
@@ -68,6 +85,13 @@ import {
   type ReceivableAggRow,
   type StockAggRow,
 } from './views'
+import {
+  approvalDecidedIdempotencyKey,
+  approvalPendingIdempotencyKey,
+  importIdempotencyKey,
+  OutboxService,
+  transitionIdempotencyKey,
+} from '../outbox/outbox.service'
 
 export type { RuntimeActor } from './field-permissions'
 
@@ -91,6 +115,52 @@ interface LoadedTemplate {
   validation: ValidationRule[]
   approval: ApprovalRuleDecl[]
   accounting: AccountingRuleDecl[]
+}
+
+/** 状态图 / 实体选择器要的语义切片：不含字段细节。 */
+export interface SemanticStateDecl {
+  name: string
+  initial: boolean
+  final: boolean
+}
+
+export interface SemanticTransitionDecl {
+  from: string
+  to: string
+}
+
+export interface SemanticEntityDecl {
+  name: string
+  children?: string[]
+  states: SemanticStateDecl[]
+  transitions: SemanticTransitionDecl[]
+}
+
+export interface SemanticDeclaration {
+  entities: SemanticEntityDecl[]
+}
+
+/** 模板实体 → 图所需的 states / transitions / children；不带字段。 */
+export function projectSemanticDeclaration(
+  entities: Array<{
+    name: string
+    children?: string[]
+    states?: Array<{ name: string; initial?: boolean; final?: boolean }>
+    transitions?: Array<{ from: string; to: string }>
+  }>,
+): SemanticDeclaration {
+  return {
+    entities: entities.map((entity) => ({
+      name: entity.name,
+      ...(entity.children && entity.children.length > 0 ? { children: [...entity.children] } : {}),
+      states: (entity.states ?? []).map((state) => ({
+        name: state.name,
+        initial: state.initial === true,
+        final: state.final === true,
+      })),
+      transitions: (entity.transitions ?? []).map((item) => ({ from: item.from, to: item.to })),
+    })),
+  }
 }
 
 export interface TransitionResult extends BlueprintRecord {
@@ -118,6 +188,7 @@ export class SemanticRuntimeService {
     private readonly records: Repository<BlueprintRecord>,
     private readonly dataSource: DataSource,
     private readonly auditLogs: AuditLogsService,
+    private readonly outbox: OutboxService,
   ) {}
 
   async write(
@@ -436,6 +507,7 @@ export class SemanticRuntimeService {
       }
     }
 
+    const batchId = randomUUID()
     await this.auditLogs.create({
       action: 'blueprint.import',
       resource: entity,
@@ -449,9 +521,26 @@ export class SemanticRuntimeService {
         failed,
         validated: dryRun ? validated : undefined,
         dryRun,
+        batchId,
       },
     })
+    await this.dataSource.transaction(async (manager) => {
+      await this.outbox.publish(manager, {
+        topic: 'blueprint.import.completed',
+        organizationId,
+        idempotencyKey: importIdempotencyKey(entity, batchId),
+        payload: {
+          entity,
+          imported,
+          failed,
+          dryRun,
+          batchId,
+          actor: actorId(actor) ?? 'semantic-runtime',
+        },
+      })
+    })
 
+    logImportMaster({ entity, imported, failed, dryRun })
     return {
       entity,
       source: normalized.source,
@@ -519,6 +608,42 @@ export class SemanticRuntimeService {
     }
 
     return this.listEnvelope(loaded.manifest.blueprint, declared, organizationId, query ?? {}, actor)
+  }
+
+  /**
+   * 已装载模板的语义声明（只读）：授权门走 loadOrThrow，内容走 readTemplate。
+   * 不重新编译、不写审计、不返回字段细节。
+   */
+  async semantic(packageId: string, organizationId: string): Promise<SemanticDeclaration> {
+    if (!organizationId) {
+      throw new RecordWriteError('缺少 organizationId，拒绝读取', 'missing-tenant')
+    }
+    await this.loadOrThrow(packageId, organizationId)
+    return projectSemanticDeclaration(this.readTemplate(packageId).entities)
+  }
+
+  /**
+   * 单条记录读：与 list 同一套后处理（resolveState + materializeDefaults + 字段省略）。
+   * 租户过滤；找不到 / 他租 → 404。
+   */
+  async read(
+    packageId: string,
+    entity: string,
+    recordId: string,
+    organizationId: string,
+    actor?: RuntimeActor,
+  ): Promise<BlueprintRecord> {
+    if (!organizationId) {
+      throw new RecordWriteError('缺少 organizationId，拒绝读取', 'missing-tenant')
+    }
+    const loaded = await this.loadOrThrow(packageId, organizationId)
+    const template = this.readTemplate(packageId)
+    const declared = template.entities.find((item) => item.name === entity)
+    if (!declared) {
+      throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
+    }
+    const row = await this.findRecordOrThrow(loaded.manifest.blueprint, organizationId, entity, recordId)
+    return this.withResolvedState(row, declared, actor)
   }
 
   async viewStock(packageId: string, organizationId: string) {
@@ -697,10 +822,28 @@ export class SemanticRuntimeService {
           to: body.to,
           entity,
           recordId,
+          source: TRANSITION_AUDIT_SOURCE_BLUEPRINT,
         },
       })
 
       const updated = await repo.findOneByOrFail({ id: recordId })
+      // 先发事件再记账：记账不平衡必须回滚事件（N0 判据：发布先于失败）。
+      await this.outbox.publish(manager, {
+        topic: 'blueprint.record.transitioned',
+        organizationId,
+        aggregateType: entity,
+        aggregateId: recordId,
+        idempotencyKey: transitionIdempotencyKey(recordId, from, body.to as string, updated.version),
+        payload: {
+          blueprintId: loaded.manifest.blueprint,
+          entity,
+          recordId,
+          from,
+          to: body.to,
+          version: updated.version,
+          actor: actor && actor.length > 0 ? actor : 'semantic-runtime',
+        },
+      })
       const journalEntries = await this.postAccounting(
         manager,
         loaded.manifest.blueprint,
@@ -712,6 +855,14 @@ export class SemanticRuntimeService {
         template,
         actor,
       )
+      logTransition({
+        blueprintId: loaded.manifest.blueprint,
+        entity,
+        recordId,
+        from,
+        to: body.to as string,
+        version: updated.version,
+      })
       return Object.assign(this.withResolvedState(updated, declared, user), { journalEntries })
     })
   }
@@ -740,6 +891,155 @@ export class SemanticRuntimeService {
       order: { ruleId: 'ASC', stepIndex: 'ASC' },
     })
     return { approvals: this.groupApprovalViews(rows) }
+  }
+
+  /** 按实例读迁移历史：来源是 audit_logs，无历史返回 []，记录不存在 404。 */
+  async listTransitionHistory(
+    packageId: string,
+    entity: string,
+    recordId: string,
+    organizationId: string,
+  ): Promise<TransitionHistoryItem[]> {
+    if (!organizationId) {
+      throw new RecordWriteError('缺少 organizationId，拒绝读取', 'missing-tenant')
+    }
+    const loaded = await this.loadOrThrow(packageId, organizationId)
+    const template = this.readTemplate(packageId)
+    if (!template.entities.find((item) => item.name === entity)) {
+      throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
+    }
+    await this.findRecordOrThrow(loaded.manifest.blueprint, organizationId, entity, recordId)
+    const rows = await this.dataSource.getRepository(AuditLog).find({
+      where: {
+        action: TRANSITION_AUDIT_ACTION,
+        resource: entity,
+        resourceId: recordId,
+        organizationId,
+      },
+      order: { timestamp: 'ASC' },
+    })
+    return assembleTransitionHistory(rows)
+  }
+
+  /**
+   * 建议迁移：只读。依据当前模板 transitions + 既有审批求值，不改 state/version、不写审计。
+   */
+  async listSuggestedTransitions(
+    packageId: string,
+    entity: string,
+    recordId: string,
+    organizationId: string,
+  ): Promise<SuggestedTransitionItem[]> {
+    if (!organizationId) {
+      throw new RecordWriteError('缺少 organizationId，拒绝读取', 'missing-tenant')
+    }
+    const loaded = await this.loadOrThrow(packageId, organizationId)
+    const template = this.readTemplate(packageId)
+    const declared = template.entities.find((item) => item.name === entity)
+    if (!declared) {
+      throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
+    }
+    const row = await this.findRecordOrThrow(loaded.manifest.blueprint, organizationId, entity, recordId)
+    assertRecordStateDeclared(declared, row.state)
+    const from = resolveState(row.state, declared)
+    const targets = from ? allowedTargetsOf(declared, from) : []
+    const ctx = await this.evalContextOf(
+      this.dataSource.manager,
+      loaded.manifest.blueprint,
+      organizationId,
+      entity,
+      row.id,
+      row.data,
+      template,
+    )
+    const approvalRepo = this.dataSource.getRepository(BlueprintApproval)
+    const judgements: ApprovalJudgement[] = []
+    for (const rule of template.approval.filter((item) => item.entity === entity)) {
+      const judged = evaluateCondition(rule.when, ctx)
+      if (!judged.ok) {
+        throw new RecordWriteError(
+          `审批条件求值失败：${judged.error}`,
+          'approval-eval-failed',
+          undefined,
+          rule.id,
+        )
+      }
+      if (!judged.value) {
+        judgements.push({ ruleId: rule.id, applies: false, fullyApproved: false })
+        continue
+      }
+      const existing = await approvalRepo.find({
+        where: {
+          blueprintId: loaded.manifest.blueprint,
+          organizationId,
+          entity,
+          recordId: row.id,
+          ruleId: rule.id,
+        },
+        order: { stepIndex: 'ASC' },
+      })
+      const steps: ApprovalStepState[] = existing.map((item) => ({
+        index: item.stepIndex,
+        role: item.role,
+        status: item.status,
+        actor: item.actor,
+        decidedAt: item.decidedAt ? item.decidedAt.toISOString() : null,
+      }))
+      const pending = currentPendingStep(steps)
+      judgements.push({
+        ruleId: rule.id,
+        applies: true,
+        fullyApproved: isFullyApproved(steps),
+        pendingRole: pending?.role ?? rule.steps[0]?.role,
+      })
+    }
+    return assembleSuggestedTransitions(targets, judgements)
+  }
+
+  /**
+   * 夜间建议的扫描面：已安装包里 `autoSuggest === true` 的非终态记录。
+   * 坏包跳过，不让一个包挡住整批。
+   */
+  async listAutoSuggestTargets(): Promise<AutoSuggestTarget[]> {
+    const packages: Array<{
+      packageId: string
+      blueprintId: string
+      entities: LoadedTemplate['entities']
+    }> = []
+    for (const pkg of this.blueprints.list()) {
+      try {
+        const template = this.readTemplate(pkg.id)
+        packages.push({
+          packageId: pkg.id,
+          blueprintId: pkg.manifest.blueprint,
+          entities: template.entities,
+        })
+      } catch (error) {
+        new Logger(SemanticRuntimeService.name).warn(
+          `跳过无法读取语义的包 ${pkg.id}：${(error as Error).message}`,
+        )
+      }
+    }
+    if (packages.length === 0) return []
+    const rows = await this.records.find({
+      where: { blueprintId: In(packages.map((pkg) => pkg.blueprintId)) },
+    })
+    return selectAutoSuggestTargets(packages, rows)
+  }
+
+  private async findRecordOrThrow(
+    blueprintId: string,
+    organizationId: string,
+    entity: string,
+    recordId: string,
+  ): Promise<BlueprintRecord> {
+    const row = await this.records.findOne({
+      where: { id: recordId, entity, blueprintId, organizationId },
+    })
+    if (!row) {
+      throw new NotFoundException(`记录 ${entity}:${recordId} 不存在`)
+    }
+    return row
   }
 
   async approve(
@@ -813,6 +1113,7 @@ export class SemanticRuntimeService {
         row.decidedAt = step.decidedAt ? new Date(step.decidedAt) : undefined
         await repo.save(row)
       }
+      const decidedStep = result.steps.find((step) => step.actor === who && step.status === 'approved')
       await this.auditLogs.create({
         action: 'blueprint.record.approval',
         resource: entity,
@@ -824,11 +1125,32 @@ export class SemanticRuntimeService {
           blueprintId: loaded.manifest.blueprint,
           ruleId,
           role,
-          stepIndex: result.steps.find((step) => step.actor === who && step.status === 'approved')
-            ?.index,
+          stepIndex: decidedStep?.index,
           result: result.chainStatus,
           actor: who,
         },
+      })
+      await this.outbox.publish(manager, {
+        topic: 'blueprint.record.approval.decided',
+        organizationId,
+        aggregateType: entity,
+        aggregateId: recordId,
+        idempotencyKey: approvalDecidedIdempotencyKey(recordId, ruleId, decidedStep?.index ?? 0),
+        payload: {
+          ruleId,
+          role,
+          stepIndex: decidedStep?.index ?? 0,
+          entity,
+          recordId,
+          result: result.chainStatus,
+          actor: who,
+        },
+      })
+      logApprove({
+        ruleId,
+        stepIndex: decidedStep?.index ?? 0,
+        role,
+        result: result.chainStatus,
       })
       return toChainView(ruleId, result.steps)
     })
@@ -900,7 +1222,8 @@ export class SemanticRuntimeService {
         order: { stepIndex: 'ASC' },
       })
       if (existing.length > 0) continue
-      for (const step of buildPendingSteps(rule)) {
+      const pendingSteps = buildPendingSteps(rule)
+      for (const step of pendingSteps) {
         await repo.save(
           repo.create({
             blueprintId,
@@ -914,6 +1237,23 @@ export class SemanticRuntimeService {
             status: 'pending',
           }),
         )
+      }
+      const first = pendingSteps[0]
+      if (first) {
+        await this.outbox.publish(manager, {
+          topic: 'blueprint.record.approval.pending',
+          organizationId,
+          aggregateType: entity,
+          aggregateId: recordId,
+          idempotencyKey: approvalPendingIdempotencyKey(recordId, rule.id, first.index),
+          payload: {
+            ruleId: rule.id,
+            role: first.role,
+            stepIndex: first.index,
+            entity,
+            recordId,
+          },
+        })
       }
     }
   }

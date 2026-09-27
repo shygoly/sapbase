@@ -9,7 +9,6 @@ import { AIModulesController } from './ai-modules.controller'
 import { AIModelsModule } from '../ai-models/ai-models.module'
 import { ModuleRegistryModule } from '../module-registry/module-registry.module'
 import { SystemModule } from '../system/system.module'
-import { WorkflowsModule } from '../workflows/workflows.module'
 import { AIModuleContextModule } from '../ai-module-context/ai-module-context.module'
 
 @Module({
@@ -19,7 +18,6 @@ import { AIModuleContextModule } from '../ai-module-context/ai-module-context.mo
     AIModelsModule,
     ModuleRegistryModule,
     SystemModule,
-    WorkflowsModule,
   ],
   providers: [AIModulesService],
   controllers: [AIModulesController],

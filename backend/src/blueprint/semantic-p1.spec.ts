@@ -56,6 +56,9 @@ describe('P1 语义 Schema 形状', () => {
     expect(schemaOf(P1_SEMANTIC).valid).toBe(true)
     expect(schemaOf({ entities: [{ ...P1_SEMANTIC.entities[0], extra: true }] }).valid).toBe(false)
     expect(
+      schemaOf({ entities: [{ ...P1_SEMANTIC.entities[0], autoSuggest: true }] }).valid,
+    ).toBe(true)
+    expect(
       schemaOf({
         entities: [
           {

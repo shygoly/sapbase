@@ -15,12 +15,6 @@ import { ModuleCapability, CapabilityType } from '../module-registry/module-capa
 import { ModuleStatistics, HealthStatus } from '../module-registry/module-statistics.entity'
 import { ModuleRelationship } from '../module-registry/module-relationship.entity'
 import { ModuleConfiguration } from '../module-registry/module-configuration.entity'
-import {
-  WorkflowDefinition,
-  WorkflowStatus,
-} from '../workflows/workflow-definition.entity'
-import { WorkflowInstance } from '../workflows/workflow-instance.entity'
-import { WorkflowHistory } from '../workflows/workflow-history.entity'
 import { UserStatus } from '@speckit/shared-schemas'
 import * as bcrypt from 'bcrypt'
 import { v4 as uuidv4 } from 'uuid'
@@ -49,9 +43,6 @@ const AppDataSource = new DataSource({
     ModuleCapability,
     ModuleStatistics,
     ModuleConfiguration,
-    WorkflowDefinition,
-    WorkflowInstance,
-    WorkflowHistory,
   ],
   synchronize: false,
   logging: false,
@@ -74,9 +65,6 @@ async function seedDatabase() {
     await AppDataSource.query('TRUNCATE TABLE "module_registry" CASCADE')
     await AppDataSource.query('TRUNCATE TABLE "module_capabilities" CASCADE')
     await AppDataSource.query('TRUNCATE TABLE "module_statistics" CASCADE')
-    await AppDataSource.query('TRUNCATE TABLE "workflow_history" CASCADE')
-    await AppDataSource.query('TRUNCATE TABLE "workflow_instances" CASCADE')
-    await AppDataSource.query('TRUNCATE TABLE "workflow_definitions" CASCADE')
     await AppDataSource.query('TRUNCATE TABLE "organization_members" CASCADE')
     await AppDataSource.query('TRUNCATE TABLE "organizations" CASCADE')
 
@@ -90,23 +78,6 @@ async function seedDatabase() {
       subscriptionStatus: SubscriptionStatus.INCOMPLETE,
     })
     console.log('Created default organization')
-
-    // Seed default Opportunity workflow (draft → formal) for current org
-    const workflowDefRepo = AppDataSource.getRepository(WorkflowDefinition)
-    await workflowDefRepo.save({
-      name: 'Opportunity',
-      description: 'Opportunity workflow from draft to formal',
-      entityType: 'opportunity',
-      organizationId: defaultOrg.id,
-      states: [
-        { name: 'draft', initial: true, final: false },
-        { name: 'formal', initial: false, final: true },
-      ],
-      transitions: [{ from: 'draft', to: 'formal' }],
-      status: WorkflowStatus.ACTIVE,
-      version: '1.0.0',
-    })
-    console.log('Created default Opportunity workflow')
 
     // Seed Roles (5 roles)
     const roleRepository = AppDataSource.getRepository(Role)

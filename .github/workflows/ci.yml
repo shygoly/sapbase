@@ -256,7 +256,12 @@ jobs:
             test/autoparts-atoms.e2e-spec.ts \
             test/traceability-import.e2e-spec.ts \
             test/upgrade-views.e2e-spec.ts \
-            test/currency-permissions.e2e-spec.ts
+            test/currency-permissions.e2e-spec.ts \
+            test/blueprint-read-interfaces.e2e-spec.ts \
+            test/legacy-workflow-gone.e2e-spec.ts \
+            test/outbox.e2e-spec.ts \
+            test/notifications-inbox.e2e-spec.ts \
+            test/ai-blueprint.e2e-spec.ts
 
   validate:
     name: Validate Components
