@@ -25,3 +25,4 @@ __exportStar(require("./audit-log"), exports);
 __exportStar(require("./settings"), exports);
 __exportStar(require("./permissions"), exports);
 __exportStar(require("./blueprint"), exports);
+__exportStar(require("./business-app"), exports);

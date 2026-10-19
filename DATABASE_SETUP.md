@@ -33,6 +33,9 @@ DB_USERNAME=your_username
 DB_PASSWORD=your_password
 DB_NAME=sapbasic
 
+# RLS: 生产环境使用非 owner 应用角色并设为 required
+RLS_ENFORCEMENT=required
+
 # JWT
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_EXPIRES_IN=7d
@@ -40,6 +43,16 @@ JWT_EXPIRES_IN=7d
 # CORS
 CORS_ORIGIN=http://localhost:3000
 ```
+
+### PostgreSQL RLS / 行级安全
+
+租户表的最后一道隔离由 PostgreSQL RLS 提供。生产数据库必须区分：
+
+- migration/DDL owner：负责建表、迁移和维护策略，不用于应用连接。
+- application role：不是表 owner，不是 superuser，也没有 `BYPASSRLS`。
+
+否则 PostgreSQL 会按 owner 规则绕过 RLS。应用以 `RLS_ENFORCEMENT=required`
+启动时会检查当前角色的 `superuser/BYPASSRLS/table owner` 属性，不满足即拒绝启动。
 
 ### 3. 运行数据库迁移和种子数据 / Run Migrations and Seed Data
 

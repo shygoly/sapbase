@@ -28,6 +28,9 @@ import { NotificationsModule } from './notifications/notifications.module'
 import { NotificationRecord } from './notifications/notification.entity'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { ChatModule } from './chat/chat.module'
+import { BusinessAppsModule } from './business-apps/business-apps.module'
+import { BusinessAppInstallation } from './business-apps/business-app-installation.entity'
+import { BusinessAppInstallationRevision } from './business-apps/business-app-installation-revision.entity'
 import { AgentConfirmationToken } from './agent-tools/confirmation-token.entity'
 import { SemanticRuntimeModule } from './semantic-runtime/semantic-runtime.module'
 import { BlueprintApproval } from './semantic-runtime/blueprint-approval.entity'
@@ -63,6 +66,16 @@ import { WorkflowAutoSuggestionLog } from './workflow-archive/workflow-auto-sugg
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
 import { LoggerMiddleware } from './common/middleware/logger.middleware'
 import { EventBusModule } from './common/events/event-bus.module'
+import { DataSource, DataSourceOptions } from 'typeorm'
+import {
+  addTransactionalDataSource,
+  initializeTransactionalContext,
+  StorageDriver,
+} from 'typeorm-transactional'
+import { TenantTransactionModule } from './common/transaction/tenant-transaction.module'
+import { RlsPolicyModule } from './common/rls/rls-policy.module'
+
+initializeTransactionalContext({ storageDriver: StorageDriver.ASYNC_LOCAL_STORAGE })
 // WebSocketModule - conditionally imported to avoid dependency issues during doc generation
 let WebSocketModule: any
 try {
@@ -82,14 +95,15 @@ try {
     EventBusModule,
     ...(WebSocketModule ? [WebSocketModule] : []),
     CacheModule,
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      username: process.env.DB_USERNAME || 'mac',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'sapbasic',
-      entities: [
+    TypeOrmModule.forRootAsync({
+      useFactory: (): DataSourceOptions => ({
+        type: 'postgres',
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        username: process.env.DB_USERNAME || 'mac',
+        password: process.env.DB_PASSWORD || '',
+        database: process.env.DB_NAME || 'sapbasic',
+        entities: [
         User,
         Organization,
         OrganizationMember,
@@ -125,10 +139,22 @@ try {
         OutboxDelivery,
         NotificationRecord,
         AgentConfirmationToken,
-      ],
-      synchronize: true,
-      logging: process.env.NODE_ENV === 'development',
+        BusinessAppInstallation,
+        BusinessAppInstallationRevision,
+        ],
+        synchronize:
+          process.env.DB_SYNCHRONIZE === 'true' ||
+          (process.env.NODE_ENV !== 'production' &&
+            process.env.DB_SYNCHRONIZE !== 'false'),
+        logging: process.env.NODE_ENV === 'development',
+      }),
+      dataSourceFactory: async (options) => {
+        if (!options) throw new Error('TypeORM DataSource options missing')
+        return addTransactionalDataSource(new DataSource(options))
+      },
     }),
+    TenantTransactionModule,
+    RlsPolicyModule,
     UsersModule,
     AuthModule,
     DepartmentsModule,
@@ -152,6 +178,7 @@ try {
     NotificationsModule,
     AgentToolsModule,
     ChatModule,
+    BusinessAppsModule,
   ],
   controllers: [],
   providers: [],

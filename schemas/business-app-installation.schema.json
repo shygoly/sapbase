@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/business-app-installation.schema.json",
+  "title": "Business App Installation",
+  "description": "An organization-scoped installation of a signed Blueprint release. The Blueprint remains the distributed business definition; the installation binds it to a tenant, runtime profile, configuration, and lifecycle.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "organizationId",
+    "appKey",
+    "displayName",
+    "slug",
+    "blueprintId",
+    "blueprintVersion",
+    "releaseDigest",
+    "runtimeRequirement",
+    "deploymentProfile",
+    "status",
+    "config",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "organizationId": { "type": "string", "format": "uuid" },
+    "appKey": { "$ref": "#/$defs/appKey" },
+    "displayName": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+    "blueprintId": { "$ref": "#/$defs/appKey" },
+    "blueprintVersion": { "$ref": "#/$defs/semver" },
+    "releaseDigest": { "$ref": "#/$defs/digest" },
+    "runtimeRequirement": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "deploymentProfile": {
+      "enum": ["shared-saas", "dedicated-saas", "standalone"]
+    },
+    "status": {
+      "enum": ["installing", "active", "suspended", "failed", "uninstalling", "removed"]
+    },
+    "config": {
+      "type": "object",
+      "description": "Tenant configuration validated by the installed Blueprint."
+    },
+    "license": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["issuer"],
+      "properties": {
+        "issuer": { "type": "string", "minLength": 1 },
+        "expiresAt": { "type": "string", "minLength": 1 }
+      }
+    },
+    "currentRevisionId": { "type": ["string", "null"], "format": "uuid" },
+    "createdById": { "type": ["string", "null"], "format": "uuid" },
+    "createdAt": { "type": "string", "minLength": 1 },
+    "updatedAt": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "appKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  }
+}

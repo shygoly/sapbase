@@ -12,6 +12,8 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { AgentToolRegistry } from './agent-tool.registry'
+import { OptionalAppContextGuard } from '../business-apps/optional-app-context.guard'
+import type { BusinessAppExecutionContext } from '@speckit/shared-schemas'
 
 interface AuthedRequest {
   user?: {
@@ -21,6 +23,7 @@ interface AuthedRequest {
     organizationId?: string
     permissions?: string[]
   }
+  appContext?: BusinessAppExecutionContext
 }
 
 /**
@@ -32,7 +35,7 @@ interface AuthedRequest {
  */
 @ApiTags('Agent Tools')
 @Controller('agent-tools')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, OptionalAppContextGuard)
 @ApiBearerAuth()
 export class AgentToolsController {
   constructor(private readonly registry: AgentToolRegistry) {}
@@ -58,6 +61,7 @@ export class AgentToolsController {
       organizationId: req.user?.organizationId,
       actor: req.user?.email ?? req.user?.userId ?? 'unknown',
       grantedPermissions: req.user?.permissions ?? [],
+      appContext: req.appContext,
     })
   }
 
@@ -74,6 +78,7 @@ export class AgentToolsController {
       args: body?.args ?? {},
       organizationId: req.user?.organizationId,
       actor: req.user?.email ?? req.user?.userId ?? 'unknown',
+      appContext: req.appContext,
     })
   }
 }

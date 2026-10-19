@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/business-app-installation-revision.schema.json",
+  "title": "Business App Installation Revision",
+  "description": "Append-only lifecycle snapshot for an installed business app. Upgrade and rollback create new revisions; historical release references are retained.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "organizationId",
+    "appInstallationId",
+    "packageId",
+    "blueprintId",
+    "blueprintVersion",
+    "releaseDigest",
+    "runtimeRequirement",
+    "action",
+    "config",
+    "createdAt"
+  ],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "organizationId": { "type": "string", "format": "uuid" },
+    "appInstallationId": { "type": "string", "format": "uuid" },
+    "previousRevisionId": { "type": ["string", "null"], "format": "uuid" },
+    "packageId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$",
+      "maxLength": 128
+    },
+    "blueprintId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+    "blueprintVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "releaseDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "runtimeRequirement": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "action": { "enum": ["installed", "upgraded", "rollback"] },
+    "config": { "type": "object" },
+    "license": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["issuer"],
+      "properties": {
+        "issuer": { "type": "string", "minLength": 1 },
+        "expiresAt": { "type": "string", "minLength": 1 }
+      }
+    },
+    "createdById": { "type": ["string", "null"], "format": "uuid" },
+    "createdAt": { "type": "string", "minLength": 1 }
+  }
+}

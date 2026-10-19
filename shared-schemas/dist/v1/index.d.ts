@@ -9,3 +9,4 @@ export * from './audit-log';
 export * from './settings';
 export * from './permissions';
 export * from './blueprint';
+export * from './business-app';

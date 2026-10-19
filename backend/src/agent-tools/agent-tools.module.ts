@@ -9,6 +9,7 @@ import { AgentToolRegistry } from './agent-tool.registry'
 import { AgentToolsController } from './agent-tools.controller'
 import { AgentConfirmationToken } from './confirmation-token.entity'
 import { ConfirmationTokenService } from './confirmation-token.service'
+import { BusinessAppsModule } from '../business-apps/business-apps.module'
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ConfirmationTokenService } from './confirmation-token.service'
     AtomicRuntimeModule,
     AtomicRegistryModule,
     AuditLogsModule,
+    BusinessAppsModule,
   ],
   controllers: [AgentToolsController],
   providers: [AgentToolRegistry, ConfirmationTokenService],

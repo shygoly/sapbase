@@ -11,6 +11,8 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { ChatOrchestrator } from './chat-orchestrator'
+import { OptionalAppContextGuard } from '../business-apps/optional-app-context.guard'
+import type { BusinessAppExecutionContext } from '@speckit/shared-schemas'
 
 interface AuthedRequest {
   user?: {
@@ -20,6 +22,7 @@ interface AuthedRequest {
     organizationId?: string
     permissions?: string[]
   }
+  appContext?: BusinessAppExecutionContext
 }
 
 /**
@@ -28,7 +31,7 @@ interface AuthedRequest {
  */
 @ApiTags('Chat')
 @Controller('chat')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, OptionalAppContextGuard)
 @ApiBearerAuth()
 export class ChatController {
   constructor(private readonly orchestrator: ChatOrchestrator) {}
@@ -68,6 +71,7 @@ export class ChatController {
       organizationId,
       actor: req.user?.email ?? req.user?.userId ?? 'unknown',
       grantedPermissions: req.user?.permissions ?? [],
+      ...(req.appContext ? { appContext: req.appContext } : {}),
     })
   }
 }

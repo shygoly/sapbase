@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { Interval } from '@nestjs/schedule'
 import { DataSource, LessThanOrEqual } from 'typeorm'
 import { EventBusService } from '../common/events/event-bus.service'
@@ -6,6 +6,7 @@ import { logOutboxDelivery } from '../common/logging/structured-logger'
 import { isUniqueViolation } from '../semantic-runtime/record-write-error'
 import { OutboxDelivery } from './outbox-delivery.entity'
 import { OutboxEvent } from './outbox-event.entity'
+import { withTenantContext } from '../common/transaction/with-tenant-context'
 
 export const OUTBOX_BATCH_SIZE = 50
 export const OUTBOX_MAX_ATTEMPTS = 8
@@ -26,6 +27,8 @@ export interface DrainResult {
  */
 @Injectable()
 export class OutboxDispatcherService {
+  private readonly logger = new Logger(OutboxDispatcherService.name)
+
   constructor(
     private readonly dataSource: DataSource,
     private readonly eventBus: EventBusService,
@@ -38,6 +41,31 @@ export class OutboxDispatcherService {
 
   async drain(): Promise<DrainResult> {
     const now = new Date()
+    const organizations: Array<{ id: string }> = await this.dataSource.query(
+      `SELECT id FROM public.organizations ORDER BY id`,
+    )
+    const total: DrainResult = { processed: 0, delivered: 0, failed: 0 }
+    for (const organization of organizations) {
+      try {
+        const partial = await withTenantContext(
+          this.dataSource,
+          { organizationId: organization.id },
+          () => this.drainOrganization(now),
+        )
+        total.processed += partial.processed
+        total.delivered += partial.delivered
+        total.failed += partial.failed
+      } catch (error) {
+        total.failed += 1
+        this.logger.error(
+          `outbox organization drain failed org=${organization.id}: ${(error as Error).message}`,
+        )
+      }
+    }
+    return total
+  }
+
+  private async drainOrganization(now: Date): Promise<DrainResult> {
     const pending = await this.dataSource.getRepository(OutboxEvent).find({
       where: { status: 'pending', nextAttemptAt: LessThanOrEqual(now) },
       order: { occurredAt: 'ASC' },

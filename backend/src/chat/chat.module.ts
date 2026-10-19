@@ -4,9 +4,10 @@ import { ChatController } from './chat.controller'
 import { ChatOrchestrator } from './chat-orchestrator'
 import { INTENT_PARSER } from './chat.types'
 import { RuleBasedIntentParser } from './rule-based-intent-parser'
+import { BusinessAppsModule } from '../business-apps/business-apps.module'
 
 @Module({
-  imports: [AgentToolsModule],
+  imports: [AgentToolsModule, BusinessAppsModule],
   controllers: [ChatController],
   providers: [
     {
