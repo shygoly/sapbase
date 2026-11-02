@@ -25,8 +25,8 @@
 - [x] 3.4 `GET /agent/conversations/:id` 分页返回会话历史
 - [x] 3.5 `POST /agent/conversations/:id/cancel` 取消当前 turn；取消写审计
 - [x] 3.6 `GET /agent/health` 健康检查
-- [ ] 3.7 Redis 缓冲最近 N 轮与进行中的 turn；Redis 丢失可从 PG 重建
-- [ ] 3.8 前端 PiAgent 侧栏接 SSE；未知事件忽略但记录，不崩
+- [x] 3.7 Redis 缓冲最近 N 轮与进行中的 turn；Redis 丢失可从 PG 重建
+- [x] 3.8 前端 PiAgent 侧栏接 SSE；未知事件忽略但记录，不崩
 
 ## 4. 上下文编译接入
 
@@ -39,30 +39,24 @@
 ## 5. 意图与模型路由
 
 - [x] 5.1 保留 `RuleBasedIntentParser` 作为 L0 快路径
-- [ ] 5.2 新建 `LlmIntentPlanner` 实现 `IntentParser` 端口：只从传入 catalog 选工具，不生成 SQL
-- [ ] 5.3 模型不可用/超时：降级到 L0 + 搜索/表单，明确告知“智能助手暂不可用”
-- [ ] 5.4 模型版本写入 `agent_turns.modelId`；换模型视为 Agent 变更，后续评测覆盖
-- [ ] 5.5 `ChatOrchestrator` 扩展为 Tool Loop（计划 → 调用 → 观察 → 收敛），写工具仍只生成 plan
+- [x] 5.2 新建 `LlmIntentPlanner` 实现 `IntentParser` 端口：只从传入 catalog 选工具，不生成 SQL
+- [x] 5.3 模型不可用/超时：降级到 L0 + 搜索/表单，明确告知“智能助手暂不可用”
+- [x] 5.4 模型版本写入 `agent_turns.modelId`；换模型视为 Agent 变更，后续评测覆盖
+- [x] 5.5 `ChatOrchestrator` 扩展为 Tool Loop（计划 → 调用 → 观察 → 收敛），写工具仍只生成 plan
 
 ## 6. 工具与写确认
 
 - [x] 6.1 保持 `AgentToolRegistry` 为唯一执行入口；不得新增绕过 registry 的通道
 - [x] 6.2 只读阶段：仅开放 `write=false` 工具；写工具继续走现有 plan + confirmation token
-- [ ] 6.3 写执行失败不自动换工具；同一 `Idempotency-Key` 且令牌未消费才允许重试
-- [ ] 6.4 工具结果 `untrustedResult=true` 时用 nonce 包裹后再给模型
+- [x] 6.3 写执行失败不自动换工具；同一 `Idempotency-Key` 且令牌未消费才允许重试
+- [x] 6.4 工具结果 `untrustedResult=true` 时用 nonce 包裹后再给模型
 - [x] 6.5 无权限/无能力时如实回答，不尝试替代路径
 
 ## 7. 失败、审计与验收
 
-- [ ] 7.1 成功与失败都写审计；失败带 `errorCode`；敏感参数脱敏
+- [x] 7.1 成功与失败都写审计；失败带 `errorCode`；敏感参数脱敏
 - [x] 7.2 每轮记录 `releaseId`、`skillVersion`、`knowledgeVersion`（后两者本变更先写 `null`/占位）
 - [x] 7.3 单测：无权限工具不可见；预算超限返回未完成；nonce 不匹配；模型超时降级
-- [ ] 7.4 E2E：一句话 → 只读工具 → SSE 事件 → 会话历史可查 → 审计有 turn/tool 记录
-- [ ] 7.5 回归：现有 `POST /chat/message` 仍通过原测试
-- [ ] 7.6 更新 `FLOWS.md`（若新增 cron/长任务）与 `DECISIONS.md`（D-3 工具面）
-
-
-## ??????
-
-- ????agent-kernel?Context Envelope????nonce ?????/??/????SSE ??????????????
-- ????LLM IntentPlanner?Redis ????? SSE ???tool_calls ??????? E2E?
+- [x] 7.4 E2E：一句话 → 只读工具 → SSE 事件 → 会话历史可查 → 审计有 turn/tool 记录
+- [x] 7.5 回归：现有 `POST /chat/message` 仍通过原测试
+- [x] 7.6 更新 `FLOWS.md`（若新增 cron/长任务）与 `DECISIONS.md`（D-3 工具面）

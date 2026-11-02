@@ -12,7 +12,7 @@
 - [x] 2.2 `backend/project.json`：`name: "backend"`，tags `["type:app","scope:api","layer:app","runtime:node"]`，保留其 `build` / `test` / `lint` target
 - [x] 2.3 `shared-schemas/project.json`：`name: "shared-schemas"`，tags `["type:lib","scope:shared","layer:shared","runtime:isomorphic"]`
 - [x] 2.4 `wasm-modules/project.json`：`name: "wasm-modules"`，tags `["type:lib","scope:shared","layer:shared","runtime:node"]`
-- [ ] 2.5 ?? `npm run dev`?`npm run build`?`npm run build --workspace backend` ????`dev` ?????? build ????
+- [x] 2.5 `npm run dev` ???????????? build ???
 - [x] 2.6 跑 `npm exec -- nx run-many -t build`，记录失败的 target 并修正 project 配置（不是改业务代码）
 
 ## 3. 开启模块边界检查（warn）
@@ -35,13 +35,7 @@
 ## 5. 验收
 
 - [x] 5.1 `npm exec -- nx graph` 能列出 4 个现有项目 + `shared-core`
-- [ ] 5.2 `npm run dev` ??????????????????
-- [ ] 5.3 `npm run build --workspace backend` ???`speckit` build ??????? `./shipping/constants.api` ??????????
+- [x] 5.2 `npm run dev` ??????(3050)???(3051)
+- [x] 5.3 `npm run build --workspace backend` 与 `npm run build --workspace speckit` 均通过（已移除失效的 shipping re-export）
 - [x] 5.4 边界规则输出违规清单，且没有把 `warn` 调成 `error`
 - [x] 5.5 `package-lock.json` 是唯一锁文件，未新增 pnpm/yarn/bun 锁文件
-
-
-## ??????
-
-- ????Nx ????tags??? warn?`libs/shared-core` ????????
-- ????`npm run dev` ?????`speckit` build ??????? `./shipping/constants.api` ???????????

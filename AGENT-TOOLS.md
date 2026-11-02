@@ -20,6 +20,8 @@
 | `builder_feedback_list` | `tool:builder:read` | 否 | none | 5000 | 是 | `contentMasked` | `piagent-builder` | - |
 | `builder_proposal_create` | `tool:builder:write` | 是 | required | 10000 | 否 | - | `piagent-builder` | - |
 | `builder_release_preview` | `tool:builder:validate` | 否 | none | 20000 | 否 | - | `piagent-builder` | - |
+| `builder_proposal_validate` | `tool:builder:validate` | 否 | none | 20000 | 否 | - | `piagent-builder` | - |
+| `builder_changelog_draft` | `tool:builder:write` | 是 | required | 10000 | 否 | - | `piagent-builder` | - |
 
 ---
 

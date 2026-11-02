@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 import { BlueprintModule } from '../blueprint/blueprint.module'
+import { ReleasesModule } from '../releases/releases.module'
 import { BusinessAppInstallation } from './business-app-installation.entity'
 import { BusinessAppInstallationRevision } from './business-app-installation-revision.entity'
 import { BusinessAppsController } from './business-apps.controller'
@@ -13,6 +14,7 @@ import { OptionalAppContextGuard } from './optional-app-context.guard'
   imports: [
     TypeOrmModule.forFeature([BusinessAppInstallation, BusinessAppInstallationRevision]),
     BlueprintModule,
+    ReleasesModule,
     AuditLogsModule,
   ],
   controllers: [BusinessAppsController],

@@ -48,6 +48,6 @@ export class AgentFeedbackController {
   @Get('feedback/triage')
   @Auth('system:manage')
   async triage(@OrganizationId() organizationId: string, @Query('appKey') appKey?: string) {
-    return this.feedback.triage(await this.feedback.list(organizationId, appKey, 'new'))
+    return this.feedback.triage(await this.feedback.list(organizationId, appKey, 'new'), organizationId)
   }
 }

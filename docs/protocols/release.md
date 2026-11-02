@@ -698,7 +698,7 @@ limit 100;
   但保留可查。
 - **变更说明**：Builder Agent 可以起草 changelog，但必须由人审核；changelog 是发布物的一部分。
 
-详见 [`docs/protocols/piagent.md`](./docs/protocols/piagent.md) 与 [`docs/protocols/agent-evolution.md`](./docs/protocols/agent-evolution.md)。
+详见 [`docs/protocols/piagent.md`](./piagent.md) 与 [`docs/protocols/agent-evolution.md`](./agent-evolution.md)。
 
 ---
 

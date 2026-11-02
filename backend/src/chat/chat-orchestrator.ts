@@ -19,43 +19,59 @@ export class ChatOrchestrator {
   ) {}
 
   async handleMessage(message: string, context: ChatContext): Promise<ChatResult> {
-    const intent = await this.parser.parse({ message, context })
-    if (!intent) {
-      return { kind: 'refusal', message: NO_SUCH_CAPABILITY }
-    }
+    let observation = ''
+    let lastIntentId = ''
+    let lastResult: ChatResult | null = null
 
-    const selector = new CatalogToolSelector(this.registry.catalog())
-    const tool = selector.select(intent.tool)
-    if (!tool) {
-      return { kind: 'refusal', message: NO_SUCH_CAPABILITY, intent: intent.label }
-    }
+    for (let step = 0; step < 3; step += 1) {
+      const intent = await this.parser.parse({
+        message: observation ? `${message}\n??: ${observation}` : message,
+        context,
+      })
+      if (!intent) {
+        if (lastResult) return lastResult
+        const degraded =
+          process.env.AGENT_LLM_ENABLED === 'true'
+            ? '???????????????????????????'
+            : NO_SUCH_CAPABILITY
+        return { kind: 'refusal', message: degraded }
+      }
+      if (intent.id === lastIntentId) return lastResult ?? { kind: 'refusal', message: NO_SUCH_CAPABILITY, intent: intent.label }
+      lastIntentId = intent.id
 
-    if (tool.confirmation === 'required') {
+      const selector = new CatalogToolSelector(this.registry.catalog())
+      const tool = selector.select(intent.tool)
+      if (!tool) return { kind: 'refusal', message: NO_SUCH_CAPABILITY, intent: intent.label }
+
+      if (tool.confirmation === 'required') {
+        const plan = buildInteractionPlan({
+          toolName: tool.name,
+          args: intent.args,
+          intentLabel: intent.label,
+          catalog: this.registry.catalog(),
+        })
+        return { kind: 'plan', plan, intent: intent.label }
+      }
+
+      const invoked = await this.registry.invoke({
+        name: tool.name,
+        args: intent.args,
+        organizationId: context.organizationId,
+        actor: context.actor,
+        grantedPermissions: context.grantedPermissions,
+        appContext: context.appContext,
+      })
+
       const plan = buildInteractionPlan({
         toolName: tool.name,
         args: intent.args,
         intentLabel: intent.label,
+        result: invoked.result,
         catalog: this.registry.catalog(),
       })
-      return { kind: 'plan', plan, intent: intent.label }
+      lastResult = { kind: 'plan', plan, intent: intent.label }
+      observation = `tool ${tool.name}: ${String(JSON.stringify(invoked.result)).slice(0, 500)}`
     }
-
-    const invoked = await this.registry.invoke({
-      name: tool.name,
-      args: intent.args,
-      organizationId: context.organizationId,
-      actor: context.actor,
-      grantedPermissions: context.grantedPermissions,
-      appContext: context.appContext,
-    })
-
-    const plan = buildInteractionPlan({
-      toolName: tool.name,
-      args: intent.args,
-      intentLabel: intent.label,
-      result: invoked.result,
-      catalog: this.registry.catalog(),
-    })
-    return { kind: 'plan', plan, intent: intent.label }
+    return lastResult ?? { kind: 'refusal', message: NO_SUCH_CAPABILITY }
   }
 }

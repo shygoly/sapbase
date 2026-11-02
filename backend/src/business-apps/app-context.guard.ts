@@ -5,10 +5,14 @@ import {
   Injectable,
 } from '@nestjs/common'
 import { BusinessAppsService } from './business-apps.service'
+import { ReleasesService } from '../releases/releases.service'
 
 @Injectable()
 export class AppContextGuard implements CanActivate {
-  constructor(private readonly apps: BusinessAppsService) {}
+  constructor(
+    private readonly apps: BusinessAppsService,
+    private readonly releases: ReleasesService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest()

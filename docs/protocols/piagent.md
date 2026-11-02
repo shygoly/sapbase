@@ -180,7 +180,7 @@ flowchart TB
 
 - 用户说“这个不对/少了 X/不好用” → 创建 `agent_feedback`。
 - 反馈自动带：`releaseId`、`cohort`、`screen`、`traceId`、`toolCallIds`、脱敏后的原文。
-- 反馈进入 [`docs/protocols/agent-evolution.md`](./docs/protocols/agent-evolution.md) 的闭环；Agent 不当场承诺“会改”。
+- 反馈进入 [`docs/protocols/agent-evolution.md`](./agent-evolution.md) 的闭环；Agent 不当场承诺“会改”。
 
 ---
 

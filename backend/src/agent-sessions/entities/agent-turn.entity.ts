@@ -21,6 +21,9 @@ export class AgentTurn extends AgentSessionBaseEntity {
   @Column({ type: 'varchar', length: 64, nullable: true })
   contextHash: string | null
 
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  knowledgeVersion: string | null
+
   @Column({ type: 'integer', default: 0 })
   tokensIn: number
 

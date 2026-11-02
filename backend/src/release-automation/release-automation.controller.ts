@@ -84,6 +84,23 @@ export class ReleaseAutomationController {
     })
   }
 
+  @Post(':appKey/promote')
+  @Auth('app:release:activate')
+  promote(
+    @Param('appKey') appKey: string,
+    @Body() body: { appInstallationId: string; releaseId: string },
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: UserLike,
+  ) {
+    return this.automation.promote({ ...body, organizationId, appKey, actorId: user?.id ?? 'unknown' })
+  }
+
+  @Get('audit/quarterly')
+  @Auth('system:manage')
+  audit(@OrganizationId() organizationId: string) {
+    return this.automation.quarterlyAudit(organizationId)
+  }
+
   @Post(':appKey/disable')
   @Auth('app:release:publish')
   disable(

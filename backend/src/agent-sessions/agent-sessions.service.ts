@@ -2,10 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { createHash, randomUUID } from 'node:crypto'
 import { Repository } from 'typeorm'
-import { compileContextEnvelope, wrapUntrustedData } from '@sap/agent-kernel'
+import { compileContextEnvelope, filterKnowledge, wrapUntrustedData } from '@sap/agent-kernel'
 import { AgentToolRegistry } from '../agent-tools/agent-tool.registry'
 import { ChatOrchestrator } from '../chat/chat-orchestrator'
 import { ReleasesService } from '../releases/releases.service'
+import { AgentKnowledgeService } from '../agent-knowledge/agent-knowledge.service'
+import { AgentSessionCacheService } from './agent-session-cache.service'
 import { AgentConversation } from './entities/agent-conversation.entity'
 import { AgentToolCall } from './entities/agent-tool-call.entity'
 import { AgentTurn } from './entities/agent-turn.entity'
@@ -28,6 +30,8 @@ export class AgentSessionsService {
     private readonly registry: AgentToolRegistry,
     private readonly orchestrator: ChatOrchestrator,
     private readonly releases: ReleasesService,
+    private readonly knowledge: AgentKnowledgeService,
+    private readonly cache: AgentSessionCacheService,
   ) {}
 
   async chat(input: {
@@ -48,6 +52,9 @@ export class AgentSessionsService {
         ? await this.releases.activeRelease(input.organizationId, input.appInstallationId)
         : null
     const catalog = this.registry.catalog()
+    const publishedKnowledge = release
+      ? await this.knowledge.listPublished({ organizationId: input.organizationId, releaseId: release.id })
+      : await this.knowledge.listPublished({ organizationId: input.organizationId })
     const envelope = compileContextEnvelope({
       turnId: randomUUID(),
       user: { id: input.userId, roles: [] },
@@ -65,6 +72,11 @@ export class AgentSessionsService {
         : {}),
       permissions: input.permissions,
       ...(input.screenContext ? { screen: input.screenContext as never } : {}),
+      knowledge: filterKnowledge(publishedKnowledge as never, {
+        organizationId: input.organizationId,
+        userId: input.userId,
+        releaseId: release?.id ?? null,
+      }),
       tools: catalog.tools.map((tool) => ({
         name: tool.name,
         description: tool.description,
@@ -82,6 +94,7 @@ export class AgentSessionsService {
         modelId: process.env.AGENT_MODEL_ID ?? null,
         promptHash: hash(input.message),
         contextHash: hash(envelope),
+        knowledgeVersion: envelope.knowledge[0] ? `${envelope.knowledge[0].id}@${envelope.knowledge[0].version}` : null,
         status: 'running',
       }),
     )
@@ -93,12 +106,33 @@ export class AgentSessionsService {
         actor: input.actor,
         grantedPermissions: input.permissions,
       })
+      if (result.modelId) turn.modelId = result.modelId
+      if (envelope.knowledge.length > 0) {
+        events.push({
+          type: 'text.delta',
+          data: { text: `???${envelope.knowledge.map((item) => `[kn:${item.id}@${item.version}]`).join(' ')}` },
+        })
+      }
       if (result.kind === 'refusal') {
         events.push({ type: 'text.delta', data: { text: result.message } })
       } else {
         const toolNames = result.plan.trace.tools
         for (const tool of toolNames) {
-          events.push({ type: 'tool.start', data: { tool, argsDigest: hash({}) } })
+          const argsDigest = hash({})
+          await this.toolCalls.save(
+            this.toolCalls.create({
+              organizationId: input.organizationId,
+              turnId: turn.id,
+              tool,
+              argsDigest,
+              permissionOk: true,
+              confirmationId: null,
+              status: 'success',
+              errorCode: null,
+              latencyMs: Date.now() - startedAt,
+            }),
+          )
+          events.push({ type: 'tool.start', data: { tool, argsDigest } })
           events.push({ type: 'tool.result', data: { tool, status: 'success', summary: 'ok' } })
         }
         events.push({ type: 'plan', data: { plan: result.plan } })
@@ -115,6 +149,7 @@ export class AgentSessionsService {
     }
     conversation.lastTurnAt = new Date()
     await this.conversations.save(conversation)
+    await this.cache.remember(conversation.id, { turnId: turn.id, status: turn.status, events })
     return { conversationId: conversation.id, turnId: turn.id, events }
   }
 

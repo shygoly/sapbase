@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Between, IsNull, Repository } from 'typeorm'
 import { AgentFeedback } from './entities/agent-feedback.entity'
+import { AgentFeedbackTopic } from './entities/agent-feedback-topic.entity'
 import { wrapUntrustedData } from '@sap/agent-kernel'
 import { randomUUID } from 'node:crypto'
 
@@ -13,7 +14,10 @@ const MASK_PATTERNS = [
 
 @Injectable()
 export class AgentFeedbackService {
-  constructor(@InjectRepository(AgentFeedback) private readonly feedback: Repository<AgentFeedback>) {}
+  constructor(
+    @InjectRepository(AgentFeedback) private readonly feedback: Repository<AgentFeedback>,
+    @InjectRepository(AgentFeedbackTopic) private readonly topics: Repository<AgentFeedbackTopic>,
+  ) {}
 
   mask(text: string | undefined | null): string | null {
     if (!text) return null
@@ -70,7 +74,7 @@ export class AgentFeedbackService {
     return this.feedback.find({ where, order: { createdAt: 'DESC' }, take: 100 })
   }
 
-  triage(rows: AgentFeedback[]) {
+  async triage(rows: AgentFeedback[], organizationId: string) {
     const topics = new Map<string, { topicKey: string; count: number; evidence: string[]; roles: Set<string> }>()
     for (const row of rows) {
       const key = `${row.appKey}:${row.category}`
@@ -85,12 +89,20 @@ export class AgentFeedbackService {
       if (row.role) topic.roles.add(row.role)
       topics.set(key, topic)
     }
-    return [...topics.values()].map((topic) => ({
+    const result = [...topics.values()].map((topic) => ({
       topicKey: topic.topicKey,
       count: topic.count,
       evidence: topic.evidence,
       roles: [...topic.roles],
     }))
+    for (const topic of result) {
+      const existing = await this.topics.findOne({ where: { organizationId, topicKey: topic.topicKey } })
+      const saved = existing ?? this.topics.create({ organizationId, appKey: topic.topicKey.split(':')[0], topicKey: topic.topicKey, title: topic.topicKey, severity: 'medium', evidence: [] })
+      saved.evidence = topic.evidence
+      saved.severity = topic.count >= 5 ? 'high' : topic.count >= 2 ? 'medium' : 'low'
+      await this.topics.save(saved)
+    }
+    return result
   }
 
   asUntrusted(row: AgentFeedback): string {

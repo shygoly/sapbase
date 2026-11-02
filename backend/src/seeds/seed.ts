@@ -214,6 +214,14 @@ async function seed() {
       { name: 'settings:read', description: 'View settings', category: 'settings', status: EntityStatus.ACTIVE },
       { name: 'settings:update', description: 'Update settings', category: 'settings', status: EntityStatus.ACTIVE },
       { name: 'audit:read', description: 'View audit logs', category: 'audit', status: EntityStatus.ACTIVE },
+      { name: 'app:release:read', description: 'View releases', category: 'app-release', status: EntityStatus.ACTIVE },
+      { name: 'app:release:propose', description: 'Draft release proposals', category: 'app-release', status: EntityStatus.ACTIVE },
+      { name: 'app:release:validate', description: 'Validate and preview releases', category: 'app-release', status: EntityStatus.ACTIVE },
+      { name: 'app:release:approve', description: 'Approve release proposals', category: 'app-release', status: EntityStatus.ACTIVE },
+      { name: 'app:release:approve:security', description: 'Security approval for high-risk changes', category: 'app-release', status: EntityStatus.ACTIVE },
+      { name: 'app:release:publish', description: 'Publish releases', category: 'app-release', status: EntityStatus.ACTIVE },
+      { name: 'app:release:activate', description: 'Activate releases', category: 'app-release', status: EntityStatus.ACTIVE },
+      { name: 'app:release:rollback', description: 'Rollback releases', category: 'app-release', status: EntityStatus.ACTIVE },
     ])
     console.log(`Created ${permissions.length} permissions`)
 

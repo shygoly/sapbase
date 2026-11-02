@@ -272,6 +272,69 @@
       "allowedAgents": [
         "piagent-builder"
       ]
+    },
+    {
+      "name": "builder_proposal_validate",
+      "description": "When Builder Agent needs to validate a proposal through G0-G6 gates. Read-only.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "proposalId": {
+            "type": "string"
+          },
+          "blueprintId": {
+            "type": "string"
+          },
+          "previewUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposalId"
+        ],
+        "additionalProperties": false
+      },
+      "permission": "tool:builder:validate",
+      "write": false,
+      "confirmation": "none",
+      "timeoutMs": 20000,
+      "untrustedResult": false,
+      "sensitiveArgs": [],
+      "allowedAgents": [
+        "piagent-builder"
+      ]
+    },
+    {
+      "name": "builder_changelog_draft",
+      "description": "When Builder Agent needs a business-facing changelog draft. Write operation, requires confirmation, never publishes.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "title",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
+      "permission": "tool:builder:write",
+      "write": true,
+      "confirmation": "required",
+      "timeoutMs": 10000,
+      "untrustedResult": false,
+      "sensitiveArgs": [],
+      "allowedAgents": [
+        "piagent-builder"
+      ]
     }
   ]
 }

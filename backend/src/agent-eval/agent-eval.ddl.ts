@@ -20,6 +20,7 @@ export const AGENT_EVAL_DDL: string[] = [
     "organizationId" uuid,
     "releaseId" uuid,
     "skillVersion" character varying(128),
+    "modelId" character varying(128),
     suite character varying(32) NOT NULL,
     passed integer DEFAULT 0 NOT NULL,
     failed integer DEFAULT 0 NOT NULL,

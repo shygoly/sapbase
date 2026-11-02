@@ -22,6 +22,8 @@ import { ReleasesModule } from '../releases/releases.module'
     AtomicRegistryModule,
     AuditLogsModule,
     BusinessAppsModule,
+    AgentFeedbackModule,
+    ReleasesModule,
   ],
   controllers: [AgentToolsController],
   providers: [AgentToolRegistry, ConfirmationTokenService],

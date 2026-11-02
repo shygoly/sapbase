@@ -12,6 +12,9 @@ export class AgentEvalRun extends EvalBaseEntity {
   @Column({ type: 'varchar', length: 128, nullable: true })
   skillVersion: string | null
 
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  modelId: string | null
+
   @Column({ type: 'varchar', length: 32 })
   suite: string
 

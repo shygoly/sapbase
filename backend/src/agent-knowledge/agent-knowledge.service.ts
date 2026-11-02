@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { IsNull, Repository } from 'typeorm'
+import { IsNull, LessThan, Repository } from 'typeorm'
 import { AgentKnowledgeEntry } from './entities/agent-knowledge-entry.entity'
 import { AgentSkillVersion } from './entities/agent-skill-version.entity'
 
@@ -94,7 +94,7 @@ export class AgentKnowledgeService {
     const rows = await this.entries.find({
       where: [
         { scope: 'global', status: 'published' },
-        { scope: 'organization', scopeId: input.organizationId, status: 'published' },
+        { scope: 'organization', organizationId: input.organizationId, status: 'published' },
       ],
       order: { createdAt: 'DESC' },
       take: input.limit ?? 20,
@@ -105,14 +105,24 @@ export class AgentKnowledgeService {
   async rollback(input: { id: string; organizationId: string | null }): Promise<AgentKnowledgeEntry> {
     const source = await this.entries.findOne({ where: { id: input.id } })
     if (!source) throw new NotFoundException('知识条目不存在')
+    const previous = await this.entries.findOne({
+      where: {
+        scope: source.scope,
+        scopeId: source.scopeId ? source.scopeId : IsNull(),
+        knowledgeKey: source.knowledgeKey,
+        version: LessThan(source.version),
+      },
+      order: { version: 'DESC' },
+    })
+    if (!previous) throw new NotFoundException('没有可回退的历史知识版本')
     return this.createDraft({
       organizationId: input.organizationId,
-      scope: source.scope,
-      scopeId: source.scopeId,
-      knowledgeKey: source.knowledgeKey,
-      title: source.title,
-      body: source.body,
-      releaseId: source.releaseId,
+      scope: previous.scope,
+      scopeId: previous.scopeId,
+      knowledgeKey: previous.knowledgeKey,
+      title: previous.title,
+      body: previous.body,
+      releaseId: previous.releaseId,
     })
   }
 

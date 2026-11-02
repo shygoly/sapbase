@@ -72,6 +72,7 @@
 | agent_eval_cases | Agent 知识与评测 |
 | agent_eval_runs | Agent 知识与评测 |
 | agent_feedback | Agent 知识与评测 |
+| agent_feedback_topics | Agent 知识与评测 |
 | release_automation_policies | 发布自动化 |
 | release_automation_runs | 发布自动化 |
 
@@ -508,7 +509,7 @@ spec: TODO
 
 ## Agent 知识与评测
 
-覆盖表：agent_knowledge_entries, agent_skill_versions, agent_eval_cases, agent_eval_runs, agent_feedback
+覆盖表：agent_knowledge_entries, agent_skill_versions, agent_eval_cases, agent_eval_runs, agent_feedback, agent_feedback_topics
 
 知识与评测聚合。知识条目只追加版本；技能集版本随 Release 绑定；评测用例版本化；评测运行绑定 `releaseId + skillVersion`。
 
@@ -521,6 +522,8 @@ spec: TODO
 | agent_eval_runs.releaseId | app_releases.id | 评测绑定发布 | none | G5 证据 |
 | agent_feedback.releaseId | app_releases.id | 反馈针对的版本 | none | 必填；无版本无法复现 |
 | agent_feedback.organizationId | organizations.id | 反馈归属组织 | none | 不可跨租户读取 |
+| agent_feedback_topics.organizationId | organizations.id | 议题归属组织 | none | 不可跨租户读取 |
+| agent_feedback_topics.linkedProposalId | app_change_proposals.id | 议题关联提议 | none | 允许为空 |
 
 ### 不变量
 

@@ -1,16 +1,20 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common'
+import { BadRequestException, Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { Auth } from '../common/decorators/auth.decorator'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import { ReleasesService } from './releases.service'
+import { ReleaseIdempotencyService } from './release-idempotency.service'
 
 type UserLike = { id?: string; email?: string; roles?: string[] }
 
 @ApiTags('Release Builder')
 @Controller('builder')
 export class ReleasesBuilderController {
-  constructor(private readonly releases: ReleasesService) {}
+  constructor(
+    private readonly releases: ReleasesService,
+    private readonly idempotency: ReleaseIdempotencyService,
+  ) {}
 
   @Post('apps/:appKey/drafts')
   @Auth('system:manage')
@@ -66,17 +70,49 @@ export class ReleasesBuilderController {
     })
   }
 
+  @Get('proposals/:id')
+  @Auth()
+  proposal(@Param('id') id: string, @OrganizationId() organizationId: string) {
+    return this.releases.getProposal(id, organizationId)
+  }
+
+  @Post('proposals/from-ai-module')
+  @Auth('system:manage')
+  fromAiModule(
+    @Body() body: { aiModuleId: string; draftId: string },
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: UserLike,
+  ) {
+    return this.releases.createProposalFromAiModule({
+      organizationId,
+      aiModuleId: body.aiModuleId,
+      draftId: body.draftId,
+      createdBy: user?.id ?? null,
+    })
+  }
+
   @Post('proposals/:id/validate')
   @Auth('system:manage')
-  validate(@Param('id') id: string, @OrganizationId() organizationId: string) {
-    return this.releases.validateProposal(id, organizationId)
+  validate(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      blueprintId?: string
+      previewUrl?: string
+      releaseId?: string
+      modelId?: string
+      eval?: { suite: string; passed: number; failed: number; writeUnconfirmed?: number; previous?: { passed: number; failed: number } | null }
+    },
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.releases.validateProposal(id, organizationId, body)
   }
 
   @Post('proposals/:id/approve')
   @Auth('app:release:approve')
   approve(
     @Param('id') id: string,
-    @Body() body: { role: 'owner' | 'tech_lead' | 'security' | 'platform_admin'; comment?: string },
+    @Body() body: { role: 'owner' | 'tech_lead' | 'security' | 'platform_admin'; comment?: string; modifiedDiff?: Record<string, unknown> },
     @OrganizationId() organizationId: string,
     @CurrentUser() user: UserLike,
   ) {
@@ -86,12 +122,31 @@ export class ReleasesBuilderController {
       approverId: user?.id ?? user?.email ?? 'unknown',
       role: body?.role ?? 'owner',
       comment: body?.comment,
+      modifiedDiff: body?.modifiedDiff,
+    })
+  }
+
+  @Post('proposals/:id/reject')
+  @Auth('app:release:approve')
+  reject(
+    @Param('id') id: string,
+    @Body() body: { role: 'owner' | 'tech_lead' | 'security' | 'platform_admin'; reason: string },
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: UserLike,
+  ) {
+    return this.releases.rejectProposal({
+      id,
+      organizationId,
+      approverId: user?.id ?? user?.email ?? 'unknown',
+      role: body?.role ?? 'owner',
+      reason: body?.reason,
     })
   }
 
   @Post('releases')
   @Auth('app:release:publish')
   publish(
+    @Headers('Idempotency-Key') idempotencyKey: string | undefined,
     @Body()
     body: {
       appKey: string
@@ -103,56 +158,80 @@ export class ReleasesBuilderController {
       migrations?: Array<{ id: string; rollbackSafe?: boolean }>
       authorId?: string
       approverId?: string
+      emergency?: boolean
     },
     @OrganizationId() organizationId: string,
     @CurrentUser() user: UserLike,
   ) {
-    return this.releases.publish({
-      ...body,
-      organizationId,
-      publishedBy: user?.id ?? null,
-    })
+    if (!idempotencyKey) throw new BadRequestException('?????? Idempotency-Key')
+    return this.idempotency
+      .run(`${organizationId}:publish:${idempotencyKey}`, () =>
+        this.releases.publish({
+          ...body,
+          organizationId,
+          publishedBy: user?.id ?? null,
+        }),
+      )
+      .then((result) => ({ jobId: idempotencyKey, status: 'succeeded', result }))
   }
 
   @Post('releases/:id/activate')
   @Auth('app:release:activate')
   activate(
     @Param('id') id: string,
+    @Headers('Idempotency-Key') idempotencyKey: string | undefined,
     @Body() body: { appInstallationId: string; cohort?: Record<string, unknown> | null; reason?: string },
     @OrganizationId() organizationId: string,
     @CurrentUser() user: UserLike,
   ) {
-    return this.releases.activate({
-      organizationId,
-      appInstallationId: body.appInstallationId,
-      releaseId: id,
-      cohort: body.cohort ?? null,
-      reason: body.reason ?? null,
-      activatedBy: user?.id ?? null,
-    })
+    if (!idempotencyKey) throw new BadRequestException('?????? Idempotency-Key')
+    return this.idempotency
+      .run(`${organizationId}:activate:${id}:${idempotencyKey}`, () =>
+        this.releases.activate({
+          organizationId,
+          appInstallationId: body.appInstallationId,
+          releaseId: id,
+          cohort: body.cohort ?? null,
+          reason: body.reason ?? null,
+          activatedBy: user?.id ?? null,
+        }),
+      )
+      .then((result) => ({ jobId: idempotencyKey, status: 'succeeded', result }))
   }
 
   @Post('releases/:id/rollback')
   @Auth('app:release:rollback')
   rollback(
     @Param('id') id: string,
+    @Headers('Idempotency-Key') idempotencyKey: string | undefined,
     @Body() body: { appInstallationId: string; reason: string },
     @OrganizationId() organizationId: string,
     @CurrentUser() user: UserLike,
   ) {
-    return this.releases.rollback({
-      organizationId,
-      appInstallationId: body.appInstallationId,
-      releaseId: id,
-      reason: body.reason,
-      activatedBy: user?.id ?? null,
-    })
+    if (!idempotencyKey) throw new BadRequestException('?????? Idempotency-Key')
+    return this.idempotency
+      .run(`${organizationId}:rollback:${id}:${idempotencyKey}`, () =>
+        this.releases.rollback({
+          organizationId,
+          appInstallationId: body.appInstallationId,
+          releaseId: id,
+          reason: body.reason,
+          activatedBy: user?.id ?? null,
+        }),
+      )
+      .then((result) => ({ jobId: idempotencyKey, status: 'succeeded', result }))
   }
 
   @Get('releases/:id/impact')
   @Auth()
   impact(@Param('id') id: string) {
     return this.releases.impact(id)
+  }
+
+  @Get('releases')
+  @Auth()
+  list(@OrganizationId() organizationId: string, @Query('appKey') appKey?: string) {
+    return this.releases.listReleases(organizationId, appKey)
   }
 
   @Get('releases/:id')

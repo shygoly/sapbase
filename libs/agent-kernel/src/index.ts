@@ -130,3 +130,39 @@ export function compileContextEnvelope(input: {
     policy: { tone: 'concise', disallow: ['raw_sql', 'html', 'unapproved_urls'] },
   }
 }
+
+export interface KnowledgeCandidate {
+  id: string
+  version: number
+  title: string
+  body: string
+  status: 'draft' | 'published' | 'superseded'
+  scope: 'global' | 'organization' | 'department' | 'user'
+  scopeId?: string | null
+  organizationId?: string | null
+  releaseId?: string | null
+}
+
+export function filterKnowledge(
+  entries: KnowledgeCandidate[],
+  input: { organizationId: string; userId?: string; releaseId?: string | null; limit?: number },
+): Array<{ id: string; version: number; title: string; snippet?: string }> {
+  return entries
+    .filter((entry) => entry.status === 'published')
+    .filter((entry) => !entry.releaseId || !input.releaseId || entry.releaseId === input.releaseId)
+    .filter((entry) => {
+      if (entry.scope === 'global') return true
+      if (entry.scope === 'organization') {
+        return entry.organizationId === input.organizationId || entry.scopeId === input.organizationId
+      }
+      if (entry.scope === 'user') return entry.scopeId === input.userId
+      return false
+    })
+    .slice(0, input.limit ?? 8)
+    .map((entry) => ({
+      id: entry.id,
+      version: entry.version,
+      title: entry.title,
+      snippet: entry.body.slice(0, 160),
+    }))
+}

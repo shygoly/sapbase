@@ -4,6 +4,7 @@ import { Repository } from 'typeorm'
 import { ReleasesService } from '../releases/releases.service'
 import { ReleaseAutomationPolicy } from './entities/release-automation-policy.entity'
 import { ReleaseAutomationRun } from './entities/release-automation-run.entity'
+import { AppReleaseActivation } from '../releases/entities/app-release-activation.entity'
 
 export const A2_ALLOWED_CHANGE_CLASSES = [
   'copy',
@@ -32,6 +33,8 @@ export class ReleaseAutomationService {
     private readonly policies: Repository<ReleaseAutomationPolicy>,
     @InjectRepository(ReleaseAutomationRun)
     private readonly runs: Repository<ReleaseAutomationRun>,
+    @InjectRepository(AppReleaseActivation)
+    private readonly activations: Repository<AppReleaseActivation>,
     private readonly releases: ReleasesService,
   ) {}
 
@@ -164,6 +167,50 @@ export class ReleaseAutomationService {
       }),
     )
     return activation
+  }
+
+  evaluateGuardrails(metrics: Record<string, number>, guardrails: Record<string, unknown>): string[] {
+    const violations: string[] = []
+    for (const [key, raw] of Object.entries(guardrails)) {
+      const limit = Number(raw)
+      const value = Number(metrics[key])
+      if (Number.isFinite(limit) && Number.isFinite(value) && value > limit) violations.push(`${key}=${value} > ${limit}`)
+    }
+    return violations
+  }
+
+  async promote(input: { organizationId: string; appKey: string; appInstallationId: string; releaseId: string; actorId: string }) {
+    const policy = await this.policy(input.organizationId, input.appKey)
+    if (policy.autonomy !== 'A2' || !policy.enabled) throw new ConflictException('A2 ???')
+    const current = await this.activations.findOne({ where: { appInstallationId: input.appInstallationId, status: 'active' } })
+    if (current) {
+      current.status = 'superseded'
+      await this.activations.save(current)
+    }
+    const activation = await this.releases.activate({
+      organizationId: input.organizationId,
+      appInstallationId: input.appInstallationId,
+      releaseId: input.releaseId,
+      action: 'upgrade',
+      cohort: null,
+      activatedBy: input.actorId,
+    })
+    await this.runs.save(this.runs.create({ policyId: policy.id, releaseId: input.releaseId, action: 'activate', status: 'success', actorId: input.actorId, actorAgent: null, details: { promotedTo: 100 } }))
+    return activation
+  }
+
+  async quarterlyAudit(organizationId: string) {
+    const policies = await this.policies.find({ where: { organizationId } })
+    const runs = await this.runs.find({ where: { policyId: policies.length ? policies[0].id : undefined } })
+    const structuralAutoPublishes = runs.filter((run) => run.action === 'publish' && (run.details as { structural?: boolean }).structural === true).length
+    return {
+      organizationId,
+      policies: policies.length,
+      runs: runs.length,
+      rollbacks: runs.filter((run) => run.action === 'rollback').length,
+      structuralAutoPublishes,
+      ok: structuralAutoPublishes === 0,
+    }
   }
 
   async review(input: { organizationId: string; appKey: string; reviewedBy: string; clean: boolean }) {

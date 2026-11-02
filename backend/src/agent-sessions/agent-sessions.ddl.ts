@@ -23,6 +23,7 @@ export const AGENT_SESSIONS_DDL: string[] = [
     "modelId" character varying(64),
     "promptHash" character varying(64),
     "contextHash" character varying(64),
+    "knowledgeVersion" character varying(128),
     "tokensIn" integer DEFAULT 0 NOT NULL,
     "tokensOut" integer DEFAULT 0 NOT NULL,
     "latencyMs" integer DEFAULT 0 NOT NULL,
@@ -30,6 +31,7 @@ export const AGENT_SESSIONS_DDL: string[] = [
     CONSTRAINT "PK_agent_turns" PRIMARY KEY (id),
     CONSTRAINT "CK_agent_turns_status" CHECK (status IN ('running','completed','cancelled','failed'))
   )`,
+  `ALTER TABLE public.agent_turns ADD COLUMN IF NOT EXISTS "knowledgeVersion" character varying(128)`,
   `CREATE INDEX IF NOT EXISTS "IDX_agent_turns_conversation"
     ON public.agent_turns ("conversationId", "createdAt" DESC)`,
   `CREATE TABLE IF NOT EXISTS public.agent_tool_calls (

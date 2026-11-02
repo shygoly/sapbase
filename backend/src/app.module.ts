@@ -38,6 +38,7 @@ import { ReleaseAutomationModule } from './release-automation/release-automation
 import { ReleaseAutomationPolicy } from './release-automation/entities/release-automation-policy.entity'
 import { ReleaseAutomationRun } from './release-automation/entities/release-automation-run.entity'
 import { AgentFeedback } from './agent-feedback/entities/agent-feedback.entity'
+import { AgentFeedbackTopic } from './agent-feedback/entities/agent-feedback-topic.entity'
 import { AgentKnowledgeEntry } from './agent-knowledge/entities/agent-knowledge-entry.entity'
 import { AgentSkillVersion } from './agent-knowledge/entities/agent-skill-version.entity'
 import { AgentEvalCase } from './agent-eval/entities/agent-eval-case.entity'
@@ -167,6 +168,25 @@ try {
         AgentConfirmationToken,
         BusinessAppInstallation,
         BusinessAppInstallationRevision,
+        AppDraft,
+        AppChangeProposal,
+        AppRelease,
+        AppReleaseItem,
+        AppReleaseActivation,
+        AppReleaseApproval,
+        AppReleaseEvent,
+        AppUserReleaseView,
+        AgentConversation,
+        AgentTurn,
+        AgentToolCall,
+        AgentKnowledgeEntry,
+        AgentSkillVersion,
+        AgentEvalCase,
+        AgentEvalRun,
+        AgentFeedback,
+        AgentFeedbackTopic,
+        ReleaseAutomationPolicy,
+        ReleaseAutomationRun,
         ],
         synchronize:
           process.env.DB_SYNCHRONIZE === 'true' ||
@@ -205,6 +225,12 @@ try {
     AgentToolsModule,
     ChatModule,
     BusinessAppsModule,
+    ReleasesModule,
+    AgentSessionsModule,
+    AgentKnowledgeModule,
+    AgentEvalModule,
+    AgentFeedbackModule,
+    ReleaseAutomationModule,
   ],
   controllers: [],
   providers: [],

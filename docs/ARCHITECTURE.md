@@ -5,7 +5,7 @@
 
 > 目标：把 sapbase 从“能跑的 npm workspaces 单体”整理成**边界可执行、可独立拆分、可被 Agent 安全调用**
 > 的 Nx 工作区。本文只定结构与依赖方向，不重写业务。
-> 迁移步骤与验收见 [`CONTRIBUTING.md`](./CONTRIBUTING.md)。
+> 迁移步骤与验收见 [`CONTRIBUTING.md`](../CONTRIBUTING.md)。
 
 ---
 

@@ -30,7 +30,8 @@
     "affected:build": "nx affected -t build",
     "affected:lint": "nx affected -t lint",
     "affected:test": "nx affected -t test",
-    "lint:boundaries": "eslint \"backend/src/**/*.ts\" \"libs/**/*.ts\" --no-error-on-unmatched-pattern"
+    "lint:boundaries": "eslint \"backend/src/**/*.ts\" \"libs/**/*.ts\" --no-error-on-unmatched-pattern",
+    "check:links": "node scripts/meta/check-doc-links.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

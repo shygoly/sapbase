@@ -229,7 +229,7 @@ Builder Agent 或规则引擎做：
 
 ## 5. 校验
 
-按 [`docs/protocols/release.md`](./docs/protocols/release.md) 的 G0–G6 执行。补充：
+按 [`docs/protocols/release.md`](./release.md) 的 G0–G6 执行。补充：
 
 - **失败必须可解释**：返回哪个闸、哪条规则、哪个字段、怎么修。
 - **不允许“带警告发布”**：警告要么修，要么显式降级为 `TD-x` 并有人签字。

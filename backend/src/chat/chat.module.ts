@@ -5,9 +5,13 @@ import { ChatOrchestrator } from './chat-orchestrator'
 import { INTENT_PARSER } from './chat.types'
 import { RuleBasedIntentParser } from './rule-based-intent-parser'
 import { BusinessAppsModule } from '../business-apps/business-apps.module'
+import { AIModelsModule } from '../ai-models/ai-models.module'
+import { AIModelsService } from '../ai-models/ai-models.service'
+import { LlmIntentPlanner } from './llm-intent-planner'
+import { HybridIntentParser } from './hybrid-intent-parser'
 
 @Module({
-  imports: [AgentToolsModule, BusinessAppsModule],
+  imports: [AgentToolsModule, BusinessAppsModule, AIModelsModule],
   controllers: [ChatController],
   providers: [
     {

@@ -1,7 +1,7 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { Repository } from 'typeorm'
+import { DataSource, Repository } from 'typeorm'
 import {
   assertPublishable,
   canTransitionProposal,
@@ -9,6 +9,12 @@ import {
   computeReleaseDigest,
   diffPlainObject,
 } from '@sap/release-kernel'
+import { ReleaseValidationService } from './release-validation.service'
+import { OutboxService } from '../outbox/outbox.service'
+import { AIModulesService } from '../ai-modules/ai-modules.service'
+import { ReleaseCacheService } from './release-cache.service'
+import { NotificationRecord } from '../notifications/notification.entity'
+import { assertApproverDistinct, assertProposalHardRequirements, needsSecondApprover } from './proposal-rules'
 import {
   AppChangeProposal,
   AppDraft,
@@ -45,6 +51,12 @@ export class ReleasesService {
     @InjectRepository(AppReleaseApproval) private readonly approvals: Repository<AppReleaseApproval>,
     @InjectRepository(AppReleaseEvent) private readonly events: Repository<AppReleaseEvent>,
     @InjectRepository(AppUserReleaseView) private readonly views: Repository<AppUserReleaseView>,
+    @InjectRepository(NotificationRecord) private readonly notifications: Repository<NotificationRecord>,
+    private readonly validation: ReleaseValidationService,
+    private readonly outbox: OutboxService,
+    private readonly dataSource: DataSource,
+    private readonly aiModules: AIModulesService,
+    private readonly cache: ReleaseCacheService,
   ) {}
 
   async createDraft(input: {
@@ -97,7 +109,11 @@ export class ReleasesService {
     assertEnabled()
     const draft = await this.getDraft(input.draftId, input.organizationId)
     if (draft.appKey !== input.appKey) throw new BadRequestException('提议只能修改目标 app 的 draft')
-    this.assertProposalHardRequirements(input)
+    try {
+      assertProposalHardRequirements(input)
+    } catch (error) {
+      throw new BadRequestException((error as Error).message)
+    }
     return this.proposals.save(
       this.proposals.create({
         organizationId: input.organizationId,
@@ -144,25 +160,31 @@ export class ReleasesService {
     }
   }
 
-  async validateProposal(id: string, organizationId: string): Promise<AppChangeProposal> {
+  async validateProposal(
+    id: string,
+    organizationId: string,
+    extra?: { blueprintId?: string; previewUrl?: string; releaseId?: string; modelId?: string; eval?: { suite: string; passed: number; failed: number; writeUnconfirmed?: number; previous?: { passed: number; failed: number } | null } },
+  ): Promise<AppChangeProposal> {
     const proposal = await this.proposals.findOne({ where: { id, organizationId } })
     if (!proposal) throw new NotFoundException('提议不存在')
-    if (!canTransitionProposal(proposal.status, 'validated')) {
+    if (!['draft', 'submitted', 'validating'].includes(proposal.status)) {
       throw new ConflictException(`提议状态 ${proposal.status} 不能进入 validated`)
     }
-    const gates = {
-      G0: { status: 'passed', evidence: 'meta-contracts checked at PR/CI time' },
-      G1: { status: 'passed', evidence: 'structured diff present' },
-      G2: { status: 'passed', evidence: 'permission diff reviewed' },
-      G3: { status: 'passed', evidence: 'rollback plan present' },
-      G4: { status: 'passed', evidence: 'test plan present' },
-      G5: { status: 'not_applicable', notApplicableReason: 'agent eval not run in this slice' },
-      G6: { status: 'not_applicable', notApplicableReason: 'preview smoke is external' },
-      G7: { status: 'pending', evidence: 'approval required' },
-      G8: { status: 'pending', evidence: 'publish required' },
+    const validation = await this.validation.validate({
+      proposal,
+      blueprintId: extra?.blueprintId,
+      previewUrl: extra?.previewUrl,
+      releaseId: extra?.releaseId ?? proposal.baseReleaseId ?? undefined,
+      modelId: extra?.modelId,
+      eval: extra?.eval,
+    })
+    if (!validation.ok) {
+      proposal.status = 'draft'
+      proposal.risk = { ...proposal.risk, gates: validation.gates }
+      return this.proposals.save(proposal)
     }
     proposal.status = 'validated'
-    proposal.risk = { ...proposal.risk, gates }
+    proposal.risk = { ...proposal.risk, gates: validation.gates }
     return this.proposals.save(proposal)
   }
 
@@ -172,6 +194,7 @@ export class ReleasesService {
     approverId: string
     role: 'owner' | 'tech_lead' | 'security' | 'platform_admin'
     comment?: string
+    modifiedDiff?: Record<string, unknown>
   }): Promise<AppChangeProposal> {
     const proposal = await this.proposals.findOne({ where: { id: input.id, organizationId: input.organizationId } })
     if (!proposal) throw new NotFoundException('提议不存在')
@@ -185,10 +208,19 @@ export class ReleasesService {
       throw new ConflictException(`提议状态 ${proposal.status} 不能批准`)
     }
     const risk = proposal.risk ?? {}
-    const needsSecond =
-      risk.permissionChange === true || risk.migration === true || risk.agentBehaviorChange === true
+    const needsSecond = needsSecondApprover(risk)
     if (needsSecond && !['security', 'tech_lead'].includes(input.role)) {
       throw new ConflictException('高风险变更需要安全或技术负责人审批')
+    }
+    if (input.modifiedDiff) {
+      proposal.risk = { ...risk, originalDiff: proposal.diff, modifiedBy: input.approverId }
+      proposal.diff = input.modifiedDiff
+      const revalidation = await this.validation.validate({ proposal, releaseId: proposal.baseReleaseId ?? undefined })
+      if (!revalidation.ok) {
+        proposal.risk = { ...proposal.risk, gates: revalidation.gates }
+        await this.proposals.save(proposal)
+        throw new ConflictException('?????????????')
+      }
     }
     proposal.status = 'approved'
     proposal.approvedBy = input.approverId
@@ -200,6 +232,57 @@ export class ReleasesService {
         role: input.role,
         decision: 'approved',
         comment: input.comment ?? null,
+      }),
+    )
+    return this.proposals.save(proposal)
+  }
+
+  async createProposalFromAiModule(input: { organizationId: string; aiModuleId: string; draftId: string; createdBy?: string | null }) {
+    const module = await this.aiModules.findOne(input.aiModuleId, input.organizationId)
+    const definition = await this.aiModules.getDefinition(input.aiModuleId)
+    const draft = await this.getDraft(input.draftId, input.organizationId)
+    return this.createProposal({
+      organizationId: input.organizationId,
+      appKey: draft.appKey,
+      draftId: draft.id,
+      type: 'form',
+      areas: ['form'],
+      title: module.name,
+      summary: module.description ?? 'AI module update',
+      diff: { source: 'ai_module', moduleId: module.id, definition: definition ?? null },
+      evidence: [{ type: 'ai_module', ids: [module.id] }],
+      risk: { breaking: false, permissionChange: false, migration: false, agentBehaviorChange: false },
+      testPlan: { unit: ['ai-module-lifecycle.spec.ts'] },
+      rollbackPlan: { strategy: 'deactivate-release', dataSafe: true },
+      createdByAgent: null,
+      createdBy: input.createdBy ?? null,
+    })
+  }
+
+  async getProposal(id: string, organizationId: string): Promise<AppChangeProposal> {
+    const proposal = await this.proposals.findOne({ where: { id, organizationId } })
+    if (!proposal) throw new NotFoundException('?????')
+    return proposal
+  }
+
+  async rejectProposal(input: {
+    id: string
+    organizationId: string
+    approverId: string
+    role: 'owner' | 'tech_lead' | 'security' | 'platform_admin'
+    reason: string
+  }): Promise<AppChangeProposal> {
+    if (!input.reason?.trim()) throw new BadRequestException('???????')
+    const proposal = await this.proposals.findOne({ where: { id: input.id, organizationId: input.organizationId } })
+    if (!proposal) throw new NotFoundException('?????')
+    proposal.status = 'rejected'
+    await this.approvals.save(
+      this.approvals.create({
+        proposalId: proposal.id,
+        approverId: input.approverId,
+        role: input.role,
+        decision: 'rejected',
+        comment: input.reason,
       }),
     )
     return this.proposals.save(proposal)
@@ -217,6 +300,7 @@ export class ReleasesService {
     authorId?: string | null
     approverId?: string | null
     publishedBy?: string | null
+    emergency?: boolean
   }): Promise<AppRelease> {
     assertEnabled()
     assertPublishable({
@@ -256,7 +340,7 @@ export class ReleasesService {
         event: 'release.published',
         actorId: input.publishedBy ?? null,
         actorAgent: null,
-        payload: { version: input.version, channel: input.channel, digest },
+        payload: { version: input.version, channel: input.channel, digest, emergency: input.emergency === true },
       }),
     )
     return release
@@ -308,6 +392,29 @@ export class ReleasesService {
         payload: { appInstallationId: input.appInstallationId, cohort: input.cohort ?? null },
       }),
     )
+    await this.cache.bumpActiveVersion(input.organizationId, release.appKey)
+    if (input.activatedBy) {
+      await this.notifications.save(
+        this.notifications.create({
+          organizationId: input.organizationId,
+          userId: input.activatedBy,
+          type: 'info',
+          title: `Release ${release.version} activated`,
+          body: `?? ${release.appKey} ???? ${release.version}`,
+          read: false,
+          sourceEventId: activation.id,
+          metadata: { releaseId: release.id, appKey: release.appKey },
+        }),
+      )
+    }
+    await this.outbox.publish(this.dataSource.manager, {
+      topic: input.action === 'rollback' ? 'release.rolled_back' : 'release.activated',
+      payload: { releaseId: input.releaseId, appInstallationId: input.appInstallationId, cohort: input.cohort ?? null },
+      organizationId: input.organizationId,
+      idempotencyKey: `release:activation:${activation.id}`,
+      aggregateType: 'app_release_activation',
+      aggregateId: activation.id,
+    })
     return activation
   }
 
@@ -385,7 +492,16 @@ export class ReleasesService {
       existing.lastSeenAt = new Date()
       return this.views.save(existing)
     }
-    return this.views.save(this.views.create(input))
+    return this.views.save(
+      this.views.create({
+        organizationId: input.organizationId,
+        userId: input.userId,
+        appInstallationId: input.appInstallationId,
+        lastSeenReleaseId: input.releaseId,
+        firstSeenAt: new Date(),
+        lastSeenAt: new Date(),
+      }),
+    )
   }
 
   issuePreviewToken(input: {
@@ -411,20 +527,20 @@ export class ReleasesService {
 
   verifyPreviewToken(token: string, expected: { organizationId: string; releaseId?: string }) {
     const [payload, sig] = token.split('.')
-    if (!payload || !sig) throw new ConflictException('预览 token 非法')
+    if (!payload || !sig) throw new ForbiddenException('预览 token 非法')
     const actual = createHmac('sha256', previewSecret()).update(payload).digest('base64url')
     if (actual.length !== sig.length || !timingSafeEqual(Buffer.from(actual), Buffer.from(sig))) {
-      throw new ConflictException('预览 token 签名不匹配')
+      throw new ForbiddenException('预览 token 签名不匹配')
     }
     const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as {
       organizationId: string
       releaseId: string
       exp: number
     }
-    if (claims.exp < Math.floor(Date.now() / 1000)) throw new ConflictException('预览 token 已过期')
-    if (claims.organizationId !== expected.organizationId) throw new ConflictException('预览 token 组织不匹配')
+    if (claims.exp < Math.floor(Date.now() / 1000)) throw new ForbiddenException('预览 token 已过期')
+    if (claims.organizationId !== expected.organizationId) throw new ForbiddenException('预览 token 组织不匹配')
     if (expected.releaseId && claims.releaseId !== expected.releaseId) {
-      throw new ConflictException('预览 token Release 不匹配')
+      throw new ForbiddenException('预览 token Release 不匹配')
     }
     return claims
   }
@@ -434,6 +550,12 @@ export class ReleasesService {
     if (!release) throw new NotFoundException('Release 不存在')
     const items = await this.items.find({ where: { releaseId } })
     return { items, diff: diffPlainObject({}, release.manifest) }
+  }
+
+  async listReleases(organizationId: string, appKey?: string): Promise<AppRelease[]> {
+    const where: Record<string, unknown> = { organizationId }
+    if (appKey) where.appKey = appKey
+    return this.releases.find({ where, order: { createdAt: 'DESC' }, take: 100 })
   }
 
   async releaseStatus(releaseId: string): Promise<AppRelease> {

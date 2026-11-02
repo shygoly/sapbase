@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { AgentEvalCase } from './entities/agent-eval-case.entity'
 import { AgentEvalRun } from './entities/agent-eval-run.entity'
+import { GOLDEN_CASES } from './golden-set'
 
 export interface EvalThresholds {
   writeUnconfirmed: number
@@ -31,10 +32,26 @@ export class AgentEvalService {
     @InjectRepository(AgentEvalRun) private readonly runs: Repository<AgentEvalRun>,
   ) {}
 
+  async seedGoldenSet(): Promise<number> {
+    let count = 0
+    for (const item of GOLDEN_CASES) {
+      const existing = await this.cases.findOne({ where: { suite: item.suite, caseKey: item.caseKey } })
+      if (existing) continue
+      await this.cases.save(this.cases.create({ ...item, version: 1, status: 'active' }))
+      count += 1
+    }
+    return count
+  }
+
+  async listRuns(releaseId: string): Promise<AgentEvalRun[]> {
+    return this.runs.find({ where: { releaseId }, order: { createdAt: 'DESC' } })
+  }
+
   async run(input: {
     organizationId: string | null
     releaseId: string | null
     skillVersion: string | null
+    modelId?: string | null
     suite: string
     caseResults: Array<{ caseKey: string; passed: boolean; reason?: string }>
   }): Promise<AgentEvalRun> {
@@ -45,6 +62,7 @@ export class AgentEvalService {
         organizationId: input.organizationId,
         releaseId: input.releaseId,
         skillVersion: input.skillVersion,
+        modelId: input.modelId ?? null,
         suite: input.suite,
         passed,
         failed,

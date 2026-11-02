@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post } from '@nestjs/common'
 import { Auth } from '../common/decorators/auth.decorator'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import { AgentEvalService } from './agent-eval.service'
@@ -14,6 +14,7 @@ export class AgentEvalController {
     body: {
       releaseId?: string
       skillVersion?: string
+      modelId?: string
       suite: string
       caseResults: Array<{ caseKey: string; passed: boolean; reason?: string }>
     },
@@ -23,9 +24,22 @@ export class AgentEvalController {
       organizationId,
       releaseId: body.releaseId ?? null,
       skillVersion: body.skillVersion ?? null,
+      modelId: body.modelId ?? null,
       suite: body.suite,
       caseResults: body.caseResults ?? [],
     })
+  }
+
+  @Post('seed')
+  @Auth('system:manage')
+  seed() {
+    return this.evalService.seedGoldenSet()
+  }
+
+  @Get('runs/:releaseId')
+  @Auth()
+  runs(@Param('releaseId') releaseId: string) {
+    return this.evalService.listRuns(releaseId)
   }
 
   @Post('gate')
