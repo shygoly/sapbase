@@ -1,0 +1,913 @@
+{
+  "generatedAt": "2026-10-30T17:54:44.324Z",
+  "source": "typeorm",
+  "root": "D:\\projects\\chada\\saas-spabase\\sapbase\\backend\\src",
+  "tables": {
+    "agent_eval_cases": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "suite",
+        "caseKey",
+        "version",
+        "input",
+        "expected",
+        "status"
+      ]
+    },
+    "agent_eval_runs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "releaseId",
+        "skillVersion",
+        "suite",
+        "passed",
+        "failed",
+        "details",
+        "startedAt",
+        "finishedAt"
+      ]
+    },
+    "agent_feedback": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "releaseId",
+        "cohort",
+        "userId",
+        "role",
+        "screen",
+        "traceId",
+        "toolCallIds",
+        "category",
+        "contentMasked",
+        "status"
+      ]
+    },
+    "agent_knowledge_entries": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "scope",
+        "scopeId",
+        "knowledgeKey",
+        "version",
+        "title",
+        "body",
+        "status",
+        "releaseId",
+        "sensitiveReview"
+      ]
+    },
+    "agent_skill_versions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "skillKey",
+        "version",
+        "digest",
+        "status",
+        "releaseId"
+      ]
+    },
+    "agent_conversations": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "appInstallationId",
+        "userId",
+        "releaseId",
+        "lastTurnAt"
+      ]
+    },
+    "agent_tool_calls": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "turnId",
+        "tool",
+        "argsDigest",
+        "permissionOk",
+        "confirmationId",
+        "status",
+        "errorCode",
+        "latencyMs"
+      ]
+    },
+    "agent_turns": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "conversationId",
+        "releaseId",
+        "modelId",
+        "promptHash",
+        "contextHash",
+        "tokensIn",
+        "tokensOut",
+        "latencyMs",
+        "status"
+      ]
+    },
+    "agent_confirmation_tokens": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appInstallationId",
+        "tool",
+        "argsDigest",
+        "actor",
+        "expiresAt",
+        "consumedAt"
+      ]
+    },
+    "ai_models": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "name",
+        "provider",
+        "apiKey",
+        "baseUrl",
+        "model",
+        "status",
+        "description",
+        "config",
+        "lastTestedAt",
+        "isDefault"
+      ]
+    },
+    "ai_module_definitions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "aiModuleId",
+        "step1_objectModel",
+        "step2_relationships",
+        "step3_stateFlow",
+        "step4_pages",
+        "step5_permissions",
+        "step6_reports",
+        "mergedDefinition"
+      ]
+    },
+    "ai_module_reviews": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "moduleId",
+        "reviewerId",
+        "decision",
+        "comments",
+        "rejectionReason",
+        "reviewedAt",
+        "reviewData"
+      ]
+    },
+    "ai_module_tests": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "moduleId",
+        "testName",
+        "entityType",
+        "status",
+        "errorMessage",
+        "testData",
+        "result",
+        "executedAt",
+        "duration"
+      ]
+    },
+    "ai_modules": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "name",
+        "description",
+        "naturalLanguagePrompt",
+        "patchContent",
+        "status",
+        "version",
+        "aiModelId",
+        "createdById",
+        "reviewedById",
+        "reviewedAt",
+        "reviewComments",
+        "publishedAt",
+        "unpublishedAt",
+        "testResults",
+        "metadata"
+      ]
+    },
+    "atomic_contracts": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "atomicType",
+        "version",
+        "kind",
+        "description",
+        "status",
+        "inputSchema",
+        "outputSchema",
+        "permissions",
+        "errors",
+        "idempotency",
+        "cpuBudget",
+        "outputAudit",
+        "organizationId"
+      ]
+    },
+    "atomic_implementations": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "atomicContractId",
+        "kind",
+        "moduleSha256",
+        "abiVersion",
+        "tier",
+        "review",
+        "reproducibleBuildRef",
+        "sourceGate",
+        "staticGate",
+        "releaseEvidence",
+        "status"
+      ]
+    },
+    "atomic_module_manifests": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "atomicType",
+        "file",
+        "sha256",
+        "tier",
+        "sizeBytes",
+        "importedBy",
+        "manifestSnapshot"
+      ]
+    },
+    "audit_logs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "action",
+        "resource",
+        "actor",
+        "status",
+        "resourceId",
+        "changes",
+        "metadata",
+        "timestamp"
+      ]
+    },
+    "app_installation_revisions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appInstallationId",
+        "previousRevisionId",
+        "packageId",
+        "blueprintId",
+        "blueprintVersion",
+        "releaseDigest",
+        "runtimeRequirement",
+        "action",
+        "config",
+        "license",
+        "createdById"
+      ]
+    },
+    "app_installations": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "displayName",
+        "slug",
+        "blueprintId",
+        "blueprintVersion",
+        "releaseDigest",
+        "runtimeRequirement",
+        "deploymentProfile",
+        "status",
+        "config",
+        "license",
+        "currentRevisionId",
+        "createdById"
+      ]
+    },
+    "departments": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "name",
+        "description",
+        "managerId",
+        "status"
+      ]
+    },
+    "menu_items": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "label",
+        "path",
+        "icon",
+        "permissions",
+        "visible",
+        "disabled",
+        "order",
+        "parentId"
+      ]
+    },
+    "module_capabilities": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "moduleId",
+        "capabilityType",
+        "entity",
+        "operations",
+        "apiEndpoints",
+        "description"
+      ]
+    },
+    "module_configurations": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "moduleId",
+        "configType",
+        "schema",
+        "documentation",
+        "metadata"
+      ]
+    },
+    "module_registry": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "name",
+        "description",
+        "moduleType",
+        "dependsOnAtomics",
+        "aiModelId",
+        "createdById",
+        "version",
+        "status",
+        "aiModuleId",
+        "metadata"
+      ]
+    },
+    "module_relationships": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "sourceModuleId",
+        "targetModuleId",
+        "relationshipType",
+        "description",
+        "configuration"
+      ]
+    },
+    "module_statistics": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "moduleId",
+        "entity",
+        "recordCount",
+        "lastUpdate",
+        "errorCount",
+        "averageResponseTime",
+        "healthStatus",
+        "collectedAt"
+      ]
+    },
+    "notifications": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "type",
+        "title",
+        "body",
+        "read",
+        "sourceEventId",
+        "metadata"
+      ]
+    },
+    "brand_configs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "logoUrl",
+        "faviconUrl",
+        "theme",
+        "customCss",
+        "appName",
+        "supportEmail",
+        "supportUrl"
+      ]
+    },
+    "invitations": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "email",
+        "role",
+        "invitedById",
+        "invitedAt",
+        "status",
+        "token",
+        "expiresAt"
+      ]
+    },
+    "organization_activities": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "action",
+        "description",
+        "metadata",
+        "ipAddress",
+        "timestamp"
+      ]
+    },
+    "organization_members": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "role",
+        "joinedAt",
+        "invitedById"
+      ]
+    },
+    "organizations": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "name",
+        "slug",
+        "stripeCustomerId",
+        "stripeSubscriptionId",
+        "stripeProductId",
+        "planName",
+        "subscriptionStatus"
+      ]
+    },
+    "outbox_deliveries": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "eventId",
+        "subscriber"
+      ]
+    },
+    "outbox_events": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "topic",
+        "payload",
+        "occurredAt",
+        "deliveredAt",
+        "attempts",
+        "lastError",
+        "idempotencyKey",
+        "status",
+        "nextAttemptAt",
+        "aggregateType",
+        "aggregateId"
+      ]
+    },
+    "permissions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "name",
+        "description",
+        "status"
+      ]
+    },
+    "plugins": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "name",
+        "version",
+        "type",
+        "manifest",
+        "status",
+        "installPath"
+      ]
+    },
+    "release_automation_policies": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "autonomy",
+        "enabled",
+        "allowedChangeClasses",
+        "guardrails",
+        "canaryStages",
+        "autoRollbackEnabled",
+        "consecutiveCleanRuns",
+        "lastReviewedAt",
+        "reviewedBy"
+      ]
+    },
+    "release_automation_runs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "policyId",
+        "proposalId",
+        "releaseId",
+        "action",
+        "status",
+        "actorId",
+        "actorAgent",
+        "details"
+      ]
+    },
+    "app_change_proposals": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "draftId",
+        "baseReleaseId",
+        "type",
+        "areas",
+        "status",
+        "title",
+        "summary",
+        "diff",
+        "evidence",
+        "risk",
+        "testPlan",
+        "rollbackPlan",
+        "createdByAgent",
+        "createdBy",
+        "approvedBy",
+        "approvedAt",
+        "publishedReleaseId"
+      ]
+    },
+    "app_drafts": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "baseReleaseId",
+        "status",
+        "revision",
+        "content",
+        "createdBy"
+      ]
+    },
+    "app_release_activations": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appInstallationId",
+        "releaseId",
+        "action",
+        "status",
+        "cohort",
+        "effectiveAt",
+        "activatedAt",
+        "activatedBy",
+        "reason",
+        "fromReleaseId"
+      ]
+    },
+    "app_release_approvals": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "proposalId",
+        "releaseId",
+        "approverId",
+        "role",
+        "decision",
+        "comment"
+      ]
+    },
+    "app_release_events": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "releaseId",
+        "organizationId",
+        "event",
+        "actorId",
+        "actorAgent",
+        "payload"
+      ]
+    },
+    "app_release_items": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "releaseId",
+        "itemType",
+        "itemKey",
+        "changeType",
+        "beforeDigest",
+        "afterDigest",
+        "payload"
+      ]
+    },
+    "app_releases": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "version",
+        "channel",
+        "status",
+        "baseReleaseId",
+        "manifest",
+        "changelog",
+        "compatibility",
+        "digest",
+        "signature",
+        "publishedAt",
+        "publishedBy",
+        "createdBy"
+      ]
+    },
+    "app_user_release_views": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "appInstallationId",
+        "lastSeenReleaseId",
+        "firstSeenAt",
+        "lastSeenAt"
+      ]
+    },
+    "roles": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "name",
+        "description",
+        "permissions",
+        "status"
+      ]
+    },
+    "blueprint_approvals": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "blueprintId",
+        "blueprintVersion",
+        "entity",
+        "recordId",
+        "ruleId",
+        "stepIndex",
+        "role",
+        "status",
+        "actor",
+        "decidedAt"
+      ]
+    },
+    "blueprint_doc_counters": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "seq",
+        "organizationId"
+      ]
+    },
+    "blueprint_journal_entries": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "blueprintId",
+        "blueprintVersion",
+        "ruleId",
+        "event",
+        "entity",
+        "recordId",
+        "account",
+        "side",
+        "amountUnits",
+        "scale"
+      ]
+    },
+    "blueprint_records": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "blueprintId",
+        "blueprintVersion",
+        "entity",
+        "data",
+        "state",
+        "version"
+      ]
+    },
+    "blueprint_suggestion_logs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "blueprintId",
+        "entity",
+        "recordId",
+        "suggestedToState",
+        "reason"
+      ]
+    },
+    "settings": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "theme",
+        "language",
+        "timezone",
+        "dateFormat",
+        "timeFormat",
+        "pageSize",
+        "fontSize",
+        "enableNotifications"
+      ]
+    },
+    "users": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "name",
+        "email",
+        "passwordHash",
+        "role",
+        "department",
+        "status",
+        "permissions"
+      ]
+    },
+    "workflow_auto_suggestion_logs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "workflowInstanceId",
+        "organizationId",
+        "suggestedToState",
+        "reason"
+      ]
+    },
+    "workflow_definitions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "name",
+        "description",
+        "entityType",
+        "states",
+        "transitions",
+        "status",
+        "version",
+        "metadata"
+      ]
+    },
+    "workflow_history": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "workflowInstanceId",
+        "fromState",
+        "toState",
+        "triggeredById",
+        "timestamp",
+        "guardResult",
+        "actionResult",
+        "metadata"
+      ]
+    },
+    "workflow_instances": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "workflowDefinitionId",
+        "entityType",
+        "entityId",
+        "currentState",
+        "context",
+        "status",
+        "startedById",
+        "startedAt",
+        "completedAt"
+      ]
+    }
+  }
+}

@@ -29,6 +29,32 @@ import { NotificationRecord } from './notifications/notification.entity'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { ChatModule } from './chat/chat.module'
 import { BusinessAppsModule } from './business-apps/business-apps.module'
+import { ReleasesModule } from './releases/releases.module'
+import { AgentSessionsModule } from './agent-sessions/agent-sessions.module'
+import { AgentKnowledgeModule } from './agent-knowledge/agent-knowledge.module'
+import { AgentEvalModule } from './agent-eval/agent-eval.module'
+import { AgentFeedbackModule } from './agent-feedback/agent-feedback.module'
+import { ReleaseAutomationModule } from './release-automation/release-automation.module'
+import { ReleaseAutomationPolicy } from './release-automation/entities/release-automation-policy.entity'
+import { ReleaseAutomationRun } from './release-automation/entities/release-automation-run.entity'
+import { AgentFeedback } from './agent-feedback/entities/agent-feedback.entity'
+import { AgentKnowledgeEntry } from './agent-knowledge/entities/agent-knowledge-entry.entity'
+import { AgentSkillVersion } from './agent-knowledge/entities/agent-skill-version.entity'
+import { AgentEvalCase } from './agent-eval/entities/agent-eval-case.entity'
+import { AgentEvalRun } from './agent-eval/entities/agent-eval-run.entity'
+import { AgentConversation } from './agent-sessions/entities/agent-conversation.entity'
+import { AgentTurn } from './agent-sessions/entities/agent-turn.entity'
+import { AgentToolCall } from './agent-sessions/entities/agent-tool-call.entity'
+import {
+  AppChangeProposal,
+  AppDraft,
+  AppRelease,
+  AppReleaseActivation,
+  AppReleaseApproval,
+  AppReleaseEvent,
+  AppReleaseItem,
+  AppUserReleaseView,
+} from './releases/entities'
 import { BusinessAppInstallation } from './business-apps/business-app-installation.entity'
 import { BusinessAppInstallationRevision } from './business-apps/business-app-installation-revision.entity'
 import { AgentConfirmationToken } from './agent-tools/confirmation-token.entity'

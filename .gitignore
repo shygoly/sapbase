@@ -52,3 +52,6 @@ backend/test-plugins/
 # 机器本地配置：Codex 项目级配置与钩子
 # （含指向本机 Keel checkout 的绝对路径，不适合共享；由各自按需启用）
 .codex/
+.nx/
+libs/*/dist/
+boundaries.log

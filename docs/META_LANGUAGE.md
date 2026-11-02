@@ -391,3 +391,19 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 1.2 | 2026-09-24 | 补入口分层：新增 `speckit/AGENTS.md`、`backend/AGENTS.md` 两个作用域入口；`openspec/AGENTS.md` 的 Context Checklist 与 Stage 1 步骤纳入本文件；§5.2 补 Clerk 文档行并标注为待清理残留 |
 | 1.1 | 2026-09-24 | 按反馈修正：移除上一版加入的 space 相关表述（本文件只做结构化系统描述，不引入新概念词）；§5.2 文档真源表改为**索引项目已有的结构化文档**（speckit/docs、backend/docs、openspec），明确"新增内容先放入既有文件，不另建新文件" |
 | 1.0 | 2026-09-24 | 首次建立：从本次会话（设计 v3、技术栈差距、Wasm 原子模块、变更提案、包管理器收敛）提炼元模型、协议与执行原语、不变量、术语表与文档真源 |
+
+## 9. 参考包并入：发布 / PiAgent / 进化闭环
+
+以下内容由 `docs/reference` 参考包并入，权威落点如下：
+
+| 主题 | 真源 | 关键不变量 |
+|---|---|---|
+| 工程架构（Nx/Next/Nest/PG/Redis） | `docs/ARCHITECTURE.md` | `INV-META-*` |
+| Release / Activation / Rollback | `docs/protocols/release.md` + `DOMAIN.md` | `INV-REL-01..10` |
+| PiAgent 双 profile / Context Envelope / 工具面 | `docs/protocols/piagent.md` | `INV-AGENT-01..12` |
+| Agent 自主进化 / A0–A3 / A2 | `docs/protocols/agent-evolution.md` | `INV-EVO-01..10` |
+| 四份机器可校验契约 | `DOMAIN.md` / `FLOWS.md` / `DECISIONS.md` / `AGENT-TOOLS.md` | `INV-META-01..05`, `INV-DATA-01..07`, `INV-FLOW-01..04` |
+
+**发布三动词**：`deploy`（部署进程）≠ `publish`（生成不可变 Release）≠ `activate`（对租户/cohort 生效）。
+**Agent 三不拥有**：不拥有事实（事实在工具结果）、不拥有规则（规则在 `Φ`/`Σ`）、不拥有发布权（发布在 `V`）。
+**A2 边界**：Agent 仍只提议；发布由平台 `release-automation` 策略服务执行，`actorAgent` 为空。

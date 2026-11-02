@@ -10,6 +10,8 @@ import { AgentToolsController } from './agent-tools.controller'
 import { AgentConfirmationToken } from './confirmation-token.entity'
 import { ConfirmationTokenService } from './confirmation-token.service'
 import { BusinessAppsModule } from '../business-apps/business-apps.module'
+import { AgentFeedbackModule } from '../agent-feedback/agent-feedback.module'
+import { ReleasesModule } from '../releases/releases.module'
 
 @Module({
   imports: [

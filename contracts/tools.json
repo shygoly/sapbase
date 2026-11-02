@@ -28,7 +28,9 @@
             "description": "蓝图包 id（文件名去掉 .erpkg）"
           }
         },
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "additionalProperties": false
       },
       "permission": "tool:blueprint:read",
@@ -50,7 +52,9 @@
             "description": "蓝图包 id"
           }
         },
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "additionalProperties": false
       },
       "permission": "tool:blueprint:compile",
@@ -79,7 +83,9 @@
             "type": "array",
             "items": {
               "type": "object",
-              "additionalProperties": { "type": "number" }
+              "additionalProperties": {
+                "type": "number"
+              }
             },
             "description": "输入行；字段名对应契约 inputSchema 投影"
           },
@@ -89,7 +95,9 @@
             "description": "本次调用超时（毫秒）"
           }
         },
-        "required": ["atomicType"],
+        "required": [
+          "atomicType"
+        ],
         "additionalProperties": false
       },
       "permission": "tool:atomic:invoke",
@@ -134,7 +142,9 @@
             "description": "输出 .erpkg 路径"
           }
         },
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "additionalProperties": false
       },
       "permission": "tool:module:export",
@@ -143,6 +153,125 @@
       "timeoutMs": 30000,
       "untrustedResult": false,
       "sensitiveArgs": []
+    },
+    {
+      "name": "builder_feedback_list",
+      "description": "? Builder Agent ???????????????????????????????????",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "appKey": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "permission": "tool:builder:read",
+      "write": false,
+      "confirmation": "none",
+      "timeoutMs": 5000,
+      "untrustedResult": true,
+      "sensitiveArgs": [
+        "contentMasked"
+      ],
+      "allowedAgents": [
+        "piagent-builder"
+      ]
+    },
+    {
+      "name": "builder_proposal_create",
+      "description": "? Builder Agent ????????????????????????/??????????",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "appKey": {
+            "type": "string"
+          },
+          "draftId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "diff": {
+            "type": "object"
+          },
+          "evidence": {
+            "type": "array"
+          },
+          "risk": {
+            "type": "object"
+          },
+          "testPlan": {
+            "type": "object"
+          },
+          "rollbackPlan": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "appKey",
+          "draftId",
+          "type",
+          "title",
+          "summary",
+          "diff",
+          "evidence",
+          "risk",
+          "testPlan",
+          "rollbackPlan"
+        ],
+        "additionalProperties": false
+      },
+      "permission": "tool:builder:write",
+      "write": true,
+      "confirmation": "required",
+      "timeoutMs": 10000,
+      "untrustedResult": false,
+      "sensitiveArgs": [],
+      "allowedAgents": [
+        "piagent-builder"
+      ]
+    },
+    {
+      "name": "builder_release_preview",
+      "description": "? Builder Agent ????????????????????????",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "releaseId": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "releaseId"
+        ],
+        "additionalProperties": false
+      },
+      "permission": "tool:builder:validate",
+      "write": false,
+      "confirmation": "none",
+      "timeoutMs": 20000,
+      "untrustedResult": false,
+      "sensitiveArgs": [],
+      "allowedAgents": [
+        "piagent-builder"
+      ]
     }
   ]
 }

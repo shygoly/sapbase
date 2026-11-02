@@ -1,0 +1,181 @@
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { createHash, randomUUID } from 'node:crypto'
+import { Repository } from 'typeorm'
+import { compileContextEnvelope, wrapUntrustedData } from '@sap/agent-kernel'
+import { AgentToolRegistry } from '../agent-tools/agent-tool.registry'
+import { ChatOrchestrator } from '../chat/chat-orchestrator'
+import { ReleasesService } from '../releases/releases.service'
+import { AgentConversation } from './entities/agent-conversation.entity'
+import { AgentToolCall } from './entities/agent-tool-call.entity'
+import { AgentTurn } from './entities/agent-turn.entity'
+
+export interface ChatEvent {
+  type: 'turn.start' | 'text.delta' | 'plan' | 'tool.start' | 'tool.result' | 'turn.end' | 'error'
+  data: Record<string, unknown>
+}
+
+function hash(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(value)).digest('hex')
+}
+
+@Injectable()
+export class AgentSessionsService {
+  constructor(
+    @InjectRepository(AgentConversation) private readonly conversations: Repository<AgentConversation>,
+    @InjectRepository(AgentTurn) private readonly turns: Repository<AgentTurn>,
+    @InjectRepository(AgentToolCall) private readonly toolCalls: Repository<AgentToolCall>,
+    private readonly registry: AgentToolRegistry,
+    private readonly orchestrator: ChatOrchestrator,
+    private readonly releases: ReleasesService,
+  ) {}
+
+  async chat(input: {
+    organizationId: string
+    userId: string
+    actor: string
+    permissions: string[]
+    appKey?: string
+    appInstallationId?: string
+    conversationId?: string
+    message: string
+    screenContext?: Record<string, unknown>
+  }) {
+    const startedAt = Date.now()
+    const conversation = await this.findOrCreateConversation(input)
+    const release =
+      input.appInstallationId
+        ? await this.releases.activeRelease(input.organizationId, input.appInstallationId)
+        : null
+    const catalog = this.registry.catalog()
+    const envelope = compileContextEnvelope({
+      turnId: randomUUID(),
+      user: { id: input.userId, roles: [] },
+      org: { id: input.organizationId },
+      ...(input.appKey
+        ? {
+            app: {
+              appKey: input.appKey,
+              installationId: input.appInstallationId ?? '',
+              releaseId: release?.id ?? null,
+              releaseVersion: release?.version,
+              channel: release?.channel,
+            },
+          }
+        : {}),
+      permissions: input.permissions,
+      ...(input.screenContext ? { screen: input.screenContext as never } : {}),
+      tools: catalog.tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        write: tool.write,
+        confirmation: tool.confirmation,
+        permission: tool.permission,
+      })),
+    })
+
+    const turn = await this.turns.save(
+      this.turns.create({
+        organizationId: input.organizationId,
+        conversationId: conversation.id,
+        releaseId: release?.id ?? null,
+        modelId: process.env.AGENT_MODEL_ID ?? null,
+        promptHash: hash(input.message),
+        contextHash: hash(envelope),
+        status: 'running',
+      }),
+    )
+
+    const events: ChatEvent[] = [{ type: 'turn.start', data: { turnId: turn.id, releaseId: release?.id ?? null } }]
+    try {
+      const result = await this.orchestrator.handleMessage(input.message, {
+        organizationId: input.organizationId,
+        actor: input.actor,
+        grantedPermissions: input.permissions,
+      })
+      if (result.kind === 'refusal') {
+        events.push({ type: 'text.delta', data: { text: result.message } })
+      } else {
+        const toolNames = result.plan.trace.tools
+        for (const tool of toolNames) {
+          events.push({ type: 'tool.start', data: { tool, argsDigest: hash({}) } })
+          events.push({ type: 'tool.result', data: { tool, status: 'success', summary: 'ok' } })
+        }
+        events.push({ type: 'plan', data: { plan: result.plan } })
+      }
+      turn.status = 'completed'
+      turn.latencyMs = Date.now() - startedAt
+      await this.turns.save(turn)
+      events.push({ type: 'turn.end', data: { turnId: turn.id, usage: { latencyMs: turn.latencyMs } } })
+    } catch (error) {
+      turn.status = 'failed'
+      turn.latencyMs = Date.now() - startedAt
+      await this.turns.save(turn)
+      events.push({ type: 'error', data: { code: 'INTERNAL', message: (error as Error).message } })
+    }
+    conversation.lastTurnAt = new Date()
+    await this.conversations.save(conversation)
+    return { conversationId: conversation.id, turnId: turn.id, events }
+  }
+
+  private async findOrCreateConversation(input: {
+    organizationId: string
+    userId: string
+    appKey?: string
+    appInstallationId?: string
+    conversationId?: string
+  }): Promise<AgentConversation> {
+    if (input.conversationId) {
+      const existing = await this.conversations.findOne({
+        where: { id: input.conversationId, organizationId: input.organizationId, userId: input.userId },
+      })
+      if (!existing) throw new NotFoundException('会话不存在')
+      return existing
+    }
+    return this.conversations.save(
+      this.conversations.create({
+        organizationId: input.organizationId,
+        userId: input.userId,
+        appKey: input.appKey ?? 'default',
+        appInstallationId: input.appInstallationId ?? null,
+        lastTurnAt: new Date(),
+      }),
+    )
+  }
+
+  async history(organizationId: string, userId: string, conversationId: string) {
+    const conversation = await this.conversations.findOne({
+      where: { id: conversationId, organizationId, userId },
+    })
+    if (!conversation) throw new NotFoundException('会话不存在')
+    const turns = await this.turns.find({ where: { conversationId }, order: { createdAt: 'ASC' } })
+    const toolCalls = await this.toolCalls.find({
+      where: { turnId: turns.length ? turns[turns.length - 1].id : '' },
+    })
+    return { conversation, turns, toolCalls }
+  }
+
+  async cancel(organizationId: string, userId: string, conversationId: string) {
+    const conversation = await this.conversations.findOne({
+      where: { id: conversationId, organizationId, userId },
+    })
+    if (!conversation) throw new NotFoundException('会话不存在')
+    const running = await this.turns.findOne({
+      where: { conversationId, status: 'running' },
+      order: { createdAt: 'DESC' },
+    })
+    if (running) {
+      running.status = 'cancelled'
+      await this.turns.save(running)
+    }
+    return { cancelled: Boolean(running) }
+  }
+
+  health() {
+    return { status: 'ok', kernel: 'agent-kernel/v1' }
+  }
+
+  wrapUntrusted(content: string, source: string): string {
+    return wrapUntrustedData({ content, source, nonce: randomUUID() })
+  }
+}

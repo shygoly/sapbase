@@ -11,7 +11,7 @@ jest.mock('typeorm-transactional', () => ({
 }))
 
 const SRC_ROOT = join(__dirname, '..')
-const CRON = "@Cron('0 2 * * *')"
+const CRON = "@Cron('0 2 * * *', { name: 'semantic.suggest_transitions' })"
 const LIVE_JOB = 'semantic-runtime/suggestion-cron.ts'
 
 function walk(dir: string, out: string[] = []): string[] {

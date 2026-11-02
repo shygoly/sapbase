@@ -23,8 +23,12 @@ import {
   ConfirmationTokenService,
   digestToolArgs,
 } from './confirmation-token.service'
+import { AgentFeedbackService } from '../agent-feedback/agent-feedback.service'
+import { ReleasesService } from '../releases/releases.service'
 
 const ALLOWED_ATOMIC_KINDS = new Set(['calculation', 'query'])
+
+export type AgentProfile = 'piagent-runtime' | 'piagent-builder'
 
 export interface AgentToolInvokeInput {
   name: string
@@ -34,6 +38,7 @@ export interface AgentToolInvokeInput {
   actor: string
   grantedPermissions: readonly string[]
   appContext?: BusinessAppExecutionContext
+  agentProfile?: AgentProfile
 }
 
 export interface AgentToolConfirmInput {
@@ -42,6 +47,7 @@ export interface AgentToolConfirmInput {
   organizationId?: string
   actor: string
   appContext?: BusinessAppExecutionContext
+  agentProfile?: AgentProfile
 }
 
 /**
@@ -63,6 +69,8 @@ export class AgentToolRegistry {
     private readonly atomics: AtomicRegistryService,
     private readonly auditLogs: AuditLogsService,
     private readonly tokens: ConfirmationTokenService,
+    private readonly feedback: AgentFeedbackService,
+    private readonly releases: ReleasesService,
   ) {}
 
   catalog(): ToolCatalog {
@@ -72,6 +80,7 @@ export class AgentToolRegistry {
   async confirm(input: AgentToolConfirmInput) {
     const organizationId = this.requireOrganizationId(input.organizationId)
     const tool = this.requireTool(input.name, this.catalog())
+    this.assertAgent(tool, input.agentProfile ?? 'piagent-runtime')
     if (tool.confirmation !== 'required') {
       throw new BadRequestException(
         `工具 ${tool.name} 不需要确认令牌（confirmation=${tool.confirmation}）`,
@@ -91,6 +100,7 @@ export class AgentToolRegistry {
   async invoke(input: AgentToolInvokeInput, catalog: ToolCatalog = loadToolCatalog()) {
     const organizationId = this.requireOrganizationId(input.organizationId)
     const tool = this.requireTool(input.name, catalog)
+    this.assertAgent(tool, input.agentProfile ?? 'piagent-runtime')
     this.assertArgs(tool, input.args)
     this.assertAppContext(input.appContext, organizationId)
 
@@ -169,6 +179,15 @@ export class AgentToolRegistry {
     return organizationId
   }
 
+  private assertAgent(tool: AgentToolContract, profile: AgentProfile): void {
+    const allowed = tool.allowedAgents
+    if (!allowed || allowed.length === 0) return
+    if (allowed.includes('*') || allowed.includes(profile)) return
+    throw new ForbiddenException(
+      `智能体 ${profile} 不允许调用工具 ${tool.name}（allowedAgents=${allowed.join(',')}）`,
+    )
+  }
+
   private requireTool(name: string, catalog: ToolCatalog): AgentToolContract {
     const tool = catalog.tools.find((item) => item.name === name)
     if (!tool) {
@@ -225,6 +244,37 @@ export class AgentToolRegistry {
           dir: typeof args.dir === 'string' ? args.dir : undefined,
           out: typeof args.out === 'string' ? args.out : undefined,
         })
+      case 'builder_feedback_list':
+        return this.feedback.list(
+          organizationId,
+          typeof args.appKey === 'string' ? args.appKey : undefined,
+          typeof args.status === 'string' ? args.status : undefined,
+        )
+      case 'builder_proposal_create':
+        return this.releases.createProposal({
+          organizationId,
+          appKey: String(args.appKey),
+          draftId: String(args.draftId),
+          type: String(args.type),
+          title: String(args.title),
+          summary: String(args.summary),
+          diff: (args.diff as Record<string, unknown>) ?? {},
+          evidence: Array.isArray(args.evidence) ? args.evidence : [],
+          risk: (args.risk as Record<string, unknown>) ?? {},
+          testPlan: (args.testPlan as Record<string, unknown>) ?? {},
+          rollbackPlan: (args.rollbackPlan as Record<string, unknown>) ?? {},
+          createdByAgent: 'piagent-builder',
+          createdBy: null,
+        })
+      case 'builder_release_preview':
+        return {
+          token: this.releases.issuePreviewToken({
+            userId: 'piagent-builder',
+            organizationId,
+            releaseId: String(args.releaseId),
+            roles: Array.isArray(args.roles) ? args.roles.map(String) : [],
+          }),
+        }
       default:
         throw new NotFoundException(
           `没有这个能力：${tool.name}（契约有名字但运行时没有落点）`,

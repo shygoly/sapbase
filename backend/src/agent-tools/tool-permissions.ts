@@ -14,6 +14,9 @@ export const TOOL_PERMISSION_CATALOG = [
   'tool:atomic:invoke',
   'tool:module:read',
   'tool:module:export',
+  'tool:builder:read',
+  'tool:builder:write',
+  'tool:builder:validate',
 ] as const
 
 export type ToolPermission = (typeof TOOL_PERMISSION_CATALOG)[number]
