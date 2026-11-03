@@ -283,6 +283,10 @@ jobs:
         with:
           node-version: '22.x'
 
+      # 四份契约只读校验：秒级、零依赖；采用初期 --warn-only，存量进 meta-baseline.json
+      - name: Validate meta contracts
+        run: npm run check:ci
+
       - name: Validate agents
         run: node scripts/ci/validate-agents.js
 

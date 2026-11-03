@@ -34,16 +34,16 @@ export function RolesList({ roles, onDelete, onEdit }: RolesListProps) {
       case 'active':
         return 'bg-green-100 text-green-800'
       case 'inactive':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
       case 'archived':
         return 'bg-yellow-100 text-yellow-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
     }
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white overflow-x-auto">
+    <div className="rounded-lg border border-border bg-card overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -57,7 +57,7 @@ export function RolesList({ roles, onDelete, onEdit }: RolesListProps) {
         <TableBody>
           {roles.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                 No roles found
               </TableCell>
             </TableRow>
@@ -65,7 +65,7 @@ export function RolesList({ roles, onDelete, onEdit }: RolesListProps) {
             roles.map((role) => (
               <TableRow key={role.id}>
                 <TableCell className="font-medium">{role.name}</TableCell>
-                <TableCell className="text-gray-600">{role.description || '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{role.description || '-'}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {role.permissions.slice(0, 2).map((perm) => (

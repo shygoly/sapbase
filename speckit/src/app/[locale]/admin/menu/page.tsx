@@ -40,8 +40,8 @@ export default function MenuPage() {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
-          <p className="mt-2 text-gray-600">You do not have permission to access this page.</p>
+          <h1 className="text-2xl font-bold text-foreground">Access Denied</h1>
+          <p className="mt-2 text-muted-foreground">You do not have permission to access this page.</p>
         </div>
       </div>
     )
@@ -82,8 +82,8 @@ export default function MenuPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Menu Management</h1>
-          <p className="mt-1 text-gray-600">Manage application menu items and navigation structure</p>
+          <h1 className="text-3xl font-bold text-foreground">Menu Management</h1>
+          <p className="mt-1 text-muted-foreground">Manage application menu items and navigation structure</p>
         </div>
         {hasPermission('menu:create') && (
           <Button onClick={() => setShowCreateDialog(true)}>
@@ -103,7 +103,7 @@ export default function MenuPage() {
       {/* Menu List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-gray-600">Loading menu items...</div>
+          <div className="text-muted-foreground">Loading menu items...</div>
         </div>
       ) : (
         <MenuList

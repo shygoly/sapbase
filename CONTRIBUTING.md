@@ -422,3 +422,18 @@ How you tested this.
 ---
 
 Thanks for contributing! Let's build a great resource together.
+
+## 元语契约与 CI（参考包并入）
+
+提交 PR 前至少运行：
+
+```bash
+npm run check:ci
+```
+
+- 改 `biz_/app_/agent_/sys_` 表或 `app-*/domain-*` 服务：更新 `DOMAIN.md` 并跑 `npm run check:domain`。
+- 改 cron：同步 `FLOWS.md` + registry + `@Cron(name:)`，跑 `npm run check:meta`。
+- 改工具：同步 `contracts/tools.json` + `AGENT-TOOLS.md`，跑 `npm run check:agent-tools`。
+- 新增 `D-x`：登记 `DECISIONS.md`；`TD-x` 登记 `docs/tech-debt.md`。
+- 契约变更必须同时更新对应 checker；checker 未更新视为契约未完成。
+- 基线 `meta-baseline.json` 只缩不扩，必须单独 PR 更新。

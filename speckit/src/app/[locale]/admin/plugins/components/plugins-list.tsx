@@ -42,13 +42,13 @@ export function PluginsList({
       case PluginStatus.ACTIVE:
         return 'bg-green-100 text-green-800'
       case PluginStatus.INACTIVE:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
       case PluginStatus.ERROR:
         return 'bg-red-100 text-red-800'
       case PluginStatus.INSTALLED:
         return 'bg-blue-100 text-blue-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
     }
   }
 
@@ -61,13 +61,13 @@ export function PluginsList({
       case PluginType.THEME:
         return 'bg-pink-100 text-pink-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
     }
   }
 
   if (plugins.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
+      <div className="text-center py-12 text-muted-foreground">
         No plugins installed. Install a plugin to get started.
       </div>
     )

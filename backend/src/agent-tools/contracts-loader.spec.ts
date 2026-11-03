@@ -33,6 +33,11 @@ describe('契约加载（真文件）', () => {
       'erp_atomic_invoke',
       'erp_module_list',
       'erp_module_export',
+      'builder_feedback_list',
+      'builder_proposal_create',
+      'builder_release_preview',
+      'builder_proposal_validate',
+      'builder_changelog_draft',
     ])
     const compile = catalog.tools.find((tool) => tool.name === 'erp_blueprint_compile')
     expect(compile?.write).toBe(false)

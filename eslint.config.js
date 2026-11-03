@@ -1,9 +1,31 @@
 const js = require('@eslint/js');
 const globals = require('globals');
+const nx = require('@nx/eslint-plugin');
+const tsParser = require('@typescript-eslint/parser');
 
 module.exports = [
+    ...nx.configs['flat/base'],
     js.configs.recommended,
     {
+        files: ['**/*.ts', '**/*.tsx'],
+        languageOptions: {
+            parser: tsParser,
+            parserOptions: {
+                ecmaVersion: 2022,
+                sourceType: 'module'
+            },
+            globals: {
+                ...globals.node,
+                ...globals.browser
+            }
+        },
+        rules: {
+            'no-unused-vars': 'off',
+            'no-undef': 'off'
+        }
+    },
+    {
+        files: ['**/*.js', '**/*.cjs', '**/*.mjs'],
         languageOptions: {
             ecmaVersion: 2022,
             sourceType: 'commonjs',
@@ -20,6 +42,22 @@ module.exports = [
             }],
             'no-undef': 'error',
             'eqeqeq': 'warn'
+        }
+    },
+    {
+        files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+        rules: {
+            '@nx/enforce-module-boundaries': ['warn', {
+                depConstraints: [
+                    { sourceTag: 'layer:domain', onlyDependOnLibsWithTags: ['layer:domain', 'layer:shared'] },
+                    { sourceTag: 'layer:app', onlyDependOnLibsWithTags: ['layer:domain', 'layer:app', 'layer:infra', 'layer:shared'] },
+                    { sourceTag: 'layer:infra', onlyDependOnLibsWithTags: ['layer:infra', 'layer:shared'] },
+                    { sourceTag: 'layer:agent', onlyDependOnLibsWithTags: ['layer:agent', 'layer:app', 'layer:domain', 'layer:shared'] },
+                    { sourceTag: 'scope:agent-kernel', notDependOnLibsWithTags: ['layer:app', 'layer:infra'] },
+                    { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['layer:domain', 'layer:app', 'layer:infra', 'layer:shared', 'layer:agent', 'layer:release', 'layer:ui'] },
+                    { sourceTag: 'runtime:browser', notDependOnLibsWithTags: ['runtime:node'] }
+                ]
+            }]
         }
     }
 ];

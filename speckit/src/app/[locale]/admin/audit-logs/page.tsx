@@ -82,9 +82,9 @@ export default function AuditLogsPage() {
     <PageRuntime model={AuditLogsPageModel} isLoading={isLoading}>
       <div className="space-y-6">
         {/* Filters */}
-        <div className="flex gap-4 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="flex gap-4 rounded-lg border border-border bg-card p-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               Action
             </label>
             <select
@@ -93,7 +93,7 @@ export default function AuditLogsPage() {
                 setAction(e.target.value as AuditAction | '')
                 setPage(1)
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Actions</option>
               <option value="CREATE">Create</option>
@@ -106,7 +106,7 @@ export default function AuditLogsPage() {
           </div>
 
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               Resource Type
             </label>
             <select
@@ -115,7 +115,7 @@ export default function AuditLogsPage() {
                 setResourceType(e.target.value)
                 setPage(1)
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Resources</option>
               <option value="users">Users</option>

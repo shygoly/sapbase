@@ -75,8 +75,8 @@ export function LayoutRuntimeAdapter({
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-input border-t-blue-600"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -94,15 +94,15 @@ export function LayoutRuntimeAdapter({
     }
 
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="rounded-lg bg-white p-8 shadow-lg">
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="rounded-lg bg-card p-8 shadow-lg">
           <div className="flex items-center justify-center">
             <AlertCircle className="h-12 w-12 text-red-500" />
           </div>
-          <h1 className="mt-4 text-center text-xl font-semibold text-gray-900">
+          <h1 className="mt-4 text-center text-xl font-semibold text-foreground">
             Access Denied
           </h1>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             You do not have permission to access this area.
           </p>
           <button
@@ -119,7 +119,7 @@ export function LayoutRuntimeAdapter({
   // Render layout with Runtime integration
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-gray-50">
+      <div className="flex h-screen w-full bg-background">
         <UnifiedSidebar source="api" />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />

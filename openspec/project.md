@@ -134,3 +134,12 @@ State / Event / Capability / Time / Version / Context 为渐进维度。
 | Sentry | 前端错误监控 | `@sentry/nextjs` |
 | Docker | Wasm 隔离构建器 | `wasm-modules/Dockerfile.builder`；CI 中用 host 模式自证 |
 | Clerk | — | ⚠️ 依赖存在于 `speckit/package.json` 但源码未使用，属模板残留，待清理 |
+
+## 参考包归并后的入口
+
+- 工程结构：`docs/ARCHITECTURE.md`（Nx + Next/Nest + PG/Redis）
+- 发布模型：`docs/protocols/release.md`
+- PiAgent：`docs/protocols/piagent.md`
+- Agent 进化闭环：`docs/protocols/agent-evolution.md`
+- 机器可校验契约：`DOMAIN.md` / `FLOWS.md` / `DECISIONS.md` / `AGENT-TOOLS.md`
+- `docs/reference/` 只保留历史 README 与 `reference.zip`，不是入口，不参与校验。

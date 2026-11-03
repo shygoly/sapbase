@@ -49,5 +49,5 @@ export interface InteractionPlan {
 }
 
 export type ChatResult =
-  | { kind: 'plan'; plan: InteractionPlan; intent: string }
-  | { kind: 'refusal'; message: string; intent?: string }
+  | { kind: 'plan'; plan: InteractionPlan; intent: string; modelId?: string }
+  | { kind: 'refusal'; message: string; intent?: string; modelId?: string }

@@ -129,7 +129,7 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
               placeholder="Role description..."
               {...register('description')}
               disabled={isSubmitting}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={3}
             />
           </div>
@@ -137,9 +137,9 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
           {/* Permissions */}
           <div className="space-y-2">
             <Label>Permissions</Label>
-            <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-gray-300 p-3">
+            <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-input p-3">
               {permissions.length === 0 ? (
-                <p className="text-sm text-gray-500">No permissions available</p>
+                <p className="text-sm text-muted-foreground">No permissions available</p>
               ) : (
                 permissions.map((perm) => {
                   const permissionValue = getPermissionValue(perm)
@@ -181,7 +181,7 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
               id="status"
               {...register('status')}
               disabled={isSubmitting}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>

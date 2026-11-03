@@ -260,30 +260,36 @@ async function seed() {
 
     // Create Permissions
     const permissionRepository = AppDataSource.getRepository(Permission)
-    const permissions = await permissionRepository.save(
-      [
-        { name: 'users:read', description: 'View users', category: 'users', status: 'active' as const },
-        { name: 'users:create', description: 'Create users', category: 'users', status: 'active' as const },
-        { name: 'users:update', description: 'Update users', category: 'users', status: 'active' as const },
-        { name: 'users:delete', description: 'Delete users', category: 'users', status: 'active' as const },
-        { name: 'roles:read', description: 'View roles', category: 'roles', status: 'active' as const },
-        { name: 'roles:create', description: 'Create roles', category: 'roles', status: 'active' as const },
-        { name: 'roles:update', description: 'Update roles', category: 'roles', status: 'active' as const },
-        { name: 'roles:delete', description: 'Delete roles', category: 'roles', status: 'active' as const },
-        { name: 'departments:read', description: 'View departments', category: 'departments', status: 'active' as const },
-        { name: 'departments:create', description: 'Create departments', category: 'departments', status: 'active' as const },
-        { name: 'departments:update', description: 'Update departments', category: 'departments', status: 'active' as const },
-        { name: 'departments:delete', description: 'Delete departments', category: 'departments', status: 'active' as const },
-        { name: 'menu:read', description: 'View menu', category: 'menu', status: 'active' as const },
-        { name: 'menu:create', description: 'Create menu', category: 'menu', status: 'active' as const },
-        { name: 'menu:update', description: 'Update menu', category: 'menu', status: 'active' as const },
-        { name: 'menu:delete', description: 'Delete menu', category: 'menu', status: 'active' as const },
-        { name: 'dashboard:read', description: 'View dashboard', category: 'dashboard', status: 'active' as const },
-        { name: 'settings:read', description: 'View settings', category: 'settings', status: 'active' as const },
-        { name: 'settings:update', description: 'Update settings', category: 'settings', status: 'active' as const },
-        { name: 'audit:read', description: 'View audit logs', category: 'audit', status: 'active' as const },
-      ].map((permission) => ({ ...permission, organization: defaultOrganization })),
-    )
+    const permissions = await permissionRepository.save([
+      { name: 'users:read', description: 'View users', category: 'users', status: 'active' as const },
+      { name: 'users:create', description: 'Create users', category: 'users', status: 'active' as const },
+      { name: 'users:update', description: 'Update users', category: 'users', status: 'active' as const },
+      { name: 'users:delete', description: 'Delete users', category: 'users', status: 'active' as const },
+      { name: 'roles:read', description: 'View roles', category: 'roles', status: 'active' as const },
+      { name: 'roles:create', description: 'Create roles', category: 'roles', status: 'active' as const },
+      { name: 'roles:update', description: 'Update roles', category: 'roles', status: 'active' as const },
+      { name: 'roles:delete', description: 'Delete roles', category: 'roles', status: 'active' as const },
+      { name: 'departments:read', description: 'View departments', category: 'departments', status: 'active' as const },
+      { name: 'departments:create', description: 'Create departments', category: 'departments', status: 'active' as const },
+      { name: 'departments:update', description: 'Update departments', category: 'departments', status: 'active' as const },
+      { name: 'departments:delete', description: 'Delete departments', category: 'departments', status: 'active' as const },
+      { name: 'menu:read', description: 'View menu', category: 'menu', status: 'active' as const },
+      { name: 'menu:create', description: 'Create menu', category: 'menu', status: 'active' as const },
+      { name: 'menu:update', description: 'Update menu', category: 'menu', status: 'active' as const },
+      { name: 'menu:delete', description: 'Delete menu', category: 'menu', status: 'active' as const },
+      { name: 'dashboard:read', description: 'View dashboard', category: 'dashboard', status: 'active' as const },
+      { name: 'settings:read', description: 'View settings', category: 'settings', status: 'active' as const },
+      { name: 'settings:update', description: 'Update settings', category: 'settings', status: 'active' as const },
+      { name: 'audit:read', description: 'View audit logs', category: 'audit', status: 'active' as const },
+      { name: 'app:release:read', description: 'View releases', category: 'app-release', status: 'active' as const },
+      { name: 'app:release:propose', description: 'Draft release proposals', category: 'app-release', status: 'active' as const },
+      { name: 'app:release:validate', description: 'Validate and preview releases', category: 'app-release', status: 'active' as const },
+      { name: 'app:release:approve', description: 'Approve release proposals', category: 'app-release', status: 'active' as const },
+      { name: 'app:release:approve:security', description: 'Security approval for high-risk changes', category: 'app-release', status: 'active' as const },
+      { name: 'app:release:publish', description: 'Publish releases', category: 'app-release', status: 'active' as const },
+      { name: 'app:release:activate', description: 'Activate releases', category: 'app-release', status: 'active' as const },
+      { name: 'app:release:rollback', description: 'Rollback releases', category: 'app-release', status: 'active' as const },
+    ].map((permission) => ({ ...permission, organization: defaultOrganization })))
     console.log(`Created ${permissions.length} permissions`)
 
     // Ensure the default admin has access to every seeded permission so they can reach admin routes

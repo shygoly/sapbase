@@ -23,13 +23,13 @@ function SidebarContent() {
         {item.path ? (
           <Link
             href={item.path}
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-muted hover:text-foreground"
           >
             {item.icon && <span className="text-lg">{item.icon}</span>}
             <span>{item.label}</span>
           </Link>
         ) : (
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700">
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80">
             {item.icon && <span className="text-lg">{item.icon}</span>}
             <span>{item.label}</span>
           </div>
@@ -48,7 +48,7 @@ function SidebarContent() {
     <>
       <button
         onClick={toggleSidebar}
-        className="fixed left-4 top-4 z-40 rounded-lg bg-white p-2 shadow-lg lg:hidden"
+        className="fixed left-4 top-4 z-40 rounded-lg bg-card p-2 shadow-lg lg:hidden"
       >
         {sidebarOpen ? (
           <X className="h-6 w-6" />
@@ -58,20 +58,20 @@ function SidebarContent() {
       </button>
 
       <aside
-        className={`fixed left-0 top-0 z-30 h-screen w-64 bg-white shadow-lg transition-transform duration-300 lg:relative lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-30 h-screen w-64 bg-card shadow-lg transition-transform duration-300 lg:relative lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex h-full flex-col">
-          <div className="border-b border-gray-200 px-6 py-4">
-            <h1 className="text-xl font-bold text-gray-900">ERP Runtime</h1>
-            <p className="text-xs text-gray-500">v1.0</p>
+          <div className="border-b border-border px-6 py-4">
+            <h1 className="text-xl font-bold text-foreground">ERP Runtime</h1>
+            <p className="text-xs text-muted-foreground">v1.0</p>
           </div>
 
           {user && (
-            <div className="border-b border-gray-200 px-6 py-4">
-              <p className="text-sm font-medium text-gray-900">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
+            <div className="border-b border-border px-6 py-4">
+              <p className="text-sm font-medium text-foreground">{user.name}</p>
+              <p className="text-xs text-muted-foreground">{user.email}</p>
               <p className="mt-1 inline-block rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                 {user.roleName ?? 'user'}
               </p>
@@ -84,18 +84,18 @@ function SidebarContent() {
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-8 rounded-lg bg-gray-200 animate-pulse"
+                    className="h-8 rounded-lg bg-border animate-pulse"
                   />
                 ))}
               </div>
             ) : menuItems.length > 0 ? (
               <div className="space-y-1">{renderMenuItems(menuItems)}</div>
             ) : (
-              <p className="text-sm text-gray-500">No menu items available</p>
+              <p className="text-sm text-muted-foreground">No menu items available</p>
             )}
           </nav>
 
-          <div className="border-t border-gray-200 px-6 py-4">
+          <div className="border-t border-border px-6 py-4">
             <Link
               href="/login"
               className="block rounded-lg bg-red-50 px-3 py-2 text-center text-sm font-medium text-red-600 hover:bg-red-100"

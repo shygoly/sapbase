@@ -1,0 +1,21 @@
+{
+  "name": "backend",
+  "root": "backend",
+  "sourceRoot": "backend/src",
+  "projectType": "application",
+  "tags": ["type:app", "scope:api", "layer:app", "runtime:node"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run build", "cwd": "backend" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run test -- --runInBand", "cwd": "backend" }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run lint", "cwd": "backend" }
+    }
+  }
+}

@@ -93,7 +93,7 @@ export function InstallPluginDialog({
               />
             </div>
             {file && (
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
               </p>
             )}

@@ -23,8 +23,19 @@ import {
   ConfirmationTokenService,
   digestToolArgs,
 } from './confirmation-token.service'
+import { AgentFeedbackService } from '../agent-feedback/agent-feedback.service'
+import { ReleasesService } from '../releases/releases.service'
+import { wrapUntrustedData } from '@sap/agent-kernel'
 
 const ALLOWED_ATOMIC_KINDS = new Set(['calculation', 'query'])
+
+export type AgentProfile = 'piagent-runtime' | 'piagent-builder'
+
+export function isAgentAllowed(tool: { allowedAgents?: string[] }, profile: AgentProfile): boolean {
+  const allowed = tool.allowedAgents
+  if (!allowed || allowed.length === 0) return true
+  return allowed.includes('*') || allowed.includes(profile)
+}
 
 export interface AgentToolInvokeInput {
   name: string
@@ -34,6 +45,8 @@ export interface AgentToolInvokeInput {
   actor: string
   grantedPermissions: readonly string[]
   appContext?: BusinessAppExecutionContext
+  agentProfile?: AgentProfile
+  idempotencyKey?: string
 }
 
 export interface AgentToolConfirmInput {
@@ -42,6 +55,7 @@ export interface AgentToolConfirmInput {
   organizationId?: string
   actor: string
   appContext?: BusinessAppExecutionContext
+  agentProfile?: AgentProfile
 }
 
 /**
@@ -55,6 +69,8 @@ export interface AgentToolConfirmInput {
  */
 @Injectable()
 export class AgentToolRegistry {
+  private readonly writeCache = new Map<string, unknown>()
+
   constructor(
     private readonly blueprints: BlueprintService,
     private readonly modules: ModuleRegistryService,
@@ -63,6 +79,8 @@ export class AgentToolRegistry {
     private readonly atomics: AtomicRegistryService,
     private readonly auditLogs: AuditLogsService,
     private readonly tokens: ConfirmationTokenService,
+    private readonly feedback: AgentFeedbackService,
+    private readonly releases: ReleasesService,
   ) {}
 
   catalog(): ToolCatalog {
@@ -72,6 +90,7 @@ export class AgentToolRegistry {
   async confirm(input: AgentToolConfirmInput) {
     const organizationId = this.requireOrganizationId(input.organizationId)
     const tool = this.requireTool(input.name, this.catalog())
+    this.assertAgent(tool, input.agentProfile ?? 'piagent-runtime')
     if (tool.confirmation !== 'required') {
       throw new BadRequestException(
         `工具 ${tool.name} 不需要确认令牌（confirmation=${tool.confirmation}）`,
@@ -88,12 +107,23 @@ export class AgentToolRegistry {
     })
   }
 
-  async invoke(input: AgentToolInvokeInput, catalog: ToolCatalog = loadToolCatalog()) {
+  async invoke(
+    input: AgentToolInvokeInput,
+    catalog: ToolCatalog = loadToolCatalog(),
+  ): Promise<{ ok: true; tool: string; result: unknown }> {
     const organizationId = this.requireOrganizationId(input.organizationId)
     const tool = this.requireTool(input.name, catalog)
+    this.assertAgent(tool, input.agentProfile ?? 'piagent-runtime')
     this.assertArgs(tool, input.args)
     this.assertAppContext(input.appContext, organizationId)
 
+    const cacheKey =
+      tool.write && input.idempotencyKey
+        ? `${organizationId}:${tool.name}:${input.idempotencyKey}`
+        : null
+    if (cacheKey && this.writeCache.has(cacheKey)) {
+      return this.writeCache.get(cacheKey) as { ok: true; tool: string; result: unknown }
+    }
     const missing = missingPermissions([tool.permission], input.grantedPermissions)
     if (missing.length > 0) {
       throw new ForbiddenException(
@@ -133,7 +163,9 @@ export class AgentToolRegistry {
         appKey: input.appContext?.appKey,
         traceId: input.appContext?.traceId,
       })
-      return { ok: true as const, tool: tool.name, result }
+      const response = { ok: true as const, tool: tool.name, result }
+      if (cacheKey) this.writeCache.set(cacheKey, response)
+      return response
     } catch (error) {
       await this.audit({
         actor: input.actor,
@@ -167,6 +199,21 @@ export class AgentToolRegistry {
       )
     }
     return organizationId
+  }
+
+  private assertBuilderEnabled(profile: AgentProfile): void {
+    if (profile === 'piagent-builder' && process.env.BUILDER_ENABLED === 'false') {
+      throw new ForbiddenException('Builder 智能体不允许直接操作 ai_modules 表')
+    }
+  }
+
+  private assertAgent(tool: AgentToolContract, profile: AgentProfile): void {
+    const allowed = tool.allowedAgents
+    if (!allowed || allowed.length === 0) return
+    if (allowed.includes('*') || allowed.includes(profile)) return
+    throw new ForbiddenException(
+      `智能体 ${profile} 不允许调用工具 ${tool.name}（allowedAgents=${allowed.join(',')}）`,
+    )
   }
 
   private requireTool(name: string, catalog: ToolCatalog): AgentToolContract {
@@ -225,6 +272,54 @@ export class AgentToolRegistry {
           dir: typeof args.dir === 'string' ? args.dir : undefined,
           out: typeof args.out === 'string' ? args.out : undefined,
         })
+      case 'builder_feedback_list':
+        return this.feedback.list(
+          organizationId,
+          typeof args.appKey === 'string' ? args.appKey : undefined,
+          typeof args.status === 'string' ? args.status : undefined,
+        )
+      case 'builder_proposal_create':
+        return this.releases.createProposal({
+          organizationId,
+          appKey: String(args.appKey),
+          draftId: String(args.draftId),
+          type: String(args.type),
+          title: String(args.title),
+          summary: String(args.summary),
+          diff: (args.diff as Record<string, unknown>) ?? {},
+          evidence: Array.isArray(args.evidence) ? args.evidence : [],
+          risk: (args.risk as Record<string, unknown>) ?? {},
+          testPlan: (args.testPlan as Record<string, unknown>) ?? {},
+          rollbackPlan: (args.rollbackPlan as Record<string, unknown>) ?? {},
+          createdByAgent: 'piagent-builder',
+          createdBy: null,
+        })
+      case 'builder_proposal_validate':
+        return this.releases.validateProposal(
+          String(args.proposalId),
+          organizationId,
+          {
+            blueprintId: typeof args.blueprintId === 'string' ? args.blueprintId : undefined,
+            previewUrl: typeof args.previewUrl === 'string' ? args.previewUrl : undefined,
+          },
+        )
+      case 'builder_changelog_draft':
+        return {
+          status: 'draft',
+          changelog: {
+            'zh-CN': Array.isArray(args.changes) ? args.changes : [{ type: 'changed', title: String(args.title), detail: String(args.summary) }],
+          },
+          note: 'draft only; human review required before publish',
+        }
+      case 'builder_release_preview':
+        return {
+          token: this.releases.issuePreviewToken({
+            userId: 'piagent-builder',
+            organizationId,
+            releaseId: String(args.releaseId),
+            roles: Array.isArray(args.roles) ? args.roles.map(String) : [],
+          }),
+        }
       default:
         throw new NotFoundException(
           `没有这个能力：${tool.name}（契约有名字但运行时没有落点）`,
@@ -281,6 +376,7 @@ export class AgentToolRegistry {
     appInstallationId?: string
     appKey?: string
     traceId?: string
+    releaseId?: string | null
     reason?: string
   }): Promise<void> {
     const redactedArgs = redactArgs(detail.args, detail.sensitiveArgs)
@@ -305,6 +401,7 @@ export class AgentToolRegistry {
           : {}),
         ...(detail.appKey ? { appKey: detail.appKey } : {}),
         ...(detail.traceId ? { traceId: detail.traceId } : {}),
+        ...(detail.releaseId ? { releaseId: detail.releaseId } : {}),
         ...(detail.reason ? { reason: detail.reason } : {}),
       },
     })

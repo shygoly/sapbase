@@ -36,7 +36,7 @@ function StateNode({ data }: { data: { state: SemanticState; isCurrent: boolean 
             ? 'border-green-500 bg-green-50 dark:bg-green-950'
             : isFinal
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-950 border-double'
-              : 'border-gray-300 bg-white dark:bg-gray-800'
+              : 'border-input bg-card dark:bg-gray-800'
       }`}
     >
       <div className="font-semibold">{state.name}</div>

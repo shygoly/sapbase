@@ -49,13 +49,13 @@ export default function ModuleRegistryPage() {
       case 'active':
         return 'bg-green-100 text-green-800'
       case 'inactive':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
       case 'deprecated':
         return 'bg-yellow-100 text-yellow-800'
       case 'error':
         return 'bg-red-100 text-red-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
     }
   }
 
@@ -68,7 +68,7 @@ export default function ModuleRegistryPage() {
       case 'integration':
         return 'bg-orange-100 text-orange-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
     }
   }
 
@@ -78,11 +78,11 @@ export default function ModuleRegistryPage() {
         pageTitle="Module Registry"
         pageDescription="Manage and monitor all AI-created modules"
       >
-        <div className="space-y-4 rounded-lg border border-gray-200 bg-white">
+        <div className="space-y-4 rounded-lg border border-border bg-card">
           {isLoading ? (
-            <div className="p-8 text-center text-gray-500">Loading modules...</div>
+            <div className="p-8 text-center text-muted-foreground">Loading modules...</div>
           ) : modules.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">No modules registered</div>
+            <div className="p-8 text-center text-muted-foreground">No modules registered</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -101,7 +101,7 @@ export default function ModuleRegistryPage() {
                   {modules.map((module) => (
                     <TableRow key={module.id}>
                       <TableCell className="font-medium">{module.name}</TableCell>
-                      <TableCell className="text-gray-600">
+                      <TableCell className="text-muted-foreground">
                         {module.description || '-'}
                       </TableCell>
                       <TableCell>
@@ -117,7 +117,7 @@ export default function ModuleRegistryPage() {
                       <TableCell>{module.version}</TableCell>
                       <TableCell>
                         {module.metadata?.entities?.length ? (
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-muted-foreground">
                             {module.metadata.entities.length} entities
                           </span>
                         ) : (

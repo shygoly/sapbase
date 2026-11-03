@@ -1,0 +1,37 @@
+export const RELEASE_AUTOMATION_DDL: string[] = [
+  `CREATE TABLE IF NOT EXISTS public.release_automation_policies (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    "createdAt" timestamp with time zone DEFAULT now() NOT NULL,
+    "updatedAt" timestamp with time zone DEFAULT now() NOT NULL,
+    "organizationId" uuid NOT NULL,
+    "appKey" character varying(64) NOT NULL,
+    autonomy character varying(8) DEFAULT 'A1' NOT NULL,
+    enabled boolean DEFAULT false NOT NULL,
+    "allowedChangeClasses" jsonb DEFAULT '[]'::jsonb NOT NULL,
+    guardrails jsonb DEFAULT '{}'::jsonb NOT NULL,
+    "canaryStages" jsonb DEFAULT '[5,25,100]'::jsonb NOT NULL,
+    "autoRollbackEnabled" boolean DEFAULT false NOT NULL,
+    "consecutiveCleanRuns" integer DEFAULT 0 NOT NULL,
+    "lastReviewedAt" timestamp with time zone,
+    "reviewedBy" uuid,
+    CONSTRAINT "PK_release_automation_policies" PRIMARY KEY (id),
+    CONSTRAINT "CK_release_automation_autonomy" CHECK (autonomy IN ('A1','A2')),
+    CONSTRAINT "UQ_release_automation_policy_app" UNIQUE ("organizationId", "appKey")
+  )`,
+  `CREATE TABLE IF NOT EXISTS public.release_automation_runs (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    "createdAt" timestamp with time zone DEFAULT now() NOT NULL,
+    "updatedAt" timestamp with time zone DEFAULT now() NOT NULL,
+    "policyId" uuid,
+    "proposalId" uuid,
+    "releaseId" uuid,
+    action character varying(32) NOT NULL,
+    status character varying(32) NOT NULL,
+    "actorId" uuid,
+    "actorAgent" character varying(64),
+    details jsonb DEFAULT '{}'::jsonb NOT NULL,
+    CONSTRAINT "PK_release_automation_runs" PRIMARY KEY (id),
+    CONSTRAINT "CK_release_automation_action" CHECK (action IN ('publish','activate','rollback','review','disable')),
+    CONSTRAINT "CK_release_automation_status" CHECK (status IN ('success','failure'))
+  )`,
+]

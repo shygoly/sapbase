@@ -54,6 +54,8 @@ function createRegistry(overrides?: {
     atomics as never,
     auditLogs as never,
     tokens as never,
+    { list: jest.fn(async () => []) } as never,
+    { createProposal: jest.fn(), issuePreviewToken: jest.fn(), validateProposal: jest.fn() } as never,
   )
   return { registry, blueprints, modules, executor, auditLogs, tokens, atomics }
 }
@@ -325,5 +327,15 @@ describe('AgentToolRegistry 调用链', () => {
       args: { id: 'pack-1' },
     })
     expect(blueprints.compile).toHaveBeenCalledWith('pack-1', { stamp: false })
+  })
+})
+
+
+describe('isAgentAllowed', () => {
+  const { isAgentAllowed } = require('./agent-tool.registry')
+  it('enforces allowedAgents', () => {
+    expect(isAgentAllowed({ allowedAgents: ['piagent-builder'] }, 'piagent-runtime')).toBe(false)
+    expect(isAgentAllowed({ allowedAgents: ['piagent-builder'] }, 'piagent-builder')).toBe(true)
+    expect(isAgentAllowed({}, 'piagent-runtime')).toBe(true)
   })
 })

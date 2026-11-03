@@ -21,7 +21,7 @@ export class SuggestionCronJob {
     private readonly dataSource: DataSource,
   ) {}
 
-  @Cron('0 2 * * *')
+  @Cron('0 2 * * *', { name: 'semantic.suggest_transitions' })
   async run(): Promise<void> {
     this.logger.log('blueprint suggestion cron started')
     try {

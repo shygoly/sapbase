@@ -7,7 +7,8 @@
     "shared-schemas",
     "speckit",
     "backend",
-    "wasm-modules"
+    "wasm-modules",
+    "libs/*"
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace speckit\" \"npm run start:dev --workspace backend\"",
@@ -19,13 +20,27 @@
     "wasm:test": "npm run test --workspace @speckit/wasm-modules",
     "wasm:reproducible": "npm run check:reproducible --workspace @speckit/wasm-modules --",
     "build": "npm run build --workspaces",
-    "lint": "npm run lint --workspaces"
+    "lint": "npm run lint --workspaces",
+    "check:domain": "node scripts/meta/check-domain-doc.mjs",
+    "check:meta": "node scripts/meta/check-meta-docs.mjs",
+    "check:agent-tools": "node scripts/meta/check-agent-tools.mjs",
+    "check:all": "node scripts/meta/check-all.mjs",
+    "check:ci": "node scripts/meta/check-all.mjs --warn-only",
+    "nx:graph": "nx graph",
+    "affected:build": "nx affected -t build",
+    "affected:lint": "nx affected -t lint",
+    "affected:test": "nx affected -t test",
+    "lint:boundaries": "eslint \"backend/src/**/*.ts\" \"libs/**/*.ts\" --no-error-on-unmatched-pattern",
+    "check:links": "node scripts/meta/check-doc-links.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@nx/eslint": "^24.0.2",
+    "@nx/eslint-plugin": "^24.0.2",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "globals": "^17.1.0",
-    "markdownlint-cli": "^0.47.0"
+    "markdownlint-cli": "^0.47.0",
+    "nx": "^24.0.2"
   }
 }
