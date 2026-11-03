@@ -123,3 +123,39 @@
 | `workflow_auto_suggestion_logs` | 0 |
 
 四张表都在本体基线（`schema-baseline.ts:350-386`）。本轮不加表、不改列。
+
+---
+
+## 附：W0 复核勘误（2026-09-27）
+
+> 本节的数字以 `rg` 扫描 + 逐文件核对为准，修正上文初稿的三处偏差。
+> 复核时旧树仍在（`consolidate-platform-foundations` 分支 `aea9ec7`），今日旧树已由 W3 删除，
+> 下面的结论保留作 W1 做法的依据。
+
+1. **HTTP 出口是 13 条，不是 12 条**。`workflows.controller.ts` 里有**两个** `@Controller`：
+   `@Controller('workflows')` 7 条（含 `GET /:id/instances`，前端未调用但路由存在）+
+   `@Controller('workflow-instances')` 6 条。前端 `workflows.api.ts` 同样是 13 个方法，
+   与路由一一对应；上文的函数计数少算了 `GET /workflows/:id/instances`。
+
+2. **`/workflow-instances` 这个 Controller 是"混血"**：构造函数注入 10 个服务，两棵树各 5 个 ——
+   `GET /` 走 `workflows` 的 `WorkflowInstanceService`，而 `POST /:id/transition` 走
+   `workflow-context` 的 `ExecuteTransitionService`。这条决定 W1 的做法：
+   **不能"换数据源"整体切**，必须按接口逐个接线，双跑期用 `audit.source` 区分。
+   另外 `WorkflowSuggestionService` 在 Controller 里注入了但全类未被使用（死枝，随 W3 一起删）。
+
+   > 顺带更正：`workflow-context` 树唯一的功能出口不是 AI 上下文 —— `ai-module-context`
+   > 只是它的两个消费者之一，真正的对外出口是 `/workflow-instances/*` 那 5 条路由。
+
+3. **前端调用点是 8 个文件**，不是"5 个组件 + 1 个页面"：
+   1 个页面（`admin/workflows/page.tsx`）+ 6 个组件（`workflow-definition-editor` /
+   `workflow-instance-list` / `workflow-instance-viewer` / `workflow-transition-buttons` /
+   `workflow-history-timeline` / `workflow-state-diagram`）+ 1 个 API 客户端
+   （`lib/api/workflows.api.ts`）。菜单项在 `config/default-menu-items.ts`（`id: admin-workflows`）。
+
+复核命令（旧树已删，仅作方法记录）：
+
+```bash
+rg -n "@Controller\(" backend/src/workflows/workflows.controller.ts
+rg -n "constructor\(" -A 14 backend/src/workflows/workflows.controller.ts
+rg -l "workflows.api" speckit/src/app/\[locale\]/admin/workflows speckit/src/lib/api
+```
