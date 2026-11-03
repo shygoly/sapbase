@@ -3,7 +3,7 @@
 # Everything Claude Code
 
 [![Stars](https://img.shields.io/github/stars/affaan-m/everything-claude-code?style=flat)](https://github.com/affaan-m/everything-claude-code/stargazers)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](rprojects/hispoc/node_modules/ms/license.md)
 ![Shell](https://img.shields.io/badge/-Shell-4EAA25?logo=gnu-bash\&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript\&logoColor=white)
 ![Go](https://img.shields.io/badge/-Go-00ADD8?logo=go\&logoColor=white)
@@ -489,7 +489,7 @@ node tests/hooks/hooks.test.js
 * 更好的 MCP 配置
 * 改进的规则
 
-请贡献！请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 了解指南。
+请贡献！请参阅 [CONTRIBUTING.md](projects/sapbase/zh-CN/CONTRIBUTING.md) 了解指南。
 
 ### 贡献想法
 

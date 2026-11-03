@@ -22,6 +22,10 @@ const CONSUME_SQL = `
     AND tool = $2
     AND "argsDigest" = $3
     AND "organizationId" = $4
+    AND (
+      ("appInstallationId" = $5::uuid)
+      OR ($5::uuid IS NULL AND "appInstallationId" IS NULL)
+    )
 `
 
 /** 参数摘要：sha256(canonicalizeJson(args))，与签发/消费共用这一份。 */
@@ -31,6 +35,7 @@ export function digestToolArgs(args: unknown): string {
 
 export interface IssueConfirmationInput {
   organizationId: string
+  appInstallationId?: string
   tool: string
   args: unknown
   actor: string
@@ -39,6 +44,7 @@ export interface IssueConfirmationInput {
 export interface ConsumeConfirmationInput {
   token: string
   organizationId: string
+  appInstallationId?: string
   tool: string
   argsDigest: string
 }
@@ -54,12 +60,14 @@ export class ConfirmationTokenService {
     token: string
     tool: string
     argsDigest: string
+    appInstallationId: string | null
     expiresAt: Date
   }> {
     const argsDigest = digestToolArgs(input.args)
     const expiresAt = new Date(Date.now() + CONFIRMATION_TOKEN_TTL_MS)
     const row = this.tokens.create({
       organizationId: input.organizationId,
+      appInstallationId: input.appInstallationId ?? null,
       tool: input.tool,
       argsDigest,
       actor: input.actor,
@@ -71,6 +79,7 @@ export class ConfirmationTokenService {
       token: saved.id,
       tool: saved.tool,
       argsDigest: saved.argsDigest,
+      appInstallationId: saved.appInstallationId,
       expiresAt: saved.expiresAt,
     }
   }
@@ -86,6 +95,7 @@ export class ConfirmationTokenService {
       input.tool,
       input.argsDigest,
       input.organizationId,
+      input.appInstallationId ?? null,
     ])
     const affected = Array.isArray(result) ? Number(result[1] ?? 0) : 0
     if (affected !== 1) {

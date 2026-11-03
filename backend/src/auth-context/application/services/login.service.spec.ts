@@ -1,7 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { LoginService } from './login.service'
-// 实体构造是私有的：测试替身用 cast（change: restore-green-backend-tests）
-import type { User } from '../../../users/user.entity'
 import type { Organization } from '../../../organization-context/domain/entities/organization.entity'
 import {
   USER_REPOSITORY,
@@ -12,11 +10,24 @@ import { JWT_SERVICE, PASSWORD_SERVICE, EFFECTIVE_PERMISSIONS_RESOLVER } from '.
 import type {
   IUserRepository,
   IOrganizationRepository,
+  User,
 } from '../../domain/repositories'
 import type { IJwtService, IPasswordService, IEffectivePermissionsResolver } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { AuthenticationError } from '../../domain/errors'
 import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
+
+function domainUser(overrides: Partial<User> = {}): User {
+  return {
+    id: 'user-1',
+    email: 'user@example.com',
+    name: 'Test User',
+    role: 'user',
+    permissions: [],
+    passwordHash: 'hashed-password',
+    ...overrides,
+  }
+}
 
 describe('LoginService', () => {
   let service: LoginService
@@ -84,12 +95,7 @@ describe('LoginService', () => {
 
   describe('execute', () => {
     it('should login successfully with valid credentials', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        passwordHash: 'hashed-password',
-        name: 'Test User',
-      }
+      const user = domainUser()
 
       const organization = {
         id: 'org-1',
@@ -102,7 +108,7 @@ describe('LoginService', () => {
         organizationId: 'org-1',
       }
 
-      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
+      userRepository.findByEmail.mockResolvedValue(user)
       passwordService.compare.mockResolvedValue(true)
       // 服务用的是 findAll(userId)（列出用户所属组织）而不是 findById
       organizationRepository.findAll.mockResolvedValue([
@@ -137,19 +143,14 @@ describe('LoginService', () => {
     })
 
     it('should throw error if password is incorrect', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        passwordHash: 'hashed-password',
-        name: 'Test User',
-      }
+      const user = domainUser()
 
       const command = {
         email: 'user@example.com',
         password: 'wrong-password',
       }
 
-      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
+      userRepository.findByEmail.mockResolvedValue(user)
       passwordService.compare.mockResolvedValue(false)
 
       await expect(service.execute(command)).rejects.toThrow(
@@ -158,12 +159,7 @@ describe('LoginService', () => {
     })
 
     it('should throw error if organization not found', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        passwordHash: 'hashed-password',
-        name: 'Test User',
-      }
+      const user = domainUser()
 
       const command = {
         email: 'user@example.com',
@@ -171,7 +167,7 @@ describe('LoginService', () => {
         organizationId: 'org-999',
       }
 
-      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
+      userRepository.findByEmail.mockResolvedValue(user)
       passwordService.compare.mockResolvedValue(true)
       // 用户所属组织为 org-1，但请求的是 org-999 → 服务按"无访问权"拒绝
       organizationRepository.findAll.mockResolvedValue([
@@ -182,16 +178,12 @@ describe('LoginService', () => {
     })
 
     it('签发的 payload 与响应 user.permissions 都是有效权限（角色 ∪ 直授）', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        passwordHash: 'hashed-password',
-        name: 'Test User',
+      const user = domainUser({
         role: 'clerk',
         permissions: ['direct:write'],
-      }
+      })
       const organization = { id: 'org-1', name: 'Test Org', slug: 'org-1' }
-      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
+      userRepository.findByEmail.mockResolvedValue(user)
       passwordService.compare.mockResolvedValue(true)
       organizationRepository.findAll.mockResolvedValue([
         organization as unknown as Organization,
@@ -223,15 +215,11 @@ describe('LoginService', () => {
     })
 
     it('解析器抛错时只留直授且登录仍然成功', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        passwordHash: 'hashed-password',
-        name: 'Test User',
+      const user = domainUser({
         role: 'clerk',
         permissions: ['direct:keep'],
-      }
-      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
+      })
+      userRepository.findByEmail.mockResolvedValue(user)
       passwordService.compare.mockResolvedValue(true)
       organizationRepository.findAll.mockResolvedValue([
         { id: 'org-1', name: 'Org', slug: 'org' } as unknown as Organization,
@@ -253,15 +241,11 @@ describe('LoginService', () => {
     })
 
     it('解析器返回空时只留直授且登录仍然成功', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        passwordHash: 'hashed-password',
-        name: 'Test User',
+      const user = domainUser({
         role: 'inactive-clerk',
         permissions: ['direct:keep'],
-      }
-      userRepository.findByEmail.mockResolvedValue(user as unknown as User)
+      })
+      userRepository.findByEmail.mockResolvedValue(user)
       passwordService.compare.mockResolvedValue(true)
       organizationRepository.findAll.mockResolvedValue([
         { id: 'org-1', name: 'Org', slug: 'org' } as unknown as Organization,

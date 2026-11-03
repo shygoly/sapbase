@@ -11,6 +11,8 @@ import { OUTBOX_DDL } from '../outbox/outbox.ddl'
 import { NOTIFICATIONS_DDL } from '../notifications/notification.ddl'
 import { SUGGESTION_LOG_DDL } from '../semantic-runtime/suggestion-log.ddl'
 import { AGENT_CONFIRMATION_TOKENS_DDL } from '../agent-tools/confirmation-token.ddl'
+import { BUSINESS_APP_INSTALLATIONS_DDL } from '../business-apps/business-app-installation.ddl'
+import { TENANT_RLS_DDL } from '../common/rls/tenant-rls.ddl'
 
 export const SCHEMA_BASELINE_SQL: string[] = [
   `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`,
@@ -596,4 +598,6 @@ export const SCHEMA_BASELINE_SQL: string[] = [
   ...NOTIFICATIONS_DDL,
   ...SUGGESTION_LOG_DDL,
   ...AGENT_CONFIRMATION_TOKENS_DDL,
+  ...BUSINESS_APP_INSTALLATIONS_DDL,
+  ...TENANT_RLS_DDL,
 ]

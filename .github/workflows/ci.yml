@@ -265,7 +265,9 @@ jobs:
             test/agent-tools.e2e-spec.ts \
             test/user-serialization.e2e-spec.ts \
             test/role-permissions.e2e-spec.ts \
-            test/chat-first-erp.e2e-spec.ts
+            test/chat-first-erp.e2e-spec.ts \
+            test/business-apps.e2e-spec.ts \
+            test/rls.e2e-spec.ts
 
   validate:
     name: Validate Components

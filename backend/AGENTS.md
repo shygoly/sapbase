@@ -18,8 +18,9 @@
 ## 本目录约定
 
 1. **只允许 npm**，且不要在 `backend/` 内单独安装依赖 —— 在仓库根执行 `npm install`。
-2. **多租户**：业务实体继承 `TenantAwareEntity`，隔离在应用层实现
-   （`common/interceptors/data-isolation.interceptor.ts`）；数据库 RLS 尚未引入。
+2. **多租户**：业务实体继承 `TenantAwareEntity`；HTTP 请求由
+   `TenantTransactionInterceptor` 在事务内设置组织/应用/用户上下文，PostgreSQL RLS
+   提供最后拒绝边界。生产应用角色不得是表 owner、superuser 或 `BYPASSRLS`。
 3. **迁移**：TypeORM 命令式迁移（`src/migrations/`）；声明式 diff 尚未引入，
    因此**迁移一旦提交不要改写**，新增变更用新迁移文件。
 4. **测试**：Jest + supertest。新增协议/契约类逻辑必须带**负例**（拒绝集），只测正路径不算完成。

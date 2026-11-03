@@ -13,6 +13,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { BlueprintService } from '../blueprint/blueprint.service'
 import { validateToolArguments } from '../chat/chat-protocol-validator'
 import { ModuleRegistryService } from '../module-registry/module-registry.service'
+import type { BusinessAppExecutionContext } from '@speckit/shared-schemas'
 import {
   type AgentToolContract,
   type ToolCatalog,
@@ -32,6 +33,7 @@ export interface AgentToolInvokeInput {
   organizationId?: string
   actor: string
   grantedPermissions: readonly string[]
+  appContext?: BusinessAppExecutionContext
 }
 
 export interface AgentToolConfirmInput {
@@ -39,6 +41,7 @@ export interface AgentToolConfirmInput {
   args: Record<string, unknown>
   organizationId?: string
   actor: string
+  appContext?: BusinessAppExecutionContext
 }
 
 /**
@@ -75,8 +78,10 @@ export class AgentToolRegistry {
       )
     }
     this.assertArgs(tool, input.args)
+    this.assertAppContext(input.appContext, organizationId)
     return this.tokens.issue({
       organizationId,
+      appInstallationId: input.appContext?.appInstallationId,
       tool: tool.name,
       args: input.args,
       actor: input.actor,
@@ -87,6 +92,7 @@ export class AgentToolRegistry {
     const organizationId = this.requireOrganizationId(input.organizationId)
     const tool = this.requireTool(input.name, catalog)
     this.assertArgs(tool, input.args)
+    this.assertAppContext(input.appContext, organizationId)
 
     const missing = missingPermissions([tool.permission], input.grantedPermissions)
     if (missing.length > 0) {
@@ -104,6 +110,7 @@ export class AgentToolRegistry {
       await this.tokens.consume({
         token: input.confirmationToken,
         organizationId,
+        appInstallationId: input.appContext?.appInstallationId,
         tool: tool.name,
         argsDigest: digestToolArgs(input.args),
       })
@@ -122,6 +129,9 @@ export class AgentToolRegistry {
         argsDigest,
         elapsedMs: Date.now() - startedAt,
         status: 'success',
+        appInstallationId: input.appContext?.appInstallationId,
+        appKey: input.appContext?.appKey,
+        traceId: input.appContext?.traceId,
       })
       return { ok: true as const, tool: tool.name, result }
     } catch (error) {
@@ -134,6 +144,9 @@ export class AgentToolRegistry {
         argsDigest,
         elapsedMs: Date.now() - startedAt,
         status: 'failure',
+        appInstallationId: input.appContext?.appInstallationId,
+        appKey: input.appContext?.appKey,
+        traceId: input.appContext?.traceId,
         reason: error instanceof Error ? error.message : String(error),
       })
       throw error
@@ -166,6 +179,15 @@ export class AgentToolRegistry {
       )
     }
     return tool
+  }
+
+  private assertAppContext(
+    appContext: BusinessAppExecutionContext | undefined,
+    organizationId: string,
+  ): void {
+    if (appContext && appContext.organizationId !== organizationId) {
+      throw new ForbiddenException('应用上下文与组织上下文不一致')
+    }
   }
 
   private assertArgs(tool: AgentToolContract, args: Record<string, unknown>): void {
@@ -256,6 +278,9 @@ export class AgentToolRegistry {
     argsDigest: string
     elapsedMs: number
     status: 'success' | 'failure'
+    appInstallationId?: string
+    appKey?: string
+    traceId?: string
     reason?: string
   }): Promise<void> {
     const redactedArgs = redactArgs(detail.args, detail.sensitiveArgs)
@@ -275,6 +300,11 @@ export class AgentToolRegistry {
         elapsedMs: detail.elapsedMs,
         args: redactedArgs,
         sensitiveArgs: sensitiveMap,
+        ...(detail.appInstallationId
+          ? { appInstallationId: detail.appInstallationId }
+          : {}),
+        ...(detail.appKey ? { appKey: detail.appKey } : {}),
+        ...(detail.traceId ? { traceId: detail.traceId } : {}),
         ...(detail.reason ? { reason: detail.reason } : {}),
       },
     })

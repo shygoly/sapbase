@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { SwitchOrganizationService } from './switch-organization.service'
-import type { User } from '../../../users/user.entity'
 import type { Organization } from '../../../organization-context/domain/entities/organization.entity'
 import {
   USER_REPOSITORY,
@@ -11,11 +10,24 @@ import { JWT_SERVICE, EFFECTIVE_PERMISSIONS_RESOLVER } from '../../domain/servic
 import type {
   IUserRepository,
   IOrganizationRepository,
+  User,
 } from '../../domain/repositories'
 import type { IJwtService, IEffectivePermissionsResolver } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { AuthenticationError } from '../../domain/errors'
 import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
+
+function domainUser(overrides: Partial<User> = {}): User {
+  return {
+    id: 'user-1',
+    email: 'user@example.com',
+    name: 'Test User',
+    role: 'user',
+    permissions: [],
+    passwordHash: 'hashed-password',
+    ...overrides,
+  }
+}
 
 describe('SwitchOrganizationService', () => {
   let service: SwitchOrganizationService
@@ -73,11 +85,7 @@ describe('SwitchOrganizationService', () => {
 
   describe('execute', () => {
     it('should switch organization successfully', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        name: 'Test User',
-      }
+      const user = domainUser()
 
       const organization = {
         id: 'org-2',
@@ -90,7 +98,7 @@ describe('SwitchOrganizationService', () => {
         currentOrganizationId: 'org-1',
       }
 
-      userRepository.findById.mockResolvedValue(user as unknown as User)
+      userRepository.findById.mockResolvedValue(user)
       organizationRepository.findById.mockResolvedValue(organization as unknown as Organization)
       jwtService.sign.mockResolvedValue('new-jwt-token')
       effectivePermissionsResolver.resolve.mockResolvedValue([])
@@ -115,11 +123,7 @@ describe('SwitchOrganizationService', () => {
     })
 
     it('should throw error if organization not found', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        name: 'Test User',
-      }
+      const user = domainUser()
 
       const command = {
         userId: 'user-1',
@@ -127,21 +131,18 @@ describe('SwitchOrganizationService', () => {
         currentOrganizationId: 'org-1',
       }
 
-      userRepository.findById.mockResolvedValue(user as unknown as User)
+      userRepository.findById.mockResolvedValue(user)
       organizationRepository.findById.mockResolvedValue(null)
 
       await expect(service.execute(command)).rejects.toThrow()
     })
 
     it('签发的 payload permissions 是有效权限（角色 ∪ 直授）', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        name: 'Test User',
+      const user = domainUser({
         role: 'clerk',
         permissions: ['direct:write'],
-      }
-      userRepository.findById.mockResolvedValue(user as unknown as User)
+      })
+      userRepository.findById.mockResolvedValue(user)
       organizationRepository.findById.mockResolvedValue({
         id: 'org-2',
         name: 'New Org',
@@ -171,14 +172,11 @@ describe('SwitchOrganizationService', () => {
     })
 
     it('解析器抛错时只留直授且切换仍然成功', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        name: 'Test User',
+      const user = domainUser({
         role: 'clerk',
         permissions: ['direct:keep'],
-      }
-      userRepository.findById.mockResolvedValue(user as unknown as User)
+      })
+      userRepository.findById.mockResolvedValue(user)
       organizationRepository.findById.mockResolvedValue({
         id: 'org-2',
         name: 'New Org',
@@ -199,14 +197,11 @@ describe('SwitchOrganizationService', () => {
     })
 
     it('解析器返回空时只留直授且切换仍然成功', async () => {
-      const user = {
-        id: 'user-1',
-        email: 'user@example.com',
-        name: 'Test User',
+      const user = domainUser({
         role: 'clerk',
         permissions: ['direct:keep'],
-      }
-      userRepository.findById.mockResolvedValue(user as unknown as User)
+      })
+      userRepository.findById.mockResolvedValue(user)
       organizationRepository.findById.mockResolvedValue({
         id: 'org-2',
         name: 'New Org',

@@ -10,6 +10,10 @@ import {
 import { OutboxDelivery } from './outbox-delivery.entity'
 import { OutboxEvent } from './outbox-event.entity'
 
+jest.mock('typeorm-transactional', () => ({
+  runInTransaction: jest.fn(async (fn: () => Promise<unknown>) => fn()),
+}))
+
 class CountingHandler implements IEventHandler<{ topic: string; payload: unknown }> {
   public calls = 0
   async handle(): Promise<void> {
@@ -53,6 +57,8 @@ describe('OutboxDispatcherService', () => {
     const saved: OutboxEvent[] = []
     const inserted: Array<{ eventId: string; subscriber: string }> = []
     const dataSource = {
+      query: async (sql: string) =>
+        sql.includes('FROM public.organizations') ? [{ id: 'org-1' }] : [],
       getRepository: (entity: unknown) => {
         if (entity === OutboxEvent) {
           return {
@@ -104,6 +110,8 @@ describe('OutboxDispatcherService', () => {
     } as unknown as OutboxEvent
     let persisted: OutboxEvent | undefined
     const dataSource = {
+      query: async (sql: string) =>
+        sql.includes('FROM public.organizations') ? [{ id: 'org-1' }] : [],
       getRepository: (entity: unknown) => {
         if (entity === OutboxEvent) {
           return {
@@ -155,6 +163,8 @@ describe('OutboxDispatcherService', () => {
       nextAttemptAt: new Date(0),
     } as unknown as OutboxEvent
     const dataSource = {
+      query: async (sql: string) =>
+        sql.includes('FROM public.organizations') ? [{ id: 'org-1' }] : [],
       getRepository: (entity: unknown) => {
         if (entity === OutboxEvent) {
           return {

@@ -1,0 +1,74 @@
+{
+  "id": "chg_01J0000000000000000000000",
+  "organizationId": "org_01J0000000000000000000000",
+  "appKey": "erp-purchase",
+  "draftId": "drf_01J0000000000000000000000",
+  "baseReleaseId": "rel_01J0000000000000000000000",
+  "type": "data",
+  "areas": ["data", "form", "agent", "knowledge"],
+  "status": "draft",
+  "title": "采购单增加税率字段，并让 PiAgent 会填",
+  "summary": "新增 taxRate 字段、表单控件、校验、工具参数、答疑口径；旧单默认 0。",
+  "diff": {
+    "entities": [
+      {
+        "op": "add",
+        "path": "/semantic/entities/PurchaseOrder/fields/taxRate",
+        "value": { "type": "decimal", "precision": 5, "scale": 2, "required": false }
+      }
+    ],
+    "forms": [
+      {
+        "op": "add",
+        "path": "/forms/purchase-order/fields/taxRate",
+        "value": { "label": "税率(%)", "required": false, "min": 0, "max": 100 }
+      }
+    ],
+    "tools": [
+      {
+        "op": "change",
+        "path": "/tools/erp_order_create/parameters/taxRate",
+        "value": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    ],
+    "knowledge": [
+      {
+        "op": "add",
+        "path": "/knowledge/purchase-order-tax",
+        "value": { "title": "采购单税率填写", "scope": "global" }
+      }
+    ]
+  },
+  "evidence": [
+    { "type": "feedback", "ids": ["fb_01J0000000000000000000000"], "count": 12 },
+    { "type": "metric", "name": "form_abandon_rate", "value": 0.34, "window": "14d" }
+  ],
+  "risk": {
+    "level": "medium",
+    "breaking": false,
+    "permissionChange": false,
+    "migration": true,
+    "agentBehaviorChange": true,
+    "affectedRoles": ["buyer", "finance"],
+    "notes": "旧单 taxRate 默认 0；报表需确认是否展示该字段"
+  },
+  "testPlan": {
+    "unit": ["tax-rate.validation.spec.ts"],
+    "integration": ["purchase-order.create.spec.ts"],
+    "e2e": ["create-order-with-tax"],
+    "agentEval": ["query-tax-rate", "create-order-tax"],
+    "preview": ["sample-order", "mobile"]
+  },
+  "rollbackPlan": {
+    "strategy": "deactivate-release",
+    "dataSafe": true,
+    "notes": "新增可空字段，旧版本忽略；无需补偿迁移"
+  },
+  "createdByAgent": "piagent-builder",
+  "createdBy": "usr_01J0000000000000000000000",
+  "approvedBy": null,
+  "approvedAt": null,
+  "publishedReleaseId": null,
+  "createdAt": "2026-10-30T00:00:00Z",
+  "updatedAt": "2026-10-30T00:00:00Z"
+}

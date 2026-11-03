@@ -2,18 +2,19 @@
 
 > 本文件是 AI 助手进入本项目时的**权威上下文**。术语、不变量与文档真源以
 > [`docs/META_LANGUAGE.md`](../docs/META_LANGUAGE.md)（项目元语）为准，本文件是它的入口摘要。
-> 最后更新：2026-09-24
+> 最后更新：2026-10-18
 
 ## Purpose
 
-构建一个 **AI 驱动的模块化 ERP 平台**（Speckit ERP），并逐步演进为
-**ERP Space Platform**：把 ERP 拆成"可交易的业务蓝图 + 不可拆出的执行内核 + 本地运行时"，
-让客户获得可迁移的业务定义，但拿不到核心实现。
+构建一个 **AI 驱动的多应用业务平台**（sapbase），把业务系统拆成
+"可交易的业务蓝图 + 租户内应用安装 + 不可拆出的执行内核 + 可部署运行时"。
+ERP、CRM、HRO、MES 与后续垂直系统共用一套协议和 Runtime，而不是各自复制一套平台。
+客户获得可迁移的业务定义，但拿不到核心实现。
 
 产品定义（一句话）：
 
-> 不是让客户购买一个 ERP，而是让客户购买、设计和组合一个 ERP Blueprint，
-> 再由统一的 ERP Runtime 把 Blueprint 编译成可运行的企业系统。
+> 不是让客户购买一个固定 ERP，而是让客户安装、设计和组合业务应用；
+> 每个应用由 signed Blueprint release 定义，并由统一的 Business App Runtime 执行。
 
 当前阶段：真实产品是"AI 模块定义 → 模块注册 → 前端运行时渲染"的闭环，
 平台化目标（蓝图编译器、许可市场）处于设计与协议冻结阶段。
@@ -48,8 +49,11 @@
   它是未来 `space-delta` 协议的前身
 - **模块化注册**：业务能力以模块登记（`backend/src/module-registry/`），
   AI 生成的模块定义见 `backend/src/ai-modules/`
-- **多租户隔离**：`TenantAwareEntity` + `DataIsolationInterceptor`（应用层；
-  数据库 RLS 尚未引入）
+- **多租户隔离**：`TenantAwareEntity` + 事务内 `app.organization_id/app.app_installation_id`
+  上下文 + PostgreSQL RLS；应用层 Predicate 继续保留用于可解释错误。生产应用角色必须是
+  非 owner、非 superuser、无 `BYPASSRLS`
+- **应用安装边界**：`Organization` 与 `Blueprint` 之间由 `BusinessAppInstallation` 绑定；
+  应用上下文由 `X-App-Id` 发起、平台重新校验，不能从请求体信任
 - **原子与模块分离**：原子是最小执行单元，模块是原子的组合；
   可交付的原子实现以 Wasm 模块形态存在（`wasm-modules/`）
 - **准入与执行共享同一份判定**：闸 1 静态校验与吊销判定只有一份实现
@@ -116,6 +120,8 @@ State / Event / Capability / Time / Version / Context 为渐进维度。
 5. **不假设客户无法逆向**：目标是"拿不到可移植的核心实现"，不是"绝对不可逆"
 6. 生产运行时必须确定性、可审计；LLM 只出现在设计时/编译时
 7. 文档真源见 [`docs/META_LANGUAGE.md`](../docs/META_LANGUAGE.md) 第 5.2 节，避免多处重复维护
+8. **RLS fail-closed**：生产环境设置 `RLS_ENFORCEMENT=required`；若应用数据库角色可绕过
+   RLS，启动必须失败，而不是仅记录警告
 
 ## External Dependencies
 

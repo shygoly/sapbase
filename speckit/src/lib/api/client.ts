@@ -15,6 +15,7 @@ try {
 }
 const TOKEN_KEY = 'access_token'
 const USER_KEY = 'user'
+const APP_ID_KEY = 'currentAppId'
 
 class ApiClient {
   private client: AxiosInstance
@@ -48,6 +49,10 @@ class ApiClient {
         const orgId = this.getOrganizationId()
         if (orgId) {
           config.headers['X-Organization-Id'] = orgId
+        }
+        const appId = this.getAppId()
+        if (appId) {
+          config.headers['X-App-Id'] = appId
         }
         return config
       },
@@ -117,11 +122,16 @@ class ApiClient {
       localStorage.removeItem(USER_KEY)
       localStorage.removeItem('currentOrganizationId')
       localStorage.removeItem('organizations')
+      localStorage.removeItem(APP_ID_KEY)
     }
   }
 
   public setOrganizationId(organizationId: string): void {
     if (typeof window !== 'undefined') {
+      const previous = localStorage.getItem('currentOrganizationId')
+      if (previous !== organizationId) {
+        localStorage.removeItem(APP_ID_KEY)
+      }
       localStorage.setItem('currentOrganizationId', organizationId)
     }
   }
@@ -129,6 +139,20 @@ class ApiClient {
   public getOrganizationId(): string | null {
     if (typeof window === 'undefined') return null
     return localStorage.getItem('currentOrganizationId')
+  }
+
+  public setAppId(appId: string): void {
+    if (typeof window === 'undefined') return
+    if (appId) {
+      localStorage.setItem(APP_ID_KEY, appId)
+    } else {
+      localStorage.removeItem(APP_ID_KEY)
+    }
+  }
+
+  public getAppId(): string | null {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem(APP_ID_KEY)
   }
 
   // Public methods

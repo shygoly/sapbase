@@ -46,6 +46,7 @@ export class ChatOrchestrator {
       organizationId: context.organizationId,
       actor: context.actor,
       grantedPermissions: context.grantedPermissions,
+      appContext: context.appContext,
     })
 
     const plan = buildInteractionPlan({

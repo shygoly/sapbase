@@ -41,6 +41,12 @@ export class User extends BaseEntity {
   @JoinColumn({ name: 'departmentId' })
   departmentEntity?: Department
 
+  /**
+   * Legacy display/auth fallback retained for databases created before the
+   * normalized role entity. New authorization reads `roleEntity`, but keeping
+   * the column explicit prevents `synchronize` from deleting it.
+   */
+  @Column({ type: 'varchar', length: 50, nullable: true })
   role?: string
   roleName?: string
   rolePermissions?: string[]

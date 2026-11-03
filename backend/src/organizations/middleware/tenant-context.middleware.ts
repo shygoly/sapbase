@@ -1,4 +1,9 @@
-import { Injectable, NestMiddleware, BadRequestException } from '@nestjs/common'
+import {
+  Injectable,
+  NestMiddleware,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common'
 import { Request, Response, NextFunction } from 'express'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
@@ -24,6 +29,7 @@ export class TenantContextMiddleware implements NestMiddleware {
     // 3. JWT token (if present) - middleware runs before guard so we decode here
     let organizationId: string | undefined
     let userIdFromToken: string | undefined
+    let tokenOrganizationId: string | undefined
 
     organizationId = req.headers['x-organization-id'] as string
     if (!organizationId) {
@@ -32,12 +38,13 @@ export class TenantContextMiddleware implements NestMiddleware {
     if (!organizationId && (req as any).user?.organizationId) {
       organizationId = (req as any).user.organizationId
     }
-    if (!organizationId && req.headers.authorization) {
+    if (req.headers.authorization) {
       try {
         const token = req.headers.authorization.replace('Bearer ', '')
         const payload = this.jwtService.decode(token) as { organizationId?: string; sub?: string } | null
-        organizationId = payload?.organizationId
+        tokenOrganizationId = payload?.organizationId
         userIdFromToken = payload?.sub
+        if (!organizationId) organizationId = tokenOrganizationId
       } catch (error) {
         // Ignore JWT decode errors, will be handled by auth guard
       }
@@ -55,6 +62,26 @@ export class TenantContextMiddleware implements NestMiddleware {
     if (isPublicPath || req.path === '/health' || req.originalUrl === '/api/health') {
       next()
       return
+    }
+
+    if (organizationId && userIdFromToken) {
+      if (
+        tokenOrganizationId &&
+        tokenOrganizationId !== organizationId
+      ) {
+        throw new ForbiddenException(
+          'X-Organization-Id 与当前令牌组织不一致；请先切换组织',
+        )
+      }
+
+      const membership = await this.memberRepository.findOne({
+        where: { organizationId, userId: userIdFromToken },
+        relations: ['organization'],
+      })
+      if (!membership) {
+        throw new ForbiddenException('当前用户不属于请求指定的组织')
+      }
+      ;(req as any).organization = membership.organization
     }
 
     // For protected paths, try to get organizationId
