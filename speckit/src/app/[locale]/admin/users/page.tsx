@@ -11,7 +11,8 @@ import { User } from '@/lib/api/types'
 import { useNotification } from '@/core/ui/ui-hooks'
 import { PermissionGuard } from '@/core/auth/permission-guard'
 import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Plus, Search } from 'lucide-react'
 import { UsersList } from './components/users-list'
 import { CreateUserDialog } from './components/create-user-dialog'
 import { TableSkeleton } from '@/components/loading-skeleton'
@@ -95,8 +96,9 @@ export default function UsersPage() {
     <PageRuntime model={UsersPageModel} isLoading={isLoading} pageHeaderAction={pageHeaderAction}>
       <div className="space-y-6">
         {/* Search */}
-        <div className="flex gap-4">
-          <input
+        <div className="relative">
+          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <Input
             type="text"
             placeholder="Search users..."
             value={search}
@@ -104,7 +106,7 @@ export default function UsersPage() {
               setSearch(e.target.value)
               setPage(1)
             }}
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="pl-9"
           />
         </div>
 

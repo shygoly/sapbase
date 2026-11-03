@@ -84,36 +84,36 @@ export default function SettingsPage() {
       <div className="space-y-6">
         {/* Settings Form */}
         <FormRuntime model={SettingsFormModel}>
-          <div className="rounded-lg border border-gray-200 bg-white p-6 space-y-6">
+          <div className="rounded-lg border border-border bg-card p-6 space-y-6">
             {/* Theme Setting */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-900">Theme</label>
+          <label className="block text-sm font-medium text-foreground">Theme</label>
           <select
             value={settings.theme || 'light'}
             onChange={(e) => handleSettingChange('theme', e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="light">Light</option>
             <option value="dark">Dark</option>
             <option value="auto">Auto</option>
           </select>
-          <p className="text-sm text-gray-500">Choose your preferred theme</p>
+          <p className="text-sm text-muted-foreground">Choose your preferred theme</p>
         </div>
 
         {/* Language Setting */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-900">Language</label>
+          <label className="block text-sm font-medium text-foreground">Language</label>
           <select
             value={settings.language || 'en'}
             onChange={(e) => handleSettingChange('language', e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="en">English</option>
             <option value="zh">中文</option>
             <option value="es">Español</option>
             <option value="fr">Français</option>
           </select>
-          <p className="text-sm text-gray-500">Select your preferred language</p>
+          <p className="text-sm text-muted-foreground">Select your preferred language</p>
         </div>
 
         {/* Notifications Setting */}
@@ -123,11 +123,11 @@ export default function SettingsPage() {
               type="checkbox"
               checked={settings.notifications !== false}
               onChange={(e) => handleSettingChange('notifications', e.target.checked)}
-              className="rounded border-gray-300"
+              className="rounded border-input"
             />
-            <span className="text-sm font-medium text-gray-900">Enable Notifications</span>
+            <span className="text-sm font-medium text-foreground">Enable Notifications</span>
           </label>
-          <p className="text-sm text-gray-500">Receive notifications for important events</p>
+          <p className="text-sm text-muted-foreground">Receive notifications for important events</p>
         </div>
 
         {/* Email Notifications Setting */}
@@ -137,31 +137,31 @@ export default function SettingsPage() {
               type="checkbox"
               checked={settings.emailNotifications !== false}
               onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
-              className="rounded border-gray-300"
+              className="rounded border-input"
             />
-            <span className="text-sm font-medium text-gray-900">Email Notifications</span>
+            <span className="text-sm font-medium text-foreground">Email Notifications</span>
           </label>
-          <p className="text-sm text-gray-500">Receive email notifications</p>
+          <p className="text-sm text-muted-foreground">Receive email notifications</p>
         </div>
 
         {/* Items Per Page Setting */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-900">Items Per Page</label>
+          <label className="block text-sm font-medium text-foreground">Items Per Page</label>
           <select
             value={settings.itemsPerPage || 10}
             onChange={(e) => handleSettingChange('itemsPerPage', parseInt(e.target.value))}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value={10}>10</option>
             <option value={20}>20</option>
             <option value={50}>50</option>
             <option value={100}>100</option>
           </select>
-          <p className="text-sm text-gray-500">Default number of items to display per page</p>
+          <p className="text-sm text-muted-foreground">Default number of items to display per page</p>
         </div>
 
         {/* Save Button */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
+        <div className="flex gap-3 pt-4 border-t border-border">
           <Button
             onClick={handleSaveSettings}
             disabled={isSaving}

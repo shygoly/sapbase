@@ -128,7 +128,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
               id="role"
               {...register('role')}
               disabled={isSubmitting}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select a role</option>
               <option value="Admin">Admin</option>
@@ -156,7 +156,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
               id="status"
               {...register('status')}
               disabled={isSubmitting}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>

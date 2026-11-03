@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, Param, Post, Res } from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import type { Response } from 'express'
 import { Auth } from '../common/decorators/auth.decorator'
@@ -20,6 +20,8 @@ export class AgentSessionsController {
 
   @Post('chat')
   @Auth()
+  /** SSE 流的 HTTP 状态应是 200，而不是 POST 默认的 201 */
+  @HttpCode(200)
   @ApiOperation({ summary: 'PiAgent 对话（SSE 事件流）' })
   async chat(
     @Body()

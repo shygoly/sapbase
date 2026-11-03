@@ -110,7 +110,7 @@ export class AgentSessionsService {
       if (envelope.knowledge.length > 0) {
         events.push({
           type: 'text.delta',
-          data: { text: `???${envelope.knowledge.map((item) => `[kn:${item.id}@${item.version}]`).join(' ')}` },
+          data: { text: `参考知识：${envelope.knowledge.map((item) => `[kn:${item.id}@${item.version}]`).join(' ')}\n` },
         })
       }
       if (result.kind === 'refusal') {

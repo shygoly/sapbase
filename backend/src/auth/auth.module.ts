@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { JwtModule } from '@nestjs/jwt'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { PassportModule } from '@nestjs/passport'
 import { UsersModule } from '../users/users.module'
 import { OrganizationsModule } from '../organizations/organizations.module'
@@ -16,9 +17,15 @@ import { AuthContextModule } from '../auth-context/auth-context.module'
     OrganizationsModule,
     RolesModule,
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key',
-      signOptions: { expiresIn: '7d' },
+    // register() 在模块导入阶段求值，早于 ConfigModule 读 .env，会落到兜底密钥；
+    // 与 JwtStrategy 的实际密钥不一致会导致登录后所有受保护接口 401。
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET') || 'your-secret-key',
+        signOptions: { expiresIn: '7d' },
+      }),
     }),
   ],
   controllers: [AuthController],

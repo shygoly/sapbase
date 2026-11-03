@@ -70,6 +70,17 @@ export class ReleasesBuilderController {
     })
   }
 
+  @Get('proposals')
+  @Auth()
+  @ApiOperation({ summary: '变更提议列表（可按应用与状态过滤）' })
+  listProposals(
+    @OrganizationId() organizationId: string,
+    @Query('appKey') appKey?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.releases.listProposals(organizationId, appKey, status)
+  }
+
   @Get('proposals/:id')
   @Auth()
   proposal(@Param('id') id: string, @OrganizationId() organizationId: string) {
@@ -163,7 +174,7 @@ export class ReleasesBuilderController {
     @OrganizationId() organizationId: string,
     @CurrentUser() user: UserLike,
   ) {
-    if (!idempotencyKey) throw new BadRequestException('?????? Idempotency-Key')
+    if (!idempotencyKey) throw new BadRequestException('缺少 Idempotency-Key 请求头')
     return this.idempotency
       .run(`${organizationId}:publish:${idempotencyKey}`, () =>
         this.releases.publish({
@@ -184,7 +195,7 @@ export class ReleasesBuilderController {
     @OrganizationId() organizationId: string,
     @CurrentUser() user: UserLike,
   ) {
-    if (!idempotencyKey) throw new BadRequestException('?????? Idempotency-Key')
+    if (!idempotencyKey) throw new BadRequestException('缺少 Idempotency-Key 请求头')
     return this.idempotency
       .run(`${organizationId}:activate:${id}:${idempotencyKey}`, () =>
         this.releases.activate({
@@ -208,7 +219,7 @@ export class ReleasesBuilderController {
     @OrganizationId() organizationId: string,
     @CurrentUser() user: UserLike,
   ) {
-    if (!idempotencyKey) throw new BadRequestException('?????? Idempotency-Key')
+    if (!idempotencyKey) throw new BadRequestException('缺少 Idempotency-Key 请求头')
     return this.idempotency
       .run(`${organizationId}:rollback:${id}:${idempotencyKey}`, () =>
         this.releases.rollback({

@@ -32,7 +32,7 @@ export class ChatOrchestrator {
         if (lastResult) return lastResult
         const degraded =
           process.env.AGENT_LLM_ENABLED === 'true'
-            ? '???????????????????????????'
+            ? '抱歉，我没理解这句话。可以换种说法，或直接说明要查的业务对象（如订单、供应商）。'
             : NO_SUCH_CAPABILITY
         return { kind: 'refusal', message: degraded }
       }

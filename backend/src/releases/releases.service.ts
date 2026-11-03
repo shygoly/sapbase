@@ -219,7 +219,7 @@ export class ReleasesService {
       if (!revalidation.ok) {
         proposal.risk = { ...proposal.risk, gates: revalidation.gates }
         await this.proposals.save(proposal)
-        throw new ConflictException('?????????????')
+        throw new ConflictException('修改 diff 后重新校验未通过，不能批准')
       }
     }
     proposal.status = 'approved'
@@ -261,7 +261,7 @@ export class ReleasesService {
 
   async getProposal(id: string, organizationId: string): Promise<AppChangeProposal> {
     const proposal = await this.proposals.findOne({ where: { id, organizationId } })
-    if (!proposal) throw new NotFoundException('?????')
+    if (!proposal) throw new NotFoundException('提议不存在')
     return proposal
   }
 
@@ -272,9 +272,9 @@ export class ReleasesService {
     role: 'owner' | 'tech_lead' | 'security' | 'platform_admin'
     reason: string
   }): Promise<AppChangeProposal> {
-    if (!input.reason?.trim()) throw new BadRequestException('???????')
+    if (!input.reason?.trim()) throw new BadRequestException('驳回时必须填写原因')
     const proposal = await this.proposals.findOne({ where: { id: input.id, organizationId: input.organizationId } })
-    if (!proposal) throw new NotFoundException('?????')
+    if (!proposal) throw new NotFoundException('提议不存在')
     proposal.status = 'rejected'
     await this.approvals.save(
       this.approvals.create({
@@ -303,16 +303,29 @@ export class ReleasesService {
     emergency?: boolean
   }): Promise<AppRelease> {
     assertEnabled()
-    assertPublishable({
-      version: input.version,
-      channel: input.channel,
-      manifest: input.manifest,
-      changelog: input.changelog,
-      compatibility: input.compatibility,
-      migrations: input.migrations,
-      authorId: input.authorId,
-      approverId: input.approverId,
-    })
+    /**
+     * 发布包的形状校验由 libs/release-kernel 负责，那里抛的是普通 Error，
+     * 直接往上抛会被全局过滤器包成 500「Internal Server Error」，
+     * 调用方看不出是入参问题。这里统一转成 400。
+     */
+    try {
+      assertPublishable({
+        version: input.version,
+        channel: input.channel,
+        manifest: input.manifest,
+        changelog: input.changelog,
+        compatibility: input.compatibility,
+        migrations: input.migrations,
+        authorId: input.authorId,
+        approverId: input.approverId,
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      const hint = message.includes('zh-CN')
+        ? '；changelog 形如 { "zh-CN": [{ "type": "changed", "title": "..." }] }'
+        : ''
+      throw new BadRequestException(`${message}${hint}`)
+    }
     const digest = computeReleaseDigest(input.manifest)
     const signature = process.env.RELEASE_SIGNING_PRIVATE_KEY_PEM ? `ed25519:${digest}` : 'unsigned:dev'
     const release = await this.releases.save(
@@ -400,7 +413,7 @@ export class ReleasesService {
           userId: input.activatedBy,
           type: 'info',
           title: `Release ${release.version} activated`,
-          body: `?? ${release.appKey} ???? ${release.version}`,
+          body: `应用 ${release.appKey} 已激活版本 ${release.version}`,
           read: false,
           sourceEventId: activation.id,
           metadata: { releaseId: release.id, appKey: release.appKey },
@@ -556,6 +569,17 @@ export class ReleasesService {
     const where: Record<string, unknown> = { organizationId }
     if (appKey) where.appKey = appKey
     return this.releases.find({ where, order: { createdAt: 'DESC' }, take: 100 })
+  }
+
+  /**
+   * 提议列表。管理端需要有入口看到「有哪些提议待审批」，
+   * 否则只能拿着 id 直接访问详情页。
+   */
+  async listProposals(organizationId: string, appKey?: string, status?: string): Promise<AppChangeProposal[]> {
+    const where: Record<string, unknown> = { organizationId }
+    if (appKey) where.appKey = appKey
+    if (status) where.status = status
+    return this.proposals.find({ where, order: { createdAt: 'DESC' }, take: 100 })
   }
 
   async releaseStatus(releaseId: string): Promise<AppRelease> {

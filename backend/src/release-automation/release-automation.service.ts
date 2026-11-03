@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { ReleasesService } from '../releases/releases.service'
@@ -55,6 +55,20 @@ export class ReleaseAutomationService {
     canaryStages?: number[]
     reviewedBy?: string | null
   }): Promise<ReleaseAutomationPolicy> {
+    /**
+     * 入参必须显式校验：控制器把 body 直接透传，「漏传 allowedChangeClasses」
+     * 以前会在下面的 .filter 处抛 TypeError → 500，用户只看到
+     * “Cannot read properties of undefined (reading 'filter')”，无法判断怎么改。
+     */
+    if (!Array.isArray(input.allowedChangeClasses) || input.allowedChangeClasses.length === 0) {
+      throw new BadRequestException('allowedChangeClasses 必填，且必须是非空字符串数组')
+    }
+    if (input.autonomy !== 'A1' && input.autonomy !== 'A2') {
+      throw new BadRequestException("autonomy 必须是 'A1' 或 'A2'")
+    }
+    if (typeof input.enabled !== 'boolean') {
+      throw new BadRequestException('enabled 必须是 boolean')
+    }
     if (input.autoRollbackEnabled && Object.keys(input.guardrails ?? {}).length === 0) {
       throw new ConflictException('未配置护栏阈值时不能开启自动回退')
     }

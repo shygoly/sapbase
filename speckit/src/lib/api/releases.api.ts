@@ -16,6 +16,10 @@ export interface ProposalView {
   appKey: string
   title: string
   status: string
+  type?: string
+  areas?: string[]
+  summary?: string
+  createdAt?: string
   risk?: Record<string, unknown>
   evidence?: unknown[]
   diff?: Record<string, unknown>
@@ -77,6 +81,13 @@ export const releasesApi = {
   },
   async createProposal(payload: Record<string, unknown>): Promise<ProposalView> {
     return unwrap<ProposalView>(await httpClient.post('/api/builder/proposals', payload))
+  },
+  async listProposals(appKey?: string, status?: string): Promise<ProposalView[]> {
+    const params = new URLSearchParams()
+    if (appKey) params.set('appKey', appKey)
+    if (status) params.set('status', status)
+    const suffix = params.toString() ? `?${params.toString()}` : ''
+    return unwrap<ProposalView[]>(await httpClient.get(`/api/builder/proposals${suffix}`)) ?? []
   },
   async getProposal(id: string): Promise<ProposalView> {
     return unwrap<ProposalView>(await httpClient.get(`/api/builder/proposals/${id}`))

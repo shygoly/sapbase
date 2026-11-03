@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { BlueprintService } from '../blueprint/blueprint.service'
 import { AgentEvalService } from '../agent-eval/agent-eval.service'
+import { resolveRepoRoot } from '../common/repo-root'
 
 export interface GateEvidence {
   status: 'passed' | 'failed' | 'pending' | 'not_applicable'
@@ -59,16 +61,16 @@ export class ReleaseValidationService {
       input.proposal.risk?.agentBehaviorChange === true ||
       ['agent', 'knowledge'].includes(input.proposal.type) ||
       input.proposal.areas.some((area) => ['agent', 'knowledge', 'tool', 'skill'].includes(area))
-    if (!agentChange) return this.na('? Release ??? Agent ??')
+    if (!agentChange) return this.na('本次变更未涉及 Agent 行为')
     if (!input.releaseId) {
-      return { status: 'failed', gate: 'G5', rule: 'agent-eval-required', path: 'agent_eval_runs', howToFix: 'run agent eval for this release', error: '?? Agent ????? releaseId????????' }
+      return { status: 'failed', gate: 'G5', rule: 'agent-eval-required', path: 'agent_eval_runs', howToFix: 'run agent eval for this release', error: '涉及 Agent 变更，但缺少 releaseId，无法关联评测记录' }
     }
     const runs = await this.evalService.listRuns(input.releaseId)
     if (input.modelId && !runs.some((run) => (run as { modelId?: string | null }).modelId === input.modelId)) {
-      return { status: 'failed', gate: 'G5', rule: 'model-change-eval-required', path: 'agent_eval_runs.modelId', howToFix: `run eval with modelId=${input.modelId}`, error: '??/????????? modelId ?????' }
+      return { status: 'failed', gate: 'G5', rule: 'model-change-eval-required', path: 'agent_eval_runs.modelId', howToFix: `run eval with modelId=${input.modelId}`, error: '模型变更必须提供针对该 modelId 的评测记录' }
     }
     if (runs.length === 0) {
-      return { status: 'failed', gate: 'G5', rule: 'agent-eval-required', path: 'agent_eval_runs', howToFix: 'run agent eval for this release', error: '? Release ??????' }
+      return { status: 'failed', gate: 'G5', rule: 'agent-eval-required', path: 'agent_eval_runs', howToFix: 'run agent eval for this release', error: '该 Release 还没有任何评测记录' }
     }
     return this.evalGate({
       suite: runs[0].suite,
@@ -78,8 +80,19 @@ export class ReleaseValidationService {
   }
 
   private runCheckers(): GateEvidence {
-    const root = process.env.REPO_ROOT ?? process.cwd()
-    const result = spawnSync(process.execPath, [resolve(root, 'scripts/meta/check-all.mjs')], {
+    const root = resolveRepoRoot()
+    const checker = resolve(root, 'scripts/meta/check-all.mjs')
+    if (!existsSync(checker)) {
+      return {
+        status: 'failed',
+        gate: 'G0',
+        rule: 'contract-check',
+        path: 'scripts/meta/check-all.mjs',
+        howToFix: '确认仓库根目录存在 scripts/meta/check-all.mjs（或设置 REPO_ROOT 环境变量）',
+        error: `未找到契约校验脚本：${checker}`,
+      }
+    }
+    const result = spawnSync(process.execPath, [checker], {
       cwd: root,
       encoding: 'utf8',
       timeout: 20_000,
@@ -128,8 +141,18 @@ export class ReleaseValidationService {
     if (process.env.RELEASE_G4_RUN_TESTS === 'false') {
       return { status: 'passed', evidence: `test plan: ${keys.join(',')} (G4 execution disabled by RELEASE_G4_RUN_TESTS=false)` }
     }
-    const root = process.env.REPO_ROOT ?? process.cwd()
+    const root = resolveRepoRoot()
     const jest = resolve(root, 'node_modules/jest/bin/jest.js')
+    if (!existsSync(jest)) {
+      return {
+        status: 'failed',
+        gate: 'G4',
+        rule: 'test-runner-missing',
+        path: 'node_modules/jest',
+        howToFix: '在仓库根执行 npm install 安装测试依赖',
+        error: `未找到 jest：${jest}`,
+      }
+    }
     const result = spawnSync(
       process.execPath,
       [jest, '--runInBand', '--testPathPattern=(release|proposal|agent|chat)'],

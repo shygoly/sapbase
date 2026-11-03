@@ -203,7 +203,7 @@ export class AgentToolRegistry {
 
   private assertBuilderEnabled(profile: AgentProfile): void {
     if (profile === 'piagent-builder' && process.env.BUILDER_ENABLED === 'false') {
-      throw new ForbiddenException('Builder ???????? ai_modules ????')
+      throw new ForbiddenException('Builder 智能体不允许直接操作 ai_modules 表')
     }
   }
 
