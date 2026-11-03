@@ -37,6 +37,8 @@
     "@eslint/js": "^9.39.2",
     "@nx/eslint": "^24.0.2",
     "@nx/eslint-plugin": "^24.0.2",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "globals": "^17.1.0",

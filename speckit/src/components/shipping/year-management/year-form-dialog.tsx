@@ -49,7 +49,7 @@ export function YearFormDialog({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm<z.input<typeof formSchema>, unknown, FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       year: new Date().getFullYear(),

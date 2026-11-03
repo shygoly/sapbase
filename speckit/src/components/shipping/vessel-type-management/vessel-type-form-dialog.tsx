@@ -56,7 +56,7 @@ export function VesselTypeFormDialog({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm<z.input<typeof formSchema>, unknown, FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       applicableStandard: 'DWT',

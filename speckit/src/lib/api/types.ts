@@ -78,6 +78,8 @@ export interface User extends BaseAuditEntity {
   email: string
   role: string
   roleId?: string
+  /** 后端在用户列表/登录响应里返回的角色名，供 UI 直接展示。 */
+  roleName?: string
   status: UserStatus
   departmentId?: string
   departmentName?: string | null

@@ -8,6 +8,12 @@ import type {
   CiiShipTypeParameterRecord,
 } from './types'
 
+/** 后端可能直接返回数组/对象，也可能包一层 { data }；两种形态都要兼容。 */
+function unwrapResponse<T>(payload: T): T {
+  const wrapped = (payload as { data?: T } | null)?.data
+  return (wrapped ?? payload) as T
+}
+
 export const constantsApi = {
   async getShips(): Promise<ShippingOption[]> {
     return fetchShippingResource('/api/shipping/constants/ships', shipOptions)
@@ -16,7 +22,7 @@ export const constantsApi = {
   async getYears(): Promise<ShippingOption[]> {
     try {
       const response = await httpClient.get<YearParameterRecord[]>('/api/shipping/constants/years')
-      const data = response.data?.data ?? response.data
+      const data = unwrapResponse(response.data)
       const list = Array.isArray(data) ? data : []
       return list.map((y) => ({ label: String(y.year), value: String(y.year) }))
     } catch {
@@ -31,7 +37,7 @@ export const constantsApi = {
   // Years CRUD
   async listYears(): Promise<YearParameterRecord[]> {
     const response = await httpClient.get<YearParameterRecord[]>('/api/shipping/constants/years')
-    const data = response.data?.data ?? response.data
+    const data = unwrapResponse(response.data)
     return Array.isArray(data) ? data : []
   },
 
@@ -40,7 +46,7 @@ export const constantsApi = {
       '/api/shipping/constants/years',
       payload,
     )
-    return response.data?.data ?? response.data
+    return unwrapResponse(response.data)
   },
 
   async updateYear(id: string, payload: Partial<YearParameterRecord>): Promise<YearParameterRecord> {
@@ -48,7 +54,7 @@ export const constantsApi = {
       `/api/shipping/constants/years/${id}`,
       payload,
     )
-    return response.data?.data ?? response.data
+    return unwrapResponse(response.data)
   },
 
   async deleteYear(id: string): Promise<void> {
@@ -60,7 +66,7 @@ export const constantsApi = {
     const response = await httpClient.get<FuelTypeRecord[]>(
       '/api/shipping/constants/fuels/system',
     )
-    const data = response.data?.data ?? response.data
+    const data = unwrapResponse(response.data)
     return Array.isArray(data) ? data : []
   },
 
@@ -69,7 +75,7 @@ export const constantsApi = {
       '/api/shipping/constants/fuels/system',
       { ...payload, defaultPrice: payload.defaultPrice ?? payload.price ?? 0 },
     )
-    return response.data?.data ?? response.data
+    return unwrapResponse(response.data)
   },
 
   async updateFuelType(
@@ -80,7 +86,7 @@ export const constantsApi = {
       `/api/shipping/constants/fuels/system/${id}`,
       { ...payload, defaultPrice: payload.defaultPrice ?? payload.price },
     )
-    return response.data?.data ?? response.data
+    return unwrapResponse(response.data)
   },
 
   async deleteFuelType(id: string): Promise<void> {
@@ -92,7 +98,7 @@ export const constantsApi = {
     const response = await httpClient.get<CiiShipTypeParameterRecord[]>(
       '/api/shipping/constants/cii-ship-types',
     )
-    const data = response.data?.data ?? response.data
+    const data = unwrapResponse(response.data)
     return Array.isArray(data) ? data : []
   },
 
@@ -103,7 +109,7 @@ export const constantsApi = {
       '/api/shipping/constants/cii-ship-types',
       payload,
     )
-    return response.data?.data ?? response.data
+    return unwrapResponse(response.data)
   },
 
   async updateCiiShipType(
@@ -114,7 +120,7 @@ export const constantsApi = {
       `/api/shipping/constants/cii-ship-types/${id}`,
       payload,
     )
-    return response.data?.data ?? response.data
+    return unwrapResponse(response.data)
   },
 
   async deleteCiiShipType(id: string): Promise<void> {

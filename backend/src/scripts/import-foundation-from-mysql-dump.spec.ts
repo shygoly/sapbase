@@ -103,7 +103,7 @@ INSERT INTO \`eu_port\` VALUES (1, 'NLRTM');
         code: 'Tenant Fuel',
         lcv: 0.041,
         wellToTankFactor: 15,
-        tankToWakeFactor: 79.24634146341463,
+        tankToWakeFactor: Number("79.24634146341463"),
         co2eqWtw: 92,
         co2Factor: 3.2,
         slipFactor: 0,

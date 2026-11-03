@@ -35,7 +35,7 @@ export function SystemSettingsShell({
   highlights,
 }: SystemSettingsShellProps) {
   const pathname = usePathname()
-  const localePrefix = getLocalePrefix(pathname)
+  const localePrefix = getLocalePrefix(pathname ?? '')
 
   return (
     <div className='space-y-6 p-1'>

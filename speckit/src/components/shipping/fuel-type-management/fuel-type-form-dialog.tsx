@@ -51,7 +51,7 @@ export function FuelTypeFormDialog({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm<z.input<typeof formSchema>, unknown, FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       scope: 'tenant',

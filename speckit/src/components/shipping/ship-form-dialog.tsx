@@ -48,9 +48,9 @@ export function ShipFormDialog({
 
     setForm({
       name: ship.name,
-      imo: ship.imo,
-      type: ship.type,
-      status: ship.status,
+      imo: ship.imo ?? '',
+      type: ship.type ?? '',
+      status: ship.status ?? '',
       ciiRating: ship.ciiRating || ship.rating,
       dwt: ship.dwt,
       speed: ship.speed,

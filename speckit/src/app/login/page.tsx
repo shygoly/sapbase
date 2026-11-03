@@ -265,7 +265,7 @@ function LoginForm() {
                       <div className="flex flex-col">
                         <span className="font-medium">{user.name}</span>
                         <span className="text-xs text-muted-foreground">
-                          {user.email} ({user.roleName ?? 'user'})
+                          {user.email} ({user.role ?? 'user'})
                         </span>
                       </div>
                     </SelectItem>

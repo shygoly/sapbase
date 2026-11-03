@@ -4,7 +4,6 @@ import * as path from 'path'
 // dotenv 可能不可用（依赖尚未干净安装的环境，见 docs/PACKAGE_MANAGER.md）：
 // 缺失时退回进程环境变量，而不是让整个数据源导入失败。
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   ;(require('dotenv') as { config: () => void }).config()
 } catch {
   // 由 shell 提供 DB_* 环境变量

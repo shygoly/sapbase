@@ -388,12 +388,7 @@ export class AIModulesService {
       const stepUserInput = i === 0 ? rawInput : ''
       const contextStr = i > 0 ? JSON.stringify(contextObj, null, 2) : ''
 
-      let stepResult: Record<string, any>
-      try {
-        stepResult = await this.generateDefinitionStep(stepId, stepUserInput, contextStr)
-      } catch (error) {
-        throw error
-      }
+      let stepResult: Record<string, any> = await this.generateDefinitionStep(stepId, stepUserInput, contextStr)
 
       if (stepId === 'state-flow') {
         const normalized = normalizeStep3ForSave(stepResult)
@@ -453,6 +448,7 @@ export class AIModulesService {
     if (!text || text.length === 0) return text
     const maxLength = 60_000
     let out = text
+      // eslint-disable-next-line no-control-regex -- 这里就是要剥掉控制字符
       .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n')

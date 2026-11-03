@@ -23,7 +23,7 @@ export function SearchFilterBar({
 }) {
   return (
     <div className='grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1.2fr_180px_1fr]'>
-      <Select value={value.shipId} onValueChange={(shipId) => onChange({ ...value, shipId })}>
+      <Select value={value.shipId} onValueChange={(shipId: string) => onChange({ ...value, shipId })}>
         <SelectTrigger className='h-11 border-slate-200 bg-slate-50'>
           <SelectValue placeholder='Select vessel' />
         </SelectTrigger>
@@ -33,7 +33,7 @@ export function SearchFilterBar({
           ))}
         </SelectContent>
       </Select>
-      <Select value={value.year} onValueChange={(year) => onChange({ ...value, year })}>
+      <Select value={value.year} onValueChange={(year: string) => onChange({ ...value, year })}>
         <SelectTrigger className='h-11 border-slate-200 bg-slate-50'>
           <SelectValue placeholder='Year' />
         </SelectTrigger>
