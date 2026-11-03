@@ -64,7 +64,7 @@ export class AuthController {
   @Post('profile')
   async getProfile(@Request() req: any) {
     try {
-      return await this.getProfileService.getProfile(req.user.id)
+      return await this.getProfileService.getProfile(req.user.id, req.user.organizationId)
     } catch (err) {
       if (err instanceof AuthenticationError) {
         throw new BadRequestException(err.message)

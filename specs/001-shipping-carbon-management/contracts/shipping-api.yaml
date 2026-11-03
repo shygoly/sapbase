@@ -1,0 +1,178 @@
+openapi: 3.0.3
+info:
+  title: Shipping Carbon Management API
+  version: 0.1.0
+paths:
+  /api/shipping/ships:
+    get:
+      summary: List ships in current organization
+    post:
+      summary: Create ship
+  /api/shipping/ships/{shipId}:
+    get:
+      summary: Get ship detail
+    put:
+      summary: Update ship
+    delete:
+      summary: Delete ship
+
+  /api/shipping/charters:
+    get:
+      summary: List charters in current organization
+    post:
+      summary: Create charter (must not overlap for same ship)
+  /api/shipping/charters/{charterId}:
+    get:
+      summary: Get charter detail
+    put:
+      summary: Update charter
+    delete:
+      summary: Delete charter
+
+  /api/shipping/voyages:
+    get:
+      summary: List voyages
+      parameters:
+        - in: query
+          name: shipId
+          schema: { type: string }
+        - in: query
+          name: year
+          schema: { type: integer }
+        - in: query
+          name: charterId
+          schema: { type: string }
+
+  /api/shipping/voyages/import:
+    post:
+      summary: Import voyage rows from xlsx
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+
+  /api/shipping/constants/years:
+    get:
+      summary: List yearly parameters
+    post:
+      summary: Create yearly parameters (admin)
+  /api/shipping/constants/fuels/system:
+    get:
+      summary: List system fuel definitions
+    post:
+      summary: Create system fuel definition (admin)
+  /api/shipping/constants/ports:
+    get:
+      summary: List ports
+    post:
+      summary: Create port (admin)
+  /api/shipping/constants/cii-ship-types:
+    get:
+      summary: List CII ship type parameters
+    post:
+      summary: Create CII ship type parameter (admin)
+  /api/shipping/constants/wind-reward-factors:
+    get:
+      summary: List wind reward factors
+    post:
+      summary: Create wind reward factor (admin)
+
+  /api/shipping/tenant-fuels:
+    get:
+      summary: List tenant fuel definitions
+    post:
+      summary: Create tenant fuel definition
+  /api/shipping/tenant-fuels/{fuelId}:
+    put:
+      summary: Update tenant fuel definition
+    delete:
+      summary: Delete tenant fuel definition
+
+  /api/shipping/penalty-history:
+    get:
+      summary: List manual non-compliance history
+    post:
+      summary: Upsert manual non-compliance history
+
+  /api/shipping/recalculate:
+    post:
+      summary: Trigger explicit recalculation for ship/year/framework
+
+  /api/shipping/reports/cii:
+    get:
+      summary: Get CII annual report
+  /api/shipping/reports/fueleu:
+    get:
+      summary: Get FuelEU annual report
+  /api/shipping/reports/eu-ets:
+    get:
+      summary: Get EU ETS annual report
+  /api/shipping/reports/fuel-cost:
+    get:
+      summary: Get Fuel Cost scenario report
+
+  /api/shipping/reports/export:
+    post:
+      summary: Export report file and archive to report center
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reportType]
+              properties:
+                reportType:
+                  type: string
+                  enum: [cii, fueleu, eu_ets, fuel_cost, home_overview, scenario_analysis]
+                vesselId:
+                  type: string
+                year:
+                  type: integer
+                fuelBasis:
+                  $ref: '#/components/schemas/FuelBasisType'
+                filters:
+                  type: object
+      responses:
+        '200':
+          description: File exported and archived
+
+  /api/shipping/report-center:
+    get:
+      summary: List archived exported reports in current organization
+      parameters:
+        - in: query
+          name: reportType
+          schema: { type: string }
+        - in: query
+          name: vesselId
+          schema: { type: string }
+        - in: query
+          name: year
+          schema: { type: integer }
+
+  /api/shipping/report-center/{recordId}/download:
+    get:
+      summary: Download archived report file by record id
+components:
+  schemas:
+    FuelBasisType:
+      type: string
+      enum: [system, tenant]
+    RecalculateRequest:
+      type: object
+      required: [shipId, year, framework]
+      properties:
+        shipId: { type: string }
+        year: { type: integer }
+        framework:
+          type: string
+          enum: [cii, fueleu, eu_ets, fuel_cost]
+        fuelBasis:
+          $ref: '#/components/schemas/FuelBasisType'

@@ -89,6 +89,7 @@ async function seedDatabase() {
       { name: 'Guest', description: 'Guest user', organizationId: defaultOrg.id },
     ])
     console.log(`Created ${roles.length} roles`)
+    const roleMap = new Map(roles.map((role) => [role.name, role]))
 
     // Seed Departments (10 departments)
     const departmentRepository = AppDataSource.getRepository(Department)
@@ -111,12 +112,13 @@ async function seedDatabase() {
     const users = []
     for (let i = 1; i <= 50; i++) {
       const hashedPassword = await bcrypt.hash('123456', 10)
+      const role = roles[i % roles.length]
       const user = userRepository.create({
         email: `user${i}@example.com`,
         passwordHash: hashedPassword,
         name: `User ${i}`,
-        role: roles[i % roles.length].name,
-        department: departments[i % departments.length].name,
+        roleId: role.id,
+        departmentId: departments[i % departments.length].id,
         status: i % 10 !== 0 ? UserStatus.ACTIVE : UserStatus.INACTIVE,
       })
       users.push(user)
@@ -232,10 +234,9 @@ async function seedDatabase() {
         email: 'admin@example.com',
         passwordHash: adminHashedPassword,
         name: 'Admin User',
-        role: adminRole.name,
-        department: departments[0].name,
+        roleId: adminRole.id,
+        departmentId: departments[0].id,
         status: UserStatus.ACTIVE,
-        permissions: adminRole.permissions, // Copy all permissions from Admin role
       })
       await userRepository.save(adminUser)
       const memberRepo = AppDataSource.getRepository(OrganizationMember)
@@ -248,9 +249,9 @@ async function seedDatabase() {
     }
 
     // Create additional test users with specific roles
-    const salesRole = roles.find(r => r.name === 'User')
-    const managerRole = roles.find(r => r.name === 'Manager')
-    const accountantRole = roles.find(r => r.name === 'Viewer')
+    const salesRole = roleMap.get('User')
+    const managerRole = roleMap.get('Manager')
+    const accountantRole = roleMap.get('Viewer')
 
     // Sales user with CRM permissions
     if (salesRole) {
@@ -258,14 +259,22 @@ async function seedDatabase() {
       const salesPermissions = permissions
         .filter(p => p.name.startsWith('customers:') || p.name.startsWith('orders:') || p.name === 'dashboard:read')
         .map(p => p.name)
+      const salesDemoRole = await roleRepository.save({
+        name: 'Sales Demo Role',
+        description: 'Auto-generated role for sales demo user',
+        permissions: salesPermissions,
+        organizationId: defaultOrg.id,
+        status: 'active',
+      })
+      roles.push(salesDemoRole)
+      roleMap.set(salesDemoRole.name, salesDemoRole)
       const salesUser = userRepository.create({
         email: 'sales@example.com',
         passwordHash: salesHashedPassword,
         name: 'Sales User',
-        role: salesRole.name,
-        department: departments.find(d => d.name === 'Sales')?.name || departments[1].name,
+        roleId: salesDemoRole.id,
+        departmentId: departments.find(d => d.name === 'Sales')?.id || departments[1].id,
         status: UserStatus.ACTIVE,
-        permissions: salesPermissions,
       })
       await userRepository.save(salesUser)
       console.log('Created sales user: sales@example.com')
@@ -284,14 +293,22 @@ async function seedDatabase() {
           p.name.startsWith('reports:')
         )
         .map(p => p.name)
+      const managerDemoRole = await roleRepository.save({
+        name: 'Manager Demo Role',
+        description: 'Auto-generated role for manager demo user',
+        permissions: managerPermissions,
+        organizationId: defaultOrg.id,
+        status: 'active',
+      })
+      roles.push(managerDemoRole)
+      roleMap.set(managerDemoRole.name, managerDemoRole)
       const managerUser = userRepository.create({
         email: 'manager@example.com',
         passwordHash: managerHashedPassword,
         name: 'Manager User',
-        role: managerRole.name,
-        department: departments.find(d => d.name === 'Sales')?.name || departments[1].name,
+        roleId: managerDemoRole.id,
+        departmentId: departments.find(d => d.name === 'Sales')?.id || departments[1].id,
         status: UserStatus.ACTIVE,
-        permissions: managerPermissions,
       })
       await userRepository.save(managerUser)
       console.log('Created manager user: manager@example.com')
@@ -308,14 +325,22 @@ async function seedDatabase() {
           p.name === 'dashboard:read'
         )
         .map(p => p.name)
+      const accountantDemoRole = await roleRepository.save({
+        name: 'Accountant Demo Role',
+        description: 'Auto-generated role for accountant demo user',
+        permissions: accountantPermissions,
+        organizationId: defaultOrg.id,
+        status: 'active',
+      })
+      roles.push(accountantDemoRole)
+      roleMap.set(accountantDemoRole.name, accountantDemoRole)
       const accountantUser = userRepository.create({
         email: 'accountant@example.com',
         passwordHash: accountantHashedPassword,
         name: 'Accountant User',
-        role: accountantRole.name,
-        department: departments.find(d => d.name === 'Finance')?.name || departments[4].name,
+        roleId: accountantDemoRole.id,
+        departmentId: departments.find(d => d.name === 'Finance')?.id || departments[4].id,
         status: UserStatus.ACTIVE,
-        permissions: accountantPermissions,
       })
       await userRepository.save(accountantUser)
       console.log('Created accountant user: accountant@example.com')

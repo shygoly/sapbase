@@ -19,12 +19,19 @@ export class UserRepository implements IUserRepository {
   }
 
   private mapToDomain(user: any): User {
+    const roleName = user.roleName || user.role || 'user'
+    // 直授权限（users.permissions 列）。角色权限**不**在这里注入 —— 由
+    // IEffectivePermissionsResolver 按「本次选中组织 + 同名 active 角色」解析；
+    // 否则未经 active/组织校验的 rolePermissions 会经 directPermissions 混进会话。
+    const permissions = user.permissions || []
+
     return {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
-      permissions: user.permissions || [],
+      role: roleName,
+      roleId: user.roleId,
+      permissions,
       passwordHash: user.passwordHash,
     }
   }

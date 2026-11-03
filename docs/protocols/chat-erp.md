@@ -51,6 +51,10 @@
 
 任一步不过即拒，**不部分执行**、不回退到"换个工具试试"。
 
+应用化后，可信上下文至少包含 `organizationId + appInstallationId + user`。写操作的
+一次性确认令牌也绑定 `appInstallationId`：ERP 对话签发的令牌不能拿去执行 CRM 的写操作。
+`X-App-Id` 只用于选择目标应用，其有效性仍由平台按身份、组织、应用状态重新解析。
+
 ---
 
 ## 3. Interaction Plan：结构化计划，不是 HTML

@@ -11,7 +11,8 @@ export interface CreateUserDto {
   email: string
   password: string
   role?: string
-  department?: string
+  roleId?: string
+  departmentId?: string
   status?: 'active' | 'inactive' | 'suspended'
 }
 
@@ -20,7 +21,8 @@ export interface UpdateUserDto {
   email?: string
   password?: string
   role?: string
-  department?: string
+  roleId?: string
+  departmentId?: string
   status?: 'active' | 'inactive' | 'suspended'
   permissions?: string[]
 }

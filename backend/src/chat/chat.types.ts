@@ -2,6 +2,7 @@
  * 编排层的接缝类型。LLM 适配器以后挂在 IntentParser 后面，
  * 不要改编排器；本轮只有确定性实现。
  */
+import type { BusinessAppExecutionContext } from '@speckit/shared-schemas'
 
 export const INTENT_PARSER = Symbol('INTENT_PARSER')
 
@@ -9,6 +10,7 @@ export interface ChatContext {
   organizationId?: string
   actor: string
   grantedPermissions: readonly string[]
+  appContext?: BusinessAppExecutionContext
 }
 
 export interface Intent {
@@ -47,5 +49,5 @@ export interface InteractionPlan {
 }
 
 export type ChatResult =
-  | { kind: 'plan'; plan: InteractionPlan; intent: string }
-  | { kind: 'refusal'; message: string; intent?: string }
+  | { kind: 'plan'; plan: InteractionPlan; intent: string; modelId?: string }
+  | { kind: 'refusal'; message: string; intent?: string; modelId?: string }

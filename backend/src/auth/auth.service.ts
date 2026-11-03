@@ -45,8 +45,11 @@ export class AuthService {
       selectedOrgId = organizations[0].id
     }
 
+    const roleName = user.roleName || user.role || 'user'
+    // 角色权限由 EffectivePermissionsService 按「本次选中组织 + 同名 active 角色」解析，
+    // 再与直授权限取并集。不要用 user.rolePermissions：那是未经 active/组织校验的预载值。
     const permissions = await this.effectivePermissions.resolve({
-      role: user.role,
+      role: roleName,
       directPermissions: user.permissions || [],
       organizationId: selectedOrgId,
     })
@@ -54,7 +57,7 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
+      role: roleName,
       permissions,
       organizationId: selectedOrgId,
     }
@@ -65,7 +68,9 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: roleName,
+        roleName,
+        roleId: user.roleId,
         permissions,
       },
       organizations,
@@ -82,8 +87,9 @@ export class AuthService {
     // Verify user has access to organization
     await this.organizationsService.findOne(organizationId, userId)
 
+    const roleName = user.roleName || user.role || 'user'
     const permissions = await this.effectivePermissions.resolve({
-      role: user.role,
+      role: roleName,
       directPermissions: user.permissions || [],
       organizationId,
     })
@@ -91,7 +97,7 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
+      role: roleName,
       permissions,
       organizationId,
     }

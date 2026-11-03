@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { JwtModule } from '@nestjs/jwt'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { UsersModule } from '../users/users.module'
 import { OrganizationsModule } from '../organizations/organizations.module'
 import { OrganizationContextModule } from '../organization-context/organization-context.module'
@@ -23,9 +24,18 @@ import { EffectivePermissionsResolver } from './infrastructure/external/effectiv
 
 @Module({
   imports: [
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key',
-      signOptions: { expiresIn: '7d' },
+    /**
+     * 登录/切换组织在这里签名，必须是同一个密钥来源。
+     * `JwtModule.register({ secret: process.env.JWT_SECRET })` 在模块导入阶段求值，
+     * 早于 ConfigModule 读 .env，会落到兜底密钥，导致 JwtStrategy 验签 401。
+     */
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET') || 'your-secret-key',
+        signOptions: { expiresIn: '7d' },
+      }),
     }),
     UsersModule,
     OrganizationsModule,

@@ -28,6 +28,36 @@ import { NotificationsModule } from './notifications/notifications.module'
 import { NotificationRecord } from './notifications/notification.entity'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { ChatModule } from './chat/chat.module'
+import { BusinessAppsModule } from './business-apps/business-apps.module'
+import { ReleasesModule } from './releases/releases.module'
+import { AgentSessionsModule } from './agent-sessions/agent-sessions.module'
+import { AgentKnowledgeModule } from './agent-knowledge/agent-knowledge.module'
+import { AgentEvalModule } from './agent-eval/agent-eval.module'
+import { AgentFeedbackModule } from './agent-feedback/agent-feedback.module'
+import { ReleaseAutomationModule } from './release-automation/release-automation.module'
+import { ReleaseAutomationPolicy } from './release-automation/entities/release-automation-policy.entity'
+import { ReleaseAutomationRun } from './release-automation/entities/release-automation-run.entity'
+import { AgentFeedback } from './agent-feedback/entities/agent-feedback.entity'
+import { AgentFeedbackTopic } from './agent-feedback/entities/agent-feedback-topic.entity'
+import { AgentKnowledgeEntry } from './agent-knowledge/entities/agent-knowledge-entry.entity'
+import { AgentSkillVersion } from './agent-knowledge/entities/agent-skill-version.entity'
+import { AgentEvalCase } from './agent-eval/entities/agent-eval-case.entity'
+import { AgentEvalRun } from './agent-eval/entities/agent-eval-run.entity'
+import { AgentConversation } from './agent-sessions/entities/agent-conversation.entity'
+import { AgentTurn } from './agent-sessions/entities/agent-turn.entity'
+import { AgentToolCall } from './agent-sessions/entities/agent-tool-call.entity'
+import {
+  AppChangeProposal,
+  AppDraft,
+  AppRelease,
+  AppReleaseActivation,
+  AppReleaseApproval,
+  AppReleaseEvent,
+  AppReleaseItem,
+  AppUserReleaseView,
+} from './releases/entities'
+import { BusinessAppInstallation } from './business-apps/business-app-installation.entity'
+import { BusinessAppInstallationRevision } from './business-apps/business-app-installation-revision.entity'
 import { AgentConfirmationToken } from './agent-tools/confirmation-token.entity'
 import { SemanticRuntimeModule } from './semantic-runtime/semantic-runtime.module'
 import { BlueprintApproval } from './semantic-runtime/blueprint-approval.entity'
@@ -40,6 +70,7 @@ import { Organization } from './organizations/organization.entity'
 import { OrganizationMember } from './organizations/organization-member.entity'
 import { Invitation } from './organizations/invitation.entity'
 import { OrganizationActivity } from './organizations/organization-activity.entity'
+import { BrandConfig } from './organizations/brand-config.entity'
 import { Department } from './departments/department.entity'
 import { Role } from './roles/role.entity'
 import { AuditLog } from './audit-logs/audit-log.entity'
@@ -63,6 +94,16 @@ import { WorkflowAutoSuggestionLog } from './workflow-archive/workflow-auto-sugg
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
 import { LoggerMiddleware } from './common/middleware/logger.middleware'
 import { EventBusModule } from './common/events/event-bus.module'
+import { DataSource, DataSourceOptions } from 'typeorm'
+import {
+  addTransactionalDataSource,
+  initializeTransactionalContext,
+  StorageDriver,
+} from 'typeorm-transactional'
+import { TenantTransactionModule } from './common/transaction/tenant-transaction.module'
+import { RlsPolicyModule } from './common/rls/rls-policy.module'
+
+initializeTransactionalContext({ storageDriver: StorageDriver.ASYNC_LOCAL_STORAGE })
 // WebSocketModule - conditionally imported to avoid dependency issues during doc generation
 let WebSocketModule: any
 try {
@@ -82,19 +123,21 @@ try {
     EventBusModule,
     ...(WebSocketModule ? [WebSocketModule] : []),
     CacheModule,
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      username: process.env.DB_USERNAME || 'mac',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'sapbasic',
-      entities: [
+    TypeOrmModule.forRootAsync({
+      useFactory: (): DataSourceOptions => ({
+        type: 'postgres',
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        username: process.env.DB_USERNAME || 'mac',
+        password: process.env.DB_PASSWORD || '',
+        database: process.env.DB_NAME || 'sapbasic',
+        entities: [
         User,
         Organization,
         OrganizationMember,
         Invitation,
         OrganizationActivity,
+        BrandConfig,
         Department,
         Role,
         AuditLog,
@@ -125,10 +168,41 @@ try {
         OutboxDelivery,
         NotificationRecord,
         AgentConfirmationToken,
-      ],
-      synchronize: true,
-      logging: process.env.NODE_ENV === 'development',
+        BusinessAppInstallation,
+        BusinessAppInstallationRevision,
+        AppDraft,
+        AppChangeProposal,
+        AppRelease,
+        AppReleaseItem,
+        AppReleaseActivation,
+        AppReleaseApproval,
+        AppReleaseEvent,
+        AppUserReleaseView,
+        AgentConversation,
+        AgentTurn,
+        AgentToolCall,
+        AgentKnowledgeEntry,
+        AgentSkillVersion,
+        AgentEvalCase,
+        AgentEvalRun,
+        AgentFeedback,
+        AgentFeedbackTopic,
+        ReleaseAutomationPolicy,
+        ReleaseAutomationRun,
+        ],
+        synchronize:
+          process.env.DB_SYNCHRONIZE === 'true' ||
+          (process.env.NODE_ENV !== 'production' &&
+            process.env.DB_SYNCHRONIZE !== 'false'),
+        logging: process.env.NODE_ENV === 'development',
+      }),
+      dataSourceFactory: async (options) => {
+        if (!options) throw new Error('TypeORM DataSource options missing')
+        return addTransactionalDataSource(new DataSource(options))
+      },
     }),
+    TenantTransactionModule,
+    RlsPolicyModule,
     UsersModule,
     AuthModule,
     DepartmentsModule,
@@ -152,6 +226,13 @@ try {
     NotificationsModule,
     AgentToolsModule,
     ChatModule,
+    BusinessAppsModule,
+    ReleasesModule,
+    AgentSessionsModule,
+    AgentKnowledgeModule,
+    AgentEvalModule,
+    AgentFeedbackModule,
+    ReleaseAutomationModule,
   ],
   controllers: [],
   providers: [],

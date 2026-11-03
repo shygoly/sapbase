@@ -1,30 +1,24 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common'
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  InternalServerErrorException,
+  NestInterceptor,
+} from '@nestjs/common'
 import { Observable } from 'rxjs'
-import { map } from 'rxjs/operators'
 
 /**
- * Interceptor to ensure all queries are filtered by organizationId
- * This is a safety net - services should already filter by organizationId
- * This interceptor can be used to add additional filtering or validation
+ * Retired compatibility shim.
+ *
+ * The old interceptor forwarded `organizationId` unchanged and did not filter
+ * anything. Keeping it wired would create a false sense of isolation. Tenant
+ * requests now run through TenantTransactionInterceptor + PostgreSQL RLS.
  */
 @Injectable()
 export class DataIsolationInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest()
-    const organizationId = request.organizationId
-
-    // Store organizationId in request for use in services
-    // Services should use this to filter queries
-    if (organizationId) {
-      request.organizationId = organizationId
-    }
-
-    return next.handle().pipe(
-      map((data) => {
-        // Additional validation can be added here
-        // For now, just pass through
-        return data
-      }),
+  intercept(_context: ExecutionContext, _next: CallHandler): Observable<unknown> {
+    throw new InternalServerErrorException(
+      'DataIsolationInterceptor 已退场；请使用 TenantTransactionInterceptor 与数据库 RLS',
     )
   }
 }

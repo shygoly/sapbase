@@ -1000,7 +1000,7 @@ export class SemanticRuntimeService {
    * 夜间建议的扫描面：已安装包里 `autoSuggest === true` 的非终态记录。
    * 坏包跳过，不让一个包挡住整批。
    */
-  async listAutoSuggestTargets(): Promise<AutoSuggestTarget[]> {
+  async listAutoSuggestTargets(organizationId?: string): Promise<AutoSuggestTarget[]> {
     const packages: Array<{
       packageId: string
       blueprintId: string
@@ -1022,7 +1022,10 @@ export class SemanticRuntimeService {
     }
     if (packages.length === 0) return []
     const rows = await this.records.find({
-      where: { blueprintId: In(packages.map((pkg) => pkg.blueprintId)) },
+      where: {
+        blueprintId: In(packages.map((pkg) => pkg.blueprintId)),
+        ...(organizationId ? { organizationId } : {}),
+      },
     })
     return selectAutoSuggestTargets(packages, rows)
   }

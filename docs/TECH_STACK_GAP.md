@@ -106,7 +106,7 @@ find . -maxdepth 5 -type d -name "axios" -not -path "*/axios/*"
 | 前端框架 | React + TypeScript + Vite | Next.js 15.3 App Router + React 18.3 + TS 5.7 + Tailwind 4 + Radix | ⚠️ React/TS 对齐，但运行模型是 SSR + 文件路由，而非 Vite SPA |
 | 移动端 | React Native / Flutter（可选） | 无（响应式 Web） | ❌（目标本身标注为可选） |
 | 报表 / 表格 | ECharts + AG Grid | recharts + TanStack Table + React Flow | 🟡 可替换，非阻塞 |
-| 认证授权 | OIDC / OAuth 2.1 + RBAC/ABAC + RLS | 自研 JWT（passport-jwt + bcrypt）+ RBAC（roles / permissions）+ 应用层隔离（`TenantAwareEntity` + `DataIsolationInterceptor`） | 🟡 无 OIDC、无 RLS；`@clerk/nextjs` 是模板残留且源码未使用 |
+| 认证授权 | OIDC / OAuth 2.1 + RBAC/ABAC + RLS | 自研 JWT（passport-jwt + bcrypt）+ RBAC（roles / permissions）+ 事务上下文 + PostgreSQL RLS | 🟡 无 OIDC；RLS 已落地，生产仍需非 owner 应用角色；`@clerk/nextjs` 是模板残留且源码未使用 |
 | API 网关 / 内部通信 | Higress / APISIX + gRPC + NATS / Kafka | 无网关；NestJS 单体 REST + Swagger；无 gRPC / Protobuf | ❌（单体阶段可接受） |
 | 连接器引擎 | WASM 沙箱连接器 | 无（页面/服务内直接 REST 调用） | ❌ |
 | 基础设施 | Kubernetes + Helm + ArgoCD；本地 Docker Compose / K3s | 无 Dockerfile、无 docker-compose、无 Terraform、无 K8s | ❌ |
@@ -136,7 +136,7 @@ find . -maxdepth 5 -type d -name "axios" -not -path "*/axios/*"
 
 | 能力 | 现状 | 需要补什么 |
 | --- | --- | --- |
-| 多租户 | `organizationId` + 拦截器做应用层隔离 | 数据库 RLS（目标栈推荐的 Pool + RLS 默认策略） |
+| 多租户 | `organizationId` + 事务上下文 + RLS 策略 | 生产非 owner 数据库角色 + `RLS_ENFORCEMENT=required` |
 | 事件 | 进程内 EventBus，README 已注明可扩展 Redis/RabbitMQ | Outbox、Saga、事件溯源、哈希链 |
 | LLM | 模型注册表 + 调用点 | 统一网关、模型路由、成本与限流、受约束解码 |
 | 版本 | `semver` 已在注册表解析与依赖闭包里使用 | 兼容性检查（跨版本迁移规则）仍缺 |

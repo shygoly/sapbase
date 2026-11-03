@@ -60,7 +60,7 @@ function MenuItemRow({
             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
               item.visible
                 ? 'bg-green-100 text-green-800'
-                : 'bg-gray-100 text-gray-800'
+                : 'bg-muted text-foreground'
             }`}
           >
             {item.visible ? 'Visible' : 'Hidden'}
@@ -115,14 +115,14 @@ export function MenuList({
 }: MenuListProps) {
   if (items.length === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
-        <p className="text-gray-600">No menu items found</p>
+      <div className="rounded-lg border border-border bg-card p-8 text-center">
+        <p className="text-muted-foreground">No menu items found</p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white">
+    <div className="rounded-lg border border-border bg-card">
       <Table>
         <TableHeader>
           <TableRow>

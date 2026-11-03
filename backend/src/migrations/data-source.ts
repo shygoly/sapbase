@@ -4,7 +4,6 @@ import * as path from 'path'
 // dotenv 可能不可用（依赖尚未干净安装的环境，见 docs/PACKAGE_MANAGER.md）：
 // 缺失时退回进程环境变量，而不是让整个数据源导入失败。
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   ;(require('dotenv') as { config: () => void }).config()
 } catch {
   // 由 shell 提供 DB_* 环境变量
@@ -24,6 +23,11 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1738000000000-CreateBrandConfigsTable.ts'),
     path.join(__dirname, '1739000000000-CreatePluginsTable.ts'),
     path.join(__dirname, '1790300000000-CreateAtomicRegistry.ts'),
+    path.join(__dirname, '1791600000000-CreateBusinessAppInstallations.ts'),
+    path.join(__dirname, '1791700000000-AddBusinessAppInstallationRevisions.ts'),
+    path.join(__dirname, '1791800000000-BindConfirmationTokensToApps.ts'),
+    path.join(__dirname, '1791900000000-EnableTenantRls.ts'),
+    path.join(__dirname, '1792000000000-PreserveLegacyUserRole.ts'),
   ],
   synchronize: false,
   logging: true,

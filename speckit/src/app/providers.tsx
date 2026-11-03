@@ -11,6 +11,7 @@ import { I18nProvider } from '@/components/i18n/i18n-provider';
 import { BrandConfigProvider } from '@/contexts/brand-config-context';
 import { BrandThemeApplier } from '@/components/brand/brand-theme-applier';
 import { PluginRuntimeProvider } from '@/core/plugins/plugin-runtime';
+import { NotificationContainer } from '@/components/notification-container';
 import type { Locale } from '@/i18n/config';
 
 export function AppProviders({
@@ -36,6 +37,7 @@ export function AppProviders({
             <PluginRuntimeProvider>
               <NuqsAdapter>
                 <RootProviders>
+                  <NotificationContainer />
                   <NextTopLoader
                     color='hsl(var(--primary))'
                     showSpinner={false}

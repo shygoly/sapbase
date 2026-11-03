@@ -13,6 +13,10 @@ export class CreateDepartmentDto {
   managerId?: string
 
   @IsOptional()
+  @IsString()
+  parentId?: string
+
+  @IsOptional()
   @IsEnum(['active', 'inactive'])
   status?: 'active' | 'inactive'
 }

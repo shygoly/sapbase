@@ -15,6 +15,7 @@ export const AGENT_CONFIRMATION_TOKENS_DDL: string[] = [
     "createdAt" timestamp without time zone DEFAULT now() NOT NULL,
     "updatedAt" timestamp without time zone DEFAULT now() NOT NULL,
     "organizationId" uuid NOT NULL,
+    "appInstallationId" uuid,
     tool character varying NOT NULL,
     "argsDigest" character varying(64) NOT NULL,
     actor character varying NOT NULL,
@@ -22,6 +23,19 @@ export const AGENT_CONFIRMATION_TOKENS_DDL: string[] = [
     "consumedAt" timestamp with time zone,
     CONSTRAINT "PK_18058f62de5de5627e22ebe699d" PRIMARY KEY (id)
   )`,
+  `ALTER TABLE public.agent_confirmation_tokens
+    ADD COLUMN IF NOT EXISTS "appInstallationId" uuid`,
+  `DO $$ BEGIN
+    IF to_regclass('public.app_installations') IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM pg_constraint WHERE conname = 'FK_agent_confirmation_tokens_app_installation'
+    ) THEN
+      ALTER TABLE ONLY public.agent_confirmation_tokens
+        ADD CONSTRAINT "FK_agent_confirmation_tokens_app_installation"
+        FOREIGN KEY ("appInstallationId") REFERENCES public.app_installations(id) ON DELETE CASCADE;
+    END IF;
+  END $$`,
+  `CREATE INDEX IF NOT EXISTS "idx_agent_confirmation_tokens_app_installation"
+    ON public.agent_confirmation_tokens USING btree ("appInstallationId")`,
   `DO $$ BEGIN
     IF NOT EXISTS (
       SELECT 1 FROM pg_constraint WHERE conname = 'FK_14bd7faa76804af32abe4aed6f0'

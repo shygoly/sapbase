@@ -1,0 +1,13 @@
+{
+  "name": "shared-schemas",
+  "root": "shared-schemas",
+  "sourceRoot": "shared-schemas/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:shared", "layer:shared", "runtime:isomorphic"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run build", "cwd": "shared-schemas" }
+    }
+  }
+}

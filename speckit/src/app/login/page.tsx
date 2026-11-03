@@ -14,8 +14,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, LogIn, Building2 } from 'lucide-react'
-import { authApi } from '@/lib/api/auth.api'
+import { authApi, type LoginResponseWithOrgs } from '@/lib/api/auth.api'
 import { Organization } from '@/lib/api/organizations.api'
+import { usePermissionStore } from '@/core/store/permission.store'
 
 interface TestUser {
   email: string
@@ -59,7 +60,8 @@ function LoginForm() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [selectedOrgId, setSelectedOrgId] = useState<string>('')
   const [showOrgSelector, setShowOrgSelector] = useState(false)
-  const { login } = useAuthStore()
+  const { setUser } = useAuthStore()
+  const setPermissions = usePermissionStore((state) => state.setPermissions)
   const { setCurrentOrganization, setOrganizations: setOrgStore } = useOrganizationStore()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -74,6 +76,25 @@ function LoginForm() {
     }
   }, [selectedUser])
 
+  const applyLoginResponse = (response: LoginResponseWithOrgs) => {
+    if (response.user) {
+      setPermissions(response.user.permissions || [])
+      setUser(response.user)
+    }
+
+    if (response.organizations) {
+      setOrgStore(response.organizations)
+      if (response.currentOrganizationId) {
+        const currentOrg = response.organizations.find(org => org.id === response.currentOrganizationId)
+        if (currentOrg) {
+          setCurrentOrganization(currentOrg)
+        }
+      } else if (response.organizations.length === 1) {
+        setCurrentOrganization(response.organizations[0])
+      }
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -84,41 +105,42 @@ function LoginForm() {
 
     setIsLoading(true)
     try {
-      // Login without organization first to get organizations list
       const response = await authApi.login({ email, password, organizationId: selectedOrgId || undefined })
-      
+
+      // Check if user has no organizations
+      if (!response.organizations || response.organizations.length === 0) {
+        notification.error('Your account is not associated with any organization. Please contact your administrator.')
+        setIsLoading(false)
+        return
+      }
+
       // If user has multiple organizations and none selected, show selector
-      if (response.organizations && response.organizations.length > 1 && !selectedOrgId) {
+      if (response.organizations.length > 1 && !selectedOrgId) {
         setOrganizations(response.organizations)
         setShowOrgSelector(true)
         setIsLoading(false)
         return
       }
 
-      // Store organizations and current organization
-      if (response.organizations) {
-        setOrgStore(response.organizations)
-        if (response.currentOrganizationId) {
-          const currentOrg = response.organizations.find(org => org.id === response.currentOrganizationId)
-          if (currentOrg) {
-            setCurrentOrganization(currentOrg)
-          }
-        } else if (response.organizations.length === 1) {
-          setCurrentOrganization(response.organizations[0])
-        }
-      }
-
-      // Call login store method to update auth state (organizations already set above)
-      await login(email, password, selectedOrgId || undefined)
-      
+      applyLoginResponse(response)
       notification.success('Login successful')
-      
+
       // Redirect to returnUrl or default page
       const returnUrl = searchParams?.get('returnUrl') || '/admin/users'
       router.push(returnUrl)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Login failed'
-      notification.error(message)
+    } catch (error: any) {
+      let errorMessage = 'Login failed'
+      if (error?.response?.data?.message) {
+        const backendMessage = error.response.data.message
+        if (Array.isArray(backendMessage)) {
+          errorMessage = backendMessage.join(', ')
+        } else {
+          errorMessage = backendMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      notification.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -132,31 +154,27 @@ function LoginForm() {
 
     setIsLoading(true)
     try {
-      // Login with selected organization
       const response = await authApi.login({ email, password, organizationId: selectedOrgId })
-      
-      // Store organizations and current organization
-      if (response.organizations) {
-        setOrgStore(response.organizations)
-        if (response.currentOrganizationId) {
-          const currentOrg = response.organizations.find(org => org.id === response.currentOrganizationId)
-          if (currentOrg) {
-            setCurrentOrganization(currentOrg)
-          }
-        }
-      }
+      applyLoginResponse(response)
 
-      // Call login store method to update auth state (organizations already set above)
-      await login(email, password, selectedOrgId)
-      
       notification.success('Login successful')
-      
+
       // Redirect to returnUrl or default page
       const returnUrl = searchParams?.get('returnUrl') || '/admin/users'
       router.push(returnUrl)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Login failed'
-      notification.error(message)
+    } catch (error: any) {
+      let errorMessage = 'Login failed'
+      if (error?.response?.data?.message) {
+        const backendMessage = error.response.data.message
+        if (Array.isArray(backendMessage)) {
+          errorMessage = backendMessage.join(', ')
+        } else {
+          errorMessage = backendMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      notification.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -246,7 +264,9 @@ function LoginForm() {
                     <SelectItem key={user.email} value={user.email}>
                       <div className="flex flex-col">
                         <span className="font-medium">{user.name}</span>
-                        <span className="text-xs text-muted-foreground">{user.email} ({user.role})</span>
+                        <span className="text-xs text-muted-foreground">
+                          {user.email} ({user.role ?? 'user'})
+                        </span>
                       </div>
                     </SelectItem>
                   ))}
@@ -276,7 +296,6 @@ function LoginForm() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}

@@ -97,7 +97,9 @@ describe('PluginLifecycleService (Integration)', () => {
     // Cleanup
     try {
       await fs.rm(testPluginsDir, { recursive: true, force: true })
-    } catch {}
+    } catch {
+      // 清理失败不影响断言
+    }
   })
 
   beforeEach(async () => {

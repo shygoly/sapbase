@@ -2,6 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
 import { UsersService } from './users.service'
 import { User } from './user.entity'
+import { Role } from '../roles/role.entity'
+import { Department } from '../departments/department.entity'
+import { OrganizationMember } from '../organizations/organization-member.entity'
 
 describe('UsersService credential boundary', () => {
   let service: UsersService
@@ -53,6 +56,20 @@ describe('UsersService credential boundary', () => {
             findOne,
             createQueryBuilder,
           },
+        },
+        {
+          provide: getRepositoryToken(Role),
+          useValue: {
+            findOne: jest.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          provide: getRepositoryToken(Department),
+          useValue: {},
+        },
+        {
+          provide: getRepositoryToken(OrganizationMember),
+          useValue: {},
         },
       ],
     }).compile()

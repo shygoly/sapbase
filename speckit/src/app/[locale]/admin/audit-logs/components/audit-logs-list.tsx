@@ -47,9 +47,9 @@ export function AuditLogsList({
       case 'DELETE':
         return 'bg-red-100 text-red-800'
       case 'READ':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
     }
   }
 
@@ -60,9 +60,9 @@ export function AuditLogsList({
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white">
+    <div className="space-y-4 rounded-lg border border-border bg-card">
       {/* Export Buttons */}
-      <div className="flex gap-2 border-b border-gray-200 px-6 py-4">
+      <div className="flex gap-2 border-b border-border px-6 py-4">
         <Button
           variant="outline"
           size="sm"
@@ -97,7 +97,7 @@ export function AuditLogsList({
           <TableBody>
             {logs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No audit logs found
                 </TableCell>
               </TableRow>
@@ -117,7 +117,7 @@ export function AuditLogsList({
                       {log.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">
+                  <TableCell className="text-sm text-muted-foreground">
                     {format(new Date(log.timestamp || log.createdAt), 'MMM dd, yyyy HH:mm:ss')}
                   </TableCell>
                 </TableRow>
@@ -128,8 +128,8 @@ export function AuditLogsList({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4">
-        <div className="text-sm text-gray-600">
+      <div className="flex items-center justify-between border-t border-border px-6 py-4">
+        <div className="text-sm text-muted-foreground">
           Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
         </div>
         <div className="flex gap-2">

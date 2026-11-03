@@ -1,0 +1,30 @@
+{
+  "docs": {
+    "domain": "DOMAIN.md",
+    "flows": "FLOWS.md",
+    "decisions": "DECISIONS.md",
+    "agentTools": "AGENT-TOOLS.md"
+  },
+  "code": {
+    "roots": ["apps", "libs", "backend/src", "speckit/src"],
+    "extensions": [".ts", ".tsx", ".js", ".mjs"],
+    "ignoreDirs": ["node_modules", ".next", "dist", "coverage", ".nx", ".git"]
+  },
+  "schema": {
+    "kind": "manifest",
+    "path": "contracts/schema-manifest.json",
+    "tablePrefixes": [],
+    "strictDbConstraints": false
+  },
+  "cron": {
+    "registry": "apps/api/src/monitor/scheduled-job.registry.ts",
+    "decoratorPatterns": ["@Cron\\([^)]*name:\\s*['\"]([^'\"]+)['\"]"]
+  },
+  "agentTools": {
+    "contract": "contracts/tools.json",
+    "handlerRoots": ["libs/agent-tools/src", "backend/src/agent-tools"],
+    "handlerPattern": "(?:toolName\\s*:\\s*|case\\s+)['\"]([^'\"]+)['\"]",
+    "strictHandlers": false
+  },
+  "sqlDirs": ["sql", "tools/postgres/init", "backend/src/migrations"]
+}

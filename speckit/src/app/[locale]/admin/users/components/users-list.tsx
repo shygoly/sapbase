@@ -5,7 +5,7 @@
 'use client'
 
 import React from 'react'
-import { User } from '@/lib/api/types'
+import { User, Department } from '@/lib/api/types'
 import { usePermission } from '@/core/auth/permission-hooks'
 import {
   Table,
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, Edit2 } from 'lucide-react'
+import { Trash2, Edit2, KeyRound } from 'lucide-react'
 
 interface UsersListProps {
   users: User[]
@@ -27,6 +27,9 @@ interface UsersListProps {
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
   onDelete: (id: string) => void
+  onEdit: (user: User) => void
+  onChangePassword: (user: User) => void
+  departments: Department[]
 }
 
 export function UsersList({
@@ -37,6 +40,9 @@ export function UsersList({
   onPageChange,
   onPageSizeChange,
   onDelete,
+  onEdit,
+  onChangePassword,
+  departments,
 }: UsersListProps) {
   void onPageSizeChange // reserved for future use
   const canDelete = usePermission('users:delete')
@@ -49,16 +55,24 @@ export function UsersList({
       case 'active':
         return 'bg-green-100 text-green-800'
       case 'inactive':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
       case 'suspended':
         return 'bg-red-100 text-red-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
     }
   }
 
+  const departmentMap = React.useMemo(() => {
+    const map = new Map<string, string>()
+    departments.forEach((dept) => {
+      map.set(dept.id, dept.name)
+    })
+    return map
+  }, [departments])
+
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white">
+    <div className="space-y-4 rounded-lg border border-border bg-card">
       {/* Table */}
       <div className="overflow-x-auto">
         <Table>
@@ -75,7 +89,7 @@ export function UsersList({
           <TableBody>
             {(users ?? []).length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No users found
                 </TableCell>
               </TableRow>
@@ -85,9 +99,11 @@ export function UsersList({
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{user.role}</Badge>
+                    <Badge variant="outline">{user.roleName || '-'}</Badge>
                   </TableCell>
-                  <TableCell>{user.department || '-'}</TableCell>
+                  <TableCell>
+                    {user.departmentId ? departmentMap.get(user.departmentId) || user.departmentName || '-' : '-'}
+                  </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(user.status)}>
                       {user.status}
@@ -96,8 +112,13 @@ export function UsersList({
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {canUpdate && (
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(user)}>
                           <Edit2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canUpdate && (
+                        <Button variant="ghost" size="sm" onClick={() => onChangePassword(user)}>
+                          <KeyRound className="h-4 w-4" />
                         </Button>
                       )}
                       {canDelete && (
@@ -120,8 +141,8 @@ export function UsersList({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4">
-        <div className="text-sm text-gray-600">
+      <div className="flex items-center justify-between border-t border-border px-6 py-4">
+        <div className="text-sm text-muted-foreground">
           Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
         </div>
         <div className="flex gap-2">

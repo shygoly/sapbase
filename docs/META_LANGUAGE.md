@@ -1,7 +1,7 @@
 # 项目元语（Meta Language）
 
-> 版本：1.13
-> 日期：2026-09-27
+> 版本：1.14
+> 日期：2026-10-18
 > 定位：本文件是 sapbase 的**基础定义层** —— 元模型、协议原语、执行原语、工程约定与术语真源。
 > 与设计文档的分工：设计文档回答"**要做什么**"，本文件回答"**用什么词、按什么不变量做、真源在哪**"。
 > 任何新增设计、代码或文档，都应先在本文件的词汇与不变量里找到落点；找不到，说明元语需要扩展（走变更记录）。
@@ -38,7 +38,7 @@ $$
 | $\Gamma$ | Capability 能力 | 渐进 | `backend/src/module-registry/module-capability.entity.ts`、原子契约（提案中） |
 | $\Tau$ | Time 生效时间与生命周期 | 渐进 | 各实体的 `createdAt/updatedAt`；生命周期语义待补 |
 | $V$ | Version 版本与迁移 | 渐进 | `ObjectSchema.version`、`backend/src/migrations/` |
-| $C$ | Context 租户/组织/权限上下文 | 渐进 | `TenantAwareEntity` + `DataIsolationInterceptor` |
+| $C$ | Context 租户/组织/应用实例/权限上下文 | 渐进 | `TenantAwareEntity` + `BusinessAppExecutionContext`；应用安装见 `app_installations` |
 
 判据：**元模型是类型系统，不是提示词。** 任何"约定"必须能落到上表的某个维度或第 2、3 节的原语上，否则它不是元语，只是偏好。
 
@@ -201,6 +201,29 @@ L3 验证层     Schema 验证、引用完整性、权限验证、可执行性�
 
 真源：[`protocols/chat-erp.md`](./protocols/chat-erp.md)。
 
+### 3.10 Business App Installation（业务应用安装）
+
+`BusinessAppInstallation` 是**租户内的应用运行边界**，不是新的业务定义格式，也不是 Ω 的新维度：
+
+```text
+Organization（客户）
+  └─ AppInstallation（ERP / CRM / HRO / MES 的一个运行实例）
+       ├─ signed Blueprint release + releaseDigest
+       ├─ deployment profile（shared-saas / dedicated-saas / standalone）
+       ├─ tenant config / lifecycle / license binding
+       └─ App tool + menu + Agent context
+```
+
+- 可分发、可签名、可授权的业务定义仍是 **Blueprint**；AppInstallation 只绑定某个具体发布。
+- 同一组织内 `appKey` 与 `slug` 各自唯一；换发布会走升级/回滚，不在安装接口里静默覆盖。
+- 安装、升级、回滚都追加 `app_installation_revisions`，不重写历史；回滚必须重新装载目标发布并核对 release digest。
+- 应用私有数据不得被同组织另一个应用直接读取；跨应用读取只能经过显式发布的数据能力。
+- 客户端可以指明目标应用，但组织、用户、权限和应用状态必须由平台按可信身份重新解析。
+- HTTP 租户请求在事务内写入 `app.organization_id/app.app_installation_id/app.user_id`；
+  PostgreSQL RLS 是最后拒绝边界，且生产应用角色不得拥有绕过 RLS 的数据库权限。
+
+真源：[`schemas/business-app-installation.schema.json`](../schemas/business-app-installation.schema.json)。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -326,6 +349,8 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 模块注册表 | Module Registry | `backend/src/module-registry/` | ✅ |
 | 经验策略 | Experience Policy | `experience.json`；`schemas/blueprint-experience.schema.json` | ✅ |
 | 交互面 | Interaction Surface | `interaction-plan/v1`；`schemas/interaction-plan.schema.json` | 🟡 |
+| 业务应用安装 | Business App Installation | `BusinessAppInstallation`；`app_installations` | 🟡 |
+| 应用执行上下文 | Business App Execution Context | `BusinessAppExecutionContext` | 🟡 |
 | 蓝图授权声明 | Blueprint License | `license.json`；`manifest.signature`；`backend/src/blueprint/license.ts` | ✅ |
 | 主从结构 | Header-Line | `children` / `parent`；头行一件事务 | ✅ |
 | 唯一性 | Uniqueness | `unique: true` → DB 唯一索引（按租户/蓝图隔离） | ✅ |
@@ -351,6 +376,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.14 | 2026-10-18 | 新增 §3.10「Business App Installation」：在 Organization 与 Blueprint 之间建立租户内应用运行边界；$C$ 补应用实例；术语表补业务应用安装与应用执行上下文；租户请求改用事务上下文 + PostgreSQL RLS |
 | 1.13 | 2026-09-27 | 新增 §3.9「Interaction Surface（临时交互面）」：一次意图的可视化投影，确认或取消后即消失。真源见 `protocols/chat-erp.md` |
 | 1.12 | 2026-09-27 | §5.2「建议迁移」真源补夜间生产者。见 `protocols/record-transition.md` §2.1 |
 | 1.11 | 2026-09-26 | §5.2 补最小可观测真源。见 `protocols/observability.md`（明确不做 OTel/Prometheus） |
@@ -365,3 +391,19 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 1.2 | 2026-09-24 | 补入口分层：新增 `speckit/AGENTS.md`、`backend/AGENTS.md` 两个作用域入口；`openspec/AGENTS.md` 的 Context Checklist 与 Stage 1 步骤纳入本文件；§5.2 补 Clerk 文档行并标注为待清理残留 |
 | 1.1 | 2026-09-24 | 按反馈修正：移除上一版加入的 space 相关表述（本文件只做结构化系统描述，不引入新概念词）；§5.2 文档真源表改为**索引项目已有的结构化文档**（speckit/docs、backend/docs、openspec），明确"新增内容先放入既有文件，不另建新文件" |
 | 1.0 | 2026-09-24 | 首次建立：从本次会话（设计 v3、技术栈差距、Wasm 原子模块、变更提案、包管理器收敛）提炼元模型、协议与执行原语、不变量、术语表与文档真源 |
+
+## 9. 参考包并入：发布 / PiAgent / 进化闭环
+
+以下内容由 `docs/reference` 参考包并入，权威落点如下：
+
+| 主题 | 真源 | 关键不变量 |
+|---|---|---|
+| 工程架构（Nx/Next/Nest/PG/Redis） | `docs/ARCHITECTURE.md` | `INV-META-*` |
+| Release / Activation / Rollback | `docs/protocols/release.md` + `DOMAIN.md` | `INV-REL-01..10` |
+| PiAgent 双 profile / Context Envelope / 工具面 | `docs/protocols/piagent.md` | `INV-AGENT-01..12` |
+| Agent 自主进化 / A0–A3 / A2 | `docs/protocols/agent-evolution.md` | `INV-EVO-01..10` |
+| 四份机器可校验契约 | `DOMAIN.md` / `FLOWS.md` / `DECISIONS.md` / `AGENT-TOOLS.md` | `INV-META-01..05`, `INV-DATA-01..07`, `INV-FLOW-01..04` |
+
+**发布三动词**：`deploy`（部署进程）≠ `publish`（生成不可变 Release）≠ `activate`（对租户/cohort 生效）。
+**Agent 三不拥有**：不拥有事实（事实在工具结果）、不拥有规则（规则在 `Φ`/`Σ`）、不拥有发布权（发布在 `V`）。
+**A2 边界**：Agent 仍只提议；发布由平台 `release-automation` 策略服务执行，`actorAgent` 为空。

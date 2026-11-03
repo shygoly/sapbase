@@ -1,0 +1,28 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: Your browser does not support the video tag.
+      - generic [ref=e6]: Data Ocean
+    - generic [ref=e8]:
+      - img "Logo" [ref=e10]
+      - heading "Welcome Back" [level=2] [ref=e11]
+      - paragraph [ref=e12]: Please enter your account information to login
+      - generic [ref=e17]:
+        - img [ref=e19]
+        - textbox "Tenant Code" [ref=e21]
+      - generic [ref=e26]:
+        - img [ref=e28]
+        - textbox "Username" [ref=e30]
+      - generic [ref=e35]:
+        - img [ref=e37]
+        - textbox "Password" [ref=e39]
+      - link "Forgot password?" [ref=e41] [cursor=pointer]:
+        - /url: "#"
+      - button "Sign in" [ref=e44] [cursor=pointer]:
+        - generic [ref=e46]: Sign in
+      - generic [ref=e47]:
+        - text: Don't have an account?
+        - link "Contact Us" [ref=e48] [cursor=pointer]:
+          - /url: https://www.dataocean.nl/contact
+      - generic [ref=e49]: © 2025. All rights reserved.
+  - img

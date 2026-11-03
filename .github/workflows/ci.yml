@@ -265,7 +265,9 @@ jobs:
             test/agent-tools.e2e-spec.ts \
             test/user-serialization.e2e-spec.ts \
             test/role-permissions.e2e-spec.ts \
-            test/chat-first-erp.e2e-spec.ts
+            test/chat-first-erp.e2e-spec.ts \
+            test/business-apps.e2e-spec.ts \
+            test/rls.e2e-spec.ts
 
   validate:
     name: Validate Components
@@ -280,6 +282,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
+
+      # 四份契约只读校验：秒级、零依赖；采用初期 --warn-only，存量进 meta-baseline.json
+      - name: Validate meta contracts
+        run: npm run check:ci
 
       - name: Validate agents
         run: node scripts/ci/validate-agents.js

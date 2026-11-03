@@ -64,7 +64,7 @@ export function RegistryBrowser({ onInstallFromRegistry }: RegistryBrowserProps)
       case 'theme':
         return 'bg-pink-100 text-pink-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
     }
   }
 
@@ -78,7 +78,7 @@ export function RegistryBrowser({ onInstallFromRegistry }: RegistryBrowserProps)
 
   if (plugins.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
+      <div className="text-center py-12 text-muted-foreground">
         No plugins available in the registry.
       </div>
     )

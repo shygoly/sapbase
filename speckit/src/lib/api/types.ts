@@ -77,8 +77,12 @@ export interface User extends BaseAuditEntity {
   name: string
   email: string
   role: string
+  roleId?: string
+  /** 后端在用户列表/登录响应里返回的角色名，供 UI 直接展示。 */
+  roleName?: string
   status: UserStatus
-  department?: string
+  departmentId?: string
+  departmentName?: string | null
   permissions: string[]
 }
 
@@ -122,8 +126,13 @@ export interface UpdateRoleInput {
 // ============ Permission ============
 
 export interface Permission extends BaseAuditEntity {
-  resource: PermissionResource
-  action: PermissionAction
+  /**
+   * Backend currently returns a flat `name` like `users:read`.
+   * Keep resource/action optional so UI can fall back gracefully.
+   */
+  name?: string
+  resource?: PermissionResource
+  action?: PermissionAction
   description?: string
 }
 

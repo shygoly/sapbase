@@ -54,6 +54,8 @@ function createRegistry(overrides?: {
     atomics as never,
     auditLogs as never,
     tokens as never,
+    { list: jest.fn(async () => []) } as never,
+    { createProposal: jest.fn(), issuePreviewToken: jest.fn(), validateProposal: jest.fn() } as never,
   )
   return { registry, blueprints, modules, executor, auditLogs, tokens, atomics }
 }
@@ -179,6 +181,46 @@ describe('AgentToolRegistry 调用链', () => {
     expect(modules.exportBlueprint).not.toHaveBeenCalled()
   })
 
+  it('应用上下文绑定确认令牌并进入审计', async () => {
+    const consume = jest.fn(async () => undefined)
+    const auditCreate = jest.fn(async (row: unknown) => row)
+    const { registry, modules } = createRegistry({ consume, auditCreate })
+    const appContext = {
+      organizationId: 'org-1',
+      appInstallationId: 'app-erp',
+      appKey: 'erp',
+      userId: 'user-1',
+      grantedPermissions: ['tool:module:export'],
+      runtimeProfile: 'shared-saas' as const,
+      traceId: 'trace-1',
+    }
+
+    await registry.invoke({
+      ...ACTOR,
+      name: 'erp_module_export',
+      args: { id: 'mod-1' },
+      confirmationToken: 'tok-1',
+      appContext,
+    })
+
+    expect(consume).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: 'tok-1',
+        appInstallationId: 'app-erp',
+      }),
+    )
+    expect(modules.exportBlueprint).toHaveBeenCalled()
+    expect(auditCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          appInstallationId: 'app-erp',
+          appKey: 'erp',
+          traceId: 'trace-1',
+        }),
+      }),
+    )
+  })
+
   it('成功调用 → 恰好一条 chat.tool.invoked 审计，status=success，sensitiveArgs 被脱敏', async () => {
     const { registry, blueprints, auditLogs } = createRegistry()
     const catalog: ToolCatalog = {
@@ -285,5 +327,15 @@ describe('AgentToolRegistry 调用链', () => {
       args: { id: 'pack-1' },
     })
     expect(blueprints.compile).toHaveBeenCalledWith('pack-1', { stamp: false })
+  })
+})
+
+
+describe('isAgentAllowed', () => {
+  const { isAgentAllowed } = require('./agent-tool.registry')
+  it('enforces allowedAgents', () => {
+    expect(isAgentAllowed({ allowedAgents: ['piagent-builder'] }, 'piagent-runtime')).toBe(false)
+    expect(isAgentAllowed({ allowedAgents: ['piagent-builder'] }, 'piagent-builder')).toBe(true)
+    expect(isAgentAllowed({}, 'piagent-runtime')).toBe(true)
   })
 })

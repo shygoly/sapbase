@@ -26,6 +26,7 @@ interface DepartmentsListProps {
   pageSize: number
   onPageChange: (page: number) => void
   onDelete: (id: string) => void
+  onEdit: (department: Department) => void
 }
 
 export function DepartmentsList({
@@ -35,6 +36,7 @@ export function DepartmentsList({
   pageSize,
   onPageChange,
   onDelete,
+  onEdit,
 }: DepartmentsListProps) {
   const canDelete = usePermission('departments:delete')
   const canUpdate = usePermission('departments:update')
@@ -46,16 +48,16 @@ export function DepartmentsList({
       case 'active':
         return 'bg-green-100 text-green-800'
       case 'inactive':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
       case 'archived':
         return 'bg-yellow-100 text-yellow-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
     }
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white">
+    <div className="space-y-4 rounded-lg border border-border bg-card">
       {/* Table */}
       <div className="overflow-x-auto">
         <Table>
@@ -71,7 +73,7 @@ export function DepartmentsList({
           <TableBody>
             {departments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No departments found
                 </TableCell>
               </TableRow>
@@ -79,7 +81,7 @@ export function DepartmentsList({
               departments.map((dept) => (
                 <TableRow key={dept.id}>
                   <TableCell className="font-medium">{dept.name}</TableCell>
-                  <TableCell className="text-gray-600">{dept.description || '-'}</TableCell>
+                  <TableCell className="text-muted-foreground">{dept.description || '-'}</TableCell>
                   <TableCell>{dept.parentId || '-'}</TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(dept.status)}>
@@ -89,7 +91,11 @@ export function DepartmentsList({
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {canUpdate && (
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEdit(dept)}
+                        >
                           <Edit2 className="h-4 w-4" />
                         </Button>
                       )}
@@ -113,8 +119,8 @@ export function DepartmentsList({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4">
-        <div className="text-sm text-gray-600">
+      <div className="flex items-center justify-between border-t border-border px-6 py-4">
+        <div className="text-sm text-muted-foreground">
           Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
         </div>
         <div className="flex gap-2">

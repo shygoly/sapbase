@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing'
+import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { JwtStrategy } from './jwt.strategy'
 import { AuthService } from './auth.service'
@@ -17,6 +18,8 @@ describe('JwtStrategy', () => {
         JwtStrategy,
         // JwtStrategy 的构造依赖 AuthService（本 spec 只验 payload → 身份的映射）
         { provide: AuthService, useValue: {} },
+        // 构造签名还依赖 ConfigService（验签密钥来源），本 spec 不需要真实配置
+        { provide: ConfigService, useValue: { get: () => 'test-secret' } },
         {
           provide: JwtService,
           useValue: mockJwtService,

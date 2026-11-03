@@ -6,8 +6,12 @@ import { join, relative, sep } from 'node:path'
 import { SuggestionCronJob } from './suggestion-cron'
 import { selectAutoSuggestTargets, type AutoSuggestPackage } from './suggestion-targets'
 
+jest.mock('typeorm-transactional', () => ({
+  runInTransaction: jest.fn(async (fn: () => Promise<unknown>) => fn()),
+}))
+
 const SRC_ROOT = join(__dirname, '..')
-const CRON = "@Cron('0 2 * * *')"
+const CRON = "@Cron('0 2 * * *', { name: 'semantic.suggest_transitions' })"
 const LIVE_JOB = 'semantic-runtime/suggestion-cron.ts'
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -93,9 +97,13 @@ describe('SuggestionCronJob', () => {
     ])
     const listSuggestedTransitions = jest.fn(async () => suggestions)
     const save = jest.fn(async (row: unknown) => row)
+    const dataSource = {
+      query: jest.fn(async () => [{ id: 'org-1' }]),
+    }
     const cron = new SuggestionCronJob(
       { listAutoSuggestTargets, listSuggestedTransitions, transition } as never,
       { save } as never,
+      dataSource as never,
     )
     return { cron, transition, save }
   }

@@ -59,4 +59,46 @@ describe('ChatController', () => {
       grantedPermissions: ['tool:blueprint:read'],
     })
   })
+
+  it('可信应用上下文随会话进入编排，仍不信任 body', async () => {
+    const orchestrator = {
+      handleMessage: jest.fn(async () => ({ kind: 'refusal', message: '没有这个能力' })),
+    }
+    const controller = new ChatController(orchestrator as never)
+    await controller.message(
+      { message: '列出模块', appInstallationId: 'app-body' } as never,
+      {
+        user: {
+          id: 'user-1',
+          organizationId: 'org-1',
+          email: 'a@b.c',
+          permissions: ['tool:module:read'],
+        },
+        appContext: {
+          organizationId: 'org-1',
+          appInstallationId: 'app-trusted',
+          appKey: 'erp',
+          userId: 'user-1',
+          grantedPermissions: ['tool:module:read'],
+          runtimeProfile: 'shared-saas',
+          traceId: 'trace-1',
+        },
+      },
+    )
+    const trustedContext = {
+      organizationId: 'org-1',
+      appInstallationId: 'app-trusted',
+      appKey: 'erp',
+      userId: 'user-1',
+      grantedPermissions: ['tool:module:read'],
+      runtimeProfile: 'shared-saas',
+      traceId: 'trace-1',
+    }
+    expect(orchestrator.handleMessage).toHaveBeenCalledWith('列出模块', {
+      organizationId: 'org-1',
+      actor: 'a@b.c',
+      grantedPermissions: ['tool:module:read'],
+      appContext: trustedContext,
+    })
+  })
 })

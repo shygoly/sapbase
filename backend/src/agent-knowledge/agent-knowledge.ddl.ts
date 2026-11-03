@@ -1,0 +1,35 @@
+export const AGENT_KNOWLEDGE_DDL: string[] = [
+  `CREATE TABLE IF NOT EXISTS public.agent_knowledge_entries (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    "createdAt" timestamp with time zone DEFAULT now() NOT NULL,
+    "updatedAt" timestamp with time zone DEFAULT now() NOT NULL,
+    "organizationId" uuid,
+    scope character varying(32) NOT NULL,
+    "scopeId" uuid,
+    "knowledgeKey" character varying(128) NOT NULL,
+    version integer NOT NULL,
+    title text NOT NULL,
+    body text NOT NULL,
+    status character varying(32) DEFAULT 'draft' NOT NULL,
+    "releaseId" uuid,
+    "sensitiveReview" jsonb DEFAULT '{}'::jsonb NOT NULL,
+    CONSTRAINT "PK_agent_knowledge_entries" PRIMARY KEY (id),
+    CONSTRAINT "CK_agent_knowledge_scope" CHECK (scope IN ('global','organization','department','user')),
+    CONSTRAINT "CK_agent_knowledge_status" CHECK (status IN ('draft','published','superseded')),
+    CONSTRAINT "UQ_agent_knowledge_version" UNIQUE (scope, "scopeId", "knowledgeKey", version)
+  )`,
+  `CREATE TABLE IF NOT EXISTS public.agent_skill_versions (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    "createdAt" timestamp with time zone DEFAULT now() NOT NULL,
+    "updatedAt" timestamp with time zone DEFAULT now() NOT NULL,
+    "organizationId" uuid,
+    "skillKey" character varying(128) NOT NULL,
+    version integer NOT NULL,
+    digest character varying(80) NOT NULL,
+    status character varying(32) DEFAULT 'draft' NOT NULL,
+    "releaseId" uuid,
+    CONSTRAINT "PK_agent_skill_versions" PRIMARY KEY (id),
+    CONSTRAINT "CK_agent_skill_status" CHECK (status IN ('draft','canary','active','retired')),
+    CONSTRAINT "UQ_agent_skill_version" UNIQUE ("skillKey", version)
+  )`,
+]

@@ -64,11 +64,42 @@ describe('ConfirmationTokenService', () => {
     const sql = String(query.mock.calls[0][0])
     expect(sql).toContain('"consumedAt" IS NULL')
     expect(sql).toContain('"expiresAt" > now()')
-    expect(query.mock.calls[0][1]).toEqual([
+    expect((query as jest.Mock).mock.calls[0][1]).toEqual([
       'tok-1',
       'erp_module_export',
       issued.argsDigest,
       'org-1',
+      null,
+    ])
+  })
+
+  it('签发与消费绑定应用安装，跨应用令牌不匹配', async () => {
+    const query = jest.fn(async () => [[], 0])
+    const { service } = createService(query)
+    const issued = await service.issue({
+      organizationId: 'org-1',
+      appInstallationId: 'app-erp',
+      tool: 'erp_module_export',
+      args: { id: 'mod-1' },
+      actor: 'user@example.com',
+    })
+    expect(issued.appInstallationId).toBe('app-erp')
+
+    await expect(
+      service.consume({
+        token: issued.token,
+        organizationId: 'org-1',
+        appInstallationId: 'app-crm',
+        tool: issued.tool,
+        argsDigest: issued.argsDigest,
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException)
+    expect((query as jest.Mock).mock.calls[0][1]).toEqual([
+      'tok-1',
+      'erp_module_export',
+      issued.argsDigest,
+      'org-1',
+      'app-crm',
     ])
   })
 

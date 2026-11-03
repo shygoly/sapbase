@@ -2,11 +2,14 @@ import { Column, Entity } from 'typeorm'
 import { TenantAwareEntity } from '../common/entities/tenant-aware.entity'
 
 /**
- * 写工具的一次性确认令牌。绑定 `(organizationId, tool, argsDigest)`。
+ * 写工具的一次性确认令牌。绑定 `(organizationId, appInstallationId, tool, argsDigest)`。
  * 签发后 5 分钟内有效；消费用条件 UPDATE，影响行数 0 一律拒。
  */
 @Entity('agent_confirmation_tokens')
 export class AgentConfirmationToken extends TenantAwareEntity {
+  @Column({ type: 'uuid', nullable: true })
+  appInstallationId: string | null
+
   @Column()
   tool: string
 
