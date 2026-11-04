@@ -1,0 +1,13 @@
+{
+  "name": "ui-shipping",
+  "root": "libs/ui-shipping",
+  "sourceRoot": "libs/ui-shipping/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:shipping", "layer:ui", "runtime:browser"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run typecheck", "cwd": "libs/ui-shipping" }
+    }
+  }
+}

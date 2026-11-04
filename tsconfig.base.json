@@ -49,6 +49,12 @@
       ],
       "@sap/shared-schemas": [
         "libs/shared-schemas/src/index.ts"
+      ],
+      "@sap/ui-shipping": [
+        "libs/ui-shipping/src/index.ts"
+      ],
+      "@sap/ui-shipping/*": [
+        "libs/ui-shipping/src/*"
       ]
     }
   }

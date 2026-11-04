@@ -64,6 +64,12 @@
       ],
       "@sap/app-shared/*": [
         "../../libs/app-shared/src/*"
+      ],
+      "@sap/ui-shipping": [
+        "../../libs/ui-shipping/src/index.ts"
+      ],
+      "@sap/ui-shipping/*": [
+        "../../libs/ui-shipping/src/*"
       ]
     },
     "incremental": true,

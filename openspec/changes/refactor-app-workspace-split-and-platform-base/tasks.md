@@ -36,28 +36,28 @@
 
 - [x] 4.1 建 `libs/platform-core`：212 文件（common / auth / auth-context / organizations / permissions / roles / audit-logs / settings / users / departments / cache），闭包自闭合；16 个 `*.spec.ts` 留在 backend
 - [x] 4.1b 消费方式：`@sap/platform-core` 编译到 `dist`，用 `exports` + `typesVersions` 支撑子路径；backend 旧路径全部留兼容壳
-- [ ] 4.2 ⏳ 未做：`platform-core` 提供显式 entity 汇总点（`platform-core.entities.ts`）与启动自检：注册表为空或 entity 未被 `forFeature` 覆盖时启动失败（防止重演 `BrandConfig` 漏注册）
-- [ ] 4.3 ⏳ 未做（P3b）：建 `libs/platform-release`：迁 `blueprint`、`releases`、`release-automation`、`atomic-registry`、`atomic-runtime`
-- [ ] 4.4 ⏳ 未做（P3b）：建 `libs/agent-tools`：迁 `agent-tools`；确认 `agent-kernel` 未新增对 platform/domain 的 import
-- [ ] 4.5 ⏳ 未做（P3b）：`backend/src/app.module.ts` 收敛为组合根，只做 import + TypeORM/Config/Throttler 装配，不含任何业务 service
-- [ ] 4.6 ⏳ 未做（P3b）：`git mv backend` → `apps/api`；`package.json` name 改 `@sap/api`，根 scripts 同步
-- [ ] 4.7 `tsconfig.base.json` 增加 `@sap/platform-core` / `@sap/platform-release` / `@sap/agent-tools`；`shared-schemas` 移入 `libs/` 并改名为 `@sap/shared-schemas`（旧名保留 re-export 一周期）
-- [ ] 4.8 验收：`npx jest`（backend 全量）绿；`npm run typecheck --workspace api` 绿；`cargo test -p wasm-host` 不受影响；`ATOMIC_ENGINE` 两条路径（wasmtime / v8）各跑一个 atomic 用例
+- [x] 4.2 `platform-core` 提供显式 entity 汇总点（`libs/platform-core/src/platform-core.entities.ts`）与启动自检 `PlatformEntityRegistrationCheck`：注册表为空、entity 未进 DataSource、或未被 `forFeature` 覆盖时启动失败。单测 4 例（`apps/api/src/platform-core.entities.spec.ts`）
+- [x] 4.3 建 `libs/platform-release`：`blueprint` / `releases` / `release-automation` / `atomic-registry` / `atomic-runtime` 实现迁出，`apps/api` 留兼容壳。`releases` / `release-automation` 的 Nest module 留在组合根（D5），用工厂注入 outbox / ai-modules / agent-eval / notifications 端口
+- [x] 4.4 建 `libs/agent-tools`：工具注册表 / 确认令牌 / 契约加载 / MCP 桥迁出；module-registry 与 builder 反馈走端口。`agent-kernel` 出边仍只有 `shared-*`（B5 0 violation）
+- [x] 4.5 `apps/api/src/app.module.ts` 收敛为组合根：实体清单抽到 `app.entities.ts`（`APP_ENTITIES`），providers 只留启动自检；不含业务 service
+- [x] 4.6 `git mv backend` → `apps/api`；包名 `@sap/api`、Nx project `api`；根 scripts、meta.config、CI、真源文档路径同步
+- [x] 4.7 `shared-schemas` → `libs/shared-schemas`（`@sap/shared-schemas`）；根 `shared-schemas/` 保留 `@speckit/shared-schemas` re-export 一周期。platform 库走 workspace 包解析（eslint/graph 已识别），base paths 增加 `@sap/shared-schemas` / `@sap/ui-shipping`
+- [x] 4.8 验收：`npx jest`（apps/api 全量）134 suites / 991 tests 绿；`npm run typecheck --workspace @sap/api` 绿；atomic 用例在 wasmtime 路径全绿；`ATOMIC_ENGINE=v8 npx jest src/atomic-runtime/atomic-executor.service.spec.ts` 14/14 通过；`cargo test -p wasm-host`（manifest `crates/wasm-host/Cargo.toml`）3/3 通过
 
 ## 5. P4 — 业务域样板（航运）
 
-- [ ] 5.1 ⏳ 未做（P4）：建 `libs/domain-shipping`：迁后端 shipping 实体/用例/控制器与 `migrations/*Shipping*`、`scripts/rebuild-voyage-emissions.ts`；tags `type:lib,scope:shipping,layer:domain,runtime:node`
-- [ ] 5.2 ⏳ 未做（P4）：建 `libs/ui-shipping`：迁 `speckit/src/components/shipping/**`（20 文件）与 `app/[locale]/dashboard/shipping/**`（10 页）；tags `type:lib,scope:shipping,layer:ui,runtime:browser`
-- [ ] 5.3 `domain-shipping` 只依赖 `platform-core` + `shared-*`；不得 import 任何 `ui-*`
-- [ ] 5.4 新增 `docs/architecture/add-a-domain.md`：以航运为范例，写清「建两个 project → 配 tags → 注册 module → 加路由 → 跑边界检查」五步
-- [ ] 5.5 验收：`nx graph` 中 `domain-shipping` 与 `ui-shipping` 的入边/出边符合 D2–D4 的允许边表；航运 10 个页面全部可访问
+- [x] 5.1 建 `libs/domain-shipping`（tags `type:lib,scope:shipping,layer:domain,runtime:node`）：迁 6 个 shipping 迁移、`shipping-data-source`、4 个导入/重算脚本。航运当前无 Nest 实体/控制器（由 Semantic Runtime + 迁移承载），故只迁迁移与脚本
+- [x] 5.2 建 `libs/ui-shipping`（tags `type:lib,scope:shipping,layer:ui,runtime:browser`）：迁 24 个 shipping 组件 + 10 个页面组件；app 路由保留一行 re-export 壳。console 的 3 个系统设置页改从 `@sap/ui-shipping` 取组件
+- [x] 5.3 `domain-shipping` 出边为空（不依赖任何 `ui-*`）；`ui-shipping` 只依赖 `api-client / ui-kit / ui-layout / ui-runtime`。B3/B4 0 violation
+- [x] 5.4 新增 `docs/architecture/add-a-domain.md`：五步 + 允许边表 + 验收清单，并以航运为样板
+- [x] 5.5 验收：`nx graph` 21 projects / 47 edges / 0 violation；`next build` 输出 10 条航运路由（charters / report-center / reports×6 / ships / voyages）
 
 ## 6. P5 — 收紧边界并同步真源文档
 
 - [x] 6.1 `eslint.config.js`：`@nx/enforce-module-boundaries` 由 `warn` 改 `error`；新增 `layer:platform` 规则
 - [x] 6.2 清空 `BOUNDARY-BASELINE.md` 里的遗留违规（或逐条转为显式 `bannedExternalImports` 例外并写明理由）
 - [x] 6.3 更新 `docs/ARCHITECTURE.md`：目录树、运行拓扑、tags 表与实际一致；把「目标态」改成「现状」
-- [ ] 6.4 ⏳ 待 P4 完成后补：`docs/META_LANGUAGE.md` §5.2 新增 `docs/architecture/add-a-domain.md`
+- [x] 6.4 `docs/META_LANGUAGE.md` §5.2 新增 `docs/architecture/add-a-domain.md` 与航运样板行；同时清理指向已删除 `speckit/docs/*` 的死链接
 - [x] 6.5 更新根 `AGENTS.md` 与 `speckit/AGENTS.md` / `backend/AGENTS.md` 的入口路径（目录改名后失效）
 - [x] 6.6 `npm run check:all` 全绿；`npx nx graph` 无孤立节点
 - [x] 6.7 验收：故意新增一条 `platform → domain` import，`npm run lint` **必须**失败（不是警告）

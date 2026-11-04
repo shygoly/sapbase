@@ -18,7 +18,7 @@
     "wasm:admit": "npm run admit --workspace @speckit/wasm-modules --",
     "wasm:test": "npm run test --workspace @speckit/wasm-modules",
     "wasm:reproducible": "npm run check:reproducible --workspace @speckit/wasm-modules --",
-    "build": "npm run build --workspace @sap/shared-core && npm run build --workspace @sap/shared-schemas && npm run build --workspace shared-schemas && npm run build --workspace @speckit/wasm-modules && npm run build --workspace @sap/release-kernel && npm run build --workspace @sap/agent-kernel && npm run build --workspace @sap/platform-core && npm run build --workspace @sap/platform-release && npm run build --workspace @sap/agent-tools && npm run build --workspace @sap/api && npm run build --workspace @sap/web-portal && npm run build --workspace @sap/web-console",
+    "build": "npm run build --workspace @sap/shared-core && npm run build --workspace @sap/shared-schemas && npm run build --workspace shared-schemas && npm run build --workspace @speckit/wasm-modules && npm run build --workspace @sap/release-kernel && npm run build --workspace @sap/agent-kernel && npm run build --workspace @sap/platform-core && npm run build --workspace @sap/platform-release && npm run build --workspace @sap/agent-tools && npm run build --workspace @sap/domain-shipping && npm run build --workspace @sap/api && npm run build --workspace @sap/web-portal && npm run build --workspace @sap/web-console",
     "lint": "npm run lint --workspaces",
     "check:domain": "node scripts/meta/check-domain-doc.mjs",
     "check:meta": "node scripts/meta/check-meta-docs.mjs",

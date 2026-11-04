@@ -1,0 +1,17 @@
+{
+  "name": "domain-shipping",
+  "root": "libs/domain-shipping",
+  "sourceRoot": "libs/domain-shipping/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:shipping", "layer:domain", "runtime:node"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run build", "cwd": "libs/domain-shipping" }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run typecheck", "cwd": "libs/domain-shipping" }
+    }
+  }
+}

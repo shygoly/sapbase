@@ -47,15 +47,24 @@ export interface RebuildResult {
  * 手抄的清单一定会漂移（`data-source.ts` 里那份就是漏的），从源码读则不会。
  */
 function legacyMigrations(): Array<{ timestamp: string; name: string }> {
-  const dir = join(__dirname, '../src/migrations')
+  // 业务域迁移已迁到 libs/*/src/migrations；与应用层迁移一起按时间戳排序。
+  const dirs = [
+    join(__dirname, '../src/migrations'),
+    join(__dirname, '../../../libs/domain-shipping/src/migrations'),
+  ]
   const out: Array<{ timestamp: string; name: string }> = []
-  for (const file of readdirSync(dir)) {
-    const match = file.match(/^(\d{13})-([\w-]+)\.ts$/)
-    if (!match) continue
-    const source = readFileSync(join(dir, file), 'utf8')
-    const classMatch = source.match(/export class (\w+)\s+implements MigrationInterface/)
-    if (!classMatch) continue
-    out.push({ timestamp: match[1], name: classMatch[1] })
+  const seen = new Set<string>()
+  for (const dir of dirs) {
+    for (const file of readdirSync(dir)) {
+      const match = file.match(/^(\d{13})-([\w-]+)\.ts$/)
+      if (!match) continue
+      if (seen.has(file)) continue
+      seen.add(file)
+      const source = readFileSync(join(dir, file), 'utf8')
+      const classMatch = source.match(/export class (\w+)\s+implements MigrationInterface/)
+      if (!classMatch) continue
+      out.push({ timestamp: match[1], name: classMatch[1] })
+    }
   }
   return out.sort((a, b) => parseInt(a.timestamp, 10) - parseInt(b.timestamp, 10))
 }

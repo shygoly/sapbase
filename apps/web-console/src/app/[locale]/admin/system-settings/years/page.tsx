@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect } from 'react'
 import { constantsApi } from '@sap/app-shared/lib/api'
-import type { YearParameterRecord } from '@sap/app-shared/lib/api/shipping/types'
+import type { YearParameterRecord } from '@sap/api-client/api/shipping/types'
 import { useNotification } from '@sap/app-shared/core/ui/ui-hooks'
 import { Button } from '@sap/app-shared/components/ui/button'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Badge } from '@sap/app-shared/components/ui/badge'
-import { YearTable } from '@sap/app-shared/components/shipping/year-management/year-table'
-import { YearFormDialog } from '@sap/app-shared/components/shipping/year-management/year-form-dialog'
+import { YearTable } from '@sap/ui-shipping/components/shipping/year-management/year-table'
+import { YearFormDialog } from '@sap/ui-shipping/components/shipping/year-management/year-form-dialog'
 import { ConfirmDialog } from '@sap/app-shared/components/ui/confirm-dialog'
 
 function getLocalePrefix(pathname: string): string {

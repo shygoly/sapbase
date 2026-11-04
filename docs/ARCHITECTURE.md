@@ -30,33 +30,35 @@
 
 ## 1. 目标目录
 
-**现状（2026-11，P2/P3a 落地后）**：目标树已部分达成，下表即当前真实结构。
-未完成项在「状态」列标注，避免再次出现「文档画饼、代码没有」。
+**现状（2026-11，P3b/P4 落地后）**：下表即当前真实结构；架构迁移已完成，
+新增业务域按 `docs/architecture/add-a-domain.md` 复制。
 
 ```text
 sapbase/
 ├─ apps/
 │  ├─ web-portal/            # Next.js 15：业务人员入口（/、/docs、/dashboard/**）
 │  ├─ web-console/           # Next.js 15：治理台（/admin/**）
-│  └─ api/                   # ⏳ 未拆：Nest 仍在 backend/（P3b）
-├─ backend/                  # NestJS：REST/SSE、认证、租户、业务用例（组合根 + 尚未迁出的域）
+│  └─ api/                   # NestJS：REST/SSE、认证、租户、组合根 + 尚未迁出的应用模块
 ├─ libs/
-│  ├─ platform-core/         # ✅ 基座：common / auth / auth-context / organizations /
-│  │                         #    permissions / roles / audit-logs / settings / users
-│  ├─ app-shared/            # ✅ 两个前端 app 共享的应用层（组件 / hooks / core / i18n）
-│  ├─ ui-kit/                # ✅ shadcn 原子组件 + 数据表格子系统
-│  ├─ ui-theme/              # ✅ 主题 token / Provider / 选择器
-│  ├─ ui-layout/             # ✅ 侧栏 / 顶栏 / 导航 / 面包屑 / 组织与应用切换
-│  ├─ ui-runtime/            # ✅ Schema 驱动渲染（Page/Form/Collection/Detail）
-│  ├─ api-client/            # ✅ 前端 REST / WebSocket 客户端
-│  ├─ shared-state/          # ✅ zustand 全局状态
-│  ├─ shared-core/           # ✅ 零 IO 纯函数（money / canonicalizeJson）
-│  ├─ agent-kernel/          # ✅ 会话 / Context Compiler（只依赖端口）
-│  ├─ release-kernel/        # ✅ semver / digest / 发布状态机纯逻辑
-│  ├─ platform-release/      # ⏳ 未拆：blueprint / releases / atomic 仍在 backend（P3b）
-│  ├─ agent-tools/           # ⏳ 未拆（P3b）
-│  ├─ domain-shipping/       # ⏳ 未拆（P4）
-│  └─ ui-shipping/           # ⏳ 未拆（P4，代码现居 app-shared）
+│  ├─ platform-core/         # 基座：common / auth / auth-context / organizations /
+│  │                         #       permissions / roles / audit-logs / settings / users
+│  ├─ platform-release/      # 发布基座：blueprint / releases（领域实现）/ release-automation /
+│  │                         #             atomic-registry / atomic-runtime
+│  ├─ agent-tools/           # 工具面：契约加载 / 确认令牌 / 工具注册表 / MCP 桥
+│  ├─ app-shared/            # 两个前端 app 共享的应用层（组件 / hooks / core / i18n）
+│  ├─ ui-kit/                # shadcn 原子组件 + 数据表格子系统
+│  ├─ ui-theme/              # 主题 token / Provider / 选择器
+│  ├─ ui-layout/             # 侧栏 / 顶栏 / 导航 / 面包屑 / 组织与应用切换
+│  ├─ ui-runtime/            # Schema 驱动渲染（Page/Form/Collection/Detail）
+│  ├─ api-client/            # 前端 REST / WebSocket 客户端
+│  ├─ shared-state/          # zustand 全局状态
+│  ├─ shared-core/           # 零 IO 纯函数（money / canonicalizeJson）
+│  ├─ shared-schemas/        # 前后端共享 Schema / 类型（@sap/shared-schemas）
+│  ├─ agent-kernel/          # 会话 / Context Compiler（只依赖端口）
+│  ├─ release-kernel/        # semver / digest / 发布状态机纯逻辑
+│  ├─ domain-shipping/       # 航运域：迁移 / 导入 / 重算脚本（第一个 domain 样板）
+│  └─ ui-shipping/           # 航运域前端：页面 / 组件 / 报表（第一个 ui 域样板）
+├─ shared-schemas/           # 兼容包：@speckit/shared-schemas → @sap/shared-schemas（一周期）
 ├─ schemas/                  # JSON Schema 真源
 ├─ contracts/                # tools.json / 发布清单
 ├─ wasm-modules/             # Rust→Wasm 原子模块与准入闸
@@ -64,6 +66,7 @@ sapbase/
 ├─ tools/postgres/init/      # 迁移/种子 SQL
 ├─ docs/
 │  ├─ META_LANGUAGE.md
+│  ├─ architecture/add-a-domain.md
 │  └─ reference/             # 历史归档
 ├─ nx.json
 ├─ tsconfig.base.json
@@ -96,42 +99,41 @@ sapbase/
 | 维度 | 允许值 |
 |---|---|
 | `type` | `app` / `lib` |
-| `scope` | `portal` / `console` / `api` / `agent` / `agent-kernel` / `agent-tools` / `worker` / `order` / `inventory` / `shared` … |
+| `scope` | `portal` / `console` / `api` / `agent` / `agent-kernel` / `shared` / `platform` / `shipping` … |
 | `layer` | `domain` / `app` / `infra` / `shared` / `agent` / `release` / `ui` / `platform` |
+| `runtime` | `node` / `browser` / `isomorphic` |
 
 > **`layer` 只描述库**。组合根（`type:app`）只声明 `type` / `scope` / `runtime`。
 > 原因：Nx 的 `depConstraints` 是 AND 语义，若 app 同时带 `layer:app`，
 > 会被更严的 `layer:app` 白名单锁死，连 `agent-kernel` / `release-kernel` 都装配不了
 > （P0 实测 6 条）。
-| `runtime` | `node` / `browser` / `isomorphic` |
 
-ESLint 约束（节选）：
+ESLint 约束（与根 `eslint.config.js` 保持一致）：
 
 ```js
-// eslint.config.mjs
-{
-  files: ['**/*.ts', '**/*.tsx'],
-  rules: {
-    '@nx/enforce-module-boundaries': ['error', {
-      depConstraints: [
-        { sourceTag: 'layer:domain', onlyDependOnLibsWithTags: ['layer:domain', 'layer:shared'] },
-        { sourceTag: 'layer:app', onlyDependOnLibsWithTags: ['layer:domain', 'layer:app', 'layer:infra', 'layer:shared'] },
-        { sourceTag: 'layer:infra', onlyDependOnLibsWithTags: ['layer:infra', 'layer:shared'] },
-        { sourceTag: 'layer:agent', onlyDependOnLibsWithTags: ['layer:agent', 'layer:app', 'layer:domain', 'layer:shared'] },
-        { sourceTag: 'scope:agent-kernel', notDependOnLibsWithTags: ['layer:app', 'layer:infra'] },
-        { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['layer:domain', 'layer:app', 'layer:infra', 'layer:shared', 'layer:agent', 'layer:release', 'layer:ui'] },
-        { sourceTag: 'runtime:browser', notDependOnLibsWithTags: ['runtime:node'] },
-      ],
-    }],
-  },
-}
+'@nx/enforce-module-boundaries': ['error', {
+  depConstraints: [
+    { sourceTag: 'layer:domain', onlyDependOnLibsWithTags: ['layer:domain', 'layer:platform', 'layer:shared'] },
+    { sourceTag: 'layer:app', onlyDependOnLibsWithTags: ['layer:domain', 'layer:app', 'layer:infra', 'layer:shared', 'layer:platform'] },
+    { sourceTag: 'layer:infra', onlyDependOnLibsWithTags: ['layer:infra', 'layer:shared', 'layer:platform'] },
+    { sourceTag: 'layer:agent', onlyDependOnLibsWithTags: ['layer:agent', 'layer:app', 'layer:domain', 'layer:shared', 'layer:platform'] },
+    { sourceTag: 'layer:ui', onlyDependOnLibsWithTags: ['layer:ui', 'layer:shared', 'layer:release'] },
+    { sourceTag: 'layer:platform', notDependOnLibsWithTags: ['layer:domain', 'layer:ui', 'layer:agent'] },
+    { sourceTag: 'scope:agent-kernel', notDependOnLibsWithTags: ['layer:app', 'layer:infra'] },
+    { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['layer:domain', 'layer:app', 'layer:infra', 'layer:shared', 'layer:agent', 'layer:release', 'layer:ui', 'layer:platform'] },
+    { sourceTag: 'runtime:browser', notDependOnLibsWithTags: ['runtime:node'] },
+  ],
+}]
 ```
 
 **四条硬规则**：
 
-1. `domain-*` 不 import Nest、TypeORM、Prisma、Redis、`fetch`、`fs`。它是纯函数与类型。
+1. `domain-*` 的**用例层**不 import Nest、TypeORM、Prisma、Redis、`fetch`、`fs`；
+   它只放纯函数与类型。迁移与运维脚本允许放在 `src/migrations` / `src/scripts`
+   （样板：`domain-shipping`），但不得被用例层反向 import。
 2. `app-*` 不 import 另一个 `app-*` 的内部实现；跨上下文走公开入口或事件。
-3. `agent-kernel` 不 import `app-*`；它只依赖工具契约与端口，适配器在 `agent-tools`。
+3. `agent-kernel` 不 import `platform-*` / `domain-*`；它只依赖工具契约与端口，
+   适配器在 `agent-tools`。
 4. `web-*` 不直接连 PG/Redis；所有数据经 `api`。
 
 > 为什么第 3 条重要：如果 Agent 内核能直接 import 业务服务，它就能绕过工具白名单、

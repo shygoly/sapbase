@@ -1,0 +1,23 @@
+{
+  "name": "@sap/ui-shipping",
+  "version": "1.0.0",
+  "private": true,
+  "description": "航运业务域前端：页面、组件与报表视图（第一个 ui-* 域样板）",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@sap/api-client": "*",
+    "@sap/ui-kit": "*",
+    "@sap/ui-layout": "*",
+    "@sap/ui-runtime": "*",
+    "lucide-react": "^0.476.0",
+    "react": "^18.3.1",
+    "react-hook-form": "^7.54.1",
+    "recharts": "^2.15.1",
+    "zod": "^4.1.8"
+  }
+}

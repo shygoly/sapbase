@@ -29,7 +29,7 @@ $$
 
 | 符号 | 含义 | 必需性 | 仓库落点 |
 | --- | --- | --- | --- |
-| $E$ | Entity 业务实体 | 必需 | `speckit/src/core/schema/types.ts` 的 `ObjectSchema` |
+| $E$ | Entity 业务实体 | 必需 | `libs/app-shared/src/core/schema/types.ts` 的 `ObjectSchema` |
 | $O$ | Object 实体实例 | 必需 | 后端实体（`apps/api/src/**/*.entity.ts`） |
 | $R$ | Relation 对象关系 | 必需 | `ObjectSchema.relations` |
 | $\Phi$ | Constraint / Policy / Behavior | 必需 | `FieldDefinition.validation`、`apps/api/src/permissions`、规则（待统一） |
@@ -140,7 +140,7 @@ LLM 的输出语言，是结构化增量而非自由文本。**它修改的对�
                   { "op": "link", "from": "...", "to": "...", "type": "belongsTo" } ] }
 ```
 
-仓库既有 **Patch DSL**（`speckit/src/core/patch/`：5 类 scope、5 种操作、L1–L3 安全级）是它的前身，
+仓库既有 **Patch DSL**（`libs/app-shared/src/core/patch/`：5 类 scope、5 种操作、L1–L3 安全级）是它的前身，
 演进路径为 `space-delta/v2`（扩展命名空间 + `link`/`unlink`），**不另起一套**。
 
 ### 3.7 Context Compiler 与决策分层
@@ -265,22 +265,17 @@ workspaces：shared-schemas / speckit / backend / wasm-modules
 | --- | --- | --- |
 | 基础定义（元模型、原语、不变量、术语） | **本文件** | 跨领域的定义层 |
 | 平台总体设计（要做什么） | [`ERP_Space_Platform_设计方案_v3.md`](./ERP_Space_Platform_设计方案_v3.md) | 含路线图与差距 |
-| 前端 Schema 驱动系统 | [`speckit/docs/schema-system.md`](../speckit/docs/schema-system.md) | 页面/表单/视图生成 |
-| 增量修改机制（Patch DSL） | [`speckit/docs/patch-dsl.md`](../speckit/docs/patch-dsl.md) | 未来 Delta 协议的载体 |
-| 前端组件模式（Runtime-First） | [`speckit/docs/component-patterns.md`](../speckit/docs/component-patterns.md) | — |
-| 插件体系 | [`speckit/docs/plugins.md`](../speckit/docs/plugins.md) | UI / Integration / Theme |
-| 导航与 RBAC | [`speckit/docs/nav-rbac.md`](../speckit/docs/nav-rbac.md) | — |
-| 主题体系 | [`speckit/docs/themes.md`](../speckit/docs/themes.md) | — |
-| 前端集成指南 | [`speckit/docs/frontend-integration-guide.md`](../speckit/docs/frontend-integration-guide.md) | — |
-| CRM 模块 | [`speckit/docs/crm-module.md`](../speckit/docs/crm-module.md)、[`crm-integration.md`](../speckit/docs/crm-integration.md) | 第一个业务模块样板 |
-| Clerk 配置 | [`speckit/docs/clerk_setup.md`](../speckit/docs/clerk_setup.md) | ⚠️ 模板残留：`@clerk` 依赖源码未使用，待清理 |
+| 工程架构 / 目录与边界 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Nx 项目、tags、依赖方向、运行拓扑 |
+| 新增一个业务域 | [`architecture/add-a-domain.md`](./architecture/add-a-domain.md) | 以航运为样板：project / tags / 注册 / 路由 / 检查 |
+| 业务域样板（航运） | [`domain-shipping`](../libs/domain-shipping/)、[`ui-shipping`](../libs/ui-shipping/) | 第一个 `domain-*` + `ui-*`，迁移与导入脚本在此 |
+| 前端共享层 | [`ui-kit`](../libs/ui-kit/)、[`ui-runtime`](../libs/ui-runtime/)、[`ui-layout`](../libs/ui-layout/)、[`api-client`](../libs/api-client/) | 原子组件 / Schema 渲染 / 布局 / REST·WS 客户端 |
 | 后端 Base Object 模式 | [`apps/api/docs/architecture/base-object-pattern.md`](../apps/api/docs/architecture/base-object-pattern.md) | 实体基类约定 |
 | AI 模块的数据与安全 | [`apps/api/docs/ai-modules-database-and-security.md`](../apps/api/docs/ai-modules-database-and-security.md) | — |
 | 后端开发指南 | [`apps/api/docs/developer-guide.md`](../apps/api/docs/developer-guide.md) | — |
 | 工作流引擎（已退场） | [`protocols/workflow-consolidation.md`](./protocols/workflow-consolidation.md) | 旧树已删；能力去向与归档在此登记 |
 | 前端运行时总体设计（历史） | [`通用_erp_前端运行时_speckit_v_1 (1).md`](<../通用_erp_前端运行时_speckit_v_1 (1).md>) | 根目录；理念来源 |
 | 当前 vs 目标技术栈差距 | [`TECH_STACK_GAP.md`](./TECH_STACK_GAP.md) | — |
-| 前端依赖实际版本 | [`TECH_STACK_v2.md`](./TECH_STACK_v2.md) | `speckit/README.md` 是上游模板原文，不可作依据 |
+| 前端依赖实际版本 | [`TECH_STACK_v2.md`](./TECH_STACK_v2.md) | `libs/app-shared/README.md`（若存在）与根 README 以上游模板为主，不可作版本依据 |
 | 包管理器与依赖安装 | [`PACKAGE_MANAGER.md`](./PACKAGE_MANAGER.md) | — |
 | Wasm 原子模块与准入门禁 | [`wasm-modules/README.md`](../wasm-modules/README.md) | — |
 | 汽配计算原子 ABI | [`protocols/autoparts-atoms.md`](./protocols/autoparts-atoms.md) | ATP / 价格 / 信用 / 换算 / 替代链；查库能力不做原子 |
@@ -305,7 +300,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
    ↓
 本表（文档真源）→ 各子系统的结构化文档
 
-子目录另设作用域入口：speckit/AGENTS.md、apps/api/AGENTS.md（各自索引本目录 docs/）
+子目录另设作用域入口：`apps/api/AGENTS.md`（索引本目录 docs/）；前端按 app 分治，共享层入口见 `docs/ARCHITECTURE.md` §1
 ```
 
 ### 5.3 变更流程

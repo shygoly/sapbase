@@ -1,0 +1,35 @@
+{
+  "name": "@sap/domain-shipping",
+  "version": "1.0.0",
+  "private": true,
+  "description": "航运业务域：碳核算 schema 迁移与数据导入/重算脚本（第一个 domain 样板）",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "shipping:migrate": "ts-node src/migrations/run-shipping-migration.ts",
+    "shipping:rebuild-emissions": "ts-node src/scripts/rebuild-voyage-emissions.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pg": "^8.11.0",
+    "typeorm": "^0.3.19"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/*"
+      ]
+    }
+  }
+}
