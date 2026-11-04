@@ -14,7 +14,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage --config jest.config.js",
@@ -80,7 +80,12 @@
     "swagger-ui-express": "^5.0.0",
     "typeorm": "^0.3.19",
     "typeorm-transactional": "^0.5.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "@sap/platform-core": "*",
+    "@sap/platform-release": "*",
+    "@sap/agent-tools": "*",
+    "@sap/domain-shipping": "*",
+    "@sap/shared-core": "*"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.3.0",

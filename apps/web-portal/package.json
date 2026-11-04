@@ -93,7 +93,8 @@
     "@sap/ui-runtime": "*",
     "@sap/ui-layout": "*",
     "@sap/shared-state": "*",
-    "@sap/app-shared": "*"
+    "@sap/app-shared": "*",
+    "@sap/ui-shipping": "*"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.3.0",

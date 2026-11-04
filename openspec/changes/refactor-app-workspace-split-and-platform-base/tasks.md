@@ -50,7 +50,7 @@
 - [x] 5.2 建 `libs/ui-shipping`（tags `type:lib,scope:shipping,layer:ui,runtime:browser`）：迁 24 个 shipping 组件 + 10 个页面组件；app 路由保留一行 re-export 壳。console 的 3 个系统设置页改从 `@sap/ui-shipping` 取组件
 - [x] 5.3 `domain-shipping` 出边为空（不依赖任何 `ui-*`）；`ui-shipping` 只依赖 `api-client / ui-kit / ui-layout / ui-runtime`。B3/B4 0 violation
 - [x] 5.4 新增 `docs/architecture/add-a-domain.md`：五步 + 允许边表 + 验收清单，并以航运为样板
-- [x] 5.5 验收：`nx graph` 21 projects / 47 edges / 0 violation；`next build` 输出 10 条航运路由（charters / report-center / reports×6 / ships / voyages）
+- [x] 5.5 验收：`nx graph` 21 projects / 54 edges / 0 violation、无孤立节点；`next build` 输出 10 条航运路由；`next start` 后逐条 `curl` 10 个 `/en/dashboard/shipping/**` 均 200（charters / report-center / reports×6 / ships / voyages）
 
 ## 6. P5 — 收紧边界并同步真源文档
 

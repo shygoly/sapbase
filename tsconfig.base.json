@@ -55,6 +55,24 @@
       ],
       "@sap/ui-shipping/*": [
         "libs/ui-shipping/src/*"
+      ],
+      "@sap/platform-core": [
+        "libs/platform-core/src/index.ts"
+      ],
+      "@sap/platform-core/*": [
+        "libs/platform-core/src/*"
+      ],
+      "@sap/platform-release": [
+        "libs/platform-release/src/index.ts"
+      ],
+      "@sap/platform-release/*": [
+        "libs/platform-release/src/*"
+      ],
+      "@sap/agent-tools": [
+        "libs/agent-tools/src/index.ts"
+      ],
+      "@sap/agent-tools/*": [
+        "libs/agent-tools/src/*"
       ]
     }
   }
