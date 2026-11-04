@@ -79,7 +79,7 @@ export default function AIModuleDevelopPage() {
     try {
       const modules = await moduleRegistryApi.findAll().catch(() => [])
       setRegistryModules(modules)
-    } catch (error) {
+    } catch {
       notification.error('Failed to load modules')
     } finally {
       setIsLoadingRegistry(false)
@@ -116,7 +116,7 @@ export default function AIModuleDevelopPage() {
       })
       
       setAiModules(combinedModules)
-    } catch (error) {
+    } catch {
       notification.error('Failed to load modules')
     } finally {
       setIsLoadingModules(false)
@@ -129,7 +129,7 @@ export default function AIModuleDevelopPage() {
       const definition = await aiModulesApi.getDefinition(moduleId)
       setSelectedDefinition(definition)
       setDefinitionMarkdown(formatDefinitionAsMarkdown(definition))
-    } catch (error) {
+    } catch {
       notification.error('Failed to load definition')
       setSelectedDefinition(null)
       setDefinitionMarkdown('')
@@ -197,7 +197,7 @@ export default function AIModuleDevelopPage() {
       setModule(newModule)
       setMode('create')
       notification.success('Module created')
-    } catch (error) {
+    } catch {
       notification.error('Failed to create module')
     }
   }
@@ -214,7 +214,7 @@ export default function AIModuleDevelopPage() {
       setModule(updated)
       setPatchPreview(JSON.stringify(updated.patchContent, null, 2))
       notification.success('Patch generated successfully')
-    } catch (error) {
+    } catch {
       notification.error('Failed to generate patch')
     } finally {
       setIsGenerating(false)
@@ -235,7 +235,7 @@ export default function AIModuleDevelopPage() {
       setModule(updated)
       setPatchPreview(JSON.stringify(updated.patchContent, null, 2))
       notification.success('Module generated from definition. Check Preview tab.')
-    } catch (error) {
+    } catch {
       notification.error('Failed to generate from definition')
     } finally {
       setIsGenerating(false)
@@ -254,7 +254,7 @@ export default function AIModuleDevelopPage() {
       setModule(updated)
       setPatchPreview(JSON.stringify(updated.patchContent, null, 2))
       notification.success('Update patch generated successfully')
-    } catch (error) {
+    } catch {
       notification.error('Failed to generate update patch')
     } finally {
       setIsGenerating(false)

@@ -174,7 +174,7 @@ class CachedApiClient {
   async prefetch<T>(url: string, cacheTTL?: number): Promise<void> {
     try {
       await this.get<T>(url, { cacheTTL });
-    } catch (error) {
+    } catch {
       // Silently fail for prefetch
     }
   }

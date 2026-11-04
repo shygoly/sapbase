@@ -44,7 +44,7 @@ export default function AIModuleReviewPage() {
     try {
       const data = await aiModulesApi.findAll('pending_review')
       setModules(data)
-    } catch (error) {
+    } catch {
       notification.error('Failed to load modules')
     }
   }
@@ -70,7 +70,7 @@ export default function AIModuleReviewPage() {
       setRejectionReason('')
       setReviewDecision('pending')
       await fetchModules()
-    } catch (error) {
+    } catch {
       notification.error('Failed to submit review')
     }
   }

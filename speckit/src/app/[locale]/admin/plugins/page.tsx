@@ -48,7 +48,7 @@ export default function PluginsPage() {
     try {
       const data = await pluginsApi.findAll()
       setPlugins(data)
-    } catch (error) {
+    } catch {
       notification.error('Failed to load plugins')
     } finally {
       setIsLoading(false)
@@ -111,7 +111,7 @@ export default function PluginsPage() {
       alert(
         `Plugin Details:\n\nName: ${plugin.name}\nVersion: ${plugin.version}\nType: ${plugin.type}\nStatus: ${plugin.status}\nDescription: ${plugin.description || 'N/A'}\nAuthor: ${plugin.author || 'N/A'}`,
       )
-    } catch (error: any) {
+    } catch {
       notification.error('Failed to load plugin details')
     }
   }

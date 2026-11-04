@@ -82,7 +82,7 @@ export default function RolesPage() {
       await rolesApi.delete(roleToDelete)
       notification.success('Role deleted successfully')
       await fetchRoles()
-    } catch (error) {
+    } catch {
       notification.error('Failed to delete role')
     } finally {
       setRoleToDelete(null)

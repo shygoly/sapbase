@@ -68,7 +68,7 @@ export function CreateDepartmentDialog({
       reset()
       onOpenChange(false)
       onSuccess()
-    } catch (error) {
+    } catch {
       notification.error('Failed to create department')
     } finally {
       setIsSubmitting(false)

@@ -78,7 +78,7 @@ export class HotReloader {
     for (const callback of Array.from(this.reloadCallbacks)) {
       try {
         callback()
-      } catch (error) {
+      } catch {
         // Callback error swallowed to avoid breaking other callbacks
       }
     }

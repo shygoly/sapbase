@@ -49,7 +49,7 @@ export default function AuditLogsPage() {
       })
       setLogs(result.data || [])
       setTotal(result.total || 0)
-    } catch (error) {
+    } catch {
       notification.error('Failed to load audit logs')
     } finally {
       setIsLoading(false)

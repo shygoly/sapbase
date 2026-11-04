@@ -145,7 +145,7 @@ export function UnifiedSidebar({
       } else {
         await logout()
       }
-    } catch (error) {
+    } catch {
       // Logout error surfaced via UI
     }
   }

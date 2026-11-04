@@ -38,7 +38,7 @@ export function RegistryBrowser({ onInstallFromRegistry }: RegistryBrowserProps)
     try {
       const response = await pluginsApi.browseRegistry()
       setPlugins(response.plugins || [])
-    } catch (error) {
+    } catch {
       notification.error('Failed to load registry plugins')
     } finally {
       setIsLoading(false)

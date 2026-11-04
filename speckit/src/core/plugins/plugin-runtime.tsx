@@ -67,7 +67,7 @@ export function PluginRuntimeProvider({
       }
 
       setPlugins(activePlugins)
-    } catch (error) {
+    } catch {
       // Error surfaced via state
     } finally {
       setIsLoading(false)
@@ -83,7 +83,7 @@ export function PluginRuntimeProvider({
       if (plugin.type === 'theme') {
         await pluginThemeService.applyPluginTheme(plugin)
       }
-    } catch (error) {
+    } catch {
       // Error surfaced via state
     }
   }

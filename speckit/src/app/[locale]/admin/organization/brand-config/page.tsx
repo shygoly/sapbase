@@ -41,7 +41,7 @@ export default function BrandConfigPage() {
         title: 'Success',
         description: 'Brand configuration updated successfully',
       })
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to update brand configuration',

@@ -24,7 +24,7 @@ export class PatchGateway {
     // Initialize Kimi client if API key is available
     try {
       this.kimiClient = kimiClient || new KimiClient()
-    } catch (error) {
+    } catch {
       // Kimi client not available, falling back to pattern matching
     }
   }
@@ -52,7 +52,7 @@ export class PatchGateway {
         patch.timestamp = patch.timestamp || new Date().toISOString()
         patch.actor = patch.actor || 'ai'
         patch.version = patch.version || '1.0'
-      } catch (error) {
+      } catch {
         // Fall back to pattern matching
         patch = this.parseIntentToPatch(request)
       }

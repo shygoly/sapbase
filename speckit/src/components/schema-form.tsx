@@ -51,7 +51,7 @@ export function SchemaForm({
     setErrors({})
     try {
       await onSubmit(finalData)
-    } catch (error) {
+    } catch {
       return
     }
   }
