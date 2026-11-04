@@ -69,6 +69,11 @@ Host ──MCP──▶ Tool Gateway（唯一 PEP）──▶ 用例 ──▶ P
 
 风险：MCP 的注解（`readOnlyHint`）只是提示，**不能**当作授权依据；授权仍以网关判定为准。
 
+内嵌通道（Web SSE）同样经 MCP：`AgentToolMcpBridge` 在进程内起 server + client，
+`AGENT_TOOL_TRANSPORT=mcp` 启用、默认 `direct`（行为与改造前一致）。
+**调用上下文按引用传递**：organizationId / 权限 / 确认令牌不进 `arguments`，
+而是由客户端登记、服务端按 `_meta.contextId` 一次性取出——模型即使伪造同名字段也无效。
+
 ### Decision 3: 一实例一宿主，不做 cell 编排
 
 一个部署单元 = 一个 ERP 后端 + 一个宿主进程（可选）+ PG/Redis。

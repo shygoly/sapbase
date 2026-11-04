@@ -10,7 +10,9 @@
 - [x] 1.2 新增 MCP 投影器：`scripts/meta/lib/mcp-projection.mjs` + `project-mcp-tools.mjs`，
       由契约生成 `contracts/mcp-tools.json`，不手写第二份
 - [x] 1.3 扩展 `scripts/meta/check-agent-tools.mjs`：契约 ↔ MCP 清单 ↔ `AGENT-TOOLS.md` 三方对拍
-- [ ] 1.4 内嵌通道经 MCP 客户端调用同一工具面，行为与现状等价（回归 chat e2e）
+- [x] 1.4 内嵌通道经 MCP 客户端调用同一工具面：`AgentToolMcpBridge`，
+      `AGENT_TOOL_TRANSPORT=mcp` 时走 MCP、默认 `direct` 保持行为等价；
+      租户/权限/确认令牌按引用传递（`_meta.contextId`），模型参数无法伪造；profile 收窄在 listTools 生效
 - [x] 1.5 拒绝路径单测已存在并复跑通过：未知工具、参数非法、权限不足、缺确认令牌
       （`backend/src/agent-tools/agent-tool.registry.spec.ts`）
 

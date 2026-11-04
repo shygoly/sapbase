@@ -2,8 +2,9 @@
  * 编排：意图 → 选工具 → 计划。执行一律走 AgentToolRegistry（不新造第二条路径）。
  * 写工具（confirmation=required）在本层绝不 invoke。
  */
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Optional } from '@nestjs/common'
 import { AgentToolRegistry } from '../agent-tools/agent-tool.registry'
+import { AgentToolMcpBridge } from '../agent-tools/mcp/agent-tool-mcp.bridge'
 import type { ChatContext, ChatResult, IntentParser } from './chat.types'
 import { INTENT_PARSER } from './chat.types'
 import { buildInteractionPlan } from './interaction-plan-builder'
@@ -16,6 +17,8 @@ export class ChatOrchestrator {
   constructor(
     @Inject(INTENT_PARSER) private readonly parser: IntentParser,
     private readonly registry: AgentToolRegistry,
+    // 可选：transport=direct 时桥会直接委托网关；不注入也保持原有行为（测试可只传前两个）。
+    @Optional() private readonly bridge?: AgentToolMcpBridge,
   ) {}
 
   async handleMessage(message: string, context: ChatContext): Promise<ChatResult> {
@@ -53,14 +56,23 @@ export class ChatOrchestrator {
         return { kind: 'plan', plan, intent: intent.label }
       }
 
-      const invoked = await this.registry.invoke({
-        name: tool.name,
-        args: intent.args,
-        organizationId: context.organizationId,
-        actor: context.actor,
-        grantedPermissions: context.grantedPermissions,
-        appContext: context.appContext,
-      })
+      const invoked = this.bridge
+        ? await this.bridge.invoke({
+            name: tool.name,
+            args: intent.args,
+            organizationId: context.organizationId,
+            actor: context.actor,
+            grantedPermissions: context.grantedPermissions,
+            appContext: context.appContext,
+          })
+        : await this.registry.invoke({
+            name: tool.name,
+            args: intent.args,
+            organizationId: context.organizationId,
+            actor: context.actor,
+            grantedPermissions: context.grantedPermissions,
+            appContext: context.appContext,
+          })
 
       const plan = buildInteractionPlan({
         toolName: tool.name,

@@ -6,6 +6,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 import { BlueprintModule } from '../blueprint/blueprint.module'
 import { ModuleRegistryModule } from '../module-registry/module-registry.module'
 import { AgentToolRegistry } from './agent-tool.registry'
+import { AgentToolMcpBridge } from './mcp/agent-tool-mcp.bridge'
 import { AgentToolsController } from './agent-tools.controller'
 import { AgentConfirmationToken } from './confirmation-token.entity'
 import { ConfirmationTokenService } from './confirmation-token.service'
@@ -26,7 +27,7 @@ import { ReleasesModule } from '../releases/releases.module'
     ReleasesModule,
   ],
   controllers: [AgentToolsController],
-  providers: [AgentToolRegistry, ConfirmationTokenService],
-  exports: [AgentToolRegistry, ConfirmationTokenService],
+  providers: [AgentToolRegistry, ConfirmationTokenService, AgentToolMcpBridge],
+  exports: [AgentToolRegistry, ConfirmationTokenService, AgentToolMcpBridge],
 })
 export class AgentToolsModule {}
