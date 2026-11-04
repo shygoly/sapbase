@@ -1,17 +1,3 @@
-import { Button } from '@/components/ui/button';
-import { IconBrandGithub } from '@tabler/icons-react';
-
-export default function CtaGithub() {
-  return (
-    <Button variant='ghost' asChild size='sm' className='group hidden sm:flex'>
-      <a
-        href='https://github.com/Kiranism/next-shadcn-dashboard-starter'
-        rel='noopener noreferrer'
-        target='_blank'
-        className='dark:text-foreground transition-colors duration-300 hover:text-[#24292e] dark:hover:text-yellow-400'
-      >
-        <IconBrandGithub className='transition-transform duration-300 group-hover:animate-bounce' />
-      </a>
-    </Button>
-  );
-}
+// 兼容壳：实现已迁到 libs/ui-layout（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-layout/layout/cta-github'
+export { default } from '@sap/ui-layout/layout/cta-github'

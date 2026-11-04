@@ -1,18 +1,4 @@
-'use client';
-
-import {
-  ThemeProvider as NextThemesProvider,
-  ThemeProviderProps
-} from 'next-themes';
-import React from 'react';
-
-interface CustomThemeProviderProps extends Omit<ThemeProviderProps, 'children'> {
-  children: React.ReactNode;
-}
-
-export default function ThemeProvider({
-  children,
-  ...props
-}: CustomThemeProviderProps) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
-}
+'use client'
+// 兼容壳：实现已迁到 libs/ui-theme（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-theme/theme-provider'
+export { default } from '@sap/ui-theme/theme-provider'

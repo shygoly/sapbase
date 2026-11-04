@@ -1,25 +1,2 @@
-export interface UnifiedMenuItem {
-  id: string
-  label: string
-  path?: string
-  icon?: string
-  permissions?: string[]
-  visible?: boolean // Optional, defaults to true
-  disabled?: boolean // Optional, defaults to false
-  order: number
-  children?: UnifiedMenuItem[]
-  isActive?: boolean
-  shortcut?: [string, string]
-}
-
-export interface MenuSource {
-  type: 'static' | 'api'
-  items: UnifiedMenuItem[]
-}
-
-export interface MenuState {
-  items: UnifiedMenuItem[]
-  loading: boolean
-  error: string | null
-  expandedItems: Set<string>
-}
+// 兼容壳：实现已迁到 libs/ui-layout（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-layout/types/navigation'

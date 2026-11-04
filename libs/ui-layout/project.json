@@ -1,0 +1,10 @@
+{
+  "name": "ui-layout",
+  "root": "libs/ui-layout",
+  "sourceRoot": "libs/ui-layout/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:shared", "layer:ui", "runtime:browser"],
+  "targets": {
+    "typecheck": { "executor": "nx:run-commands", "options": { "command": "npm run typecheck", "cwd": "libs/ui-layout" } }
+  }
+}

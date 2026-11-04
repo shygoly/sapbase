@@ -1,8 +1,2 @@
-/**
- * Export all stores
- */
-
-export { useAuthStore } from './auth.store'
-export { usePermissionStore } from './permission.store'
-export { useMenuStore } from './menu.store'
-export { useUIStore } from './ui.store'
+// 兼容壳：实现已迁到 libs/shared-state（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/shared-state/core/store'

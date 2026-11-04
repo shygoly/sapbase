@@ -1,6 +1,2 @@
-// Schema system exports
-export * from './types'
-export * from './resolver'
-export * from './validator'
-export * from './registry'
-export * from './adapters'
+// 兼容壳：实现已迁到 libs/ui-runtime（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-runtime/schema'

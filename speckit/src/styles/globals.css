@@ -2,7 +2,10 @@
 
 /* Tailwind v4 默认只扫描 app 目录；共享 lib 的类名必须显式登记，否则样式静默丢失 */
 @source "../../../libs/ui-kit/src";
+@source "../../../libs/ui-theme/src";
 
+@source "../../../libs/ui-runtime/src";
+@source "../../../libs/ui-layout/src";
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));

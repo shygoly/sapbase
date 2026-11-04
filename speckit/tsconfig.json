@@ -31,6 +31,36 @@
       ],
       "@sap/ui-kit/*": [
         "../libs/ui-kit/src/*"
+      ],
+      "@sap/ui-theme": [
+        "../libs/ui-theme/src/index.ts"
+      ],
+      "@sap/ui-theme/*": [
+        "../libs/ui-theme/src/*"
+      ],
+      "@sap/api-client": [
+        "../libs/api-client/src/index.ts"
+      ],
+      "@sap/api-client/*": [
+        "../libs/api-client/src/*"
+      ],
+      "@sap/shared-state": [
+        "../libs/shared-state/src/index.ts"
+      ],
+      "@sap/shared-state/*": [
+        "../libs/shared-state/src/*"
+      ],
+      "@sap/ui-runtime": [
+        "../libs/ui-runtime/src/index.ts"
+      ],
+      "@sap/ui-runtime/*": [
+        "../libs/ui-runtime/src/*"
+      ],
+      "@sap/ui-layout": [
+        "../libs/ui-layout/src/index.ts"
+      ],
+      "@sap/ui-layout/*": [
+        "../libs/ui-layout/src/*"
       ]
     },
     "incremental": true,

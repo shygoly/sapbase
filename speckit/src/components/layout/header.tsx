@@ -1,33 +1,4 @@
-'use client';
-
-import React from 'react';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Separator } from '../ui/separator';
-import { Breadcrumbs } from '../breadcrumbs';
-import SearchInput from '../search-input';
-import { UserNav } from './user-nav';
-import { ThemeSelector } from '../themes/theme-selector';
-import { ThemeModeToggle } from '../themes/theme-mode-toggle';
-import CtaGithub from './cta-github';
-
-export default function Header() {
-  return (
-    <header className='flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'>
-      <div className='flex items-center gap-2 px-4'>
-        <SidebarTrigger className='-ml-1' />
-        <Separator orientation='vertical' className='mr-2 h-4' />
-        <Breadcrumbs />
-      </div>
-
-      <div className='flex items-center gap-2 px-4'>
-        <CtaGithub />
-        <div className='hidden md:flex'>
-          <SearchInput />
-        </div>
-        <UserNav />
-        <ThemeModeToggle />
-        <ThemeSelector />
-      </div>
-    </header>
-  );
-}
+'use client'
+// 兼容壳：实现已迁到 libs/ui-layout（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-layout/layout/header'
+export { default } from '@sap/ui-layout/layout/header'

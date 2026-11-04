@@ -1,0 +1,27 @@
+{
+  "name": "@sap/ui-theme",
+  "version": "1.0.0",
+  "private": true,
+  "description": "主题 token、Provider、主题选择器",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "next": "^15.3.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./active-theme": "./src/active-theme.tsx",
+    "./font.config": "./src/font.config.ts",
+    "./theme-mode-toggle": "./src/theme-mode-toggle.tsx",
+    "./theme-provider": "./src/theme-provider.tsx",
+    "./theme-selector": "./src/theme-selector.tsx",
+    "./theme.config": "./src/theme.config.ts"
+  },
+  "dependencies": {
+    "@sap/ui-kit": "*"
+  }
+}

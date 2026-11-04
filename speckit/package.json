@@ -100,7 +100,13 @@
     "uuid": "^11.0.3",
     "vaul": "^1.1.2",
     "zod": "^4.1.8",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.2",
+    "@sap/ui-kit": "*",
+    "@sap/ui-theme": "*",
+    "@sap/api-client": "*",
+    "@sap/ui-runtime": "*",
+    "@sap/ui-layout": "*",
+    "@sap/shared-state": "*"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.3.0",

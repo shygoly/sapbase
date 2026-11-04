@@ -1,0 +1,60 @@
+{
+  "name": "@sap/ui-layout",
+  "version": "1.0.0",
+  "private": true,
+  "description": "应用外壳：侧栏、顶栏、导航、面包屑、组织/应用切换",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "next": "^15.3.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./components/app-switcher": "./src/components/app-switcher.tsx",
+    "./components/breadcrumbs": "./src/components/breadcrumbs.tsx",
+    "./components/nav-main": "./src/components/nav-main.tsx",
+    "./components/nav-projects": "./src/components/nav-projects.tsx",
+    "./components/nav-user": "./src/components/nav-user.tsx",
+    "./components/notification-container": "./src/components/notification-container.tsx",
+    "./components/org-switcher": "./src/components/org-switcher.tsx",
+    "./components/search-input": "./src/components/search-input.tsx",
+    "./config/nav-config": "./src/config/nav-config.ts",
+    "./core/auth/auth-hooks": "./src/core/auth/auth-hooks.ts",
+    "./core/auth/permission-hooks": "./src/core/auth/permission-hooks.ts",
+    "./core/navigation/menu-hooks": "./src/core/navigation/menu-hooks.ts",
+    "./core/ui/ui-hooks": "./src/core/ui/ui-hooks.ts",
+    "./hooks/use-breadcrumbs": "./src/hooks/use-breadcrumbs.tsx",
+    "./hooks/use-locale": "./src/hooks/use-locale.ts",
+    "./hooks/use-media-query": "./src/hooks/use-media-query.ts",
+    "./hooks/use-nav": "./src/hooks/use-nav.ts",
+    "./hooks/use-unified-menu": "./src/hooks/use-unified-menu.ts",
+    "./i18n/config": "./src/i18n/config.ts",
+    "./layout/app-layout-wrapper": "./src/layout/app-layout-wrapper.tsx",
+    "./layout/app-sidebar": "./src/layout/app-sidebar.tsx",
+    "./layout/cta-github": "./src/layout/cta-github.tsx",
+    "./layout/header": "./src/layout/header.tsx",
+    "./layout": "./src/layout/index.ts",
+    "./layout/info-sidebar": "./src/layout/info-sidebar.tsx",
+    "./layout/message-center": "./src/layout/message-center.tsx",
+    "./layout/providers": "./src/layout/providers.tsx",
+    "./layout/sidebar": "./src/layout/sidebar.tsx",
+    "./layout/top-navigation-tabs": "./src/layout/top-navigation-tabs.tsx",
+    "./layout/unified-sidebar": "./src/layout/unified-sidebar.tsx",
+    "./layout/user-nav": "./src/layout/user-nav.tsx",
+    "./lib/menu-adapter": "./src/lib/menu-adapter.ts",
+    "./lib/navigation/route-display": "./src/lib/navigation/route-display.ts",
+    "./root-providers": "./src/root-providers.tsx",
+    "./types": "./src/types/index.ts",
+    "./types/navigation": "./src/types/navigation.ts"
+  },
+  "dependencies": {
+    "@sap/ui-kit": "*",
+    "@sap/ui-theme": "*",
+    "@sap/api-client": "*",
+    "@sap/shared-state": "*"
+  }
+}

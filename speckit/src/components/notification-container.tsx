@@ -1,7 +1,3 @@
-'use client';
-
-import { Toaster } from 'sonner';
-
-export function NotificationContainer() {
-  return <Toaster position="top-right" />;
-}
+'use client'
+// 兼容壳：实现已迁到 libs/ui-layout（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-layout/components/notification-container'

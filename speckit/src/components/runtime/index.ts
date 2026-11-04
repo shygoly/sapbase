@@ -1,9 +1,2 @@
-/**
- * Runtime Components
- * Export all Runtime wrapper components for Runtime-First architecture
- */
-
-export { PageRuntime, type PageModel } from './PageRuntime';
-export { CollectionRuntime, type CollectionModel } from './CollectionRuntime';
-export { FormRuntime, type FormModel } from './FormRuntime';
-export { DetailRuntime, type DetailModel } from './DetailRuntime';
+// 兼容壳：实现已迁到 libs/ui-runtime（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-runtime/runtime'

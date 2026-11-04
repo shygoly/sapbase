@@ -1,0 +1,10 @@
+{
+  "name": "shared-state",
+  "root": "libs/shared-state",
+  "sourceRoot": "libs/shared-state/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:shared", "layer:shared", "runtime:browser"],
+  "targets": {
+    "typecheck": { "executor": "nx:run-commands", "options": { "command": "npm run typecheck", "cwd": "libs/shared-state" } }
+  }
+}

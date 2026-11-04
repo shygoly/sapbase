@@ -1,0 +1,38 @@
+{
+  "name": "@sap/ui-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Schema 驱动渲染：解析器、校验器、Page/Form/Collection/Detail 运行时",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "next": "^15.3.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./components/schema-form": "./src/components/schema-form.tsx",
+    "./components/schema-list": "./src/components/schema-list.tsx",
+    "./core/auth/permission-guard": "./src/core/auth/permission-guard.tsx",
+    "./layout/page-container": "./src/layout/page-container.tsx",
+    "./runtime/CollectionRuntime": "./src/runtime/CollectionRuntime.tsx",
+    "./runtime/DetailRuntime": "./src/runtime/DetailRuntime.tsx",
+    "./runtime/FormRuntime": "./src/runtime/FormRuntime.tsx",
+    "./runtime/PageRuntime": "./src/runtime/PageRuntime.tsx",
+    "./runtime": "./src/runtime/index.ts",
+    "./schema/adapters": "./src/schema/adapters.ts",
+    "./schema": "./src/schema/index.ts",
+    "./schema/registry": "./src/schema/registry.ts",
+    "./schema/resolver": "./src/schema/resolver.ts",
+    "./schema/types": "./src/schema/types.ts",
+    "./schema/validator": "./src/schema/validator.ts"
+  },
+  "dependencies": {
+    "@sap/ui-kit": "*",
+    "@sap/api-client": "*",
+    "@sap/shared-state": "*"
+  }
+}

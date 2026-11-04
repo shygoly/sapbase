@@ -9,5 +9,10 @@
   },
   "devDependencies": {
     "typescript": "^5.7.2"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./lib/canonical-json": "./src/lib/canonical-json.ts",
+    "./lib/money": "./src/lib/money.ts"
   }
 }

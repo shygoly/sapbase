@@ -1,0 +1,28 @@
+{
+  "name": "@sap/shared-state",
+  "version": "1.0.0",
+  "private": true,
+  "description": "前端全局状态（zustand）：认证、组织、权限、菜单、UI、业务应用",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "peerDependencies": {
+    "react": "^18.3.1"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./core/store/auth.store": "./src/core/store/auth.store.ts",
+    "./core/store/business-app.store": "./src/core/store/business-app.store.ts",
+    "./core/store": "./src/core/store/index.ts",
+    "./core/store/menu.store": "./src/core/store/menu.store.ts",
+    "./core/store/navigation-tabs.store": "./src/core/store/navigation-tabs.store.ts",
+    "./core/store/organization.store": "./src/core/store/organization.store.ts",
+    "./core/store/permission.store": "./src/core/store/permission.store.ts",
+    "./core/store/ui.store": "./src/core/store/ui.store.ts"
+  },
+  "dependencies": {
+    "@sap/api-client": "*"
+  }
+}

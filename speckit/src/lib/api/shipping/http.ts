@@ -1,10 +1,2 @@
-import { httpClient } from '@/lib/api/client'
-
-export async function fetchShippingResource<T>(path: string, fallback: T): Promise<T> {
-  try {
-    const response = await httpClient.get<any>(path)
-    return (response.data?.data ?? response.data ?? fallback) as T
-  } catch {
-    return fallback
-  }
-}
+// 兼容壳：实现已迁到 libs/api-client（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/api-client/api/shipping/http'
