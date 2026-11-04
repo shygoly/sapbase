@@ -82,7 +82,7 @@ class PluginThemeService {
       }
 
       styleElement.textContent = css
-    } catch (error) {
+    } catch {
       // Theme CSS load error swallowed
     }
   }

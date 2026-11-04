@@ -77,7 +77,7 @@ export default function UsersPage() {
       await usersApi.delete(id)
       notification.success('User deleted successfully')
       await fetchUsers()
-    } catch (error) {
+    } catch {
       notification.error('Failed to delete user')
     }
   }

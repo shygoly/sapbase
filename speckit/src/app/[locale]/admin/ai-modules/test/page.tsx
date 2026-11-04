@@ -111,7 +111,7 @@ export default function AIModuleTestPage() {
       })
 
       setModules(Array.from(moduleMap.values()))
-    } catch (error) {
+    } catch {
       notification.error('Failed to load modules')
     } finally {
       setIsLoading(false)
@@ -140,7 +140,7 @@ export default function AIModuleTestPage() {
           description: `Temporary module for testing ${foundModule.name}`,
         })
         testModuleId = tempModule.id
-      } catch (error) {
+      } catch {
         notification.error('Failed to create test module')
         return
       }
@@ -157,7 +157,7 @@ export default function AIModuleTestPage() {
       setTests(testResults)
       await fetchModules()
       notification.success('Tests completed')
-    } catch (error) {
+    } catch {
       notification.error('Failed to run tests')
     } finally {
       setIsRunningTests(false)

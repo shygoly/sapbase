@@ -135,7 +135,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         })
         const { useOrganizationStore } = await import('./organization.store')
         useOrganizationStore.getState().loadOrganizations()
-      } catch (error) {
+      } catch {
         authApi.logout()
         set({
           user: null,

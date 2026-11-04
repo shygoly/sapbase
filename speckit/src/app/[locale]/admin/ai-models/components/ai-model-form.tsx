@@ -62,7 +62,7 @@ export function AIModelForm({ model, onSuccess, onCancel }: AIModelFormProps) {
         notification.success('Model created successfully')
       }
       onSuccess()
-    } catch (error) {
+    } catch {
       notification.error(
         `Failed to ${model ? 'update' : 'create'} model`,
       )

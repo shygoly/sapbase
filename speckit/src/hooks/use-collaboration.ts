@@ -106,7 +106,7 @@ export function useCollaboration(options: UseCollaborationOptions) {
           setCollaborators(data.users)
         }
       })
-    } catch (error) {
+    } catch {
       // Join failed, state already reset
     }
   }, [client, connected, resourceType, resourceId])

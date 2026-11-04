@@ -38,7 +38,7 @@ export default function AIModelsPage() {
     try {
       const data = await aiModelsApi.findAll()
       setModels(data)
-    } catch (error) {
+    } catch {
       notification.error('Failed to load AI models')
     } finally {
       setIsLoading(false)
@@ -60,7 +60,7 @@ export default function AIModelsPage() {
         notification.error(`Connection test failed: ${result.message}`)
       }
       await fetchModels()
-    } catch (error) {
+    } catch {
       notification.error('Failed to test connection')
     } finally {
       setTestingModelId(null)
@@ -73,7 +73,7 @@ export default function AIModelsPage() {
       await aiModelsApi.delete(id)
       notification.success('Model deleted successfully')
       await fetchModels()
-    } catch (error) {
+    } catch {
       notification.error('Failed to delete model')
     }
   }

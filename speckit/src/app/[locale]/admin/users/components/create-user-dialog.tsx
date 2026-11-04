@@ -67,7 +67,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
       reset()
       onOpenChange(false)
       onSuccess()
-    } catch (error) {
+    } catch {
       notification.error('Failed to create user')
     } finally {
       setIsSubmitting(false)

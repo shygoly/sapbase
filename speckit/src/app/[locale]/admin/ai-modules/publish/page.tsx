@@ -45,7 +45,7 @@ export default function AIModulePublishPage() {
       setModules(data.filter((m) => 
         m.status === 'approved' || m.status === 'published' || m.status === 'unpublished'
       ))
-    } catch (error) {
+    } catch {
       notification.error('Failed to load modules')
     }
   }
@@ -56,7 +56,7 @@ export default function AIModulePublishPage() {
       await aiModulesApi.publish(id)
       notification.success('Module published successfully')
       await fetchModules()
-    } catch (error) {
+    } catch {
       notification.error('Failed to publish module')
     }
   }
@@ -67,7 +67,7 @@ export default function AIModulePublishPage() {
       await aiModulesApi.unpublish(id)
       notification.success('Module unpublished successfully')
       await fetchModules()
-    } catch (error) {
+    } catch {
       notification.error('Failed to unpublish module')
     }
   }

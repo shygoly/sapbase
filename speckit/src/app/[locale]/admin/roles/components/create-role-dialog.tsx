@@ -77,7 +77,7 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
       setSelectedPermissions([])
       onOpenChange(false)
       onSuccess()
-    } catch (error) {
+    } catch {
       notification.error('Failed to create role')
     } finally {
       setIsSubmitting(false)

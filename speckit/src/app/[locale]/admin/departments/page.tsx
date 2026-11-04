@@ -76,7 +76,7 @@ export default function DepartmentsPage() {
       await departmentsApi.delete(id)
       notification.success('Department deleted successfully')
       await fetchDepartments()
-    } catch (error) {
+    } catch {
       notification.error('Failed to delete department')
     }
   }

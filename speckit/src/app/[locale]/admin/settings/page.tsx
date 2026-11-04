@@ -44,7 +44,7 @@ export default function SettingsPage() {
         settingsMap[setting.key] = setting.value
       })
       setSettings(settingsMap)
-    } catch (error) {
+    } catch {
       notification.error('Failed to load settings')
     } finally {
       setIsLoading(false)

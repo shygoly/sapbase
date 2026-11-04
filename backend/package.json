@@ -37,7 +37,8 @@
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "migration:saas": "ts-node -r tsconfig-paths/register src/migrations/run-migration.ts",
-    "migration:saas:revert": "ts-node -r tsconfig-paths/register src/migrations/revert-migration.ts"
+    "migration:saas:revert": "ts-node -r tsconfig-paths/register src/migrations/revert-migration.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.1.0",

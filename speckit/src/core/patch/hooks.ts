@@ -94,7 +94,7 @@ export function usePatchDryRun(patchManager: PatchManager | null) {
         const dryRunResult = await patchManager.dryRun(patch, actorPermissions)
         setResult(dryRunResult)
         return dryRunResult
-      } catch (err) {
+      } catch {
         return null
       } finally {
         setIsDryRunning(false)
