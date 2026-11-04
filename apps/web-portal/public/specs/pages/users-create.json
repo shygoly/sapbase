@@ -1,0 +1,12 @@
+{
+  "path": "users/create",
+  "view": "user-form",
+  "label": "Create User",
+  "metadata": {
+    "title": "Create New User",
+    "description": "Add a new user to the system",
+    "breadcrumb": true
+  },
+  "permissions": ["user.create"],
+  "version": "1.0.0"
+}

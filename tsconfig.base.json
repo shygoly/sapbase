@@ -40,6 +40,12 @@
       ],
       "@sap/ui-layout/*": [
         "libs/ui-layout/src/*"
+      ],
+      "@sap/app-shared": [
+        "libs/app-shared/src/index.ts"
+      ],
+      "@sap/app-shared/*": [
+        "libs/app-shared/src/*"
       ]
     }
   }

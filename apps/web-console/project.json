@@ -1,0 +1,12 @@
+{
+  "name": "web-console",
+  "root": "apps/web-console",
+  "sourceRoot": "apps/web-console/src",
+  "projectType": "application",
+  "tags": ["type:app", "scope:console", "runtime:browser"],
+  "targets": {
+    "build": { "executor": "nx:run-commands", "options": { "command": "npm run build", "cwd": "apps/web-console" } },
+    "dev": { "executor": "nx:run-commands", "options": { "command": "npm run dev", "cwd": "apps/web-console" } },
+    "typecheck": { "executor": "nx:run-commands", "options": { "command": "npm run typecheck", "cwd": "apps/web-console" } }
+  }
+}

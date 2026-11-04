@@ -1,0 +1,13 @@
+{
+  "path": "/crm/transactions",
+  "view": "transaction-list",
+  "label": "资金往来",
+  "metadata": {
+    "title": "资金往来",
+    "description": "资金交易管理",
+    "icon": "DollarSign",
+    "breadcrumb": true
+  },
+  "permissions": ["admin", "sales", "manager", "accountant"],
+  "version": "1.0"
+}

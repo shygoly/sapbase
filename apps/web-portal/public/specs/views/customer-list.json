@@ -1,0 +1,33 @@
+{
+  "name": "customer-list",
+  "type": "list",
+  "object": "Customer",
+  "label": "客户列表",
+  "description": "Customer list view",
+  "layout": {
+    "type": "grid",
+    "fields": ["name", "email", "phone", "company", "industry", "status"]
+  },
+  "permissions": [],
+  "actions": [
+    {
+      "name": "create",
+      "label": "新建客户",
+      "type": "primary",
+      "permissions": ["admin", "sales"]
+    },
+    {
+      "name": "edit",
+      "label": "编辑",
+      "type": "secondary",
+      "permissions": ["admin", "sales"]
+    },
+    {
+      "name": "delete",
+      "label": "删除",
+      "type": "danger",
+      "permissions": ["admin"]
+    }
+  ],
+  "version": "1.0"
+}

@@ -1,0 +1,188 @@
+/**
+ * Plugins Management Page
+ */
+
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { pluginsApi, Plugin } from '@sap/app-shared/lib/api/plugins.api'
+import { useNotification } from '@sap/app-shared/core/ui/ui-hooks'
+import { PermissionGuard } from '@sap/app-shared/core/auth/permission-guard'
+import { Button } from '@sap/app-shared/components/ui/button'
+import { Plus, BookOpen } from 'lucide-react'
+import Link from 'next/link'
+import { useLocale } from '@sap/app-shared/hooks/use-locale'
+import { PluginsList } from './components/plugins-list'
+import { InstallPluginDialog } from './components/install-plugin-dialog'
+import { RegistryBrowser } from './components/registry-browser'
+import { TableSkeleton } from '@sap/app-shared/components/loading-skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@sap/app-shared/components/ui/tabs'
+import { PageRuntime, type PageModel } from '@sap/app-shared/components/runtime'
+import { CollectionRuntime, type CollectionModel } from '@sap/app-shared/components/runtime'
+
+// PageModel schema
+const PluginsPageModel: PageModel = {
+  id: 'plugins-page',
+  title: 'Plugin Management',
+  description: 'Manage plugins and extensions',
+  permissions: ['plugins:read'],
+}
+
+// CollectionModel schema
+const PluginsCollectionModel: CollectionModel = {
+  id: 'plugins-collection',
+  name: 'Plugins',
+  permissions: ['plugins:read'],
+}
+
+export default function PluginsPage() {
+  const locale = useLocale()
+  const [plugins, setPlugins] = useState<Plugin[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [showInstallDialog, setShowInstallDialog] = useState(false)
+  const notification = useNotification()
+
+  // Fetch plugins
+  const fetchPlugins = async () => {
+    setIsLoading(true)
+    try {
+      const data = await pluginsApi.findAll()
+      setPlugins(data)
+    } catch {
+      notification.error('Failed to load plugins')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPlugins()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only fetch
+  }, [])
+
+  const handleActivate = async (id: string) => {
+    try {
+      await pluginsApi.activate(id)
+      notification.success('Plugin activated successfully')
+      await fetchPlugins()
+    } catch (error: any) {
+      notification.error(
+        error.response?.data?.message || 'Failed to activate plugin',
+      )
+    }
+  }
+
+  const handleDeactivate = async (id: string) => {
+    try {
+      await pluginsApi.deactivate(id)
+      notification.success('Plugin deactivated successfully')
+      await fetchPlugins()
+    } catch (error: any) {
+      notification.error(
+        error.response?.data?.message || 'Failed to deactivate plugin',
+      )
+    }
+  }
+
+  const handleUninstall = async (id: string) => {
+    const plugin = plugins.find((p) => p.id === id)
+    if (
+      !confirm(
+        `Are you sure you want to uninstall "${plugin?.name}"? This action cannot be undone.`,
+      )
+    ) {
+      return
+    }
+
+    try {
+      await pluginsApi.uninstall(id)
+      notification.success('Plugin uninstalled successfully')
+      await fetchPlugins()
+    } catch (error: any) {
+      notification.error(
+        error.response?.data?.message || 'Failed to uninstall plugin',
+      )
+    }
+  }
+
+  const handleViewDetails = async (id: string) => {
+    try {
+      const plugin = await pluginsApi.findOne(id)
+      alert(
+        `Plugin Details:\n\nName: ${plugin.name}\nVersion: ${plugin.version}\nType: ${plugin.type}\nStatus: ${plugin.status}\nDescription: ${plugin.description || 'N/A'}\nAuthor: ${plugin.author || 'N/A'}`,
+      )
+    } catch {
+      notification.error('Failed to load plugin details')
+    }
+  }
+
+  const handleInstallSuccess = async () => {
+    await fetchPlugins()
+    notification.success('Plugin installed successfully')
+  }
+
+  // Page header action: docs link + install button
+  const pageHeaderAction = (
+    <div className="flex items-center gap-2">
+      <Link href={`/${locale}/docs/plugin`}>
+        <Button variant="outline" size="default">
+          <BookOpen className="mr-2 h-4 w-4" />
+          插件配置说明
+        </Button>
+      </Link>
+      <PermissionGuard permission="plugins:create">
+        <Button onClick={() => setShowInstallDialog(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Install Plugin
+        </Button>
+      </PermissionGuard>
+    </div>
+  )
+
+  return (
+    <PageRuntime
+      model={PluginsPageModel}
+      isLoading={isLoading}
+      pageHeaderAction={pageHeaderAction}
+    >
+      <div className="space-y-6">
+        <Tabs defaultValue="installed" className="w-full">
+          <TabsList>
+            <TabsTrigger value="installed">Installed Plugins</TabsTrigger>
+            <TabsTrigger value="registry">Plugin Registry</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="installed" className="space-y-4">
+            <CollectionRuntime
+              model={PluginsCollectionModel}
+              isLoading={isLoading}
+            >
+              {isLoading ? (
+                <TableSkeleton />
+              ) : (
+                <PluginsList
+                  plugins={plugins}
+                  onActivate={handleActivate}
+                  onDeactivate={handleDeactivate}
+                  onUninstall={handleUninstall}
+                  onViewDetails={handleViewDetails}
+                />
+              )}
+            </CollectionRuntime>
+          </TabsContent>
+
+          <TabsContent value="registry" className="space-y-4">
+            <RegistryBrowser />
+          </TabsContent>
+        </Tabs>
+
+        {/* Install Plugin Dialog */}
+        <InstallPluginDialog
+          open={showInstallDialog}
+          onOpenChange={setShowInstallDialog}
+          onSuccess={handleInstallSuccess}
+        />
+      </div>
+    </PageRuntime>
+  )
+}

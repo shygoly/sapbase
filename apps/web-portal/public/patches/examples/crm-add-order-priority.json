@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "patchId": "crm-002-add-priority-field",
+  "timestamp": "2026-02-16T12:05:00.000Z",
+  "actor": "ai",
+  "scope": "object",
+  "operation": "add",
+  "target": {
+    "type": "field",
+    "identifier": "Order"
+  },
+  "payload": {
+    "field": {
+      "name": "priority",
+      "label": "优先级",
+      "type": "select",
+      "required": true,
+      "default": "normal",
+      "options": [
+        { "label": "低", "value": "low" },
+        { "label": "普通", "value": "normal" },
+        { "label": "高", "value": "high" },
+        { "label": "紧急", "value": "urgent" }
+      ],
+      "description": "订单优先级"
+    }
+  },
+  "description": "为 Order 对象添加 priority 优先级字段",
+  "securityLevel": "L1"
+}

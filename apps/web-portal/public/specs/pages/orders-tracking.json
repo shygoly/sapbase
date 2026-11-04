@@ -1,0 +1,13 @@
+{
+  "path": "/crm/orders/:id/tracking",
+  "view": "order-tracking-list",
+  "label": "订单跟踪",
+  "metadata": {
+    "title": "订单跟踪",
+    "description": "查看订单跟踪记录",
+    "icon": "Package",
+    "breadcrumb": true
+  },
+  "permissions": ["admin", "sales", "manager"],
+  "version": "1.0"
+}

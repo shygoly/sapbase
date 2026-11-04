@@ -1,0 +1,147 @@
+/**
+ * Departments List Component
+ */
+
+'use client'
+
+import React from 'react'
+import { Department } from '@sap/app-shared/lib/api/types'
+import { usePermission } from '@sap/app-shared/core/auth/permission-hooks'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@sap/app-shared/components/ui/table'
+import { Button } from '@sap/app-shared/components/ui/button'
+import { Badge } from '@sap/app-shared/components/ui/badge'
+import { Trash2, Edit2 } from 'lucide-react'
+
+interface DepartmentsListProps {
+  departments: Department[]
+  total: number
+  page: number
+  pageSize: number
+  onPageChange: (page: number) => void
+  onDelete: (id: string) => void
+  onEdit: (department: Department) => void
+}
+
+export function DepartmentsList({
+  departments,
+  total,
+  page,
+  pageSize,
+  onPageChange,
+  onDelete,
+  onEdit,
+}: DepartmentsListProps) {
+  const canDelete = usePermission('departments:delete')
+  const canUpdate = usePermission('departments:update')
+
+  const totalPages = Math.ceil(total / pageSize)
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800'
+      case 'inactive':
+        return 'bg-muted text-foreground'
+      case 'archived':
+        return 'bg-yellow-100 text-yellow-800'
+      default:
+        return 'bg-muted text-foreground'
+    }
+  }
+
+  return (
+    <div className="space-y-4 rounded-lg border border-border bg-card">
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Parent Department</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {departments.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  No departments found
+                </TableCell>
+              </TableRow>
+            ) : (
+              departments.map((dept) => (
+                <TableRow key={dept.id}>
+                  <TableCell className="font-medium">{dept.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{dept.description || '-'}</TableCell>
+                  <TableCell>{dept.parentId || '-'}</TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(dept.status)}>
+                      {dept.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      {canUpdate && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEdit(dept)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onDelete(dept.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between border-t border-border px-6 py-4">
+        <div className="text-sm text-muted-foreground">
+          Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

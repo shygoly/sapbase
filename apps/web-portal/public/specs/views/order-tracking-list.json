@@ -1,0 +1,21 @@
+{
+  "name": "order-tracking-list",
+  "type": "list",
+  "object": "OrderTracking",
+  "label": "订单跟踪列表",
+  "description": "Order tracking list view",
+  "layout": {
+    "type": "grid",
+    "fields": ["order", "status", "timestamp", "updatedBy", "notes"]
+  },
+  "permissions": [],
+  "actions": [
+    {
+      "name": "create",
+      "label": "添加跟踪",
+      "type": "primary",
+      "permissions": ["admin", "sales"]
+    }
+  ],
+  "version": "1.0"
+}

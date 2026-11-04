@@ -1,0 +1,27 @@
+{
+  "name": "customer-form",
+  "type": "form",
+  "object": "Customer",
+  "label": "客户表单",
+  "description": "Customer form view",
+  "layout": {
+    "type": "stack",
+    "fields": ["name", "email", "phone", "company", "industry", "address", "status", "notes"]
+  },
+  "permissions": [],
+  "actions": [
+    {
+      "name": "save",
+      "label": "保存",
+      "type": "primary",
+      "permissions": ["admin", "sales"]
+    },
+    {
+      "name": "cancel",
+      "label": "取消",
+      "type": "secondary",
+      "permissions": []
+    }
+  ],
+  "version": "1.0"
+}

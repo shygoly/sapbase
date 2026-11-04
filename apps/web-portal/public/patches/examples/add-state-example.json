@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "patchId": "550e8400-e29b-41d4-a716-446655440003",
+  "timestamp": "2026-02-16T10:15:00.000Z",
+  "actor": "ai",
+  "scope": "state",
+  "operation": "add",
+  "target": {
+    "type": "state",
+    "identifier": "Order"
+  },
+  "payload": {
+    "state": {
+      "name": "archived",
+      "transitions": ["view"],
+      "initial": false
+    }
+  },
+  "description": "Add archived state to Order state machine"
+}

@@ -1,0 +1,27 @@
+{
+  "name": "transaction-form",
+  "type": "form",
+  "object": "FinancialTransaction",
+  "label": "资金往来表单",
+  "description": "Financial transaction form view",
+  "layout": {
+    "type": "stack",
+    "fields": ["transactionNumber", "customer", "order", "type", "amount", "paymentMethod", "date", "status", "notes"]
+  },
+  "permissions": [],
+  "actions": [
+    {
+      "name": "save",
+      "label": "保存",
+      "type": "primary",
+      "permissions": ["admin", "accountant"]
+    },
+    {
+      "name": "cancel",
+      "label": "取消",
+      "type": "secondary",
+      "permissions": []
+    }
+  ],
+  "version": "1.0"
+}

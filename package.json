@@ -4,16 +4,16 @@
   "description": "Speckit ERP - Monorepo with Frontend and Backend",
   "private": true,
   "workspaces": [
+    "apps/*",
     "shared-schemas",
-    "speckit",
     "backend",
     "wasm-modules",
     "libs/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace speckit\" \"npm run start:dev --workspace backend\"",
+    "dev": "concurrently -n portal,console,backend -c cyan,magenta,green \"npm run dev --workspace @sap/web-portal\" \"npm run dev --workspace @sap/web-console\" \"npm run start:dev --workspace speckit-backend\"",
     "dev:all": "concurrently -n \"frontend,backend\" -c \"cyan,magenta\" \"npm run dev --workspace speckit\" \"npm run start:dev --workspace backend\"",
-    "dev:frontend": "npm run dev --workspace speckit",
+    "dev:frontend": "npm run dev --workspace @sap/web-portal",
     "dev:backend": "npm run start:dev --workspace backend",
     "wasm:build": "npm run build --workspace @speckit/wasm-modules",
     "wasm:admit": "npm run admit --workspace @speckit/wasm-modules --",
@@ -30,10 +30,13 @@
     "affected:build": "nx affected -t build",
     "affected:lint": "nx affected -t lint",
     "affected:test": "nx affected -t test",
-    "lint:boundaries": "nx graph --file=.nx/boundary-graph.json >/dev/null && eslint \"backend/src/**/*.ts\" \"libs/**/*.ts\" --no-error-on-unmatched-pattern",
+    "lint:boundaries": "nx graph --file=.nx/boundary-graph.json >/dev/null && eslint \"backend/src/**/*.ts\" \"libs/**/*.ts\" \"apps/*/src/**/*.ts\" \"apps/*/src/**/*.tsx\" --no-error-on-unmatched-pattern",
     "check:boundaries": "node scripts/meta/check-boundaries.mjs",
     "test:meta": "node --test scripts/meta/lib/*.test.mjs",
-    "check:links": "node scripts/meta/check-doc-links.mjs"
+    "check:links": "node scripts/meta/check-doc-links.mjs",
+    "dev:portal": "npm run dev --workspace @sap/web-portal",
+    "dev:console": "npm run dev --workspace @sap/web-console",
+    "build:web": "npm run build --workspace @sap/web-portal && npm run build --workspace @sap/web-console"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
@@ -49,6 +52,7 @@
   },
   "overrides": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "nuqs": "2.8.8"
   }
 }

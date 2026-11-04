@@ -1,0 +1,12 @@
+{
+  "name": "web-portal",
+  "root": "apps/web-portal",
+  "sourceRoot": "apps/web-portal/src",
+  "projectType": "application",
+  "tags": ["type:app", "scope:portal", "runtime:browser"],
+  "targets": {
+    "build": { "executor": "nx:run-commands", "options": { "command": "npm run build", "cwd": "apps/web-portal" } },
+    "dev": { "executor": "nx:run-commands", "options": { "command": "npm run dev", "cwd": "apps/web-portal" } },
+    "typecheck": { "executor": "nx:run-commands", "options": { "command": "npm run typecheck", "cwd": "apps/web-portal" } }
+  }
+}

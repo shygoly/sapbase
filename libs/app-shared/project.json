@@ -1,0 +1,10 @@
+{
+  "name": "app-shared",
+  "root": "libs/app-shared",
+  "sourceRoot": "libs/app-shared/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:shared", "layer:ui", "runtime:browser"],
+  "targets": {
+    "typecheck": { "executor": "nx:run-commands", "options": { "command": "npm run typecheck", "cwd": "libs/app-shared" } }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "path": "/crm/customers",
+  "view": "customer-list",
+  "label": "客户管理",
+  "metadata": {
+    "title": "客户管理",
+    "description": "客户信息管理",
+    "icon": "Users",
+    "breadcrumb": true
+  },
+  "permissions": ["admin", "sales", "manager"],
+  "version": "1.0"
+}

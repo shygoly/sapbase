@@ -1,0 +1,105 @@
+{
+  "name": "Customer",
+  "label": "客户",
+  "description": "Customer management schema",
+  "fields": [
+    {
+      "name": "id",
+      "label": "ID",
+      "type": "text",
+      "required": true,
+      "readonly": true,
+      "hidden": true
+    },
+    {
+      "name": "name",
+      "label": "客户名称",
+      "type": "text",
+      "required": true,
+      "placeholder": "请输入客户名称"
+    },
+    {
+      "name": "email",
+      "label": "邮箱",
+      "type": "email",
+      "required": true,
+      "placeholder": "customer@example.com"
+    },
+    {
+      "name": "phone",
+      "label": "电话",
+      "type": "text",
+      "required": false,
+      "placeholder": "请输入电话号码"
+    },
+    {
+      "name": "company",
+      "label": "公司名称",
+      "type": "text",
+      "required": false,
+      "placeholder": "请输入公司名称"
+    },
+    {
+      "name": "industry",
+      "label": "行业",
+      "type": "select",
+      "required": false,
+      "options": [
+        { "label": "制造业", "value": "manufacturing" },
+        { "label": "零售业", "value": "retail" },
+        { "label": "服务业", "value": "services" },
+        { "label": "科技", "value": "technology" },
+        { "label": "金融", "value": "finance" },
+        { "label": "其他", "value": "other" }
+      ]
+    },
+    {
+      "name": "address",
+      "label": "地址",
+      "type": "textarea",
+      "required": false,
+      "placeholder": "请输入详细地址"
+    },
+    {
+      "name": "status",
+      "label": "状态",
+      "type": "select",
+      "required": true,
+      "default": "active",
+      "options": [
+        { "label": "活跃", "value": "active" },
+        { "label": "潜在", "value": "prospect" },
+        { "label": "暂停", "value": "inactive" },
+        { "label": "已归档", "value": "archived" }
+      ]
+    },
+    {
+      "name": "notes",
+      "label": "备注",
+      "type": "textarea",
+      "required": false,
+      "placeholder": "请输入备注信息"
+    },
+    {
+      "name": "createdAt",
+      "label": "创建时间",
+      "type": "datetime",
+      "required": true,
+      "readonly": true
+    },
+    {
+      "name": "updatedAt",
+      "label": "更新时间",
+      "type": "datetime",
+      "required": true,
+      "readonly": true
+    }
+  ],
+  "permissions": {
+    "view": ["admin", "sales", "manager"],
+    "create": ["admin", "sales"],
+    "edit": ["admin", "sales"],
+    "delete": ["admin"]
+  },
+  "version": "1.0"
+}

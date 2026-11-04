@@ -1,0 +1,80 @@
+{
+  "name": "OrderTracking",
+  "label": "订单跟踪",
+  "description": "Order tracking schema for status changes",
+  "fields": [
+    {
+      "name": "id",
+      "label": "ID",
+      "type": "text",
+      "required": true,
+      "readonly": true,
+      "hidden": true
+    },
+    {
+      "name": "order",
+      "label": "订单",
+      "type": "relation",
+      "required": true,
+      "relationObject": "Order",
+      "relationField": "orderNumber"
+    },
+    {
+      "name": "status",
+      "label": "状态",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "label": "待处理", "value": "pending" },
+        { "label": "已确认", "value": "confirmed" },
+        { "label": "生产中", "value": "processing" },
+        { "label": "已发货", "value": "shipped" },
+        { "label": "已完成", "value": "completed" },
+        { "label": "已取消", "value": "cancelled" }
+      ]
+    },
+    {
+      "name": "timestamp",
+      "label": "时间戳",
+      "type": "datetime",
+      "required": true,
+      "default": "now"
+    },
+    {
+      "name": "notes",
+      "label": "备注",
+      "type": "textarea",
+      "required": false,
+      "placeholder": "请输入状态变更备注"
+    },
+    {
+      "name": "updatedBy",
+      "label": "更新人",
+      "type": "text",
+      "required": true,
+      "readonly": true
+    },
+    {
+      "name": "createdAt",
+      "label": "创建时间",
+      "type": "datetime",
+      "required": true,
+      "readonly": true
+    }
+  ],
+  "relations": [
+    {
+      "name": "order",
+      "type": "many-to-one",
+      "targetObject": "Order",
+      "foreignKey": "orderId"
+    }
+  ],
+  "permissions": {
+    "view": ["admin", "sales", "manager"],
+    "create": ["admin", "sales"],
+    "edit": ["admin"],
+    "delete": ["admin"]
+  },
+  "version": "1.0"
+}

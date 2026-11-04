@@ -6,9 +6,28 @@
     "agentTools": "AGENT-TOOLS.md"
   },
   "code": {
-    "roots": ["backend/src", "speckit/src", "shared-schemas", "wasm-modules/src"],
-    "extensions": [".ts", ".tsx", ".js", ".mjs"],
-    "ignoreDirs": ["node_modules", ".next", "dist", "coverage", ".nx", ".git"]
+    "roots": [
+      "backend/src",
+      "apps/web-portal/src",
+      "apps/web-console/src",
+      "libs",
+      "shared-schemas",
+      "wasm-modules/src"
+    ],
+    "extensions": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".mjs"
+    ],
+    "ignoreDirs": [
+      "node_modules",
+      ".next",
+      "dist",
+      "coverage",
+      ".nx",
+      ".git"
+    ]
   },
   "schema": {
     "kind": "manifest",
@@ -18,14 +37,23 @@
   },
   "cron": {
     "registry": "backend/src/monitor/scheduled-job.registry.ts",
-    "decoratorPatterns": ["@Cron\\([^)]*name:\\s*['\"]([^'\"]+)['\"]"]
+    "decoratorPatterns": [
+      "@Cron\\([^)]*name:\\s*['\"]([^'\"]+)['\"]"
+    ]
   },
   "agentTools": {
     "contract": "contracts/tools.json",
     "mcpManifest": "contracts/mcp-tools.json",
-    "handlerRoots": ["backend/src/agent-tools"],
+    "handlerRoots": [
+      "backend/src/agent-tools",
+      "libs/agent-tools/src"
+    ],
     "handlerPattern": "(?:toolName\\s*:\\s*|case\\s+)['\"]([^'\"]+)['\"]",
     "strictHandlers": false
   },
-  "sqlDirs": ["sql", "tools/postgres/init", "backend/src/migrations"]
+  "sqlDirs": [
+    "sql",
+    "tools/postgres/init",
+    "backend/src/migrations"
+  ]
 }

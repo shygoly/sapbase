@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "patchId": "crm-003-add-invoice-field",
+  "timestamp": "2026-02-16T12:10:00.000Z",
+  "actor": "ai",
+  "scope": "object",
+  "operation": "add",
+  "target": {
+    "type": "field",
+    "identifier": "FinancialTransaction"
+  },
+  "payload": {
+    "field": {
+      "name": "invoiceNumber",
+      "label": "发票编号",
+      "type": "text",
+      "required": false,
+      "placeholder": "请输入发票编号",
+      "description": "关联的发票编号"
+    }
+  },
+  "description": "为 FinancialTransaction 对象添加 invoiceNumber 发票编号字段",
+  "securityLevel": "L1"
+}

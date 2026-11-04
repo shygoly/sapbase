@@ -1,0 +1,11 @@
+import { ShippingReportPage } from '@sap/app-shared/components/shipping/report-page'
+
+export default function ciiPage() {
+  return (
+    <ShippingReportPage
+      title='CII Dashboard'
+      description='Required vs attained CII, annual trend and compliance warning.'
+      reportKey='cii'
+    />
+  )
+}

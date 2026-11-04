@@ -24,16 +24,16 @@ function test(name, fn) {
 }
 
 const shippingPages = [
-  'speckit/src/app/[locale]/dashboard/shipping/ships/page.tsx',
-  'speckit/src/app/[locale]/dashboard/shipping/charters/page.tsx',
-  'speckit/src/app/[locale]/dashboard/shipping/voyages/page.tsx',
-  'speckit/src/app/[locale]/dashboard/shipping/reports/cii/page.tsx',
-  'speckit/src/app/[locale]/dashboard/shipping/reports/fueleu/page.tsx',
-  'speckit/src/app/[locale]/dashboard/shipping/reports/eu-ets/page.tsx',
-  'speckit/src/app/[locale]/dashboard/shipping/reports/fuel-cost/page.tsx',
-  'speckit/src/app/[locale]/dashboard/shipping/reports/home-overview/page.tsx',
-  'speckit/src/app/[locale]/dashboard/shipping/reports/scenario-analysis/page.tsx',
-  'speckit/src/app/[locale]/dashboard/shipping/report-center/page.tsx',
+  'apps/web-portal/src/app/[locale]/dashboard/shipping/ships/page.tsx',
+  'apps/web-portal/src/app/[locale]/dashboard/shipping/charters/page.tsx',
+  'apps/web-portal/src/app/[locale]/dashboard/shipping/voyages/page.tsx',
+  'apps/web-portal/src/app/[locale]/dashboard/shipping/reports/cii/page.tsx',
+  'apps/web-portal/src/app/[locale]/dashboard/shipping/reports/fueleu/page.tsx',
+  'apps/web-portal/src/app/[locale]/dashboard/shipping/reports/eu-ets/page.tsx',
+  'apps/web-portal/src/app/[locale]/dashboard/shipping/reports/fuel-cost/page.tsx',
+  'apps/web-portal/src/app/[locale]/dashboard/shipping/reports/home-overview/page.tsx',
+  'apps/web-portal/src/app/[locale]/dashboard/shipping/reports/scenario-analysis/page.tsx',
+  'apps/web-portal/src/app/[locale]/dashboard/shipping/report-center/page.tsx',
 ]
 
 const shippingComponents = [
