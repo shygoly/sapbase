@@ -1,8 +1,2 @@
-export * from './app-draft.entity'
-export * from './app-change-proposal.entity'
-export * from './app-release.entity'
-export * from './app-release-item.entity'
-export * from './app-release-activation.entity'
-export * from './app-release-approval.entity'
-export * from './app-release-event.entity'
-export * from './app-user-release-view.entity'
+// 兼容壳：实现已迁到 libs/platform-release（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-release/releases/entities/index'

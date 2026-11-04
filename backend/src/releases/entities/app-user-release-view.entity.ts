@@ -1,23 +1,2 @@
-import { Column, Entity } from 'typeorm'
-import { ReleaseBaseEntity } from './release-base.entity'
-
-@Entity('app_user_release_views')
-export class AppUserReleaseView extends ReleaseBaseEntity {
-  @Column({ type: 'uuid' })
-  organizationId: string
-
-  @Column({ type: 'uuid' })
-  userId: string
-
-  @Column({ type: 'uuid' })
-  appInstallationId: string
-
-  @Column({ type: 'uuid' })
-  lastSeenReleaseId: string
-
-  @Column({ type: 'timestamptz', default: () => 'now()' })
-  firstSeenAt: Date
-
-  @Column({ type: 'timestamptz', default: () => 'now()' })
-  lastSeenAt: Date
-}
+// 兼容壳：实现已迁到 libs/platform-release（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-release/releases/entities/app-user-release-view.entity'

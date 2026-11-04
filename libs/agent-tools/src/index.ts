@@ -1,0 +1,8 @@
+// agent-tools 公共入口（子路径导入同样可用）
+export * from './agent-tools.ports'
+export * from './agent-tool.registry'
+export * from './confirmation-token.entity'
+export * from './confirmation-token.service'
+export * from './contracts-loader'
+export * from './tool-permissions'
+export * from './mcp/agent-tool-mcp.bridge'

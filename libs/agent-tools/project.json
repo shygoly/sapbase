@@ -1,0 +1,17 @@
+{
+  "name": "agent-tools",
+  "root": "libs/agent-tools",
+  "sourceRoot": "libs/agent-tools/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:agent", "layer:agent", "runtime:node"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run build", "cwd": "libs/agent-tools" }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run typecheck", "cwd": "libs/agent-tools" }
+    }
+  }
+}

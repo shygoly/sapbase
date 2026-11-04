@@ -1,12 +1,2 @@
-import { Column, PrimaryGeneratedColumn } from 'typeorm'
-
-export abstract class ReleaseAutomationBaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column({ type: 'timestamptz', default: () => 'now()' })
-  createdAt: Date
-
-  @Column({ type: 'timestamptz', default: () => 'now()' })
-  updatedAt: Date
-}
+// 兼容壳：实现已迁到 libs/platform-release（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-release/release-automation/entities/release-automation-base.entity'

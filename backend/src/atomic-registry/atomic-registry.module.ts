@@ -1,19 +1,2 @@
-import { Module } from '@nestjs/common'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { AtomicContract } from './atomic-contract.entity'
-import { AtomicImplementation } from './atomic-implementation.entity'
-import { AtomicModuleManifest } from './atomic-module-manifest.entity'
-import { AtomicRegistryService } from './atomic-registry.service'
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      AtomicContract,
-      AtomicImplementation,
-      AtomicModuleManifest,
-    ]),
-  ],
-  providers: [AtomicRegistryService],
-  exports: [AtomicRegistryService],
-})
-export class AtomicRegistryModule {}
+// 兼容壳：实现已迁到 libs/platform-release（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-release/atomic-registry/atomic-registry.module'

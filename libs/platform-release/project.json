@@ -1,0 +1,17 @@
+{
+  "name": "platform-release",
+  "root": "libs/platform-release",
+  "sourceRoot": "libs/platform-release/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:platform", "layer:platform", "runtime:node"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run build", "cwd": "libs/platform-release" }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run typecheck", "cwd": "libs/platform-release" }
+    }
+  }
+}
