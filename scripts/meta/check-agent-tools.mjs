@@ -20,6 +20,7 @@ import {
   symbolExists,
   walkFiles,
 } from './lib/common.mjs'
+import { projectManifest, diffManifests } from './lib/mcp-projection.mjs'
 
 const opts = parseArgs()
 if (opts.help) {
@@ -119,6 +120,25 @@ for (const tool of tools) {
         if (!/^[a-z][a-z0-9-]*\*?$/.test(agent)) r.err(location, `allowedAgents 含非法值：${agent}`)
       }
     }
+  }
+}
+
+// ---------- MCP 清单（契约投影） ----------
+// 三方对拍：tools.json → MCP 清单（生成物）→ AGENT-TOOLS.md，任何一方漂移都报错。
+const mcpRel = ctx.config.agentTools.mcpManifest ?? 'contracts/mcp-tools.json'
+const mcpPath = pathFromRoot(ctx, mcpRel)
+if (!existsSync(mcpPath)) {
+  r.err(mcpRel, 'MCP 清单不存在（运行 node scripts/meta/project-mcp-tools.mjs 生成）')
+} else {
+  let manifest = null
+  try {
+    manifest = JSON.parse(readFileSync(mcpPath, 'utf8'))
+  } catch (error) {
+    r.err(mcpRel, `不是合法 JSON：${error.message}`)
+  }
+  if (manifest) {
+    const expected = projectManifest([...toolsMap.values()])
+    for (const problem of diffManifests(expected, manifest)) r.err(mcpRel, problem)
   }
 }
 

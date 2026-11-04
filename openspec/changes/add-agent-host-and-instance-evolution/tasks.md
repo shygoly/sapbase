@@ -5,12 +5,14 @@
 
 ## 1. 工具面 MCP 投影（P0）
 
-- [ ] 1.1 `contracts/tools.json` 增加投影元数据：transport、timeout、readOnly/destructive 提示、
-      `confirmation` 与 `allowedAgents` 的映射规则（不改变现有字段语义）
-- [ ] 1.2 新增 MCP 投影器：由契约生成工具清单与 JSON Schema，不手写第二份
-- [ ] 1.3 扩展 `scripts/meta/check-agent-tools.mjs`：契约 ↔ MCP 清单 ↔ `AGENT-TOOLS.md` 三方对拍
+- [x] 1.1 确认投影所需字段：现有契约已齐备（name / description / parameters / write / confirmation /
+      timeoutMs / untrustedResult / sensitiveArgs / allowedAgents），**不新增字段**；规则见 design Decision 2
+- [x] 1.2 新增 MCP 投影器：`scripts/meta/lib/mcp-projection.mjs` + `project-mcp-tools.mjs`，
+      由契约生成 `contracts/mcp-tools.json`，不手写第二份
+- [x] 1.3 扩展 `scripts/meta/check-agent-tools.mjs`：契约 ↔ MCP 清单 ↔ `AGENT-TOOLS.md` 三方对拍
 - [ ] 1.4 内嵌通道经 MCP 客户端调用同一工具面，行为与现状等价（回归 chat e2e）
-- [ ] 1.5 单测补齐四条拒绝路径：未知工具、参数非法、权限不足、缺确认令牌
+- [x] 1.5 拒绝路径单测已存在并复跑通过：未知工具、参数非法、权限不足、缺确认令牌
+      （`backend/src/agent-tools/agent-tool.registry.spec.ts`）
 
 ## 2. 宿主接入（P1）
 

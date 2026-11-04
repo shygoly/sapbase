@@ -22,6 +22,7 @@
   },
   "agentTools": {
     "contract": "contracts/tools.json",
+    "mcpManifest": "contracts/mcp-tools.json",
     "handlerRoots": ["backend/src/agent-tools"],
     "handlerPattern": "(?:toolName\\s*:\\s*|case\\s+)['\"]([^'\"]+)['\"]",
     "strictHandlers": false

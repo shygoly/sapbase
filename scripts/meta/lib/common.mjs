@@ -13,6 +13,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     config: 'meta.config.json',
     warnOnly: false,
     json: false,
+    check: false,
     baseline: null,
     updateBaseline: false,
     help: false,
@@ -23,6 +24,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     if (a === '--config') out.config = argv[++i]
     else if (a === '--warn-only') out.warnOnly = true
     else if (a === '--json') out.json = true
+    else if (a === '--check') out.check = true
     else if (a === '--baseline') out.baseline = argv[++i]
     else if (a === '--update-baseline') out.updateBaseline = true
     else if (a === '--root') out.root = argv[++i]
@@ -58,6 +60,7 @@ const DEFAULTS = {
   },
   agentTools: {
     contract: 'contracts/tools.json',
+    mcpManifest: 'contracts/mcp-tools.json',
     handlerRoots: ['libs/agent-tools/src', 'backend/src/agent-tools'],
     handlerPattern: "(?:toolName\\s*:\\s*|case\\s+)['\"]([^'\"]+)['\"]",
     strictHandlers: false,

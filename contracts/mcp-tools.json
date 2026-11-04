@@ -1,0 +1,436 @@
+{
+  "note": "GENERATED — 由 scripts/meta/project-mcp-tools.mjs 从工具契约生成，不要手改。",
+  "source": "contracts/tools.json",
+  "tools": [
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [
+          "piagent-builder"
+        ],
+        "sapbase/confirmation": "required",
+        "sapbase/permission": "tool:builder:write",
+        "sapbase/sensitiveArgs": [],
+        "sapbase/timeoutMs": 10000,
+        "sapbase/untrustedResult": false
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "When Builder Agent needs a business-facing changelog draft. Write operation, requires confirmation, never publishes.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "type": "array"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "summary"
+        ],
+        "type": "object"
+      },
+      "name": "builder_changelog_draft"
+    },
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [
+          "piagent-builder"
+        ],
+        "sapbase/confirmation": "none",
+        "sapbase/permission": "tool:builder:read",
+        "sapbase/sensitiveArgs": [
+          "contentMasked"
+        ],
+        "sapbase/timeoutMs": 5000,
+        "sapbase/untrustedResult": true
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      },
+      "description": "? Builder Agent ???????????????????????????????????",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "appKey": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "builder_feedback_list"
+    },
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [
+          "piagent-builder"
+        ],
+        "sapbase/confirmation": "required",
+        "sapbase/permission": "tool:builder:write",
+        "sapbase/sensitiveArgs": [],
+        "sapbase/timeoutMs": 10000,
+        "sapbase/untrustedResult": false
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "? Builder Agent ????????????????????????/??????????",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "appKey": {
+            "type": "string"
+          },
+          "diff": {
+            "type": "object"
+          },
+          "draftId": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array"
+          },
+          "risk": {
+            "type": "object"
+          },
+          "rollbackPlan": {
+            "type": "object"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "testPlan": {
+            "type": "object"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "appKey",
+          "draftId",
+          "type",
+          "title",
+          "summary",
+          "diff",
+          "evidence",
+          "risk",
+          "testPlan",
+          "rollbackPlan"
+        ],
+        "type": "object"
+      },
+      "name": "builder_proposal_create"
+    },
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [
+          "piagent-builder"
+        ],
+        "sapbase/confirmation": "none",
+        "sapbase/permission": "tool:builder:validate",
+        "sapbase/sensitiveArgs": [],
+        "sapbase/timeoutMs": 20000,
+        "sapbase/untrustedResult": false
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "When Builder Agent needs to validate a proposal through G0-G6 gates. Read-only.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "blueprintId": {
+            "type": "string"
+          },
+          "previewUrl": {
+            "type": "string"
+          },
+          "proposalId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposalId"
+        ],
+        "type": "object"
+      },
+      "name": "builder_proposal_validate"
+    },
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [
+          "piagent-builder"
+        ],
+        "sapbase/confirmation": "none",
+        "sapbase/permission": "tool:builder:validate",
+        "sapbase/sensitiveArgs": [],
+        "sapbase/timeoutMs": 20000,
+        "sapbase/untrustedResult": false
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "? Builder Agent ????????????????????????",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "releaseId": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "releaseId"
+        ],
+        "type": "object"
+      },
+      "name": "builder_release_preview"
+    },
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [],
+        "sapbase/confirmation": "none",
+        "sapbase/permission": "tool:atomic:invoke",
+        "sapbase/sensitiveArgs": [],
+        "sapbase/timeoutMs": 20000,
+        "sapbase/untrustedResult": false
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "当用户要跑一个已登记的原子计算或查询时使用：按契约在沙箱内执行。v1 只放行 calculation/query 类原子，不跑写入型。需要 atomicType，可选 version/records/timeoutMs。",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "atomicType": {
+            "description": "原子类型（契约里的 atomicType）",
+            "minLength": 1,
+            "type": "string"
+          },
+          "records": {
+            "description": "输入行；字段名对应契约 inputSchema 投影",
+            "items": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "timeoutMs": {
+            "description": "本次调用超时（毫秒）",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "version": {
+            "description": "版本范围，缺省为 *",
+            "type": "string"
+          }
+        },
+        "required": [
+          "atomicType"
+        ],
+        "type": "object"
+      },
+      "name": "erp_atomic_invoke"
+    },
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [],
+        "sapbase/confirmation": "none",
+        "sapbase/permission": "tool:blueprint:compile",
+        "sapbase/sensitiveArgs": [],
+        "sapbase/timeoutMs": 20000,
+        "sapbase/untrustedResult": false
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "当用户要把蓝图包编译成可执行 IR 时使用：编译指定包。不改业务数据，只产生编译记录（v1 按读处理）。不写回包内清单 —— 声明 write=false 就必须真的不写。",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "蓝图包 id",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "erp_blueprint_compile"
+    },
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [],
+        "sapbase/confirmation": "none",
+        "sapbase/permission": "tool:blueprint:read",
+        "sapbase/sensitiveArgs": [],
+        "sapbase/timeoutMs": 5000,
+        "sapbase/untrustedResult": false
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "当用户要查看这个企业有哪些业务蓝图包时使用：列出已登记的蓝图包（id、文件名、清单）。不改任何业务数据。",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "erp_blueprint_list"
+    },
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [],
+        "sapbase/confirmation": "none",
+        "sapbase/permission": "tool:blueprint:read",
+        "sapbase/sensitiveArgs": [],
+        "sapbase/timeoutMs": 5000,
+        "sapbase/untrustedResult": false
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "当用户要看某个蓝图包的版本、依赖与分层时使用：读取指定包的清单。需要包 id（文件名去掉 .erpkg）。",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "蓝图包 id（文件名去掉 .erpkg）",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "erp_blueprint_manifest"
+    },
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [],
+        "sapbase/confirmation": "required",
+        "sapbase/permission": "tool:module:export",
+        "sapbase/sensitiveArgs": [],
+        "sapbase/timeoutMs": 30000,
+        "sapbase/untrustedResult": false
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "当用户要把某个模块导出为最小蓝图包文件时使用：产生文件，属于写操作，必须先由人确认。需要模块 id，可选导出目录 dir 与输出路径 out。",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "dir": {
+            "description": "导出目录（服务器路径）",
+            "type": "string"
+          },
+          "id": {
+            "description": "模块 id",
+            "minLength": 1,
+            "type": "string"
+          },
+          "out": {
+            "description": "输出 .erpkg 路径",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "erp_module_export"
+    },
+    {
+      "_meta": {
+        "sapbase/agentInvocable": true,
+        "sapbase/allowedAgents": [],
+        "sapbase/confirmation": "none",
+        "sapbase/permission": "tool:module:read",
+        "sapbase/sensitiveArgs": [],
+        "sapbase/timeoutMs": 5000,
+        "sapbase/untrustedResult": false
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "当用户要查看当前组织登记了哪些业务模块时使用：列出模块注册表。组织上下文来自调用方身份，不从参数传入。",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "erp_module_list"
+    }
+  ],
+  "version": 1
+}

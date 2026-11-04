@@ -57,6 +57,10 @@ Host ──MCP──▶ Tool Gateway（唯一 PEP）──▶ 用例 ──▶ P
 投影必须携带：name、JSON Schema、`readOnlyHint`/`destructiveHint`、超时、`confirmation` 映射、
 `allowedAgents`。
 
+**投影不新增契约字段**：所需信息在现有契约里已齐备（`write` → readOnly/destructive 提示，
+`confirmation` / `timeoutMs` / `untrustedResult` / `sensitiveArgs` / `allowedAgents` → `_meta`）。
+生成物为 `contracts/mcp-tools.json`，由 `project-mcp-tools.mjs` 生成、`check-agent-tools.mjs` 对拍漂移。
+
 理由：
 
 - 开发时（PiAgent）与运行时（OpenClaw）可以消费同一份工具面，不需要两套适配器。
