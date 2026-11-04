@@ -25,6 +25,12 @@
       ],
       "~/*": [
         "./public/*"
+      ],
+      "@sap/ui-kit": [
+        "../libs/ui-kit/src/index.ts"
+      ],
+      "@sap/ui-kit/*": [
+        "../libs/ui-kit/src/*"
       ]
     },
     "incremental": true,

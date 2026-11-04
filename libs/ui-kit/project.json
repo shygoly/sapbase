@@ -1,0 +1,13 @@
+{
+  "name": "ui-kit",
+  "root": "libs/ui-kit",
+  "sourceRoot": "libs/ui-kit/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:shared", "layer:ui", "runtime:browser"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run typecheck", "cwd": "libs/ui-kit" }
+    }
+  }
+}

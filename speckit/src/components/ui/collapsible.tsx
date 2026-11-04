@@ -1,33 +1,3 @@
-'use client';
-
-import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
-
-function Collapsible({
-  ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.Root>) {
-  return <CollapsiblePrimitive.Root data-slot='collapsible' {...props} />;
-}
-
-function CollapsibleTrigger({
-  ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleTrigger>) {
-  return (
-    <CollapsiblePrimitive.CollapsibleTrigger
-      data-slot='collapsible-trigger'
-      {...props}
-    />
-  );
-}
-
-function CollapsibleContent({
-  ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleContent>) {
-  return (
-    <CollapsiblePrimitive.CollapsibleContent
-      data-slot='collapsible-content'
-      {...props}
-    />
-  );
-}
-
-export { Collapsible, CollapsibleTrigger, CollapsibleContent };
+'use client'
+// 兼容壳：实现已迁到 libs/ui-kit（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-kit/collapsible'

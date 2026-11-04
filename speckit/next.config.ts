@@ -24,7 +24,7 @@ const baseConfig: NextConfig = {
   },
   
   // Code splitting and optimization
-  transpilePackages: ['geist'],
+  transpilePackages: ['geist', '@sap/ui-kit'],
   experimental: {
     optimizePackageImports: [
       'lucide-react',

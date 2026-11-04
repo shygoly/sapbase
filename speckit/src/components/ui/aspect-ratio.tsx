@@ -1,11 +1,3 @@
-'use client';
-
-import * as AspectRatioPrimitive from '@radix-ui/react-aspect-ratio';
-
-function AspectRatio({
-  ...props
-}: React.ComponentProps<typeof AspectRatioPrimitive.Root>) {
-  return <AspectRatioPrimitive.Root data-slot='aspect-ratio' {...props} />;
-}
-
-export { AspectRatio };
+'use client'
+// 兼容壳：实现已迁到 libs/ui-kit（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-kit/aspect-ratio'

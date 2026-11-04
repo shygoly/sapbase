@@ -1,25 +1,3 @@
-'use client';
-
-import { useTheme } from 'next-themes';
-import { Toaster as Sonner, ToasterProps } from 'sonner';
-
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme();
-
-  return (
-    <Sonner
-      theme={theme as ToasterProps['theme']}
-      className='toaster group'
-      style={
-        {
-          '--normal-bg': 'var(--popover)',
-          '--normal-text': 'var(--popover-foreground)',
-          '--normal-border': 'var(--border)'
-        } as React.CSSProperties
-      }
-      {...props}
-    />
-  );
-};
-
-export { Toaster };
+'use client'
+// 兼容壳：实现已迁到 libs/ui-kit（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-kit/sonner'

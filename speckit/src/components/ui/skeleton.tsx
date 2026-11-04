@@ -1,13 +1,2 @@
-import { cn } from '@/lib/utils';
-
-function Skeleton({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div
-      data-slot='skeleton'
-      className={cn('bg-accent animate-pulse rounded-md', className)}
-      {...props}
-    />
-  );
-}
-
-export { Skeleton };
+// 兼容壳：实现已迁到 libs/ui-kit（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-kit/skeleton'

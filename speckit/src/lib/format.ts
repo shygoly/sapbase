@@ -1,17 +1,2 @@
-export function formatDate(
-  date: Date | string | number | undefined,
-  opts: Intl.DateTimeFormatOptions = {}
-) {
-  if (!date) return '';
-
-  try {
-    return new Intl.DateTimeFormat('en-US', {
-      month: opts.month ?? 'long',
-      day: opts.day ?? 'numeric',
-      year: opts.year ?? 'numeric',
-      ...opts
-    }).format(new Date(date));
-  } catch {
-    return '';
-  }
-}
+// 兼容壳：实现已迁到 libs/ui-kit（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/ui-kit/lib/format'

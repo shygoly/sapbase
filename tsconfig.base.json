@@ -2,7 +2,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@sap/shared-core": ["libs/shared-core/src/index.ts"]
+      "@sap/shared-core": ["libs/shared-core/src/index.ts"],
+      "@sap/ui-kit": ["libs/ui-kit/src/index.ts"],
+      "@sap/ui-kit/*": ["libs/ui-kit/src/*"]
     }
   }
 }
