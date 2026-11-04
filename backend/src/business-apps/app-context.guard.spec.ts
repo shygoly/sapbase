@@ -24,7 +24,7 @@ describe('AppContextGuard', () => {
     const apps = {
       resolveExecutionContext: jest.fn(async () => resolved),
     }
-    const guard = new AppContextGuard(apps as never)
+    const guard = new AppContextGuard(apps as never, { currentRelease: jest.fn(async () => null) } as never)
     const request: Record<string, any> = {
       user: {
         id: 'user-1',
@@ -50,7 +50,7 @@ describe('AppContextGuard', () => {
   })
 
   it('缺少组织上下文时拒绝', async () => {
-    const guard = new AppContextGuard({} as never)
+    const guard = new AppContextGuard({} as never, {} as never)
     await expect(
       guard.canActivate(
         context({
@@ -62,7 +62,7 @@ describe('AppContextGuard', () => {
   })
 
   it('缺少 X-App-Id 时拒绝', async () => {
-    const guard = new AppContextGuard({} as never)
+    const guard = new AppContextGuard({} as never, {} as never)
     await expect(
       guard.canActivate(
         context({
@@ -74,7 +74,7 @@ describe('AppContextGuard', () => {
   })
 
   it('路径应用 id 与 X-App-Id 不一致时拒绝', async () => {
-    const guard = new AppContextGuard({} as never)
+    const guard = new AppContextGuard({} as never, {} as never)
     await expect(
       guard.canActivate(
         context({

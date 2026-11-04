@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { JwtService } from '@nestjs/jwt'
+import { ConfigService } from '@nestjs/config'
 import { JwtStrategy } from './jwt.strategy'
 import { AuthService } from './auth.service'
 
@@ -21,6 +22,8 @@ describe('JwtStrategy', () => {
           provide: JwtService,
           useValue: mockJwtService,
         },
+        // 密钥来源已切换到 ConfigService（与 JwtModule 同源），测试给一个固定值
+        { provide: ConfigService, useValue: { get: () => 'test-secret' } },
       ],
     }).compile()
 
