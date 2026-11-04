@@ -20,6 +20,7 @@ const scripts = [
   'check-domain-doc.mjs',
   'check-meta-docs.mjs',
   'check-agent-tools.mjs',
+  'check-boundaries.mjs',
 ]
 const passthrough = process.argv.slice(2)
 

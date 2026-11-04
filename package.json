@@ -30,7 +30,9 @@
     "affected:build": "nx affected -t build",
     "affected:lint": "nx affected -t lint",
     "affected:test": "nx affected -t test",
-    "lint:boundaries": "eslint \"backend/src/**/*.ts\" \"libs/**/*.ts\" --no-error-on-unmatched-pattern",
+    "lint:boundaries": "nx graph --file=.nx/boundary-graph.json >/dev/null && eslint \"backend/src/**/*.ts\" \"libs/**/*.ts\" --no-error-on-unmatched-pattern",
+    "check:boundaries": "node scripts/meta/check-boundaries.mjs",
+    "test:meta": "node --test scripts/meta/lib/*.test.mjs",
     "check:links": "node scripts/meta/check-doc-links.mjs"
   },
   "devDependencies": {

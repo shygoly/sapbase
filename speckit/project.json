@@ -3,7 +3,7 @@
   "root": "speckit",
   "sourceRoot": "speckit/src",
   "projectType": "application",
-  "tags": ["type:app", "scope:portal", "layer:ui", "runtime:browser"],
+  "tags": ["type:app", "scope:portal", "runtime:browser"],
   "targets": {
     "build": {
       "executor": "nx:run-commands",

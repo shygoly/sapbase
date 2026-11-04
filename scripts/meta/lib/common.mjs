@@ -29,8 +29,10 @@ export function parseArgs(argv = process.argv.slice(2)) {
     else if (a === '--update-baseline') out.updateBaseline = true
     else if (a === '--root') out.root = argv[++i]
     else if (a === '--out') out.out = argv[++i]
+    else if (a === '--graph') out.graph = argv[++i]
     else if (a.startsWith('--root=')) out.root = a.slice('--root='.length)
     else if (a.startsWith('--out=')) out.out = a.slice('--out='.length)
+    else if (a.startsWith('--graph=')) out.graph = a.slice('--graph='.length)
     else if (a === '--help' || a === '-h') out.help = true
     else out._.push(a)
   }
@@ -329,7 +331,7 @@ export function setDiff(a, b) {
 export function createReporter(name, ctx, opts) {
   const errors = []
   const warnings = []
-  const baseline = loadBaseline(ctx, opts)
+  const baseline = loadBaseline(ctx, opts, name)
 
   function isBaselined(text) {
     return baseline.some((entry) => text.includes(entry))
@@ -353,8 +355,19 @@ export function createReporter(name, ctx, opts) {
   function finish(summary) {
     if (opts.updateBaseline && opts.baseline) {
       const path = resolve(ctx.repoRoot, opts.baseline)
-      writeFileSync(path, JSON.stringify([...errors].sort(), null, 2) + '\n')
-      console.log(`已写入基线：${path}（${errors.length} 条）`)
+      // 保留其它 checker 的基线：meta-baseline.json 是 { <checker>: string[] }
+      let merged = {}
+      if (existsSync(path)) {
+        try {
+          const raw = JSON.parse(readFileSync(path, 'utf8'))
+          merged = Array.isArray(raw) ? { [name]: raw } : (raw ?? {})
+        } catch {
+          merged = {}
+        }
+      }
+      merged[name] = [...new Set(errors)].sort()
+      writeFileSync(path, JSON.stringify(merged, null, 2) + '\n')
+      console.log(`已写入基线：${path}（${name}: ${errors.length} 条）`)
     }
 
     if (opts.json) {
@@ -370,13 +383,15 @@ export function createReporter(name, ctx, opts) {
   return { err, warn, finish, errors, warnings }
 }
 
-function loadBaseline(ctx, opts) {
+function loadBaseline(ctx, opts, name) {
   if (!opts.baseline) return []
   const path = resolve(ctx.repoRoot, opts.baseline)
   if (!existsSync(path)) return []
   try {
     const raw = JSON.parse(readFileSync(path, 'utf8'))
+    // 兼容两种形状：扁平数组（单 checker），或按 checker 名分组的对象（meta-baseline.json）
     if (Array.isArray(raw)) return raw
+    if (raw && typeof raw === 'object' && Array.isArray(raw[name])) return raw[name]
     return []
   } catch {
     return []
