@@ -55,3 +55,10 @@ backend/test-plugins/
 .nx/
 libs/*/dist/
 boundaries.log
+
+# Next.js 构建产物（apps/* 与旧 speckit）
+.next/
+out/
+*.tsbuildinfo
+
+# Nx 本地缓存与图
