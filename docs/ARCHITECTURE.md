@@ -30,35 +30,44 @@
 
 ## 1. 目标目录
 
+**现状（2026-11，P2/P3a 落地后）**：目标树已部分达成，下表即当前真实结构。
+未完成项在「状态」列标注，避免再次出现「文档画饼、代码没有」。
+
 ```text
 sapbase/
 ├─ apps/
-│  ├─ web-portal/            # Next.js 15：业务人员入口（现有 speckit 的主体）
-│  ├─ web-console/           # Next.js 15：管理员/应用负责人入口（治理、发布、审计）
-│  ├─ api/                   # NestJS：REST/SSE、认证、租户、业务用例
-│  ├─ agent-gateway/         # NestJS：PiAgent 编排、上下文、工具循环（v1 可同进程）
-│  └─ worker/                # NestJS：cron、outbox、发布构建、评测（v1 可同进程）
+│  ├─ web-portal/            # Next.js 15：业务人员入口（/、/docs、/dashboard/**）
+│  ├─ web-console/           # Next.js 15：治理台（/admin/**）
+│  └─ api/                   # ⏳ 未拆：Nest 仍在 backend/（P3b）
+├─ backend/                  # NestJS：REST/SSE、认证、租户、业务用例（组合根 + 尚未迁出的域）
 ├─ libs/
-│  ├─ shared-schemas/        # JSON Schema / TS 类型 / 错误码 / 信封
-│  ├─ shared-config/         # 环境变量、开关、常量
-│  ├─ shared-auth/           # 身份、权限点、上下文类型
-│  ├─ shared-database/       # 连接、迁移、RLS、事务助手（不放大业务）
-│  ├─ domain-*/              # 纯规则：状态机、校验、公式、策略（无 IO）
-│  ├─ app-*/                 # 用例编排：事务、权限、审计、仓储端口
-│  ├─ infra-*/               # PG/Redis/对象存储/模型供应商/邮件
-│  ├─ agent-kernel/          # 会话、Context Compiler、Tool Loop、预算
-│  ├─ agent-tools/           # 工具契约的实现适配器（调用 app-*）
-│  ├─ release-kernel/        # diff / validate / publish / activate / rollback
-│  └─ ui-runtime/            # Next.js 的 Schema 渲染器（Page/Form/Collection）
-├─ schemas/                  # JSON Schema 真源（保持现有位置）
-├─ contracts/                # tools.json / 发布清单（保持现有位置）
-├─ tools/postgres/init/      # 迁移/种子 SQL（按序号）
+│  ├─ platform-core/         # ✅ 基座：common / auth / auth-context / organizations /
+│  │                         #    permissions / roles / audit-logs / settings / users
+│  ├─ app-shared/            # ✅ 两个前端 app 共享的应用层（组件 / hooks / core / i18n）
+│  ├─ ui-kit/                # ✅ shadcn 原子组件 + 数据表格子系统
+│  ├─ ui-theme/              # ✅ 主题 token / Provider / 选择器
+│  ├─ ui-layout/             # ✅ 侧栏 / 顶栏 / 导航 / 面包屑 / 组织与应用切换
+│  ├─ ui-runtime/            # ✅ Schema 驱动渲染（Page/Form/Collection/Detail）
+│  ├─ api-client/            # ✅ 前端 REST / WebSocket 客户端
+│  ├─ shared-state/          # ✅ zustand 全局状态
+│  ├─ shared-core/           # ✅ 零 IO 纯函数（money / canonicalizeJson）
+│  ├─ agent-kernel/          # ✅ 会话 / Context Compiler（只依赖端口）
+│  ├─ release-kernel/        # ✅ semver / digest / 发布状态机纯逻辑
+│  ├─ platform-release/      # ⏳ 未拆：blueprint / releases / atomic 仍在 backend（P3b）
+│  ├─ agent-tools/           # ⏳ 未拆（P3b）
+│  ├─ domain-shipping/       # ⏳ 未拆（P4）
+│  └─ ui-shipping/           # ⏳ 未拆（P4，代码现居 app-shared）
+├─ schemas/                  # JSON Schema 真源
+├─ contracts/                # tools.json / 发布清单
+├─ wasm-modules/             # Rust→Wasm 原子模块与准入闸
+├─ crates/wasm-host/         # Wasmtime sidecar
+├─ tools/postgres/init/      # 迁移/种子 SQL
 ├─ docs/
 │  ├─ META_LANGUAGE.md
-│  └─ reference/             # 本参考包
+│  └─ reference/             # 历史归档
 ├─ nx.json
 ├─ tsconfig.base.json
-├─ eslint.config.mjs
+├─ eslint.config.js
 └─ package.json              # 依赖 hoist 到根；唯一锁文件 = 根 package-lock.json（npm）
 ```
 
@@ -67,9 +76,9 @@ sapbase/
 
 **命名约定**：
 
-- Nx 项目名与目录名一致：`web-portal`、`api`、`domain-order`。
-- TS 路径别名：`@sap/shared-schemas`、`@sap/domain-order`、`@sap/app-order`。
-  现有 `@speckit/*` 在迁移期保留，新代码一律 `@sap/*`。
+- Nx 项目名与目录名一致：`web-portal`、`api`、`platform-core`。
+- TS 路径别名：`@sap/shared-schemas`、`@sap/platform-core`、`@sap/ui-kit`。
+  旧 `@speckit/*` 仅保留 `@speckit/shared-schemas` 一周期。
 - 一个 `libs/domain-*` 只服务一个限界上下文；跨上下文协作走 `app-*` 或事件。
 
 ---
@@ -88,7 +97,12 @@ sapbase/
 |---|---|
 | `type` | `app` / `lib` |
 | `scope` | `portal` / `console` / `api` / `agent` / `agent-kernel` / `agent-tools` / `worker` / `order` / `inventory` / `shared` … |
-| `layer` | `domain` / `app` / `infra` / `shared` / `agent` / `release` / `ui` |
+| `layer` | `domain` / `app` / `infra` / `shared` / `agent` / `release` / `ui` / `platform` |
+
+> **`layer` 只描述库**。组合根（`type:app`）只声明 `type` / `scope` / `runtime`。
+> 原因：Nx 的 `depConstraints` 是 AND 语义，若 app 同时带 `layer:app`，
+> 会被更严的 `layer:app` 白名单锁死，连 `agent-kernel` / `release-kernel` 都装配不了
+> （P0 实测 6 条）。
 | `runtime` | `node` / `browser` / `isomorphic` |
 
 ESLint 约束（节选）：

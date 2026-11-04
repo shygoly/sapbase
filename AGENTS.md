@@ -28,7 +28,7 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 元语对**所有**请求都适用，包括按 [`openspec/AGENTS.md`](./openspec/AGENTS.md) 走规划/提案流程时。
 各子系统的结构化描述文档不在本文件逐条罗列，统一由元语第 5.2 节的文档真源表索引；
-在子目录内工作时，入口是同目录的 `AGENTS.md`（如 [`speckit/AGENTS.md`](./speckit/AGENTS.md)、[`backend/AGENTS.md`](./backend/AGENTS.md)）。
+在子目录内工作时，入口是同目录的 `AGENTS.md`（如 [`backend/AGENTS.md`](./backend/AGENTS.md)）。
 
 两条最容易踩的规则：
 
