@@ -65,7 +65,6 @@ export default function DepartmentsPage() {
 
   useEffect(() => {
     fetchDepartments()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run on page/pageSize change
   }, [page, pageSize])
 
   const handleCreateDepartment = async () => {

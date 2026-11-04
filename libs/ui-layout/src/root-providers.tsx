@@ -36,7 +36,6 @@ export function RootProviders({ children }: RootProvidersProps) {
     return () => {
       mounted = false
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only init
   }, [])
 
   // Load permissions and menu when user changes

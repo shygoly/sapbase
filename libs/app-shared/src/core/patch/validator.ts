@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars -- reserved params for API consistency */
 // Patch validator with security rules and constraint checking
 import type {
   Patch,

@@ -1,10 +1,2 @@
-import { OrganizationSlug } from '../value-objects'
-
-/**
- * Domain service: Generate organization slug from name (pure function).
- */
-export class SlugGenerator {
-  static generate(name: string): OrganizationSlug {
-    return OrganizationSlug.create(name)
-  }
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/domain-services/slug-generator.service'

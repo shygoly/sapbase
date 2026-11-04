@@ -25,7 +25,6 @@ const NewModuleDefinitionWizard = dynamic(
 )
 
 export default function AIModuleDevelopPage() {
-  /* eslint-disable @typescript-eslint/no-unused-vars -- state reserved for future UI */
   const [mode, _setMode] = useState<'create' | 'modify'>('create')
   const [showDefinitionWizard, setShowDefinitionWizard] = useState(false)
   const [module, setModule] = useState<AIModule | null>(null)
@@ -75,7 +74,6 @@ export default function AIModuleDevelopPage() {
       setSelectedDefinition(null)
       setDefinitionMarkdown('')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchDefinition stable, mount/selectedModuleId only
   }, [selectedModuleId])
 
   const fetchDefinition = async (moduleId: string) => {

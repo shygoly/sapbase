@@ -72,7 +72,6 @@ export function CollaborativeEditor({
     if (value !== localValue && !isApplyingRemoteChangeRef.current) {
       setLocalValue(value)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- avoid syncing loop with localValue
   }, [value])
 
   const handleChange = useCallback(

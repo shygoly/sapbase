@@ -55,13 +55,11 @@ export default function AIModuleDevelopPage() {
   useEffect(() => {
     fetchRegistryModules()
     fetchAIModules()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only fetch
   }, [])
 
   // Refresh modules list when mode changes
   useEffect(() => {
     fetchAIModules()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional refresh on mode change
   }, [mode])
 
   useEffect(() => {
@@ -71,7 +69,6 @@ export default function AIModuleDevelopPage() {
       setSelectedDefinition(null)
       setDefinitionMarkdown('')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchDefinition stable, selectedModuleId only
   }, [selectedModuleId])
 
   const fetchRegistryModules = async () => {

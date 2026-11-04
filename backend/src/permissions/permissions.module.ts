@@ -1,13 +1,2 @@
-import { Module } from '@nestjs/common'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { Permission } from './permission.entity'
-import { PermissionsService } from './permissions.service'
-import { PermissionsController } from './permissions.controller'
-
-@Module({
-  imports: [TypeOrmModule.forFeature([Permission])],
-  providers: [PermissionsService],
-  controllers: [PermissionsController],
-  exports: [PermissionsService],
-})
-export class PermissionsModule {}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/permissions/permissions.module'

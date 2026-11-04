@@ -1,13 +1,2 @@
-import { Module } from '@nestjs/common'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { AuditLog } from './audit-log.entity'
-import { AuditLogsService } from './audit-logs.service'
-import { AuditLogsController } from './audit-logs.controller'
-
-@Module({
-  imports: [TypeOrmModule.forFeature([AuditLog])],
-  providers: [AuditLogsService],
-  controllers: [AuditLogsController],
-  exports: [AuditLogsService],
-})
-export class AuditLogsModule {}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/audit-logs/audit-logs.module'

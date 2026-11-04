@@ -1,21 +1,2 @@
-/**
- * Domain service: Select organization from user's list (pure function).
- */
-export class OrganizationSelector {
-  static select(
-    organizations: Array<{ id: string }>,
-    requestedOrganizationId?: string,
-  ): string | undefined {
-    if (requestedOrganizationId) {
-      const org = organizations.find((o) => o.id === requestedOrganizationId)
-      return org ? org.id : undefined
-    }
-
-    // Auto-select if only one organization
-    if (organizations.length === 1) {
-      return organizations[0].id
-    }
-
-    return undefined
-  }
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/domain-services/organization-selector.service'

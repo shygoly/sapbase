@@ -70,7 +70,6 @@ export default function OrganizationsPage() {
       loadMembers()
       loadInvitations()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run when currentOrganization changes
   }, [currentOrganization])
 
   const loadMembers = async () => {

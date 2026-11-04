@@ -1,14 +1,2 @@
-import { OrganizationRole } from '../entities'
-
-/**
- * Domain event: a member was added to an organization.
- */
-export class MemberAddedEvent {
-  constructor(
-    public readonly organizationId: string,
-    public readonly userId: string,
-    public readonly role: OrganizationRole,
-    public readonly invitedById: string | null,
-    public readonly createdAt: Date,
-  ) {}
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/events/member-added.event'

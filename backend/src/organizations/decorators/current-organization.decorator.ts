@@ -1,12 +1,2 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-
-/**
- * Decorator to extract current organization from request
- * Used after TenantContextMiddleware has set req.organization
- */
-export const CurrentOrganization = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest()
-    return request.organization
-  },
-)
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organizations/decorators/current-organization.decorator'

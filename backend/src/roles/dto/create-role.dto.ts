@@ -1,18 +1,2 @@
-import { IsString, IsOptional, IsArray, IsEnum } from 'class-validator'
-
-export class CreateRoleDto {
-  @IsString()
-  name: string
-
-  @IsOptional()
-  @IsString()
-  description?: string
-
-  @IsOptional()
-  @IsArray()
-  permissions?: string[]
-
-  @IsOptional()
-  @IsEnum(['active', 'inactive'])
-  status?: 'active' | 'inactive'
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/roles/dto/create-role.dto'

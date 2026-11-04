@@ -1,5 +1,2 @@
-import { Injectable } from '@nestjs/common'
-import { AuthGuard } from '@nestjs/passport'
-
-@Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth/jwt-auth.guard'

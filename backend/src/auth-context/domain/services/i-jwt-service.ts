@@ -1,9 +1,2 @@
-import type { JwtPayload } from '../value-objects'
-
-/**
- * Port for JWT service (implemented in infrastructure).
- */
-export interface IJwtService {
-  sign(payload: JwtPayload): Promise<string>
-  verify(token: string): Promise<JwtPayload | null>
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/services/i-jwt-service'

@@ -71,7 +71,6 @@ export function EditUserDialog({ open, onOpenChange, onSuccess, user, department
       }
       fetchRoles()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   useEffect(() => {

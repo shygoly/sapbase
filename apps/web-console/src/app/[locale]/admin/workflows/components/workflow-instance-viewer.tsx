@@ -40,7 +40,6 @@ export function WorkflowInstanceViewer({
   useEffect(() => {
     loadHistory()
     loadRecord()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 按记录 id 重载
   }, [packageId, entity, record.id])
 
   const loadHistory = async () => {

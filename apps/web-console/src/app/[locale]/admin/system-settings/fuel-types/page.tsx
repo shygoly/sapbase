@@ -45,7 +45,6 @@ export default function FuelTypesPage() {
 
   useEffect(() => {
     fetchItems()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleCreate = () => {

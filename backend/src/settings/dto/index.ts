@@ -1,3 +1,2 @@
-export { CreateSettingDto } from './create-setting.dto'
-export { UpdateSettingDto } from './update-setting.dto'
-export { SettingResponseDto } from './setting-response.dto'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/settings/dto/index'

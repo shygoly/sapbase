@@ -38,7 +38,6 @@ export default function WorkflowsPage() {
       return
     }
     loadPackages()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 登录后拉一次包列表
   }, [isAuthenticated])
 
   useEffect(() => {

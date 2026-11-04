@@ -126,25 +126,21 @@ class PluginComponentLoaderService {
    * Load component dynamically from plugin path
    */
   async loadComponentModule(component: PluginComponent): Promise<any> {
-    try {
-      // In a real implementation, this would load the component from the plugin's static assets
-      // For now, we'll return a placeholder
-      const loadedModule = await import(
-        /* @vite-ignore */
-        component.componentPath
-      ).catch(() => {
-        // Fallback: try to load from public plugins directory
-        const base =
-          typeof window !== 'undefined'
-            ? window.location.origin
-            : process.env.NEXT_PUBLIC_APP_URL ?? ''
-        return import(/* webpackIgnore: true */ `${base}/plugins/${component.pluginId}/${component.componentName}.js`)
-      })
+    // 先按注册路径动态导入；失败再回退到 public/plugins 下的产物
+    const loadedModule = await import(
+      /* @vite-ignore */
+      component.componentPath
+    ).catch(() => {
+      const base =
+        typeof window !== 'undefined'
+          ? window.location.origin
+          : (process.env.NEXT_PUBLIC_APP_URL ?? '')
+      return import(
+        /* webpackIgnore: true */ `${base}/plugins/${component.pluginId}/${component.componentName}.js`
+      )
+    })
 
-      return loadedModule.default || loadedModule
-    } catch (error) {
-      throw error
-    }
+    return loadedModule.default || loadedModule
   }
 }
 

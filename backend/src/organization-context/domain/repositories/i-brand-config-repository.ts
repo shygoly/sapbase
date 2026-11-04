@@ -1,13 +1,2 @@
-import type { BrandConfig } from '../entities/brand-config.entity'
-
-/**
- * Repository interface: Brand Configuration
- */
-export interface IBrandConfigRepository {
-  findById(id: string): Promise<BrandConfig | null>
-  findByOrganizationId(organizationId: string): Promise<BrandConfig | null>
-  save(config: BrandConfig): Promise<void>
-  delete(id: string): Promise<void>
-}
-
-export const BRAND_CONFIG_REPOSITORY = Symbol('BRAND_CONFIG_REPOSITORY')
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/repositories/i-brand-config-repository'

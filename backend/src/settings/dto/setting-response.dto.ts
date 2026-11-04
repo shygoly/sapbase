@@ -1,14 +1,2 @@
-export class SettingResponseDto {
-  id: string
-  userId: string
-  theme: 'light' | 'dark'
-  language: string
-  timezone: string
-  dateFormat: string
-  timeFormat: string
-  pageSize: number
-  fontSize: number
-  enableNotifications: boolean
-  createdAt: Date
-  updatedAt: Date
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/settings/dto/setting-response.dto'

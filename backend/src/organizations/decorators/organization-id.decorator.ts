@@ -1,12 +1,2 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-
-/**
- * Decorator to extract organizationId from request
- * Used after TenantContextMiddleware has set req.organizationId
- */
-export const OrganizationId = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest()
-    return request.organizationId
-  },
-)
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organizations/decorators/organization-id.decorator'

@@ -1,9 +1,2 @@
-export * from './i-event-publisher'
-export * from './organization-created.event'
-export * from './member-added.event'
-export * from './member-removed.event'
-export * from './member-role-updated.event'
-export * from './invitation-created.event'
-export * from './invitation-accepted.event'
-export * from './invitation-cancelled.event'
-export * from './brand-config-updated.event'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/events/index'

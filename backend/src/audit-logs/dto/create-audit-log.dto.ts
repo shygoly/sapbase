@@ -1,27 +1,2 @@
-import { IsString, IsOptional, IsUUID, IsObject } from 'class-validator'
-
-export class CreateAuditLogDto {
-  @IsString()
-  action: string
-
-  @IsString()
-  resource: string
-
-  @IsString()
-  actor: string
-
-  @IsString()
-  status: 'success' | 'failure' | 'pending'
-
-  @IsOptional()
-  @IsUUID()
-  resourceId?: string
-
-  @IsOptional()
-  @IsObject()
-  changes?: Record<string, any>
-
-  @IsOptional()
-  @IsObject()
-  metadata?: Record<string, any>
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/audit-logs/dto/create-audit-log.dto'

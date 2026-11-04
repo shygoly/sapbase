@@ -1,4 +1,2 @@
-/**
- * Injection tokens for external service ports (used by Nest DI).
- */
-export const SUBSCRIPTION_SERVICE = Symbol('ISubscriptionService')
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/services/tokens'

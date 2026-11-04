@@ -1,2 +1,2 @@
-export { DomainError } from './domain-error'
-export { BusinessRuleViolation } from './business-rule-violation'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/errors/index'

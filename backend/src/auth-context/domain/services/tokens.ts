@@ -1,6 +1,2 @@
-/**
- * Injection tokens for external service ports (used by Nest DI).
- */
-export const JWT_SERVICE = Symbol('IJwtService')
-export const PASSWORD_SERVICE = Symbol('IPasswordService')
-export const EFFECTIVE_PERMISSIONS_RESOLVER = Symbol('IEffectivePermissionsResolver')
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/services/tokens'

@@ -1,10 +1,2 @@
-/**
- * Value object: JWT payload structure.
- */
-export interface JwtPayload {
-  sub: string // user id
-  email: string
-  role: string
-  permissions: string[]
-  organizationId?: string
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/value-objects/jwt-payload.vo'

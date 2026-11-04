@@ -22,7 +22,6 @@ export default function InvitationAcceptPage() {
 
   useEffect(() => {
     loadInvitation()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run when token changes
   }, [token])
 
   const loadInvitation = async () => {

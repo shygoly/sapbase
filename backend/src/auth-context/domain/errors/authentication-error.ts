@@ -1,12 +1,2 @@
-import { DomainError } from './domain-error'
-
-/**
- * Thrown when authentication fails (e.g. invalid credentials, expired token).
- */
-export class AuthenticationError extends DomainError {
-  constructor(message: string) {
-    super(message)
-    this.name = 'AuthenticationError'
-    Object.setPrototypeOf(this, AuthenticationError.prototype)
-  }
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/errors/authentication-error'

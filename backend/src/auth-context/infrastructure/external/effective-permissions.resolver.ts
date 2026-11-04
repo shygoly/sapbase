@@ -1,15 +1,2 @@
-import { Injectable } from '@nestjs/common'
-import { EffectivePermissionsService } from '../../../roles/effective-permissions.service'
-import type {
-  EffectivePermissionsResolveInput,
-  IEffectivePermissionsResolver,
-} from '../../domain/services'
-
-@Injectable()
-export class EffectivePermissionsResolver implements IEffectivePermissionsResolver {
-  constructor(private readonly effectivePermissions: EffectivePermissionsService) {}
-
-  resolve(input: EffectivePermissionsResolveInput): Promise<string[]> {
-    return this.effectivePermissions.resolve(input)
-  }
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/infrastructure/external/effective-permissions.resolver'

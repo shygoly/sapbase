@@ -46,7 +46,6 @@ export function PluginRuntimeProvider({
 
   useEffect(() => {
     loadActivePlugins()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only load
   }, [])
 
   const loadActivePlugins = async () => {
@@ -137,7 +136,6 @@ export function PluginComponentRenderer({
 
   useEffect(() => {
     loadComponent()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run when pluginId/componentName change
   }, [pluginId, componentName])
 
   const loadComponent = async () => {

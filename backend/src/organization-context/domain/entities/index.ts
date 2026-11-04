@@ -1,4 +1,2 @@
-export * from './organization.entity'
-export * from './organization-member.entity'
-export * from './invitation.entity'
-export * from './brand-config.entity'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/entities/index'

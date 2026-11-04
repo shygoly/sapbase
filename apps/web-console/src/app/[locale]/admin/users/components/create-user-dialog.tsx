@@ -76,7 +76,6 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess, departments }:
       }
       fetchRoles()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   const onSubmit = async (data: CreateUserFormData) => {

@@ -1,11 +1,2 @@
-/**
- * Domain event: a user logged in.
- */
-export class UserLoggedInEvent {
-  constructor(
-    public readonly userId: string,
-    public readonly email: string,
-    public readonly organizationId: string | undefined,
-    public readonly loggedInAt: Date,
-  ) {}
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/events/user-logged-in.event'

@@ -57,7 +57,6 @@ export default function PluginsPage() {
 
   useEffect(() => {
     fetchPlugins()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only fetch
   }, [])
 
   const handleActivate = async (id: string) => {

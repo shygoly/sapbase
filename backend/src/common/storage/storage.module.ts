@@ -1,10 +1,2 @@
-import { Module } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
-import { StorageService } from './storage.service'
-
-@Module({
-  imports: [ConfigModule],
-  providers: [StorageService],
-  exports: [StorageService],
-})
-export class StorageModule {}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/common/storage/storage.module'

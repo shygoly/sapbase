@@ -1,11 +1,2 @@
-/**
- * Paginated result interface
- * Used for all paginated API responses
- */
-export interface PaginatedResult<T> {
-  data: T[]
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/common/interfaces/paginated-result.interface'

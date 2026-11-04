@@ -31,7 +31,6 @@ export default function AIModulePublishPage() {
 
   useEffect(() => {
     fetchModules()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional run on statusFilter change
   }, [statusFilter])
 
   const fetchModules = async () => {

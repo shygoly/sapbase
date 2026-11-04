@@ -1,12 +1,2 @@
-/**
- * Domain event: an organization was created.
- */
-export class OrganizationCreatedEvent {
-  constructor(
-    public readonly organizationId: string,
-    public readonly name: string,
-    public readonly slug: string,
-    public readonly creatorUserId: string,
-    public readonly createdAt: Date,
-  ) {}
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/events/organization-created.event'

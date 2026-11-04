@@ -1,12 +1,2 @@
-/**
- * Domain event: an invitation was cancelled.
- */
-export class InvitationCancelledEvent {
-  constructor(
-    public readonly invitationId: string,
-    public readonly organizationId: string,
-    public readonly email: string,
-    public readonly cancelledById: string,
-    public readonly cancelledAt: Date,
-  ) {}
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/events/invitation-cancelled.event'

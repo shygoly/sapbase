@@ -47,7 +47,6 @@ export default function AIModelsPage() {
 
   useEffect(() => {
     fetchModels()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only fetch
   }, [])
 
   const handleTestConnection = async (id: string) => {

@@ -1,3 +1,2 @@
-export { JwtService } from './jwt.service'
-export { PasswordService } from './password.service'
-export { EffectivePermissionsResolver } from './effective-permissions.resolver'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/infrastructure/external/index'

@@ -1,11 +1,2 @@
-/**
- * Base domain error for auth context.
- * Domain layer only - no infrastructure dependencies.
- */
-export class DomainError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'DomainError'
-    Object.setPrototypeOf(this, DomainError.prototype)
-  }
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/errors/domain-error'

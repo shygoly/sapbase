@@ -1,4 +1,2 @@
-import { SetMetadata } from '@nestjs/common'
-
-export const ROLES_KEY = 'roles'
-export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles)
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth/roles.decorator'

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars -- reserved params for API consistency */
 // Patch executor - applies patches to schemas without code generation
 import type {
   Patch,

@@ -1,5 +1,2 @@
-export * from './swagger.config'
-export * from './decorators/api-examples.decorator'
-export * from './decorators/api-description.decorator'
-export * from './dto/paginated-response.dto'
-export * from './dto/error-response.dto'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/common/swagger/index'

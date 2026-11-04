@@ -1,4 +1,2 @@
-import { PartialType } from '@nestjs/mapped-types'
-import { CreateUserDto } from './create-user.dto'
-
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/users/dto/update-user.dto'

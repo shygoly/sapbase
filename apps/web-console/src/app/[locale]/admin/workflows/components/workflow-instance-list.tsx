@@ -55,7 +55,6 @@ export function WorkflowInstanceList({ packageId, entity, semantic }: WorkflowIn
 
   useEffect(() => {
     loadRecords()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 筛选变化时重载
   }, [packageId, entity, stateFilter])
 
   const loadRecords = async () => {

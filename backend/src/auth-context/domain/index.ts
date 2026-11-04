@@ -1,6 +1,2 @@
-export * from './value-objects'
-export * from './domain-services'
-export * from './events'
-export * from './repositories'
-export * from './services'
-export * from './errors'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/index'

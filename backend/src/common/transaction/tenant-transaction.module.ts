@@ -1,14 +1,2 @@
-import { Module } from '@nestjs/common'
-import { APP_INTERCEPTOR } from '@nestjs/core'
-import { TenantTransactionInterceptor } from './tenant-transaction.interceptor'
-
-@Module({
-  providers: [
-    TenantTransactionInterceptor,
-    {
-      provide: APP_INTERCEPTOR,
-      useExisting: TenantTransactionInterceptor,
-    },
-  ],
-})
-export class TenantTransactionModule {}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/common/transaction/tenant-transaction.module'

@@ -37,7 +37,6 @@ export class HotReloader {
     schemaName: string
   ): void {
     // Clear from registry
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- key reserved for future registry delete
     const _key = `${schemaType}:${schemaName}`
     // Note: SchemaRegistry doesn't have a delete method, so we'll need to reload
     // For now, we'll trigger a full reload
@@ -102,7 +101,7 @@ export class HotReloader {
  */
 export function useHotReload(
   hotReloader: HotReloader,
-  _dependencies: any[] = [] // eslint-disable-line @typescript-eslint/no-unused-vars
+  _dependencies: any[] = []
 ): void {
   // This would be implemented in a React hooks file
   // For now, it's a placeholder

@@ -1,4 +1,2 @@
-import { SetMetadata } from '@nestjs/common'
-
-export const PERMISSIONS_KEY = 'permissions'
-export const Permissions = (...permissions: string[]) => SetMetadata(PERMISSIONS_KEY, permissions)
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth/permissions.decorator'

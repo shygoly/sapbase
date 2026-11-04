@@ -1,7 +1,2 @@
-/**
- * Port for publishing domain events (implemented in infrastructure).
- */
-export interface IEventPublisher {
-  publish<T>(event: T): Promise<void>
-  publishSync<T>(event: T): Promise<void>
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/common/events/i-event-publisher'

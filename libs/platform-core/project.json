@@ -1,0 +1,10 @@
+{
+  "name": "platform-core",
+  "root": "libs/platform-core",
+  "sourceRoot": "libs/platform-core/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:platform", "layer:platform", "runtime:node"],
+  "targets": {
+    "typecheck": { "executor": "nx:run-commands", "options": { "command": "npm run typecheck", "cwd": "libs/platform-core" } }
+  }
+}

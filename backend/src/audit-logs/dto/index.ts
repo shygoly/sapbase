@@ -1,3 +1,2 @@
-export { CreateAuditLogDto } from './create-audit-log.dto'
-export { AuditLogFilterDto } from './audit-log-filter.dto'
-export { AuditLogResponseDto } from './audit-log-response.dto'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/audit-logs/dto/index'

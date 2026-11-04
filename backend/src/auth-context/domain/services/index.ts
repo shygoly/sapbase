@@ -1,7 +1,2 @@
-export type { IJwtService } from './i-jwt-service'
-export type { IPasswordService } from './i-password-service'
-export type {
-  IEffectivePermissionsResolver,
-  EffectivePermissionsResolveInput,
-} from './i-effective-permissions-resolver'
-export { JWT_SERVICE, PASSWORD_SERVICE, EFFECTIVE_PERMISSIONS_RESOLVER } from './tokens'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/services/index'

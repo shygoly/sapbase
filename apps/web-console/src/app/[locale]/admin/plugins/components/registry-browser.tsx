@@ -30,7 +30,6 @@ export function RegistryBrowser({ onInstallFromRegistry }: RegistryBrowserProps)
 
   useEffect(() => {
     fetchRegistryPlugins()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only fetch
   }, [])
 
   const fetchRegistryPlugins = async () => {

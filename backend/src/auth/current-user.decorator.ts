@@ -1,6 +1,2 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-
-export const CurrentUser = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
-  const request = ctx.switchToHttp().getRequest()
-  return request.user
-})
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth/current-user.decorator'

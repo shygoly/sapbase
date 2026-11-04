@@ -1,13 +1,2 @@
-import { Module } from '@nestjs/common'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { Setting } from './setting.entity'
-import { SettingsService } from './settings.service'
-import { SettingsController } from './settings.controller'
-
-@Module({
-  imports: [TypeOrmModule.forFeature([Setting])],
-  providers: [SettingsService],
-  controllers: [SettingsController],
-  exports: [SettingsService],
-})
-export class SettingsModule {}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/settings/settings.module'

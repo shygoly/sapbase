@@ -1,11 +1,2 @@
-export class AuditLogResponseDto {
-  id: string
-  action: string
-  resource: string
-  actor: string
-  status: 'success' | 'failure' | 'pending'
-  resourceId?: string
-  changes?: Record<string, any>
-  metadata?: Record<string, any>
-  timestamp: Date
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/audit-logs/dto/audit-log-response.dto'

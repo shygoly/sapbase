@@ -1,7 +1,2 @@
-export { LoginService } from './login.service'
-export type { LoginCommand, LoginResult } from './login.service'
-export { SwitchOrganizationService } from './switch-organization.service'
-export type { SwitchOrganizationCommand } from './switch-organization.service'
-export { ValidateTokenService } from './validate-token.service'
-export { GetProfileService } from './get-profile.service'
-export type { ProfileResult } from './get-profile.service'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/application/services/index'

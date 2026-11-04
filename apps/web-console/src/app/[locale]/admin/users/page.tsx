@@ -71,7 +71,6 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run on page, pageSize, search change
   }, [page, pageSize, search])
 
   useEffect(() => {
@@ -84,7 +83,6 @@ export default function UsersPage() {
       }
     }
     fetchDepartments()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleCreateUser = async () => {

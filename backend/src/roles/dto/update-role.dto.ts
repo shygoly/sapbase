@@ -1,4 +1,2 @@
-import { PartialType } from '@nestjs/mapped-types'
-import { CreateRoleDto } from './create-role.dto'
-
-export class UpdateRoleDto extends PartialType(CreateRoleDto) {}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/roles/dto/update-role.dto'

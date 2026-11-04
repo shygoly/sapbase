@@ -1,27 +1,2 @@
-import { Controller, Get, Param, BadRequestException } from '@nestjs/common'
-import { InvitationsService } from './invitations.service'
-import { Invitation } from './invitation.entity'
-import { GetInvitationByTokenService } from '../organization-context/application/services/get-invitation-by-token.service'
-import { BusinessRuleViolation } from '../organization-context/domain/errors'
-
-@Controller('invitations')
-export class InvitationsPublicController {
-  constructor(
-    private readonly invitationsService: InvitationsService,
-    private readonly getInvitationByTokenService: GetInvitationByTokenService,
-  ) {}
-
-  @Get('token/:token')
-  async getInvitationByToken(@Param('token') token: string): Promise<Invitation> {
-    try {
-      const invitation = await this.getInvitationByTokenService.getByToken(token)
-      // Use old service to get relations
-      return await this.invitationsService.getInvitationByToken(token)
-    } catch (err) {
-      if (err instanceof BusinessRuleViolation) {
-        throw new BadRequestException(err.message)
-      }
-      throw err
-    }
-  }
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organizations/invitations-public.controller'

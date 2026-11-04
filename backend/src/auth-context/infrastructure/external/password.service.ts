@@ -1,14 +1,2 @@
-import { Injectable } from '@nestjs/common'
-import * as bcrypt from 'bcrypt'
-import type { IPasswordService } from '../../domain/services'
-
-@Injectable()
-export class PasswordService implements IPasswordService {
-  async hash(password: string): Promise<string> {
-    return bcrypt.hash(password, 10)
-  }
-
-  async compare(password: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(password, hash)
-  }
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/infrastructure/external/password.service'

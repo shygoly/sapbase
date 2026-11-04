@@ -1,16 +1,2 @@
-import type { Invitation, InvitationStatus } from '../entities'
-
-/**
- * Port for invitation persistence (implemented in infrastructure).
- */
-export interface IInvitationRepository {
-  save(invitation: Invitation): Promise<void>
-  findById(id: string): Promise<Invitation | null>
-  findByToken(token: string): Promise<Invitation | null>
-  findByOrganizationAndEmail(
-    organizationId: string,
-    email: string,
-    status?: InvitationStatus,
-  ): Promise<Invitation | null>
-  findByOrganization(organizationId: string): Promise<Invitation[]>
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/repositories/i-invitation.repository'

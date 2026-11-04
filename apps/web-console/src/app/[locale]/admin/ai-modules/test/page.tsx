@@ -46,7 +46,6 @@ export default function AIModuleTestPage() {
 
   useEffect(() => {
     fetchModules()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only fetch
   }, [])
 
   useEffect(() => {

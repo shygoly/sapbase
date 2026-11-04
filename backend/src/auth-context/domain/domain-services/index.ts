@@ -1,2 +1,2 @@
-export { CredentialValidator } from './credential-validator.service'
-export { OrganizationSelector } from './organization-selector.service'
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/domain-services/index'

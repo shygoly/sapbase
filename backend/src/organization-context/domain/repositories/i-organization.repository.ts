@@ -1,11 +1,2 @@
-import type { Organization } from '../entities'
-
-/**
- * Port for organization persistence (implemented in infrastructure).
- */
-export interface IOrganizationRepository {
-  save(organization: Organization): Promise<void>
-  findById(id: string): Promise<Organization | null>
-  findBySlug(slug: string): Promise<Organization | null>
-  findAll(userId: string): Promise<Organization[]>
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/organization-context/domain/repositories/i-organization.repository'

@@ -1,8 +1,2 @@
-import { Module } from '@nestjs/common'
-import { RlsPolicyService } from './rls-policy.service'
-
-@Module({
-  providers: [RlsPolicyService],
-  exports: [RlsPolicyService],
-})
-export class RlsPolicyModule {}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/common/rls/rls-policy.module'

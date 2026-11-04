@@ -1,11 +1,2 @@
-/**
- * Domain event: user switched organization.
- */
-export class OrganizationSwitchedEvent {
-  constructor(
-    public readonly userId: string,
-    public readonly oldOrganizationId: string | undefined,
-    public readonly newOrganizationId: string,
-    public readonly switchedAt: Date,
-  ) {}
-}
+// 兼容壳：实现已迁到 libs/platform-core（openspec change refactor-app-workspace-split-and-platform-base）
+export * from '@sap/platform-core/auth-context/domain/events/organization-switched.event'
