@@ -11,7 +11,7 @@
 
 | 能力 | 落点 |
 | --- | --- |
-| 一行结构化日志 | `backend/src/common/logging/structured-logger.ts`：`log(level, message, fields)` |
+| 一行结构化日志 | `apps/api/src/common/logging/structured-logger.ts`：`log(level, message, fields)` |
 | 格式切换 | `LOG_FORMAT=json` → `{ts, level, msg, ...fields}`；缺省 / `text` → 人类可读一行 |
 | 关键路径 | 迁移 `transition`、审批 `approve`、导入 `importMaster`、outbox `drain` 每条 delivered/failed |
 | 投递失败可定位 | `GET /outbox/events` 看 `attempts` / `lastError` / `status` → 修复 → `POST /outbox/events/:id/redeliver` → 再 `drain` |

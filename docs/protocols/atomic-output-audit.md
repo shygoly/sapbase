@@ -2,7 +2,7 @@
 
 > 版本：v1
 > 日期：2026-09-25
-> 定位：**闸 3 的唯一判据文本**。实现（`backend/src/atomic-runtime/output-gate.ts`）只做本文件里的判定；
+> 定位：**闸 3 的唯一判据文本**。实现（`apps/api/src/atomic-runtime/output-gate.ts`）只做本文件里的判定；
 > 想要加判据，先改本文件（元语不变量 10：未冻结的协议不做实现）。
 > 相关：`docs/META_LANGUAGE.md` §3.3（准入闸表）、`schemas/atomic-contract.schema.json`（声明的真源）。
 

@@ -71,7 +71,7 @@ jobs:
 
   wasm-host:
     name: Wasm Host Engine (Rust sidecar)
-    # 执行引擎二进制必须与 backend 一起可构建：默认引擎已是 wasmtime，
+    # 执行引擎二进制必须与 @sap/api 一起可构建：默认引擎已是 wasmtime，
     # 缺二进制时原子接口会（按设计）显式失败而不是回退。
     # linux/arm64 走 cross-rs（在 ubuntu runner 上用容器交叉编译）；
     # 该行在本机（macOS）无法验证 —— cross 需要 Linux 宿主或容器内 Rust，
@@ -126,18 +126,18 @@ jobs:
           if-no-files-found: error
 
   apps:
-    name: Apps (backend / speckit)
+    name: Apps (api / web-portal / web-console)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     # 强制门禁（2026-09-25 转正，2026-09-25 修正描述）。
     #
     # 本 job **实际覆盖**：shared-schemas 构建 → 后端类型检查（nest build）→
-    # 后端**全部单元测试**（`npm run test --workspace backend`，实测 53 套件 / 492 用例）→
+    # 后端**全部单元测试**（`npm run test --workspace @sap/api`）→
     # 前端构建（next build）。
     #
     # 本 job **不覆盖** e2e：我们维护的三个 e2e（atomic-runtime / atomic-gates /
     # blueprint-pipeline）需要真实 PostgreSQL 与已建表，跑在单独的 `e2e` job 里；
-    # `backend/test/` 下其余历史 e2e（auth / roles / departments / users / plugins /
+    # `apps/api/test/` 下其余历史 e2e（auth / roles / departments / users / plugins /
     # ai-module-lifecycle）既需要完整 AppModule 又会挂住，**不在任何 job 里**。
     # 早先这里写着"全部单元/e2e 均通过"——那句话不成立，已改掉。
     #
@@ -157,7 +157,7 @@ jobs:
         run: npm ci
 
       - name: Build shared schemas
-        run: npm run build --workspace shared-schemas
+        run: npm run build --workspace @sap/shared-schemas && npm run build --workspace shared-schemas
 
       - name: Build wasm-modules
         # backend 直接 import '@speckit/wasm-modules'，而它 package.json 的 types/main 指向 dist/，
@@ -166,18 +166,27 @@ jobs:
         # （本机之所以看不出问题：工作区里恰好有构建过的 dist/。）
         run: npm run build --workspace @speckit/wasm-modules
 
+      - name: Build shared-core
+        run: npm run build --workspace @sap/shared-core
+
+      - name: Build kernels
+        run: npm run build --workspace @sap/release-kernel && npm run build --workspace @sap/agent-kernel
+
+      - name: Build platform libs
+        run: npm run build --workspace @sap/platform-core && npm run build --workspace @sap/platform-release && npm run build --workspace @sap/agent-tools
+
       - name: Build wasm-host sidecar
         # 单元测试默认引擎（ATOMIC_ENGINE=wasmtime）需要这个二进制；不构建的话测试会红
         run: cargo build --release --locked --manifest-path crates/wasm-host/Cargo.toml
 
-      - name: Type-check backend
-        run: npm run build --workspace backend
+      - name: Type-check api
+        run: npm run build --workspace @sap/api
 
-      - name: Test backend
-        run: npm run test --workspace backend
+      - name: Test api
+        run: npm run test --workspace @sap/api
 
-      - name: Build frontend
-        run: npm run build --workspace speckit
+      - name: Build frontends
+        run: npm run build --workspace @sap/web-portal && npm run build --workspace @sap/web-console
 
   e2e:
     name: E2E (real Postgres + real Wasm)
@@ -219,7 +228,7 @@ jobs:
         run: npm ci
 
       - name: Build shared schemas
-        run: npm run build --workspace shared-schemas
+        run: npm run build --workspace @sap/shared-schemas && npm run build --workspace shared-schemas
 
       - name: Build wasm-modules
         # backend 直接 import '@speckit/wasm-modules'，而它 package.json 的 types/main 指向 dist/，
@@ -228,19 +237,28 @@ jobs:
         # （本机之所以看不出问题：工作区里恰好有构建过的 dist/。）
         run: npm run build --workspace @speckit/wasm-modules
 
+      - name: Build shared-core
+        run: npm run build --workspace @sap/shared-core
+
+      - name: Build kernels
+        run: npm run build --workspace @sap/release-kernel && npm run build --workspace @sap/agent-kernel
+
+      - name: Build platform libs
+        run: npm run build --workspace @sap/platform-core && npm run build --workspace @sap/platform-release && npm run build --workspace @sap/agent-tools
+
       - name: Build wasm-host sidecar
         run: cargo build --release --locked --manifest-path crates/wasm-host/Cargo.toml
 
       - name: Rebuild database from zero (squash baseline)
-        working-directory: backend
+        working-directory: apps/api
         run: npx ts-node --transpile-only scripts/rebuild-database.ts --db=sapbase_rebuild
 
       - name: Verify rebuilt schema matches entities
-        working-directory: backend
+        working-directory: apps/api
         run: npx ts-node --transpile-only scripts/verify-from-zero.ts --db=sapbase_rebuild
 
       - name: Run maintained e2e specs
-        working-directory: backend
+        working-directory: apps/api
         run: |
           npx jest --config ./test/jest-e2e.json --runInBand \
             test/atomic-runtime.e2e-spec.ts \
@@ -349,5 +367,4 @@ jobs:
             "openspec/project.md" \
             "openspec/AGENTS.md" \
             "AGENTS.md" \
-            "speckit/AGENTS.md" \
-            "backend/AGENTS.md"
+            "apps/api/AGENTS.md"

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The shipping carbon module implements DDD architecture under `backend/src/shipping-carbon/` with:
+The shipping carbon module implements DDD architecture under `apps/api/src/shipping-carbon/` with:
 
 - **Domain layer**: pure calculation engines (CII, FuelEU, EU ETS, Fuel Cost), value objects, aggregates
 - **Application layer**: services, commands, contracts

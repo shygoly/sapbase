@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://sapbase.local/schemas/blueprint-package.schema.json",
   "title": "Blueprint Package Manifest",
-  "description": "蓝图包（.erpkg）的 manifest —— 包内**唯一权威**入口。它声明 id/版本/runtime 范围/依赖/分层/每个文件的校验和。校验和只描述形状；「分层引用必须都属于 files」「files 必须被任何一层覆盖」这类跨字段一致性由校验器负责（见 backend/src/blueprint）。",
+  "description": "蓝图包（.erpkg）的 manifest —— 包内**唯一权威**入口。它声明 id/版本/runtime 范围/依赖/分层/每个文件的校验和。校验和只描述形状；「分层引用必须都属于 files」「files 必须被任何一层覆盖」这类跨字段一致性由校验器负责（见 apps/api/src/blueprint）。",
   "type": "object",
   "additionalProperties": false,
   "required": ["blueprint", "version", "runtime", "layers", "files"],

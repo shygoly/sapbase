@@ -1,7 +1,7 @@
 # Outbox 协议（跨进程事件）
 
 > 状态：`consolidate-platform-foundations` N0
-> 相关：进程内总线 `backend/src/common/events/`；发布点在 `semantic-runtime` 的迁移 / 审批 / 导入
+> 相关：进程内总线 `apps/api/src/common/events/`；发布点在 `semantic-runtime` 的迁移 / 审批 / 导入
 
 本文件钉跨进程事件的**形状、幂等、投递、重试、可见性、重启恢复**。
 进程内领域事件（`IEventPublisher.publish`）不走本协议。

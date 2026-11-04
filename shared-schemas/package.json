@@ -1,7 +1,8 @@
 {
   "name": "@speckit/shared-schemas",
   "version": "1.0.0",
-  "description": "Shared TypeScript schemas for Speckit ERP frontend and backend",
+  "private": true,
+  "description": "兼容包：实现已迁到 @sap/shared-schemas（libs/shared-schemas），保留旧名一个版本周期",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -9,18 +10,10 @@
     "watch": "tsc --watch",
     "clean": "rm -rf dist"
   },
-  "keywords": [
-    "speckit",
-    "schemas",
-    "types",
-    "typescript"
-  ],
-  "author": "Speckit Team",
-  "license": "MIT",
+  "dependencies": {
+    "@sap/shared-schemas": "*"
+  },
   "devDependencies": {
     "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "zod": "^4.1.8"
   }
 }

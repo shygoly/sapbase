@@ -46,6 +46,9 @@
       ],
       "@sap/app-shared/*": [
         "libs/app-shared/src/*"
+      ],
+      "@sap/shared-schemas": [
+        "libs/shared-schemas/src/index.ts"
       ]
     }
   }

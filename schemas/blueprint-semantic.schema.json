@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://sapbase.local/schemas/blueprint-semantic.schema.json",
   "title": "Blueprint Semantic Layer",
-  "description": "包内 semantic.json 的形状（业务对象、字段、关系、状态、迁移）。**跨字段判据**（初始态唯一、存在终态、无不可达态、迁移目标已声明、主从双向一致、计算字段环、金额标记）不在这里 —— 由编译器确定性判定，见 backend/src/blueprint/compiler.ts。",
+  "description": "包内 semantic.json 的形状（业务对象、字段、关系、状态、迁移）。**跨字段判据**（初始态唯一、存在终态、无不可达态、迁移目标已声明、主从双向一致、计算字段环、金额标记）不在这里 —— 由编译器确定性判定，见 apps/api/src/blueprint/compiler.ts。",
   "type": "object",
   "additionalProperties": false,
   "required": ["entities"],

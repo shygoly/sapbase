@@ -15,7 +15,7 @@ import { isSupportedToolPermission } from './tool-permissions'
 
 export const TOOLS_CONTRACT_FILE = 'tools.json'
 
-/** 向上查找的最大层数：backend/src/xxx → backend → 仓库根 */
+/** 向上查找的最大层数：apps/api/src/xxx → backend → 仓库根 */
 const MAX_WALK_UP = 8
 
 export interface AgentToolContract {

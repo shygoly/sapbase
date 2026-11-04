@@ -250,7 +250,7 @@ $$
 | Entity / Object | `speckit/src/core/schema/types.ts` 的 `ObjectSchema` | 缺 `states/events/capabilities/policies/lifecycle` |
 | Field | `FieldDefinition`（含 validation、permissions） | 基本可用，缺条件显隐与联动表达式 |
 | Relation | `Relation`（one-to-one / one-to-many / many-to-many） | 缺关系级策略与级联语义 |
-| State | `backend/src/workflows/workflow-definition.entity.ts`、`speckit` Patch DSL 的 `state` scope | 状态机在后端，前端语义对象只有引用，未统一到元模型 |
+| State | `apps/api/src/workflows/workflow-definition.entity.ts`、`speckit` Patch DSL 的 `state` scope | 状态机在后端，前端语义对象只有引用，未统一到元模型 |
 | Version | `ObjectSchema.version`、`speckit/src/core/patch/version-control.ts` | 只有字符串版本，缺兼容性与迁移定义 |
 
 ---
@@ -1088,12 +1088,12 @@ Template Signature Verify
 | Form / Collection / Detail Runtime | `speckit/src/components/runtime/{FormRuntime,CollectionRuntime,DetailRuntime,PageRuntime}.tsx` | 可用 |
 | 页面模型校验 | `speckit/src/core/page-model/schema-validator.ts` | 可用，校验面偏窄 |
 | 权限（RBAC + Scope） | `speckit/src/core/auth/{permission-guard,permission-hooks,auth-hooks}.ts`、`speckit/src/core/store/permission.store.ts` | 可用 |
-| 插件体系 | `speckit/src/core/plugins/*`、`backend/src/plugins/*`、`schemas/plugin.schema.json` | 前端插件，无沙箱 |
+| 插件体系 | `speckit/src/core/plugins/*`、`apps/api/src/plugins/*`、`schemas/plugin.schema.json` | 前端插件，无沙箱 |
 | **Wasm 原子模块准入** | `wasm-modules/`（闸 0 源码预检 / 闸 1 静态白名单 / 闸 2 双构建器复现 / 闸 5 吊销；Rust no_std 零能力模块 + 入库清单 `build/manifest.json`） | **新增强资产**：Atomic Contract 的实现封装层与相应门禁；宿主侧运行时未接 |
-| 模块注册表（≈Registry） | `backend/src/module-registry/{module-registry,module-capability,module-relationship,module-statistics}` | **强资产**，接近模块化 Registry |
-| AI 模块定义（≈Space Orchestrator 雏形） | `backend/src/ai-modules/{ai-module,ai-module-definition,ai-module-review,definition-step-prompts,step3-stateflow.schema,step3-normalizer}` | 固定步骤生成，非 Delta 闭环 |
-| Workflow Engine | `backend/src/workflows/{transition-engine,workflow-guard-ai,workflow-history,workflow-auto-transition.job,entity-state-updater.registry}`、`openspec/changes/add-workflow-engine` | 较成熟 |
-| 审计 | `backend/src/audit-logs/*`、`shared-schemas/src/v1/audit-log.ts` | 有审计，非不可篡改事件溯源 |
+| 模块注册表（≈Registry） | `apps/api/src/module-registry/{module-registry,module-capability,module-relationship,module-statistics}` | **强资产**，接近模块化 Registry |
+| AI 模块定义（≈Space Orchestrator 雏形） | `apps/api/src/ai-modules/{ai-module,ai-module-definition,ai-module-review,definition-step-prompts,step3-stateflow.schema,step3-normalizer}` | 固定步骤生成，非 Delta 闭环 |
+| Workflow Engine | `apps/api/src/workflows/{transition-engine,workflow-guard-ai,workflow-history,workflow-auto-transition.job,entity-state-updater.registry}`、`openspec/changes/add-workflow-engine` | 较成熟 |
+| 审计 | `apps/api/src/audit-logs/*`、`shared-schemas/src/v1/audit-log.ts` | 有审计，非不可篡改事件溯源 |
 | 多租户 | `openspec/changes/migrate-to-saas-architecture`（45/75） | 进行中 |
 | 全系统生成与部署 | `openspec/changes/add-full-system-generation-and-deploy` | 进行中，是 Blueprint → 运行的最近路径 |
 
@@ -1101,7 +1101,7 @@ Template Signature Verify
 
 | # | 差距 | 影响 | 建议动作 | 优先级 |
 | --- | --- | --- | --- | --- |
-| 1 | ~~无 Atomic Contract~~ **已落地（可执行）** | — | `schemas/atomic-contract.schema.json` 冻结 + `backend/src/atomic-registry/` 注册表 + `backend/src/atomic-runtime/` 宿主运行时：真实 Wasm 原子已能经 HTTP 调用、结果可审计、权限 all-of 校验、吊销即拒不回退。剩余：模块对原子的依赖声明（`dependsOnAtomics`） | P0 → 收尾 |
+| 1 | ~~无 Atomic Contract~~ **已落地（可执行）** | — | `schemas/atomic-contract.schema.json` 冻结 + `apps/api/src/atomic-registry/` 注册表 + `apps/api/src/atomic-runtime/` 宿主运行时：真实 Wasm 原子已能经 HTTP 调用、结果可审计、权限 all-of 校验、吊销即拒不回退。剩余：模块对原子的依赖声明（`dependsOnAtomics`） | P0 → 收尾 |
 | 2 | 无 Blueprint Compiler 与 IR | 无法把 Schema 编译为可验证执行计划 | 在 `shared-schemas` 定义 Blueprint 包格式，实现最小 Compiler（验证 + 依赖闭包 + IR） | P0 |
 | 3 | Patch DSL 命名空间局限于前端 | Delta 无法表达语义/策略/流程 | 扩展 `PatchScope`，落地 `space-delta/v2`，复用现有 validator/executor | P0 |
 | 4 | `ai-modules` 是固定步骤 Prompt，无 Validator 闭环 | LLM 输出不可增量验证、不可回滚 | 引入 Delta Validator + Repairer，替换固定步骤生成 | P1 |
@@ -1111,7 +1111,7 @@ Template Signature Verify
 | 8 | Rule Engine 不统一 | 规则散落在 guard 与前端校验 | 统一 rule registry：定义、优先级、冲突检测、可解释性 | P1 |
 | 9 | 无事件引擎与不可变审计 | 无事件溯源，审计可被改动 | 事件表 + Outbox + 哈希链；会计引擎前置条件 | P2 |
 | 10 | 无 Accounting Engine | 财务域无法平台化 | 会计事件 → 分录规则 → 凭证（只冲销），复用 Rule/Compute | P2 |
-| 11 | 插件无 WASM 沙箱 | 第三方扩展不可信 | **宿主运行时已就位**（`backend/src/atomic-runtime/`：零能力沙箱 + Worker 超时 + 输出上限/值域 + 吊销）；仍缺：闸 3 的低熵输出判据、`backend/src/plugins` 的插件沙箱化（插件目前仍是进程内 TS） | P2 |
+| 11 | 插件无 WASM 沙箱 | 第三方扩展不可信 | **宿主运行时已就位**（`apps/api/src/atomic-runtime/`：零能力沙箱 + Worker 超时 + 输出上限/值域 + 吊销）；仍缺：闸 3 的低熵输出判据、`apps/api/src/plugins` 的插件沙箱化（插件目前仍是进程内 TS） | P2 |
 | 12 | 无 Marketplace 交易面 | 无法形成价值闭环 | 在 `module-registry` 上叠加商品、定价、授权、分成 | P2 |
 | 13 | 无 Context Compiler | LLM 上下文不可控、成本不可控 | 依赖图 + 权限过滤 + 预算裁剪，先服务 `ai-modules` | P2 |
 | 14 | 无本地/离线运行形态 | 数据主权叙事不成立 | 打包 Production Runtime（无 Jev）+ 本地数据库 + License | P3 |
@@ -1178,7 +1178,7 @@ Space Orchestrator / Intent Parser / Space Router / Task Graph Planner /
 Delta Generator / Delta Validator / Delta Repairer / Context Compiler
 ```
 
-仓库对应：改造 `backend/src/ai-modules`，从固定步骤 Prompt 升级为 Delta 闭环。
+仓库对应：改造 `apps/api/src/ai-modules`，从固定步骤 Prompt 升级为 Delta 闭环。
 
 ### Phase 5：本地设计与调试
 

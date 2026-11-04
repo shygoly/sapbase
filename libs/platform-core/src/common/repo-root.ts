@@ -6,7 +6,7 @@ let cachedRoot: string | null = null
 /**
  * 解析仓库根目录。
  *
- * 后端以 `npm run start:dev --workspace backend` 启动时 cwd 是 `backend/`，
+ * 后端以 `npm run start:dev --workspace @sap/api` 启动时 cwd 是 `apps/api/`，
  * 而发布闸门 G0/G4 需要在仓库根执行 `scripts/meta/check-all.mjs` 和
  * `node_modules/jest`，直接用 cwd 会拼出错误路径。
  *

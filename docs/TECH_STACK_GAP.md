@@ -2,7 +2,7 @@
 
 > 日期：2026-09-24
 > 对照对象：《ERP Space Platform 技术栈设计》（目标栈，按层给出选型）
-> 现状来源：本仓库实际依赖与源码用法（`speckit/package.json`、`backend/package.json`、`shared-schemas/package.json` 及源码检索）
+> 现状来源：本仓库实际依赖与源码用法（`speckit/package.json`、`apps/api/package.json`、`shared-schemas/package.json` 及源码检索）
 > 相关文档：[ERP_Space_Platform_设计方案_v3.md](./ERP_Space_Platform_设计方案_v3.md)（第 14 节为架构与能力差距）、[TECH_STACK_v2.md](./TECH_STACK_v2.md)（前端技术栈核对版）
 > **更新（2026-09-24，同日）**：已从 `medtrust/packages/wasm-algorithms` 移植 Wasm 原子模块体系，
 > 新增 workspace 包 [`wasm-modules`](../wasm-modules/README.md)。本次更新改变了第 5.3 节
@@ -67,7 +67,7 @@ rg -l -i "hash.?chain|merkle|prevHash" backend/src
 rg -l -i "row.level security|\bRLS\b" backend/src
 
 # 前端依赖真实性
-rg -n '"axios"' speckit/package.json backend/package.json
+rg -n '"axios"' speckit/package.json apps/api/package.json
 rg -n "swr" speckit/src
 rg -l "@clerk" speckit/src
 find . -maxdepth 5 -type d -name "axios" -not -path "*/axios/*"
@@ -82,14 +82,14 @@ find . -maxdepth 5 -type d -name "axios" -not -path "*/axios/*"
 | 元模型定义 | JSON Schema 为权威 + TS(Zod/TypeBox) 与 Rust 双实现 | Zod 4 + 手写 TS 类型；根目录 `schemas/*.schema.json` 仅覆盖 plugin / package-manager / hooks | 🟡 只有 TS 侧一半，且权威源是 TS 类型而非 Schema |
 | 语义图存储 | PostgreSQL + Apache AGE / Memgraph | PostgreSQL（TypeORM）；租户隔离在应用层 | 🟡 有主库，无图扩展 |
 | 版本与生命周期 | semver + 声明式 diff 迁移 + 事件溯源 | `semver` 已装但未做解析器；TypeORM **命令式**迁移；无事件溯源 | ⚠️ 迁移范式与目标相反 |
-| Blueprint 编译器 / IR | Rust，SSA-like IR（文本 + 二进制） | **已实现，但用 TS 而非 Rust**：`backend/src/blueprint/`（校验 → 依赖闭包 → 冲突检测 → IR）+ `schemas/blueprint-ir.schema.json`；IR 双形态（文本 + 结构化）等价且可 **逐字节往返**，摘要为文本形态 sha256，见 `docs/protocols/blueprint-ir.md`。二进制形态仍在目标侧 | 🟡 能力已具备，**实现语言与目标不同**（见 §7 触发条件） |
-| LLM 接入 | 统一 Gateway + 多模型路由 + 成本 / 限流 / 审计 | `backend/src/ai-models/ai-model.entity.ts` 已是模型注册表（kimi / openai / anthropic + `isDefault` + `baseUrl` + `apiKey` + `lastTestedAt`）；另有 `speckit/src/lib/ai/kimi-client.ts` 与 workflow AI guard/suggestion | 🟡 有注册表与调用点，无网关、路由、成本追踪 |
+| Blueprint 编译器 / IR | Rust，SSA-like IR（文本 + 二进制） | **已实现，但用 TS 而非 Rust**：`apps/api/src/blueprint/`（校验 → 依赖闭包 → 冲突检测 → IR）+ `schemas/blueprint-ir.schema.json`；IR 双形态（文本 + 结构化）等价且可 **逐字节往返**，摘要为文本形态 sha256，见 `docs/protocols/blueprint-ir.md`。二进制形态仍在目标侧 | 🟡 能力已具备，**实现语言与目标不同**（见 §7 触发条件） |
+| LLM 接入 | 统一 Gateway + 多模型路由 + 成本 / 限流 / 审计 | `apps/api/src/ai-models/ai-model.entity.ts` 已是模型注册表（kimi / openai / anthropic + `isDefault` + `baseUrl` + `apiKey` + `lastTestedAt`）；另有 `speckit/src/lib/ai/kimi-client.ts` 与 workflow AI guard/suggestion | 🟡 有注册表与调用点，无网关、路由、成本追踪 |
 | 受约束生成 | Structured Outputs / Outlines / XGrammar | 无约束解码；靠 prompt + 回环校验（patch validator、`step3-normalizer`） | 🟡 有回环思想，无语法级约束 |
-| Context Compiler | 图查询 + 向量检索 + 预算优化 | 无（`backend/src/ai-module-context` 手工组织上下文） | ❌ 图库与向量库均不存在 |
+| Context Compiler | 图查询 + 向量检索 + 预算优化 | 无（`apps/api/src/ai-module-context` 手工组织上下文） | ❌ 图库与向量库均不存在 |
 | Space Delta | JSON Patch (RFC 6902) 扩展 + Ajv | `speckit/src/core/patch/types.ts`：5 类 scope（page / object / permission / state / menu）、5 种 op、L1–L3 安全级，配套 validator / executor / patch-manager / audit-logger / version-control / hot-reload / gateway | ✅ 最接近目标的既有资产，只需扩展命名空间 |
 | Runtime 内核 | Rust + WASM 组件模型 | 全 TypeScript（NestJS 模块 + 前端运行时） | ❌ 技术路线不同 |
-| WASM 沙箱 | Wasmtime（通用）/ WasmEdge / Extism | **两端齐了且已采用 Wasmtime**：模块侧零能力 ABI + 静态准入闸（`wasm-modules/`）；宿主侧 `backend/src/atomic-runtime/` 执行内核 + **Rust sidecar（`crates/wasm-host`，Wasmtime 48）** 提供 fuel 指令预算与 epoch 中断、进程外隔离；V8 保留为对拍引擎与显式回退路径（`ATOMIC_ENGINE`） | ✅ |
-| 事务与一致性 | ACID + Saga + Outbox + 事件溯源 + 哈希链 | PostgreSQL 事务；`backend/src/common/events/event-bus.service.ts` 进程内事件总线；`audit-logs` 实体表 | 🟡 有事件雏形，无 Outbox / Saga / 哈希链 |
+| WASM 沙箱 | Wasmtime（通用）/ WasmEdge / Extism | **两端齐了且已采用 Wasmtime**：模块侧零能力 ABI + 静态准入闸（`wasm-modules/`）；宿主侧 `apps/api/src/atomic-runtime/` 执行内核 + **Rust sidecar（`crates/wasm-host`，Wasmtime 48）** 提供 fuel 指令预算与 epoch 中断、进程外隔离；V8 保留为对拍引擎与显式回退路径（`ATOMIC_ENGINE`） | ✅ |
+| 事务与一致性 | ACID + Saga + Outbox + 事件溯源 + 哈希链 | PostgreSQL 事务；`apps/api/src/common/events/event-bus.service.ts` 进程内事件总线；`audit-logs` 实体表 | 🟡 有事件雏形，无 Outbox / Saga / 哈希链 |
 | 离线优先与同步 | 本地 SQLite + 操作日志同步 + CRDT | 无（前端直连远程 API） | ❌ |
 | 对象存储 | MinIO / S3-compatible | 本地磁盘 `./uploads`（multer） | ⚠️ 与之相反：无版本、无加密、无制品库 |
 | 缓存 | Redis / Dragonfly | Redis 5 + cache-manager-redis-store | ✅ |
@@ -125,11 +125,11 @@ find . -maxdepth 5 -type d -name "axios" -not -path "*/axios/*"
 | --- | --- | --- |
 | Patch DSL（含 validator / executor / audit / version-control） | `speckit/src/core/patch/` | Space Delta + Validator |
 | Schema 驱动前端运行时 | `speckit/src/core/schema/` + `speckit/src/components/runtime/` | 自研表单与页面引擎 |
-| 模块注册表（能力 / 关系 / 统计） | `backend/src/module-registry/` | Registry |
-| 多模型注册表 | `backend/src/ai-models/` | LLM Gateway（雏形） |
-| 应用层租户隔离 | `backend/src/common/entities/tenant-aware.entity.ts` + `common/interceptors/data-isolation.interceptor.ts` | 多租户 |
+| 模块注册表（能力 / 关系 / 统计） | `apps/api/src/module-registry/` | Registry |
+| 多模型注册表 | `apps/api/src/ai-models/` | LLM Gateway（雏形） |
+| 应用层租户隔离 | `apps/api/src/common/entities/tenant-aware.entity.ts` + `common/interceptors/data-isolation.interceptor.ts` | 多租户 |
 | PostgreSQL + Redis | TypeORM + `cache-manager-redis-store` | 主库 + 缓存 |
-| ~~已装但未用足的三个包~~ | `adm-zip` / `jsonschema` / `semver` **都已用上**：`.erpkg` 打包与解包、包与 IR 的 Schema 校验、原子依赖的语义化范围求解（`backend/src/blueprint/`、`backend/src/atomic-registry/`） | Blueprint Package 三件套（**已完成**） |
+| ~~已装但未用足的三个包~~ | `adm-zip` / `jsonschema` / `semver` **都已用上**：`.erpkg` 打包与解包、包与 IR 的 Schema 校验、原子依赖的语义化范围求解（`apps/api/src/blueprint/`、`apps/api/src/atomic-registry/`） | Blueprint Package 三件套（**已完成**） |
 | GitHub Actions 管道骨架 | `.github/workflows/` | CI/CD（内容需替换） |
 
 ### 5.2 B 组：方向一致但只做到皮毛（补深即可，不换技术）
@@ -243,7 +243,7 @@ Phase 4  行业模板与市场      9–12 个月
 
 | # | 发现 | 证据 | 影响 |
 | --- | --- | --- | --- |
-| 1 | `axios` 是前端幽灵依赖 | 代码在 `speckit/src/lib/api/client.ts`、`core/error/error-handler.ts` 中引用；`axios` 只声明在 `backend/package.json`，前端 `package.json` 无声明 | 干净环境下前端安装/构建可能解析失败 |
+| 1 | `axios` 是前端幽灵依赖 | 代码在 `speckit/src/lib/api/client.ts`、`core/error/error-handler.ts` 中引用；`axios` 只声明在 `apps/api/package.json`，前端 `package.json` 无声明 | 干净环境下前端安装/构建可能解析失败 |
 | 2 | `@clerk/nextjs` 与 `@clerk/themes` 未被使用 | 依赖存在于 `speckit/package.json`；`rg -l "@clerk" speckit/src` 无结果 | 认证方案混淆、包体积与安全审计噪音 |
 | 3 | ~~三套包管理器并存~~ **已收敛** | 统一为 npm：删除 `speckit/bun.lock`、修正 `bun format` 脚本与 `.npmrc` 的 pnpm 残留键、未跟踪的 pnpm 文件移出仓库 | 已解决，见 [PACKAGE_MANAGER.md](./PACKAGE_MANAGER.md)（`node_modules` 干净重建仍需执行一次） |
 | 4 | CI 与产品无关 | `.github/workflows/ci.yml` 原为 agents/commands/skills/hooks/rules 校验 + 四包管理器矩阵；**已重写**为 npm-only，并新增 `wasm-modules`（强制）与 `apps`（首期允许失败）两个产品 job | 已改善；`apps` job 跑通后应改为强制门禁 |

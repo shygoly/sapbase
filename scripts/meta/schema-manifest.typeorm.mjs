@@ -2,7 +2,7 @@
 /**
  * schema-manifest.typeorm.mjs — 从 TypeORM 实体生成 DOMAIN checker 用的 manifest。
  * 零依赖。用法：
- *   node scripts/schema-manifest.typeorm.mjs --root backend/src --out contracts/schema-manifest.json
+ *   node scripts/schema-manifest.typeorm.mjs --root apps/api/src --out contracts/schema-manifest.json
  *
  * 说明：
  *   - TypeORM 默认命名策略下，列名 = 属性名（camelCase），不是 snake_case。
@@ -17,11 +17,11 @@ import { parseArgs, walkFiles } from './lib/common.mjs'
 
 const args = parseArgs()
 if (args.help) {
-  console.log('用法：node scripts/schema-manifest.typeorm.mjs [--root backend/src] [--out contracts/schema-manifest.json]')
+  console.log('用法：node scripts/schema-manifest.typeorm.mjs [--root apps/api/src] [--out contracts/schema-manifest.json]')
   process.exit(0)
 }
 
-const root = resolve(args.root ?? 'backend/src')
+const root = resolve(args.root ?? 'apps/api/src')
 const out = resolve(args.out ?? 'contracts/schema-manifest.json')
 const files = walkFiles(root, {
   extensions: ['.ts'],

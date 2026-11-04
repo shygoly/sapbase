@@ -113,7 +113,7 @@ export class ReleaseValidationService {
       const compiled = await this.blueprints.compile(blueprintId)
       return { status: 'passed', evidence: JSON.stringify(compiled).slice(0, 300) }
     } catch (error) {
-      return { status: 'failed', gate: 'G1', rule: 'blueprint-compile', path: 'backend/src/blueprint/blueprint.service.ts#compile', howToFix: 'fix blueprint package or references', error: (error as Error).message }
+      return { status: 'failed', gate: 'G1', rule: 'blueprint-compile', path: 'apps/api/src/blueprint/blueprint.service.ts#compile', howToFix: 'fix blueprint package or references', error: (error as Error).message }
     }
   }
 

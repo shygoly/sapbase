@@ -6,7 +6,7 @@ import type { EntityManager } from 'typeorm'
  * `releases` / `release-automation` 要被 `apps/api` 装配，但不能反向 import
  * 应用层模块（ai-modules / outbox / notifications / agent-eval）。这里用结构化
  * 接口把依赖方向倒过来：应用层实现这些端口，并在自己的模块里用工厂装配
- * ReleasesService（见 backend/src/releases/releases.module.ts）。
+ * ReleasesService（见 apps/api/src/releases/releases.module.ts）。
  */
 
 export interface ReleaseAiModuleView {

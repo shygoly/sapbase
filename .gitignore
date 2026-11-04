@@ -62,3 +62,6 @@ out/
 *.tsbuildinfo
 
 # Nx 本地缓存与图
+
+# compat package build output
+shared-schemas/dist/

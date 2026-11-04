@@ -339,7 +339,7 @@ change `add-minimal-autoparts-template` 把「包能交付」推进到「包能�
 
 装载本身只证明「包合法、租户被授权、原子能绑定」。下列三项是实测，不是推测：
 
-1. `backend/src/blueprint` **没有**记录写入入口（只有 package / compile / load / manifest）。
+1. `apps/api/src/blueprint` **没有**记录写入入口（只有 package / compile / load / manifest）。
 2. `rules-expression.ts` 对 `approval.when` **只抽取字段引用，不求值**。
 3. `wasm-modules/build/manifest.json` **只有 1 个原子**：`available-inventory`（tier A，abiVersion 1）。
 
@@ -351,7 +351,7 @@ change `add-minimal-autoparts-template` 把「包能交付」推进到「包能�
 
 本节冻结 `semantic.json` 的新可选声明与编译期判据。形状在
 [`schemas/blueprint-semantic.schema.json`](../../schemas/blueprint-semantic.schema.json)；
-跨字段判据在 `backend/src/blueprint/compiler.ts`。`additionalProperties: false` 不放松。
+跨字段判据在 `apps/api/src/blueprint/compiler.ts`。`additionalProperties: false` 不放松。
 
 ### 8.1 金额：显式标记 + 裸 decimal 兼容
 
@@ -367,7 +367,7 @@ change `add-minimal-autoparts-template` 把「包能交付」推进到「包能�
 
 只写 `precision` 时仍套用缺省 `scale=4`，因此 `precision < 4` 会被拒——必须显式写兼容的 `scale`。
 
-定点运算在 `backend/src/blueprint/money.ts`：整数小单位，`add` / `sub` / `mul` / `compare` **不舍入**，`roundTo` 是唯一舍入点。不引入 decimal 库、不引入浮点。求值进模板运行时属 P2。
+定点运算在 `apps/api/src/blueprint/money.ts`：整数小单位，`add` / `sub` / `mul` / `compare` **不舍入**，`roundTo` 是唯一舍入点。不引入 decimal 库、不引入浮点。求值进模板运行时属 P2。
 
 归档模板 `templates/auto-parts-min/` 里的裸 `decimal` 与 `number`（`creditDays` / `quantity` 等）继续合法。
 

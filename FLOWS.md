@@ -11,14 +11,14 @@
 
 ## 调度总表
 
-与 `backend/src/monitor/scheduled-job.registry.ts` 的 `jobKey` 和
+与 `apps/api/src/monitor/scheduled-job.registry.ts` 的 `jobKey` 和
 各 job service 的 `@Cron(..., { name: ... })` 三向对拍。新增/改名 cron 必须三处同步。
 
 | jobKey | 触发时点 | 入口 | 作用 |
 |---|---|---|---|
-| `semantic.suggest_transitions` | `0 2 * * *`（每日 02:00） | `backend/src/semantic-runtime/suggestion-cron.ts#run` | 为每个组织写入 Blueprint 状态迁移建议日志 |
-| `release.guardrail_check` | `30 * * * *`（每小时 :30） | `backend/src/release-automation/release-automation-jobs.service.ts#guardrailCheck` | 扫描 A2 策略并记录护栏检查 |
-| `release.review_due` | `0 9 * * *`（每日 09:00） | `backend/src/release-automation/release-automation-jobs.service.ts#reviewDue` | 24h 未复核的 A2 策略自动降回 A1 |
+| `semantic.suggest_transitions` | `0 2 * * *`（每日 02:00） | `apps/api/src/semantic-runtime/suggestion-cron.ts#run` | 为每个组织写入 Blueprint 状态迁移建议日志 |
+| `release.guardrail_check` | `30 * * * *`（每小时 :30） | `apps/api/src/release-automation/release-automation-jobs.service.ts#guardrailCheck` | 扫描 A2 策略并记录护栏检查 |
+| `release.review_due` | `0 9 * * *`（每日 09:00） | `apps/api/src/release-automation/release-automation-jobs.service.ts#reviewDue` | 24h 未复核的 A2 策略自动降回 A1 |
 
 **错峰约定**：日任务集中在 02:00–04:00；新增 job 必须在本表、registry、装饰器三处同步。
 
@@ -40,7 +40,7 @@ id: FLOW-SEMANTIC-01
 name: 夜间 Blueprint 迁移建议
 trigger: semantic.suggest_transitions
 steps:
-  - actor: backend/src/semantic-runtime/suggestion-cron.ts#run
+  - actor: apps/api/src/semantic-runtime/suggestion-cron.ts#run
     produces: [blueprint_suggestion_logs]
     consumes: [blueprint_records, workflow_definitions]
 ```

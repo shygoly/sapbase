@@ -3,7 +3,7 @@
 > 版本：v1
 > 日期：2026-09-26
 > 定位：五个汽配**计算型**原子的 ABI 列布局、错误码、标度、权限点与溢出边界。
-> 实现真源：`wasm-modules/modules/autoparts-*-rust/`；契约真源：`backend/src/atomic-runtime/autoparts-contracts.ts`。
+> 实现真源：`wasm-modules/modules/autoparts-*-rust/`；契约真源：`apps/api/src/atomic-runtime/autoparts-contracts.ts`。
 > 相关：`schemas/atomic-contract.schema.json`、[`atomic-output-audit.md`](./atomic-output-audit.md)、design §3.4。
 
 ---
@@ -134,6 +134,6 @@ design §3.4：ATP / 价格 / 信用 / 换算 / 替代件是**给定输入必得
 
 ## 7. 登记与调用
 
-- 契约 + 实现登记：`registerAutopartsContracts()`（读清单、重算哈希、闸 4 补录）。部署入口：`backend/src/seeds/autoparts-atoms.seed.ts`。
+- 契约 + 实现登记：`registerAutopartsContracts()`（读清单、重算哈希、闸 4 补录）。部署入口：`apps/api/src/seeds/autoparts-atoms.seed.ts`。
 - 调用：`POST /atomic-contracts/:type/invoke`，body `{ version, records }`。缺权限点 → **403** 且审计留痕。
 - **不要**把这五个原子写进 `templates/auto-parts` 的 `dependencies`：既有装载 e2e 会因此必须先登记它们。

@@ -7,7 +7,7 @@
   },
   "code": {
     "roots": [
-      "backend/src",
+      "apps/api/src",
       "apps/web-portal/src",
       "apps/web-console/src",
       "libs",
@@ -36,7 +36,7 @@
     "strictDbConstraints": false
   },
   "cron": {
-    "registry": "backend/src/monitor/scheduled-job.registry.ts",
+    "registry": "apps/api/src/monitor/scheduled-job.registry.ts",
     "decoratorPatterns": [
       "@Cron\\([^)]*name:\\s*['\"]([^'\"]+)['\"]"
     ]
@@ -45,7 +45,7 @@
     "contract": "contracts/tools.json",
     "mcpManifest": "contracts/mcp-tools.json",
     "handlerRoots": [
-      "backend/src/agent-tools",
+      "apps/api/src/agent-tools",
       "libs/agent-tools/src"
     ],
     "handlerPattern": "(?:toolName\\s*:\\s*|case\\s+)['\"]([^'\"]+)['\"]",
@@ -54,6 +54,6 @@
   "sqlDirs": [
     "sql",
     "tools/postgres/init",
-    "backend/src/migrations"
+    "apps/api/src/migrations"
   ]
 }

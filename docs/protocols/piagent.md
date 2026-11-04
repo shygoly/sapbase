@@ -68,7 +68,7 @@ flowchart TB
 
 | 现有 | 角色 | 改造 |
 |---|---|---|
-| `backend/src/chat/chat.controller.ts` | HTTP 入口 | 保留；加 SSE 与取消 |
+| `apps/api/src/chat/chat.controller.ts` | HTTP 入口 | 保留；加 SSE 与取消 |
 | `RuleBasedIntentParser` | `INTENT_PARSER` 实现 | 保留为 L0 快路径；新增 `LlmIntentPlanner` 组合 |
 | `CatalogToolSelector` | 按意图选工具 | 保留为确定性兜底；LLM 只从同一 catalog 选 |
 | `ChatOrchestrator` | 编排 | 扩展为 `ToolLoop`，保留“写工具绝不 invoke”的约束 |

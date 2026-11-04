@@ -122,7 +122,7 @@ trigger: 任意租户数据读写
 enforcement:
   - none
 db: none
-spec: backend/test/rls.e2e-spec.ts
+spec: apps/api/test/rls.e2e-spec.ts
 ```
 
 ---
@@ -154,9 +154,9 @@ desc: 同一组织内 appKey 唯一；同一组织内 slug 唯一。
 trigger: BusinessAppsService.install()
 enforcement:
   - db-unique:uq_app_installations_organization_app_key
-  - service:backend/src/business-apps/business-apps.service.ts#install
+  - service:apps/api/src/business-apps/business-apps.service.ts#install
 db: uq_app_installations_organization_app_key
-spec: backend/src/business-apps/business-apps.service.spec.ts
+spec: apps/api/src/business-apps/business-apps.service.spec.ts
 ```
 
 ```yaml invariant
@@ -165,10 +165,10 @@ tables: [app_installation_revisions, app_installations]
 desc: 升级/回滚只追加修订记录，不覆盖历史；当前修订指针必须指向本安装的修订。
 trigger: BusinessAppsService.upgrade() / rollback()
 enforcement:
-  - service:backend/src/business-apps/business-apps.service.ts#upgrade
-  - service:backend/src/business-apps/business-apps.service.ts#rollback
+  - service:apps/api/src/business-apps/business-apps.service.ts#upgrade
+  - service:apps/api/src/business-apps/business-apps.service.ts#rollback
 db: none
-spec: backend/src/business-apps/business-apps.service.spec.ts
+spec: apps/api/src/business-apps/business-apps.service.spec.ts
 ```
 
 ```yaml invariant
@@ -177,9 +177,9 @@ tables: [agent_confirmation_tokens]
 desc: 写工具确认令牌一次性、5 分钟过期，并绑定用户/租户/应用/工具/参数摘要。
 trigger: AgentToolRegistry.confirm() / invoke()
 enforcement:
-  - service:backend/src/agent-tools/confirmation-token.service.ts#consume
+  - service:libs/agent-tools/src/confirmation-token.service.ts#consume
 db: none
-spec: backend/src/agent-tools/confirmation-token.service.spec.ts
+spec: apps/api/src/agent-tools/confirmation-token.service.spec.ts
 ```
 
 ---
@@ -209,9 +209,9 @@ tables: [blueprint_records]
 desc: 记录状态迁移必须由 Blueprint 状态机允许；建议日志不得直接改记录状态。
 trigger: SemanticRuntimeService.transition()
 enforcement:
-  - service:backend/src/semantic-runtime/semantic-runtime.service.ts#transition
+  - service:apps/api/src/semantic-runtime/semantic-runtime.service.ts#transition
 db: none
-spec: backend/src/semantic-runtime/semantic-runtime.service.spec.ts
+spec: apps/api/src/semantic-runtime/semantic-runtime.service.spec.ts
 ```
 
 ---
@@ -313,7 +313,7 @@ trigger: AtomicRegistryService.admit()
 enforcement:
   - none
 db: none
-spec: backend/src/atomic-runtime/atomic-executor.service.spec.ts
+spec: apps/api/src/atomic-runtime/atomic-executor.service.spec.ts
 ```
 
 ---
@@ -374,7 +374,7 @@ trigger: OutboxService.publish() / OutboxDispatcher
 enforcement:
   - none
 db: none
-spec: backend/src/outbox/outbox.service.spec.ts
+spec: apps/api/src/outbox/outbox.service.spec.ts
 ```
 
 ---
@@ -423,9 +423,9 @@ desc: 已发布 Release 的内容字段不可变；只允许状态改为 superse
 trigger: ReleasesService.publish() / 直接 UPDATE
 enforcement:
   - db-check:trg_app_release_guard
-  - service:backend/src/releases/releases.service.ts#publish
+  - service:libs/platform-release/src/releases/releases.service.ts#publish
 db: trg_app_release_guard
-spec: backend/src/releases/release-kernel.spec.ts
+spec: apps/api/src/releases/release-kernel.spec.ts
 ```
 
 ```yaml invariant
@@ -434,10 +434,10 @@ tables: [app_release_activations]
 desc: 激活是追加记录；回退也是追加一条新激活，不修改旧 Release。
 trigger: ReleasesService.activate() / rollback()
 enforcement:
-  - service:backend/src/releases/releases.service.ts#activate
-  - service:backend/src/releases/releases.service.ts#rollback
+  - service:libs/platform-release/src/releases/releases.service.ts#activate
+  - service:libs/platform-release/src/releases/releases.service.ts#rollback
 db: UQ_app_activation_single_active
-spec: backend/src/releases/release-kernel.spec.ts
+spec: apps/api/src/releases/release-kernel.spec.ts
 ```
 
 ```yaml invariant
@@ -447,9 +447,9 @@ desc: 同一 appInstallationId 同时只能有一条 status=active 且 cohort �
 trigger: ReleasesService.activate()
 enforcement:
   - db-unique:UQ_app_activation_single_active
-  - service:backend/src/releases/releases.service.ts#activate
+  - service:libs/platform-release/src/releases/releases.service.ts#activate
 db: UQ_app_activation_single_active
-spec: backend/src/releases/release-kernel.spec.ts
+spec: apps/api/src/releases/release-kernel.spec.ts
 ```
 
 ```yaml invariant
@@ -458,9 +458,9 @@ tables: [app_releases]
 desc: 每个 Release 必须有面向业务人员的 zh-CN changelog；技术 diff 不算。
 trigger: ReleasesService.publish()
 enforcement:
-  - service:backend/src/releases/releases.service.ts#publish
+  - service:libs/platform-release/src/releases/releases.service.ts#publish
 db: none
-spec: backend/src/releases/release-kernel.spec.ts
+spec: apps/api/src/releases/release-kernel.spec.ts
 ```
 
 ---
@@ -489,9 +489,9 @@ tables: [agent_turns]
 desc: 每个回答绑定 releaseId + skillVersion + knowledgeVersion，可追溯。
 trigger: AgentSessionsService.chat()
 enforcement:
-  - service:backend/src/agent-sessions/agent-sessions.service.ts#chat
+  - service:apps/api/src/agent-sessions/agent-sessions.service.ts#chat
 db: none
-spec: backend/src/agent-sessions/agent-sessions.service.spec.ts
+spec: apps/api/src/agent-sessions/agent-sessions.service.spec.ts
 ```
 
 ```yaml invariant
@@ -533,9 +533,9 @@ tables: [agent_knowledge_entries]
 desc: 不写自由长期记忆；要沉淀的知识必须走提议→审核→发布。
 trigger: AgentKnowledgeService.publish()
 enforcement:
-  - service:backend/src/agent-knowledge/agent-knowledge.service.ts#publish
+  - service:apps/api/src/agent-knowledge/agent-knowledge.service.ts#publish
 db: none
-spec: backend/src/agent-knowledge/agent-knowledge.service.spec.ts
+spec: apps/api/src/agent-knowledge/agent-knowledge.service.spec.ts
 ```
 
 ```yaml invariant
@@ -544,9 +544,9 @@ tables: [agent_eval_runs]
 desc: Agent 评测回归超过阈值（默认 2%）不得发布；写越权 0、注入 100% 为硬门槛。
 trigger: AgentEvalService.gate()
 enforcement:
-  - service:backend/src/agent-eval/agent-eval.service.ts#gate
+  - service:apps/api/src/agent-eval/agent-eval.service.ts#gate
 db: none
-spec: backend/src/agent-eval/agent-eval.service.spec.ts
+spec: apps/api/src/agent-eval/agent-eval.service.spec.ts
 ```
 
 ---
@@ -574,10 +574,10 @@ tables: [release_automation_policies, release_automation_runs]
 desc: A2 只允许白名单变更类，由平台策略服务执行（不是 Agent），且必须有应用级开关、灰度、护栏、自动回退。
 trigger: ReleaseAutomationService.assertEligible() / publish()
 enforcement:
-  - service:backend/src/release-automation/release-automation.service.ts#assertEligible
-  - service:backend/src/release-automation/release-automation.service.ts#publish
+  - service:libs/platform-release/src/release-automation/release-automation.service.ts#assertEligible
+  - service:libs/platform-release/src/release-automation/release-automation.service.ts#publish
 db: none
-spec: backend/src/release-automation/release-automation.service.spec.ts
+spec: apps/api/src/release-automation/release-automation.service.spec.ts
 ```
 
 ```yaml invariant
@@ -586,9 +586,9 @@ tables: [release_automation_policies]
 desc: 自动回退必须有显式阈值；未配置则只能人工回退。
 trigger: ReleaseAutomationService.rollback()
 enforcement:
-  - service:backend/src/release-automation/release-automation.service.ts#rollback
+  - service:libs/platform-release/src/release-automation/release-automation.service.ts#rollback
 db: none
-spec: backend/src/release-automation/release-automation.service.spec.ts
+spec: apps/api/src/release-automation/release-automation.service.spec.ts
 ```
 
 ---

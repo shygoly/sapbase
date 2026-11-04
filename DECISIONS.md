@@ -28,7 +28,7 @@ references:
   - INV-REL-07
   - docs/reference/04-versioning-release.md
 code_markers:
-  - backend/src/business-apps/business-apps.service.ts
+  - apps/api/src/business-apps/business-apps.service.ts
 ```
 
 ### D-2：保留 TypeORM，不在 Nx 迁移中换 ORM
@@ -47,7 +47,7 @@ decision: |
 references:
   - docs/reference/02-architecture.md
 code_markers:
-  - backend/src/migrations/data-source.ts
+  - apps/api/src/migrations/data-source.ts
 ```
 
 ### D-3：PiAgent 只能经工具面操作
@@ -67,7 +67,7 @@ references:
   - INV-AGENT-02
   - docs/protocols/chat-erp.md
 code_markers:
-  - backend/src/agent-tools/agent-tool.registry.ts
+  - apps/api/src/agent-tools/agent-tool.registry.ts
   - contracts/tools.json
 ```
 
@@ -87,7 +87,7 @@ references:
   - INV-AGENT-04
   - INV-EVO-02
 code_markers:
-  - backend/src/business-apps/business-apps.service.ts
+  - apps/api/src/business-apps/business-apps.service.ts
 ```
 
 ---

@@ -1,0 +1,1 @@
+{"name":"test-plugin","version":"1.0.0","type":"integration","description":"Test plugin","permissions":{"api":{"endpoints":["/api/test"],"methods":["GET"]}},"entry":{"backend":"index.js"}}

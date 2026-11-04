@@ -1,7 +1,7 @@
 # 旧工作流退场登记（W3）
 
 > 状态：`consolidate-platform-foundations` W3 完成后
-> 相关：蓝图记录迁移见 [`record-transition.md`](./record-transition.md)；410 墓碑见 `backend/src/legacy-workflow-gone/`；归档实体见 `backend/src/workflow-archive/`
+> 相关：蓝图记录迁移见 [`record-transition.md`](./record-transition.md)；410 墓碑见 `apps/api/src/legacy-workflow-gone/`；归档实体见 `apps/api/src/workflow-archive/`
 
 本文件逐条登记旧工作流退场项、理由与能力去向。存量 `workflow_*` 四表**不物理删除**（只读归档）。
 
@@ -21,7 +21,7 @@
 | `ai-module-context/infrastructure/external/workflow.service.ts` | 适配器 | 注入 `workflow-context` 两个仓储 token，实现 `IWorkflowService` | 端口 `IWorkflowService` **保留**（标明接缝）；`GeneratePatchService` 改为 `@Optional()`，缺实现时没有工作流上下文 |
 | `@Cron` 夜间建议（旧 `workflow-context/.../workflow-auto-transition.job.ts`） | 能力 | 旧实现只写建议日志、未执行迁移 | **换生产者**：`SuggestionCronJob`（`0 2 * * *`）对 `autoSuggest` 的非终态记录调用 `listSuggestedTransitions`，写入 `blueprint_suggestion_logs`，不改状态 |
 | `cancelInstance` 语义 | 能力 | 旧引擎专有 | 蓝图侧改为「迁到声明的 `final` 状态」（W2 已做） |
-| 四张 `workflow_*` 表（`workflow_definitions` / `workflow_instances` / `workflow_history` / `workflow_auto_suggestion_logs`） | 数据 | 不物理删除 | **只读归档**（`backend/src/workflow-archive/`）+ W0 导出脚本 |
+| 四张 `workflow_*` 表（`workflow_definitions` / `workflow_instances` / `workflow_history` / `workflow_auto_suggestion_logs`） | 数据 | 不物理删除 | **只读归档**（`apps/api/src/workflow-archive/`）+ W0 导出脚本 |
 | `seeds/mock-data.seed.ts` 的 TRUNCATE 三表 + Opportunity 定义插入 | 种子 | 表变成只读归档，种子脚本不该改它（TRUNCATE 归档表比不种更糟） | 归档表不再被种子改写 |
 | `test/utils/domain-builders.ts` 的 `WorkflowDefinitionBuilder` / `WorkflowInstanceBuilder` | 测试工具 | 全仓库无人使用（grep 0 命中） | 无净损失 |
 | `workflow-parity.e2e-spec.ts` | 测试 | 对拍对象（旧 service 读路径）已不存在；这是双跑期的过渡测试，已按计划退役 | 新侧断言由 `blueprint-read-interfaces.e2e-spec.ts` 承接（列表/迁移/历史/只读/租户） |
@@ -40,7 +40,7 @@
 | `POST /api/workflow-instances/:id/transition` | `POST /api/blueprints/:id/records/:entity/:recordId/transition` |
 | `GET /api/workflow-instances/:id/history` | `GET /api/blueprints/:id/records/:entity/:recordId/history` |
 
-实现：`backend/src/legacy-workflow-gone/`。断言：`backend/test/legacy-workflow-gone.e2e-spec.ts`。
+实现：`apps/api/src/legacy-workflow-gone/`。断言：`apps/api/test/legacy-workflow-gone.e2e-spec.ts`。
 
 ---
 

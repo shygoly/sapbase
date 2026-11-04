@@ -1,0 +1,26 @@
+{
+  "name": "@sap/shared-schemas",
+  "version": "1.0.0",
+  "description": "Shared TypeScript schemas for Speckit ERP frontend and backend",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "speckit",
+    "schemas",
+    "types",
+    "typescript"
+  ],
+  "author": "Speckit Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "zod": "^4.1.8"
+  }
+}

@@ -13,7 +13,7 @@ export const PLUGIN_MANIFEST_SCHEMA_FILE = 'plugin-manifest.schema.json'
 export const AGENT_TOOL_SCHEMA_FILE = 'agent-tool.schema.json'
 export const INTERACTION_PLAN_SCHEMA_FILE = 'interaction-plan.schema.json'
 
-/** 向上查找的最大层数：backend/src/xxx → backend → 仓库根 */
+/** 向上查找的最大层数：apps/api/src/xxx → backend → 仓库根 */
 const MAX_WALK_UP = 8
 
 let cachedDir: string | undefined
@@ -21,7 +21,7 @@ let cachedDir: string | undefined
 /**
  * 定位 `schemas/` 目录。
  *
- * 开发与测试时从 `backend/src/...` 向上找，编译后从 `backend/dist/...` 向上找，
+ * 开发与测试时从 `apps/api/src/...` 向上找，编译后从 `backend/dist/...` 向上找，
  * 两种形态都能命中仓库根的 `schemas/`。可用 `SPECKIT_SCHEMAS_DIR` 显式覆盖
  * （容器化部署时 schema 可能挂载在其他路径）。
  */

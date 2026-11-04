@@ -47,7 +47,7 @@ const DEFAULTS = {
     agentTools: 'AGENT-TOOLS.md',
   },
   code: {
-    roots: ['apps', 'libs', 'backend/src', 'speckit/src'],
+    roots: ['apps', 'libs', 'apps/api/src', 'speckit/src'],
     extensions: ['.ts', '.tsx', '.js', '.mjs'],
     ignoreDirs: ['node_modules', '.next', 'dist', 'coverage', '.nx', '.git'],
   },
@@ -63,11 +63,11 @@ const DEFAULTS = {
   agentTools: {
     contract: 'contracts/tools.json',
     mcpManifest: 'contracts/mcp-tools.json',
-    handlerRoots: ['libs/agent-tools/src', 'backend/src/agent-tools'],
+    handlerRoots: ['libs/agent-tools/src', 'apps/api/src/agent-tools'],
     handlerPattern: "(?:toolName\\s*:\\s*|case\\s+)['\"]([^'\"]+)['\"]",
     strictHandlers: false,
   },
-  sqlDirs: ['sql', 'tools/postgres/init', 'backend/src/migrations'],
+  sqlDirs: ['sql', 'tools/postgres/init', 'apps/api/src/migrations'],
 }
 
 function merge(base, override) {

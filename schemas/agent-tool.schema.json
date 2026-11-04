@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://sapbase.local/schemas/agent-tool.schema.json",
   "title": "Agent Tool Contract",
-  "description": "智能体工具的契约。**智能体只能用契约里的工具**：未声明的能力在运行时不存在（与插件沙箱、原子契约同一条原则）。形状借鉴 ~/projects/guangfa/validation 的 contracts/tools.json，并按本项目的权限/审计模型对齐。跨字段判据（写操作必须要求确认等）由校验器负责，见 backend/src/chat/agent-tool-validator.ts。",
+  "description": "智能体工具的契约。**智能体只能用契约里的工具**：未声明的能力在运行时不存在（与插件沙箱、原子契约同一条原则）。形状借鉴 ~/projects/guangfa/validation 的 contracts/tools.json，并按本项目的权限/审计模型对齐。跨字段判据（写操作必须要求确认等）由校验器负责，见 apps/api/src/chat/agent-tool-validator.ts。",
   "type": "object",
   "additionalProperties": false,
   "required": ["name", "description", "parameters", "permission", "write", "confirmation"],

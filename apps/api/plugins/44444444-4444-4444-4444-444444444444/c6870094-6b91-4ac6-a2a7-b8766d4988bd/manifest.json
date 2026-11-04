@@ -1,0 +1,10 @@
+{
+  "name": "compliant-plugin",
+  "version": "1.0.0",
+  "hostApiVersion": 1,
+  "type": "integration",
+  "permissions": {},
+  "entry": {
+    "backend": "index.js"
+  }
+}

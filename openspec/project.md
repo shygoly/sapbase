@@ -47,8 +47,8 @@ ERP、CRM、HRO、MES 与后续垂直系统共用一套协议和 Runtime，而�
   （`speckit/src/core/schema/`、`speckit/src/components/runtime/`）
 - **增量修改优先**：一切结构变更走 Patch DSL（`speckit/src/core/patch/`），
   它是未来 `space-delta` 协议的前身
-- **模块化注册**：业务能力以模块登记（`backend/src/module-registry/`），
-  AI 生成的模块定义见 `backend/src/ai-modules/`
+- **模块化注册**：业务能力以模块登记（`apps/api/src/module-registry/`），
+  AI 生成的模块定义见 `apps/api/src/ai-modules/`
 - **多租户隔离**：`TenantAwareEntity` + 事务内 `app.organization_id/app.app_installation_id`
   上下文 + PostgreSQL RLS；应用层 Predicate 继续保留用于可解释错误。生产应用角色必须是
   非 owner、非 superuser、无 `BYPASSRLS`
@@ -63,7 +63,7 @@ ERP、CRM、HRO、MES 与后续垂直系统共用一套协议和 Runtime，而�
 
 | 范围 | 现状 |
 | --- | --- |
-| 后端 | Jest + supertest（`backend/package.json`） |
+| 后端 | Jest + supertest（`apps/api/package.json`） |
 | Wasm 原子模块 | `node --test`（闸 0/1 拒绝集、闸 2 复现构建、ABI 往返），53 项 |
 | 前端 | ⚠️ **无测试框架**（`speckit-legacy` 曾有 jest + Playwright，迁移中丢失） |
 
@@ -129,7 +129,7 @@ State / Event / Capability / Time / Version / Context 为渐进维度。
 | --- | --- | --- |
 | PostgreSQL | 主数据库 | 通过 TypeORM |
 | Redis | 缓存、会话、限流 | `cache-manager-redis-store` |
-| LLM 供应商 | AI 模块生成、工作流建议 | `backend/src/ai-models/` 注册表（kimi / openai / anthropic，含 baseUrl 与 isDefault） |
+| LLM 供应商 | AI 模块生成、工作流建议 | `apps/api/src/ai-models/` 注册表（kimi / openai / anthropic，含 baseUrl 与 isDefault） |
 | Stripe | 组织订阅计费 | `organizations.stripeCustomerId` |
 | Sentry | 前端错误监控 | `@sentry/nextjs` |
 | Docker | Wasm 隔离构建器 | `wasm-modules/Dockerfile.builder`；CI 中用 host 模式自证 |

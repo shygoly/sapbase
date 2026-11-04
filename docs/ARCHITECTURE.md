@@ -368,7 +368,7 @@ sap:prod:org_123:sse:turn:<turnId>
 
 **决策建议（采用时登记为 D-x）**：
 
-> sapbase 现有 `backend/src/**/*.entity.ts` 与 TypeORM migration 是既有资产。
+> sapbase 现有 `apps/api/src/**/*.entity.ts` 与 TypeORM migration 是既有资产。
 > Nx 迁移不更换 ORM；新增代码继续用 TypeORM。若未来引入 Prisma，必须单独立项，
 > 按限界上下文逐个迁移，不允许两套 ORM 在同一上下文内混用。
 

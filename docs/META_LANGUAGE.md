@@ -30,14 +30,14 @@ $$
 | 符号 | 含义 | 必需性 | 仓库落点 |
 | --- | --- | --- | --- |
 | $E$ | Entity 业务实体 | 必需 | `speckit/src/core/schema/types.ts` 的 `ObjectSchema` |
-| $O$ | Object 实体实例 | 必需 | 后端实体（`backend/src/**/*.entity.ts`） |
+| $O$ | Object 实体实例 | 必需 | 后端实体（`apps/api/src/**/*.entity.ts`） |
 | $R$ | Relation 对象关系 | 必需 | `ObjectSchema.relations` |
-| $\Phi$ | Constraint / Policy / Behavior | 必需 | `FieldDefinition.validation`、`backend/src/permissions`、规则（待统一） |
+| $\Phi$ | Constraint / Policy / Behavior | 必需 | `FieldDefinition.validation`、`apps/api/src/permissions`、规则（待统一） |
 | $\Sigma$ | State 状态机 | 渐进 | 蓝图 `flows.json` + `semantic-runtime` 记录迁移；旧 `workflow_*` 四表只读归档（见 [`protocols/workflow-consolidation.md`](./protocols/workflow-consolidation.md)） |
-| $\Lambda$ | Event 领域事件 | 渐进 | 跨进程：outbox（见 [`protocols/outbox.md`](./protocols/outbox.md)）；进程内：`backend/src/common/events/` |
-| $\Gamma$ | Capability 能力 | 渐进 | `backend/src/module-registry/module-capability.entity.ts`、原子契约（提案中） |
+| $\Lambda$ | Event 领域事件 | 渐进 | 跨进程：outbox（见 [`protocols/outbox.md`](./protocols/outbox.md)）；进程内：`apps/api/src/common/events/` |
+| $\Gamma$ | Capability 能力 | 渐进 | `apps/api/src/module-registry/module-capability.entity.ts`、原子契约（提案中） |
 | $\Tau$ | Time 生效时间与生命周期 | 渐进 | 各实体的 `createdAt/updatedAt`；生命周期语义待补 |
-| $V$ | Version 版本与迁移 | 渐进 | `ObjectSchema.version`、`backend/src/migrations/` |
+| $V$ | Version 版本与迁移 | 渐进 | `ObjectSchema.version`、`apps/api/src/migrations/` |
 | $C$ | Context 租户/组织/应用实例/权限上下文 | 渐进 | `TenantAwareEntity` + `BusinessAppExecutionContext`；应用安装见 `app_installations` |
 
 判据：**元模型是类型系统，不是提示词。** 任何"约定"必须能落到上表的某个维度或第 2、3 节的原语上，否则它不是元语，只是偏好。
@@ -54,7 +54,7 @@ $$
 | 2 | Atomic Contract | 原子能力的输入输出、前后置条件、副作用、幂等、权限、错误、实现封装 | ✅ 已冻结 | `schemas/atomic-contract.schema.json`、`schemas/atomic-module-manifest.schema.json`；实现见 `openspec/specs/atomic-registry/` |
 | 3 | Blueprint Package | 完整 ERP 的语义/流程/规则/经验策略/授权/分层/签名；语义层落点含**主从结构 / 唯一性 / 金额精度** | 🟡 包 / IR / 规则 / 经验策略 / 授权已冻结 | `schemas/blueprint-{package,ir,rules,experience,license}.schema.json`；文本语法见 [`protocols/blueprint-ir.md`](./protocols/blueprint-ir.md)；交付与验签见 [`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md)。主从 / 唯一 / 金额见 §3.8.1。BOM 属 semantic、Form 不做层。未覆盖文件仍拒 |
 | 4 | Runtime SDK Contract | Blueprint 如何被本地 Runtime 加载、验证、编译、执行 | 🟡 加载链已实现 | 编译与加载见 3.8；执行链见 3.2、3.3。**待固化**：customer 本地 Runtime 侧的装载契约（runtime 范围协商、远端注册表） |
-| 5 | License / Encryption Protocol | 模块如何加密、授权、绑定客户、防二次销售 | 🟡 蓝图授权声明与 Ed25519 验签已落地 | `schemas/blueprint-license.schema.json`、`backend/src/blueprint/license.ts`；加密与模块级许可仍待（v3 §11） |
+| 5 | License / Encryption Protocol | 模块如何加密、授权、绑定客户、防二次销售 | 🟡 蓝图授权声明与 Ed25519 验签已落地 | `schemas/blueprint-license.schema.json`、`apps/api/src/blueprint/license.ts`；加密与模块级许可仍待（v3 §11） |
 
 ---
 
@@ -91,8 +91,8 @@ run(in_off: i32, n: i32, out_off: i32) -> i32      // 0 = 成功
 | 0 源码预检 | 编译**之前** | `build.rs` / proc-macro / `.cargo/config` / 非空依赖 / npm 生命周期 | ✅ |
 | 1 静态白名单 | 不运行就挡 | 非白名单导入、start 段、共享内存、GC、表、自定义内存、memory64、未授权导出 | ✅ |
 | 2 复现构建 | 两个独立构建器 | 哈希不一致、"只交 `.wasm`"、夹带预构建 `target/` | ✅ |
-| 3 输出管控 | 运行期（宿主侧） | 通过输出通道夹带数据、输出随行序变化、值越界 | ✅ 判据见 [`protocols/atomic-output-audit.md`](./protocols/atomic-output-audit.md)，实现在 `backend/src/atomic-runtime/output-gate.ts` |
-| 4 影子发布 | 发布流程（宿主侧） | 未经影子验证直接上生产、凭一次请求跳级 | ✅ 证据门见 `backend/src/atomic-registry/shadow-release.ts`（补录必须带理由与决定人） |
+| 3 输出管控 | 运行期（宿主侧） | 通过输出通道夹带数据、输出随行序变化、值越界 | ✅ 判据见 [`protocols/atomic-output-audit.md`](./protocols/atomic-output-audit.md)，实现在 `apps/api/src/atomic-runtime/output-gate.ts` |
+| 4 影子发布 | 发布流程（宿主侧） | 未经影子验证直接上生产、凭一次请求跳级 | ✅ 证据门见 `apps/api/src/atomic-registry/shadow-release.ts`（补录必须带理由与决定人） |
 | 5 吊销 | 执行前 | 已吊销模块继续执行、旧名单回放 | ✅（判定逻辑） |
 
 附：准入层级 **Tier A**（平台自研）/ **Tier B**（第三方交源码、平台复现构建 + 审查），**不设 Tier C** —— 不透明二进制结构性地无法入册。
@@ -168,12 +168,12 @@ L3 验证层     Schema 验证、引用完整性、权限验证、可执行性�
 
 | 环节 | 落点 | 关键约定 |
 | --- | --- | --- |
-| 打包 / 解包 | `backend/src/blueprint/packager.ts` | 清单由**打包器生成**（不手写）；`.erpkg` 只读进内存 |
-| 编译 | `backend/src/blueprint/compiler.ts` | 未覆盖的文件**拒绝**；规则/经验策略引用必须可解析；IR 摘要覆盖新两层 |
-| 加载 | `backend/src/blueprint/loader.ts` | 记录 `irDigest` 是**外部可写数据**，只用来与本次重编结果比对；授权门在装载器里 |
-| 验签 | `backend/src/blueprint/license.ts` | Ed25519；权威签名在 `manifest.signature`；未配置公钥即失败 |
+| 打包 / 解包 | `apps/api/src/blueprint/packager.ts` | 清单由**打包器生成**（不手写）；`.erpkg` 只读进内存 |
+| 编译 | `apps/api/src/blueprint/compiler.ts` | 未覆盖的文件**拒绝**；规则/经验策略引用必须可解析；IR 摘要覆盖新两层 |
+| 加载 | `apps/api/src/blueprint/loader.ts` | 记录 `irDigest` 是**外部可写数据**，只用来与本次重编结果比对；授权门在装载器里 |
+| 验签 | `apps/api/src/blueprint/license.ts` | Ed25519；权威签名在 `manifest.signature`；未配置公钥即失败 |
 | 绑定 | `loader.resolveBindings` | 加载期就把 `moduleSha256` 定下来（"客户同意跑的那一份代码"），不留到第一次调用 |
-| 导出 | `backend/src/module-registry/blueprint-export.ts` | 模块记录 → 最小蓝图：只声明模块**确实拥有**的实体名与原子依赖，字段与生命周期**不编** |
+| 导出 | `apps/api/src/module-registry/blueprint-export.ts` | 模块记录 → 最小蓝图：只声明模块**确实拥有**的实体名与原子依赖，字段与生命周期**不编** |
 | 经验策略 | `experience.json` | **Experience Policy**：交互的决策输入，与 Interaction Surface（输出）配对 |
 
 两条容易被忽略的边界，写在协议里而不是实现者的默契里：
@@ -190,8 +190,8 @@ L3 验证层     Schema 验证、引用完整性、权限验证、可执行性�
 | 落点 | 声明 | 运行时 | 真源 |
 | --- | --- | --- | --- |
 | **主从结构** | 头实体 `children` + 行实体 `parent`（编译期双向一致） | 头 + 行一次提交，一件事务，失败全不落 | [`schemas/blueprint-semantic.schema.json`](../schemas/blueprint-semantic.schema.json)、[`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md) §7 / §12 |
-| **唯一性** | 字段 `unique: true` | **落到 DB 唯一索引**，键含 `blueprintId` + `organizationId`（按蓝图 / 按租户隔离） | 同上 schema；实现 `backend/src/semantic-runtime/unique-index.ts` |
-| **金额精度** | `decimal(p,s)` + `rounding`（`half-up` / `half-even`）；`money: true` 只能标在 decimal 上 | 定点整数小单位；**单一舍入点**（`roundTo`）；i32 小单位进原子；**禁止浮点** | 同上 schema；实现 [`backend/src/blueprint/money.ts`](../backend/src/blueprint/money.ts) |
+| **唯一性** | 字段 `unique: true` | **落到 DB 唯一索引**，键含 `blueprintId` + `organizationId`（按蓝图 / 按租户隔离） | 同上 schema；实现 `apps/api/src/semantic-runtime/unique-index.ts` |
+| **金额精度** | `decimal(p,s)` + `rounding`（`half-up` / `half-even`）；`money: true` 只能标在 decimal 上 | 定点整数小单位；**单一舍入点**（`roundTo`）；i32 小单位进原子；**禁止浮点** | 同上 schema；实现 [`apps/api/src/blueprint/money.ts`](../apps/api/src/blueprint/money.ts) |
 
 ### 3.9 Interaction Surface（临时交互面）
 
@@ -274,9 +274,9 @@ workspaces：shared-schemas / speckit / backend / wasm-modules
 | 前端集成指南 | [`speckit/docs/frontend-integration-guide.md`](../speckit/docs/frontend-integration-guide.md) | — |
 | CRM 模块 | [`speckit/docs/crm-module.md`](../speckit/docs/crm-module.md)、[`crm-integration.md`](../speckit/docs/crm-integration.md) | 第一个业务模块样板 |
 | Clerk 配置 | [`speckit/docs/clerk_setup.md`](../speckit/docs/clerk_setup.md) | ⚠️ 模板残留：`@clerk` 依赖源码未使用，待清理 |
-| 后端 Base Object 模式 | [`backend/docs/architecture/base-object-pattern.md`](../backend/docs/architecture/base-object-pattern.md) | 实体基类约定 |
-| AI 模块的数据与安全 | [`backend/docs/ai-modules-database-and-security.md`](../backend/docs/ai-modules-database-and-security.md) | — |
-| 后端开发指南 | [`backend/docs/developer-guide.md`](../backend/docs/developer-guide.md) | — |
+| 后端 Base Object 模式 | [`apps/api/docs/architecture/base-object-pattern.md`](../apps/api/docs/architecture/base-object-pattern.md) | 实体基类约定 |
+| AI 模块的数据与安全 | [`apps/api/docs/ai-modules-database-and-security.md`](../apps/api/docs/ai-modules-database-and-security.md) | — |
+| 后端开发指南 | [`apps/api/docs/developer-guide.md`](../apps/api/docs/developer-guide.md) | — |
 | 工作流引擎（已退场） | [`protocols/workflow-consolidation.md`](./protocols/workflow-consolidation.md) | 旧树已删；能力去向与归档在此登记 |
 | 前端运行时总体设计（历史） | [`通用_erp_前端运行时_speckit_v_1 (1).md`](<../通用_erp_前端运行时_speckit_v_1 (1).md>) | 根目录；理念来源 |
 | 当前 vs 目标技术栈差距 | [`TECH_STACK_GAP.md`](./TECH_STACK_GAP.md) | — |
@@ -284,7 +284,7 @@ workspaces：shared-schemas / speckit / backend / wasm-modules
 | 包管理器与依赖安装 | [`PACKAGE_MANAGER.md`](./PACKAGE_MANAGER.md) | — |
 | Wasm 原子模块与准入门禁 | [`wasm-modules/README.md`](../wasm-modules/README.md) | — |
 | 汽配计算原子 ABI | [`protocols/autoparts-atoms.md`](./protocols/autoparts-atoms.md) | ATP / 价格 / 信用 / 换算 / 替代链；查库能力不做原子 |
-| Wasm 执行引擎（sidecar） | [`crates/wasm-host/`](../crates/wasm-host/) + openspec change `add-wasmtime-host` | V8 实现见 `backend/src/atomic-runtime/wasm-instance-pool.ts` |
+| Wasm 执行引擎（sidecar） | [`crates/wasm-host/`](../crates/wasm-host/) + openspec change `add-wasmtime-host` | V8 实现见 `apps/api/src/atomic-runtime/wasm-instance-pool.ts` |
 | 蓝图交付 / 授权 / 经验策略 | [`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md) | 分层、编译期判据、验签链、开发豁免 |
 | 蓝图 IR | [`protocols/blueprint-ir.md`](./protocols/blueprint-ir.md) | 结构 / 文本双形态 |
 | 记录迁移历史 / 建议迁移 / `metadata.source` | [`protocols/record-transition.md`](./protocols/record-transition.md) | 读语义、只读契约、夜间建议生产者、双跑期审计来源 |
@@ -305,7 +305,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
    ↓
 本表（文档真源）→ 各子系统的结构化文档
 
-子目录另设作用域入口：speckit/AGENTS.md、backend/AGENTS.md（各自索引本目录 docs/）
+子目录另设作用域入口：speckit/AGENTS.md、apps/api/AGENTS.md（各自索引本目录 docs/）
 ```
 
 ### 5.3 变更流程
@@ -346,15 +346,15 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 上下文编译器 | Context Compiler | `ContextEnvelope` | ❌ |
 | 设计时模型 | Jev-like LLM | `DeltaGenerator`/`DeltaRepairer` | ❌ |
 | 运行时 AI | Agent Host | — | ❌ |
-| 模块注册表 | Module Registry | `backend/src/module-registry/` | ✅ |
+| 模块注册表 | Module Registry | `apps/api/src/module-registry/` | ✅ |
 | 经验策略 | Experience Policy | `experience.json`；`schemas/blueprint-experience.schema.json` | ✅ |
 | 交互面 | Interaction Surface | `interaction-plan/v1`；`schemas/interaction-plan.schema.json` | 🟡 |
 | 业务应用安装 | Business App Installation | `BusinessAppInstallation`；`app_installations` | 🟡 |
 | 应用执行上下文 | Business App Execution Context | `BusinessAppExecutionContext` | 🟡 |
-| 蓝图授权声明 | Blueprint License | `license.json`；`manifest.signature`；`backend/src/blueprint/license.ts` | ✅ |
+| 蓝图授权声明 | Blueprint License | `license.json`；`manifest.signature`；`apps/api/src/blueprint/license.ts` | ✅ |
 | 主从结构 | Header-Line | `children` / `parent`；头行一件事务 | ✅ |
 | 唯一性 | Uniqueness | `unique: true` → DB 唯一索引（按租户/蓝图隔离） | ✅ |
-| 金额精度 | Money Precision | `decimal(p,s)` + `backend/src/blueprint/money.ts`；禁止浮点 | ✅ |
+| 金额精度 | Money Precision | `decimal(p,s)` + `apps/api/src/blueprint/money.ts`；禁止浮点 | ✅ |
 
 ---
 
@@ -383,12 +383,12 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 1.10 | 2026-09-26 | §5.2 补通知 / 审批待办真源。见 `protocols/notifications.md` |
 | 1.9 | 2026-09-26 | §5.2 补 Outbox 真源；$\Lambda$ 落点改为跨进程 outbox + 进程内 EventBus。见 `protocols/outbox.md` |
 | 1.8 | 2026-09-26 | §5.2 补「旧工作流退场 / 只读归档」真源；$\Sigma$ 落点改为蓝图 flows + 记录迁移，旧 `workflow_*` 四表只读归档。见 `protocols/workflow-consolidation.md` |
-| 1.7 | 2026-09-26 | 协议 3 / §3.8.1 / 术语表补「主从结构 / 唯一性 / 金额精度」三条语义层落点，真源指向 `schemas/blueprint-semantic.schema.json`、`docs/protocols/blueprint-delivery.md`、`backend/src/blueprint/money.ts` |
+| 1.7 | 2026-09-26 | 协议 3 / §3.8.1 / 术语表补「主从结构 / 唯一性 / 金额精度」三条语义层落点，真源指向 `schemas/blueprint-semantic.schema.json`、`docs/protocols/blueprint-delivery.md`、`apps/api/src/blueprint/money.ts` |
 | 1.6 | 2026-09-25 | 协议 3 补规则 / 经验策略 / 授权三层；协议 5 推进到 🟡（蓝图 Ed25519 验签落地，加密仍待）。§3.8 装载链改为七道关。术语表补 Experience Policy（与 Interaction Surface 配对）与 Blueprint License。交付判据见 `protocols/blueprint-delivery.md` |
 | 1.5 | 2026-09-25 | 新增 §3.5.1「插件沙箱（与原子同一套能力模型）」：边界 / 声明 / 判定 / 失败 / 审计 / 静态检查六个维度逐项对照，并写明已知边界（Node 权限模型不覆盖出网） |
 | 1.4 | 2026-09-25 | §3.3 闸表补齐：闸 3（输出管控）与闸 4（影子发布）从 ❌ 改为 ✅ —— 闸 3 的判据文本在 `protocols/atomic-output-audit.md`、实现见 §3.8 同级的 `output-gate.ts`；闸 4 的证据门在 `atomic-registry/shadow-release.ts`。术语表补"输出管控判据 / 影子发布证据"两行 |
 | 1.3 | 2026-09-25 | 协议状态位推进：协议 2（Atomic Contract）📋 → ✅ 已冻结；协议 3（Blueprint Package）❌ → 🟡（包与 IR 已冻结，表单/规则/BOM/审批层待补）；协议 4 补加载链落点。新增 §3.8「Blueprint 编译与加载链」，术语表补 IR/编译记录/原子绑定/最小蓝图导出四行 |
-| 1.2 | 2026-09-24 | 补入口分层：新增 `speckit/AGENTS.md`、`backend/AGENTS.md` 两个作用域入口；`openspec/AGENTS.md` 的 Context Checklist 与 Stage 1 步骤纳入本文件；§5.2 补 Clerk 文档行并标注为待清理残留 |
+| 1.2 | 2026-09-24 | 补入口分层：新增 `speckit/AGENTS.md`、`apps/api/AGENTS.md` 两个作用域入口；`openspec/AGENTS.md` 的 Context Checklist 与 Stage 1 步骤纳入本文件；§5.2 补 Clerk 文档行并标注为待清理残留 |
 | 1.1 | 2026-09-24 | 按反馈修正：移除上一版加入的 space 相关表述（本文件只做结构化系统描述，不引入新概念词）；§5.2 文档真源表改为**索引项目已有的结构化文档**（speckit/docs、backend/docs、openspec），明确"新增内容先放入既有文件，不另建新文件" |
 | 1.0 | 2026-09-24 | 首次建立：从本次会话（设计 v3、技术栈差距、Wasm 原子模块、变更提案、包管理器收敛）提炼元模型、协议与执行原语、不变量、术语表与文档真源 |
 

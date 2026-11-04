@@ -1,5 +1,5 @@
 {
-  "name": "shared-schemas",
+  "name": "shared-schemas-compat",
   "root": "shared-schemas",
   "sourceRoot": "shared-schemas/src",
   "projectType": "library",

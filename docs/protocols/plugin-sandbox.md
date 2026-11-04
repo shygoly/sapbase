@@ -2,7 +2,7 @@
 
 > 版本：v1
 > 日期：2026-09-25
-> 定位：**插件边界的唯一判据文本**。实现（`backend/src/plugins/`）只做本文件里的判定；
+> 定位：**插件边界的唯一判据文本**。实现（`apps/api/src/plugins/`）只做本文件里的判定；
 > 想加判据先改本文件（元语不变量 10：未冻结的协议不做实现）。
 > 相关：`schemas/plugin-manifest.schema.json`（声明真源）、`docs/META_LANGUAGE.md` §3.5（Capsule）。
 
