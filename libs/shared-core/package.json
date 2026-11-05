@@ -11,8 +11,17 @@
     "typescript": "^5.7.2"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./lib/canonical-json": "./src/lib/canonical-json.ts",
-    "./lib/money": "./src/lib/money.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./lib/canonical-json": {
+      "types": "./dist/lib/canonical-json.d.ts",
+      "default": "./dist/lib/canonical-json.js"
+    },
+    "./lib/money": {
+      "types": "./dist/lib/money.d.ts",
+      "default": "./dist/lib/money.js"
+    }
   }
 }

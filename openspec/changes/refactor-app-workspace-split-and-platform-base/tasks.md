@@ -42,7 +42,7 @@
 - [x] 4.5 `apps/api/src/app.module.ts` 收敛为组合根：实体清单抽到 `app.entities.ts`（`APP_ENTITIES`），providers 只留启动自检；不含业务 service
 - [x] 4.6 `git mv backend` → `apps/api`；包名 `@sap/api`、Nx project `api`；根 scripts、meta.config、CI、真源文档路径同步
 - [x] 4.7 `shared-schemas` → `libs/shared-schemas`（`@sap/shared-schemas`）；根 `shared-schemas/` 保留 `@speckit/shared-schemas` re-export 一周期。platform 库走 workspace 包解析（eslint/graph 已识别），base paths 增加 `@sap/shared-schemas` / `@sap/ui-shipping`
-- [x] 4.8 验收：`npx jest`（apps/api 全量）134 suites / 991 tests 绿；`npm run typecheck --workspace @sap/api` 绿；atomic 用例在 wasmtime 路径全绿；`ATOMIC_ENGINE=v8 npx jest src/atomic-runtime/atomic-executor.service.spec.ts` 14/14 通过；`cargo test -p wasm-host`（manifest `crates/wasm-host/Cargo.toml`）3/3 通过
+- [x] 4.8 验收：`npx jest`（apps/api 全量）134 suites / 991 tests 绿；`npm run typecheck --workspace @sap/api` 绿；atomic 用例在 wasmtime 路径全绿；`ATOMIC_ENGINE=v8 npx jest src/atomic-runtime/atomic-executor.service.spec.ts` 14/14 通过；`cargo test -p wasm-host`（manifest `crates/wasm-host/Cargo.toml`）3/3 通过；`npm run start --workspace @sap/api` 真实启动成功（DI 图 + 实体自检通过，`GET /api/health` 200）
 
 ## 5. P4 — 业务域样板（航运）
 
