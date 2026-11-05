@@ -123,7 +123,7 @@ async function upsertOrg(ds: DataSource) {
 async function upsertPermissions(ds: DataSource, organizationId: string) {
   const repo = ds.getRepository(Permission)
   for (const p of PERMISSION_CATALOG) {
-    const existing = await repo.findOne({ where: { name: p.name } })
+    const existing = await repo.findOne({ where: { organizationId, name: p.name } })
     if (!existing) {
       await repo.save(repo.create({ ...p, status: EntityStatus.ACTIVE, organizationId }))
     }

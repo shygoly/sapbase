@@ -37,7 +37,8 @@
     "dev:console": "npm run dev --workspace @sap/web-console",
     "build:web": "npm run build --workspace @sap/web-portal && npm run build --workspace @sap/web-console",
     "typecheck": "npm run typecheck --workspace @sap/api",
-    "build:libs": "npm run build --workspace @sap/shared-core && npm run build --workspace @sap/shared-schemas && npm run build --workspace shared-schemas && npm run build --workspace @speckit/wasm-modules && npm run build --workspace @sap/release-kernel && npm run build --workspace @sap/agent-kernel && npm run build --workspace @sap/platform-core && npm run build --workspace @sap/platform-release && npm run build --workspace @sap/agent-tools && npm run build --workspace @sap/domain-shipping"
+    "build:libs": "npm run build --workspace @sap/shared-core && npm run build --workspace @sap/shared-schemas && npm run build --workspace shared-schemas && npm run build --workspace @speckit/wasm-modules && npm run build --workspace @sap/release-kernel && npm run build --workspace @sap/agent-kernel && npm run build --workspace @sap/platform-core && npm run build --workspace @sap/platform-release && npm run build --workspace @sap/agent-tools && npm run build --workspace @sap/domain-shipping",
+    "check:auth-permissions": "node scripts/meta/check-auth-permissions.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
