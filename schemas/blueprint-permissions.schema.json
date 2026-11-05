@@ -36,6 +36,16 @@
           }
         }
       }
+    },
+    "roleMappings": {
+      "type": "object",
+      "description": "AI 角色 → 平台权限点；任一命中即视为该角色。缺省时匹配 JWT role 或同名权限点。",
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": { "type": "string", "minLength": 1 }
+      }
     }
   }
 }

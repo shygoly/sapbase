@@ -19,6 +19,7 @@ type RuntimeUser = {
   id?: string
   userId?: string
   organizationId?: string
+  role?: string | null
   permissions?: string[]
 }
 
@@ -227,6 +228,7 @@ export class SemanticRuntimeController {
         entity,
         recordId,
         user?.organizationId ?? '',
+        user,
       )
     } catch (error) {
       toHttpException(error)
@@ -283,7 +285,7 @@ export class SemanticRuntimeController {
     @CurrentUser() user?: RuntimeUser,
   ) {
     try {
-      return await this.runtime.remove(id, entity, recordId, user?.organizationId ?? '')
+      return await this.runtime.remove(id, entity, recordId, user?.organizationId ?? '', user)
     } catch (error) {
       toHttpException(error)
     }

@@ -455,8 +455,14 @@ GET /blueprints/:id/ui
 GET /blueprints/:id/permissions
 ```
 
-权限层是**声明**，不是平台 RBAC 的替代：`system:manage` 等权限点仍由 JWT 控制；
-角色名到平台角色的映射是独立变更。
+权限层是**声明 + 可执行判定**：`system:manage` 等权限点仍由 JWT 控制；
+`roleMappings` 把 AI 角色映射到平台权限点（任一命中即视为该角色），缺省时匹配 JWT `role`
+或同名权限点。运行时写/读/迁移/删除都会按 `resources + actions` 判定；
+无权限层或空规则保持旧行为。
+
+通用 UI 消费者在 `apps/web-portal/[locale]/dashboard/apps/[packageId]/[[...page]]`：
+它读取 `ui.json` / `compiled entities` / `permissions.json`，按角色过滤页面，
+用 `ui-runtime` 渲染 list/form/detail。
 
 服务端 Patch 支持：
 

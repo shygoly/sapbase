@@ -363,6 +363,9 @@ function readPermissions(raw: unknown): PermissionsFile | undefined {
   return {
     permissions: 'blueprint-permissions/v1',
     rules: source.rules as PermissionsFile['rules'],
+    ...(isRecord(source.roleMappings)
+      ? { roleMappings: source.roleMappings as Record<string, string[]> }
+      : {}),
   }
 }
 

@@ -28,6 +28,7 @@ import { BlueprintJournalEntry } from './blueprint-journal-entry.entity'
 import { BlueprintRecord } from './blueprint-record.entity'
 import { applyNotNullConstraints, constraintFieldMap } from './db-constraints'
 import { applyQueryIndexes } from './query-index'
+import { canAccessBlueprintResource } from '@sap/shared-core'
 import {
   initialStateOf,
   resolveState,
@@ -208,6 +209,7 @@ export class SemanticRuntimeService {
 
     const loaded = await this.loadOrThrow(packageId, organizationId)
     const template = this.readTemplate(packageId)
+    this.assertEntityAccess(loaded, entity, 'create', actor)
     this.assertWritablePayload(template.entities, entity, data, actor)
     await this.applyIndexesOrThrow(
       loaded.manifest.blueprint,
@@ -421,6 +423,7 @@ export class SemanticRuntimeService {
     if (!declared) {
       throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
     }
+    this.assertEntityAccess(loaded, entity, 'create', actor)
     if (declared.children && declared.children.length > 0) {
       throw new RecordWriteError(
         `实体 ${entity} 声明了 children，头行事务不能从 CSV/JSON 导入`,
@@ -593,6 +596,7 @@ export class SemanticRuntimeService {
     if (!declared) {
       throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
     }
+    this.assertEntityAccess(loaded, entity, ['list', 'read'], actor)
 
     if (!hasQueryParams(query)) {
       const rows = await this.records.find({
@@ -643,6 +647,7 @@ export class SemanticRuntimeService {
     if (!declared) {
       throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
     }
+    this.assertEntityAccess(loaded, entity, 'read', actor)
     const row = await this.findRecordOrThrow(loaded.manifest.blueprint, organizationId, entity, recordId)
     return this.withResolvedState(row, declared, actor)
   }
@@ -759,6 +764,7 @@ export class SemanticRuntimeService {
     if (!declared) {
       throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
     }
+    this.assertEntityAccess(loaded, entity, 'update', user)
     return this.dataSource.transaction(async (manager) => {
       const repo = manager.getRepository(BlueprintRecord)
       const row = await repo.findOne({
@@ -930,6 +936,7 @@ export class SemanticRuntimeService {
     entity: string,
     recordId: string,
     organizationId: string,
+    actor?: RuntimeActor,
   ): Promise<SuggestedTransitionItem[]> {
     if (!organizationId) {
       throw new RecordWriteError('缺少 organizationId，拒绝读取', 'missing-tenant')
@@ -940,6 +947,7 @@ export class SemanticRuntimeService {
     if (!declared) {
       throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
     }
+    this.assertEntityAccess(loaded, entity, 'read', actor)
     const row = await this.findRecordOrThrow(loaded.manifest.blueprint, organizationId, entity, recordId)
     assertRecordStateDeclared(declared, row.state)
     const from = resolveState(row.state, declared)
@@ -1165,6 +1173,7 @@ export class SemanticRuntimeService {
     entity: string,
     recordId: string,
     organizationId: string,
+    actor?: RuntimeActor,
   ): Promise<{ id: string; deleted: true }> {
     if (!organizationId) {
       throw new RecordWriteError('缺少 organizationId，拒绝删除', 'missing-tenant')
@@ -1175,6 +1184,7 @@ export class SemanticRuntimeService {
     if (!declared) {
       throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
     }
+    this.assertEntityAccess(loaded, entity, 'delete', actor)
 
     await this.dataSource.transaction(async (manager) => {
       const repo = manager.getRepository(BlueprintRecord)
@@ -1470,6 +1480,37 @@ export class SemanticRuntimeService {
     row.data = omitted.data
     Object.assign(row, { omittedFields: omitted.omittedFields })
     return row
+  }
+
+  /**
+   * Blueprint 权限层：角色 → 资源 → 动作。
+   * 无权限层或空规则时保持旧行为；有规则时按 roleMappings/JWT role/权限点匹配。
+   */
+  private assertEntityAccess(
+    loaded: { compiled?: { permissions?: Parameters<typeof canAccessBlueprintResource>[0] } },
+    entity: string,
+    action: 'create' | 'read' | 'update' | 'delete' | 'list' | Array<'create' | 'read' | 'update' | 'delete' | 'list'>,
+    actor?: RuntimeActor,
+  ): void {
+    const actions = Array.isArray(action) ? action : [action]
+    const allowed = actions.some((candidate) =>
+      canAccessBlueprintResource(
+        loaded.compiled?.permissions,
+        { role: actor?.role, permissions: actorPermissions(actor) },
+        entity,
+        candidate,
+      ),
+    )
+    if (!allowed) {
+      throw new RecordWriteError(
+        `无权对 ${entity} 执行 ${actions.join('/')}（Blueprint 权限层拒绝）`,
+        'forbidden',
+        undefined,
+        undefined,
+        403,
+        entity,
+      )
+    }
   }
 
   private assertWritablePayload(

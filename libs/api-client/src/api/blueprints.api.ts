@@ -120,6 +120,39 @@ class BlueprintsApi {
     return unwrap<SemanticDeclaration>(response)
   }
 
+  async getEntities(packageId: string): Promise<Array<Record<string, any>>> {
+    const response = await httpClient.get<unknown>(
+      `/api/blueprints/${encodeURIComponent(packageId)}/entities`,
+    )
+    return unwrap<Array<Record<string, any>>>(response) ?? []
+  }
+
+  async getUi(packageId: string): Promise<Record<string, any>> {
+    const response = await httpClient.get<unknown>(
+      `/api/blueprints/${encodeURIComponent(packageId)}/ui`,
+    )
+    return unwrap<Record<string, any>>(response)
+  }
+
+  async getPermissions(packageId: string): Promise<Record<string, any>> {
+    const response = await httpClient.get<unknown>(
+      `/api/blueprints/${encodeURIComponent(packageId)}/permissions`,
+    )
+    return unwrap<Record<string, any>>(response)
+  }
+
+  async createRecord(
+    packageId: string,
+    entity: string,
+    data: Record<string, unknown>,
+  ): Promise<RecordEnvelope> {
+    const response = await httpClient.post<unknown>(
+      `/api/blueprints/${encodeURIComponent(packageId)}/records/${encodeURIComponent(entity)}`,
+      data,
+    )
+    return unwrap<RecordEnvelope>(response)
+  }
+
   async listRecords(packageId: string, entity: string, query: ListRecordsQuery = {}): Promise<RecordPage> {
     const params: Record<string, string | number> = {
       page: query.page ?? 1,

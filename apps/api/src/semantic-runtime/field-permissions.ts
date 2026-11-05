@@ -33,6 +33,7 @@ export interface OwnershipEntity {
 export interface RuntimeActor {
   id?: string
   userId?: string
+  role?: string | null
   permissions?: string[]
 }
 

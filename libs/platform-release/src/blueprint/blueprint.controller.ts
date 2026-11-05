@@ -150,6 +150,16 @@ export class BlueprintController {
     return this.loadAndMap(id, user?.organizationId)
   }
 
+  @Get(':id/entities')
+  @ApiOperation({ summary: '读取已装载包的完整实体声明（字段/状态/迁移，供 UI 渲染）' })
+  async entities(
+    @Param('id') id: string,
+    @CurrentUser() user?: { organizationId?: string },
+  ) {
+    const loaded = await this.loadAndMap(id, user?.organizationId)
+    return loaded.compiled.template.entities
+  }
+
   @Get(':id/ui')
   @ApiOperation({ summary: '读取已装载包的 UI 发布层（页面/菜单）' })
   async ui(

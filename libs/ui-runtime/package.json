@@ -28,11 +28,13 @@
     "./schema/registry": "./src/schema/registry.ts",
     "./schema/resolver": "./src/schema/resolver.ts",
     "./schema/types": "./src/schema/types.ts",
-    "./schema/validator": "./src/schema/validator.ts"
+    "./schema/validator": "./src/schema/validator.ts",
+    "./blueprint/BlueprintAppRuntime": "./src/blueprint/BlueprintAppRuntime.tsx"
   },
   "dependencies": {
     "@sap/ui-kit": "*",
     "@sap/api-client": "*",
-    "@sap/shared-state": "*"
+    "@sap/shared-state": "*",
+    "@sap/shared-core": "*"
   }
 }

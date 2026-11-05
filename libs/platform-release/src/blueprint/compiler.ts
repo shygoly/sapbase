@@ -212,6 +212,8 @@ export interface PermissionRule {
 export interface PermissionsFile {
   permissions: 'blueprint-permissions/v1'
   rules: PermissionRule[]
+  /** AI 角色 → 平台权限点；缺省时匹配 JWT role 或同名权限点。 */
+  roleMappings?: Record<string, string[]>
 }
 
 export interface DetectConflictsExtras {
