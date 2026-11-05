@@ -746,6 +746,7 @@ export class AIModulesService {
         description: module.description,
         version: module.version,
         status: ModuleStatus.ACTIVE,
+        metadata: this.extractMetadataFromPatch(module.patchContent),
       }, module.organizationId)
     }
 

@@ -108,6 +108,41 @@ export const aiModulesApi = {
     return response.data.data || response.data
   },
 
+  async getBlueprint(id: string): Promise<Record<string, any>> {
+    const response = await httpClient.get<any>(`/api/ai-modules/${id}/blueprint`)
+    return response.data.data || response.data
+  },
+
+  async deliverBlueprint(
+    id: string,
+    input: {
+      grantedTo: string[]
+      expiresAt?: string
+      issuer?: string
+      resell?: boolean
+    },
+  ): Promise<Record<string, any>> {
+    const response = await httpClient.post<any>(
+      `/api/ai-modules/${id}/blueprint/deliver`,
+      input,
+      { timeout: 120000 },
+    )
+    return response.data.data || response.data
+  },
+
+  async applyDefinitionPatch(
+    id: string,
+    patch: Record<string, any>,
+    confirmed = false,
+  ): Promise<AIModule> {
+    const response = await httpClient.post<any>(
+      `/api/ai-modules/${id}/patches/apply`,
+      { patch, confirmed },
+      { timeout: 120000 },
+    )
+    return response.data.data || response.data
+  },
+
   async modifyExisting(moduleRegistryId: string, prompt: string): Promise<AIModule> {
     const response = await httpClient.post<any>('/api/ai-modules/modify', { moduleRegistryId, prompt })
     return response.data.data || response.data
