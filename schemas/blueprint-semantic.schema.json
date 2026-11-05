@@ -39,6 +39,7 @@
                 "scale": { "type": "integer", "minimum": 0, "maximum": 38 },
                 "rounding": { "enum": ["half-up", "half-even"] },
                 "unique": { "type": "boolean" },
+                "indexed": { "type": "boolean", "description": "声明式查询索引候选；不改校验、唯一性或存储语义。" },
                 "values": {
                   "type": "array",
                   "minItems": 1,

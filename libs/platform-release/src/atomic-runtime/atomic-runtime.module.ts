@@ -1,7 +1,8 @@
 import { Logger, Module } from '@nestjs/common'
 import { existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { join } from 'node:path'
 import { AuditLogsModule } from '@sap/platform-core/audit-logs/audit-logs.module'
+import { resolveRepoRoot } from '@sap/platform-core/common/repo-root'
 import { AtomicRegistryModule } from '../atomic-registry/atomic-registry.module'
 import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
 import { AtomicExecutor } from './atomic-executor.service'
@@ -23,12 +24,13 @@ export const WASM_ENGINE = Symbol('WASM_ENGINE')
 
 /** 模块产物目录：默认仓库根的 `wasm-modules/build`，可用 `ATOMIC_MODULES_DIR` 覆盖。 */
 const modulesDir =
-  process.env.ATOMIC_MODULES_DIR ?? resolve(__dirname, '../../../wasm-modules/build')
+  process.env.ATOMIC_MODULES_DIR ??
+  join(resolveRepoRoot(), 'wasm-modules', 'build')
 
 /** 吊销名单文件：默认与模块产物同目录，可用 `ATOMIC_REVOCATION_LIST` 覆盖。 */
 const revocationListPath =
   process.env.ATOMIC_REVOCATION_LIST ??
-  resolve(__dirname, '../../../wasm-modules/build/revocations.json')
+  join(modulesDir, 'revocations.json')
 
 /**
  * 引擎选择：`ATOMIC_ENGINE=v8`（默认）或 `wasmtime`。
@@ -43,7 +45,7 @@ function buildEngine(): WasmEngine {
   if (kind === 'wasmtime') {
     const binary =
       process.env.ATOMIC_ENGINE_BINARY ??
-      resolve(__dirname, '../../../crates/wasm-host/target/release/wasm-host')
+      join(resolveRepoRoot(), 'crates', 'wasm-host', 'target', 'release', 'wasm-host')
     if (!existsSync(binary)) {
       // 启动即提示（不阻断进程）：原子接口会在调用时给出可诊断的错误
       new Logger('AtomicRuntime').error(

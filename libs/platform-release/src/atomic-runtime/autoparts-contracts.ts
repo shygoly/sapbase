@@ -7,7 +7,8 @@
  */
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
+import { resolveRepoRoot } from '@sap/platform-core/common/repo-root'
 import { ConflictException } from '@nestjs/common'
 import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
 import { bindRunnableForTest } from '../atomic-registry/test-fixtures'
@@ -234,7 +235,7 @@ export const AUTOPARTS_CONTRACTS: AutopartsContractDef[] = [
   },
 ]
 
-const DEFAULT_BUILD_DIR = resolve(__dirname, '../../../wasm-modules/build')
+const DEFAULT_BUILD_DIR = join(resolveRepoRoot(), 'wasm-modules', 'build')
 
 export interface AutopartsManifestEntry {
   atomicType: string

@@ -7,6 +7,7 @@ import type {
 import { Validator } from 'jsonschema'
 import { loadSchema } from '@sap/platform-core/common/protocol/schema-loader'
 import { compileBlueprint } from './compiler'
+import { buildCompiledBlueprint, type CompiledBlueprint } from './compiled-model'
 import {
   isUnsignedExemption,
   verifyAgainstTrustRoots,
@@ -95,6 +96,8 @@ export interface LoadedBlueprint {
   ir: BlueprintIr
   irText: string
   plan: BlueprintExecutionPlan
+  /** 运行时编译产物：实体/规则/索引计划；请求路径只读它，不再解析源 JSON。 */
+  compiled: CompiledBlueprint
   /** 装载器保持纯函数：审计记录收集到返回值，由 service 落库。 */
   audit: BlueprintAuditRecord[]
   /** 授权声明（豁免路径可能缺省）；resell 只透出，不做装载门。 */
@@ -170,11 +173,18 @@ export async function loadBlueprint(
   }
 
   const bindings = await resolveBindings(unpacked.manifest, registry)
+  const runtimeModel = buildCompiledBlueprint({
+    blueprint: compiled.blueprint,
+    version: compiled.version,
+    irDigest: compiled.irDigest,
+    files: unpacked.files,
+  })
   return {
     manifest: unpacked.manifest,
     ir: compiled.ir,
     irText: compiled.irText,
     plan: buildExecutionPlan(compiled, bindings),
+    compiled: runtimeModel,
     audit,
     ...(license ? { license } : {}),
   }

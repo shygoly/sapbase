@@ -27,6 +27,7 @@ import { BlueprintApproval } from './blueprint-approval.entity'
 import { BlueprintJournalEntry } from './blueprint-journal-entry.entity'
 import { BlueprintRecord } from './blueprint-record.entity'
 import { applyNotNullConstraints, constraintFieldMap } from './db-constraints'
+import { applyQueryIndexes } from './query-index'
 import {
   initialStateOf,
   resolveState,
@@ -1615,6 +1616,14 @@ export class SemanticRuntimeService {
         .join('; ')
       throw new RecordWriteError(`非空约束冲突，拒绝建约束：${list}`, 'not-null-conflict')
     }
+    try {
+      await applyQueryIndexes(this.dataSource, blueprintId, semantic, version)
+    } catch (error) {
+      throw new RecordWriteError(
+        `创建查询索引失败：${(error as Error).message}`,
+        'query-index-failed',
+      )
+    }
     this.appliedIndexKeys.add(key)
   }
 
@@ -1635,6 +1644,11 @@ export class SemanticRuntimeService {
   }
 
   private readTemplate(packageId: string): LoadedTemplate {
+    // 正常路径：loadOrThrow 已把 CompiledTemplate 放进 BlueprintService 缓存。
+    // fallback 只服务未先 load 的后台任务（例如 listAutoSuggestTargets）。
+    const compiled = this.blueprints.compiledTemplate?.(packageId)
+    if (compiled) return compiled as unknown as LoadedTemplate
+
     const path = join(this.blueprints.packagesDirectory(), `${packageId}.erpkg`)
     const unpacked = unpackBlueprint(path)
     const semanticBytes = unpacked.files.get('semantic.json')

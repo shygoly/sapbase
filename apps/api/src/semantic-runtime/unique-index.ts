@@ -131,7 +131,7 @@ export async function findUniqueConflicts(
   return conflicts
 }
 
-function assertSafeIdent(value: string, pattern: RegExp, label: string): void {
+export function assertSafeIdent(value: string, pattern: RegExp, label: string): void {
   if (!pattern.test(value)) {
     throw new Error(`${label}名非法，拒绝编入 DDL：${value}`)
   }

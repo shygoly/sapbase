@@ -13,6 +13,8 @@ export interface SemanticField {
   required?: boolean
   reference?: string
   unique?: boolean
+  /** 声明式查询索引候选；不改变校验语义。 */
+  indexed?: boolean
   onDelete?: 'restrict' | 'setNull'
   money?: boolean
   currency?: string

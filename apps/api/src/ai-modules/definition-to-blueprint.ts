@@ -71,6 +71,7 @@ export interface BlueprintSemanticEntity {
     required?: boolean
     reference?: string
     values?: string[]
+    indexed?: boolean
   }>
   relations?: Array<{ name: string; type: string; target: string }>
   states: Array<{ name: string; initial?: boolean; final?: boolean }>
@@ -208,6 +209,7 @@ function mapFields(raw: unknown, entityName: string): BlueprintSemanticEntity['f
       const target = item.reference ?? item.target
       field.reference = requireEntityName(target, `${entityName}.${name}.reference`)
     }
+    if (item.indexed === true) field.indexed = true
     if (type === 'enum') {
       if (!Array.isArray(item.values) || item.values.length === 0) {
         fail(`实体 ${entityName} 的枚举字段 ${name} 缺少 values`)

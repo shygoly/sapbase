@@ -71,7 +71,7 @@ interface SemanticFieldPermissions {
   write?: string
 }
 
-interface SemanticField {
+export interface SemanticField {
   name: string
   type: string
   required?: boolean
@@ -83,6 +83,8 @@ interface SemanticField {
   scale?: number
   rounding?: string
   unique?: boolean
+  /** 声明式查询索引候选；不改校验/唯一性语义。 */
+  indexed?: boolean
   values?: string[]
   computed?: SemanticComputed
   uom?: { base: string; packs: SemanticUomPack[] }
@@ -90,14 +92,14 @@ interface SemanticField {
   default?: unknown
 }
 
-interface SemanticNumbering {
+export interface SemanticNumbering {
   field: string
   prefix: string
   dateFormat?: string
   width: number
 }
 
-interface SemanticEntity {
+export interface SemanticEntity {
   name: string
   fields: SemanticField[]
   relations?: Array<{ name: string; type: string; target: string; cardinality?: string }>
@@ -130,7 +132,7 @@ interface FlowsFile {
   }>
 }
 
-interface ValidationRule {
+export interface ValidationRule {
   id: string
   entity: string
   field: string
@@ -139,7 +141,7 @@ interface ValidationRule {
   message: string
 }
 
-interface ApprovalRule {
+export interface ApprovalRule {
   id: string
   entity: string
   when: string
@@ -152,7 +154,7 @@ interface AccountingEntry {
   amount: number | string
 }
 
-interface AccountingRule {
+export interface AccountingRule {
   id: string
   on: string
   entries: AccountingEntry[]

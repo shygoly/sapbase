@@ -1,14 +1,16 @@
 import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 import { Validator } from 'jsonschema'
 import type { BlueprintCompileResult, BlueprintManifest } from '@speckit/shared-schemas'
 import { loadSchema } from '@sap/platform-core/common/protocol/schema-loader'
 import { packBlueprint, readBlueprintMeta, stampCompiled, unpackBlueprint } from './packager'
 import { compileBlueprint } from './compiler'
 import { signPackage } from './license'
+import { resolveRepoRoot } from '@sap/platform-core/common/repo-root'
 import { loadBlueprint, type BlueprintAuditRecord, type LoadedBlueprint } from './loader'
+import type { CompiledTemplate } from './compiled-model'
 import { AtomicRegistryService } from '../atomic-registry/atomic-registry.service'
 import { AuditLogsService } from '@sap/platform-core/audit-logs/audit-logs.service'
 
@@ -43,15 +45,88 @@ export class BlueprintService {
   private readonly logger = new Logger(BlueprintService.name)
   private readonly packagesDir =
     process.env.BLUEPRINT_PACKAGES_DIR ??
-    resolve(__dirname, '../../../blueprints')
+    join(resolveRepoRoot(), 'blueprints')
   private readonly templatesDir =
     process.env.BLUEPRINT_TEMPLATES_DIR ??
-    resolve(__dirname, '../../../templates')
+    join(resolveRepoRoot(), 'templates')
+
+  /**
+   * 进程内装载缓存。key = packageId::tenantId。
+   *
+   * 为什么 key 带租户：license 的 grantedTo/expiresAt 是按租户判定的；
+   * compiled template 本身与租户无关，所以另存一份 compiledCache。
+   */
+  private readonly loadCache = new Map<
+    string,
+    { loaded: LoadedBlueprint; mtimeMs: number; size: number; expiresAt: number }
+  >()
+  private readonly compiledCache = new Map<
+    string,
+    { template: CompiledTemplate; expiresAt: number; mtimeMs: number; size: number }
+  >()
 
   constructor(
     private readonly atomicRegistry: AtomicRegistryService,
     @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
+
+  private cacheTtlMs(): number {
+    const raw = Number(process.env.BLUEPRINT_CACHE_TTL_MS ?? 300_000)
+    return Number.isFinite(raw) && raw >= 0 ? raw : 300_000
+  }
+
+  private cacheKey(id: string, tenantId?: string): string {
+    // 未签名豁免是启动配置；把它纳入 key，关闭豁免后不会继续命中旧条目。
+    const exemption =
+      process.env.BLUEPRINT_ALLOW_UNSIGNED === 'true' || process.env.BLUEPRINT_ALLOW_UNSIGNED === '1'
+        ? 'unsigned'
+        : 'strict'
+    return `${id}::${tenantId ?? '-'}::${exemption}`
+  }
+
+  private isLicenseExpired(loaded: LoadedBlueprint): boolean {
+    const expiresAt = loaded.license?.expiresAt
+    if (!expiresAt) return false
+    const expires = new Date(expiresAt)
+    return !Number.isNaN(expires.getTime()) && Date.now() > expires.getTime()
+  }
+
+  /** 显式失效：发布/回滚/覆盖同 id 的包后调用。 */
+  invalidate(id?: string): void {
+    if (!id) {
+      this.loadCache.clear()
+      this.compiledCache.clear()
+      return
+    }
+    for (const key of [...this.loadCache.keys()]) {
+      if (key.startsWith(`${id}::`)) this.loadCache.delete(key)
+    }
+    this.compiledCache.delete(id)
+  }
+
+  /**
+   * 已缓存的编译产物（租户无关）。
+   * 运行时的 readTemplate 优先读它；未 load 过的后台任务拿不到时走 fallback。
+   */
+  compiledTemplate(id: string): CompiledTemplate | undefined {
+    const entry = this.compiledCache.get(id)
+    if (!entry) return undefined
+    if (Date.now() > entry.expiresAt) {
+      this.compiledCache.delete(id)
+      return undefined
+    }
+    try {
+      const stat = statSync(this.packagePathOf(id))
+      if (stat.mtimeMs !== entry.mtimeMs || stat.size !== entry.size) {
+        this.compiledCache.delete(id)
+        return undefined
+      }
+    } catch {
+      this.compiledCache.delete(id)
+      return undefined
+    }
+    return entry.template
+  }
 
   /** 打包目录为 `.erpkg`（不指定 out 时落到包目录，名字由 id + 版本决定）。 */
   packageFrom(
@@ -135,10 +210,41 @@ export class BlueprintService {
 
   /** 加载蓝图包 → 可执行计划（fail-closed：任一校验不过即拒）。 */
   async load(id: string, options: { tenantId?: string } = {}): Promise<LoadedBlueprint> {
-    const loaded = await loadBlueprint(this.packagePathOf(id), this.atomicRegistry, {
+    const path = this.packagePathOf(id)
+    const stat = statSync(path)
+    const key = this.cacheKey(id, options.tenantId)
+    const cached = this.loadCache.get(key)
+    if (
+      cached &&
+      cached.mtimeMs === stat.mtimeMs &&
+      cached.size === stat.size &&
+      Date.now() < cached.expiresAt &&
+      !this.isLicenseExpired(cached.loaded)
+    ) {
+      this.logger.debug(`blueprint cache hit: ${key}`)
+      return cached.loaded
+    }
+
+    const loaded = await loadBlueprint(path, this.atomicRegistry, {
       tenantId: options.tenantId,
       env: process.env,
     })
+    const ttl = this.cacheTtlMs()
+    if (ttl > 0) {
+      this.loadCache.set(key, {
+        loaded,
+        mtimeMs: stat.mtimeMs,
+        size: stat.size,
+        expiresAt: Date.now() + ttl,
+      })
+      this.compiledCache.set(id, {
+        template: loaded.compiled.template,
+        expiresAt: Date.now() + ttl,
+        mtimeMs: stat.mtimeMs,
+        size: stat.size,
+      })
+    }
+    this.logger.debug(`blueprint cache miss: ${key} (compiled ${loaded.compiled.indexPlan.length} index candidates)`)
     await this.persistAudit(loaded.audit, options.tenantId)
     return loaded
   }
@@ -199,7 +305,10 @@ export class BlueprintService {
         compiledAt: new Date().toISOString(),
       })
       const manifest = signPackage(packagePath, privateKeyPem)
-      return { id: `${meta.blueprint}-${meta.version}`, packagePath, manifest }
+      const id = `${meta.blueprint}-${meta.version}`
+      // 同 id/同版本被覆盖时，旧缓存必须失效
+      this.invalidate(id)
+      return { id, packagePath, manifest }
     } finally {
       rmSync(staging, { recursive: true, force: true })
     }

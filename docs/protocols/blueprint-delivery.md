@@ -315,6 +315,23 @@ change `add-minimal-autoparts-template` 把「包能交付」推进到「包能�
 先签后编会让签名失效——这是有意的：编译结果变了就该重签。
 私钥来自 `BLUEPRINT_LICENSE_PRIVATE_KEY`；**未配置 → 抛错拒绝**（不能产出未签名制品）。
 
+### 7.2.1 编译产物与运行时缓存
+
+`compileBlueprint` 产出两类东西：
+
+| 产物 | 形态 | 谁消费 |
+| --- | --- | --- |
+| `BlueprintIr` | 协议/审计形态（实体数、事件、层 digest），进清单 `compiled.irDigest` | 防漂移、发布审计 |
+| `CompiledBlueprint` | 运行时形态（实体/字段/状态机、validation/approval/accounting、indexPlan） | `SemanticRuntimeService` |
+
+`loadBlueprint` 在授权/绑定通过后构建 `CompiledBlueprint`；`BlueprintService` 按
+`packageId + tenantId` 缓存 `LoadedBlueprint`，并另存一份租户无关的 compiled template。
+缓存命中时**不再解包、编译或验签**；`mtime` / `size` / TTL（`BLUEPRINT_CACHE_TTL_MS`，默认 300000）
+或 license 过期时失效，`deliver` 覆盖同 id 后显式 `invalidate`。
+
+运行时 `readTemplate()` 优先读 compiled template；只有未先 `load` 的后台任务才回退解包。
+这是“编译一次、运行多次”的边界：包的源 JSON 仍是作者格式，运行时不解释它。
+
 ### 7.3 约束来自模板校验，不来自数据库
 
 `blueprint_records` 是通用记录表：`data` 是 jsonb，**没有列约束**。
@@ -374,6 +391,7 @@ change `add-minimal-autoparts-template` 把「包能交付」推进到「包能�
 ### 8.2 枚举 / 唯一 / 关系基数 / 单位
 
 - `type: "enum"` 时 `values` 必填、非空、无重复；`values` 出现在非 enum 上 → 拒。未在集合内的取值被拒是**运行时**行为（属 semantic-runtime / P2），本轮只做协议与编译期。
+- `indexed: true` 是**查询索引候选**：编译产出 `indexPlan`，运行时按 `data->>'field'`（文本）或 `(data->>'field')::numeric`（数值）建部分索引，谓词含 `blueprintId` 与 `entity`。它不改变校验、唯一性或存储语义；未声明的字段不建索引。
 - `unique: true` 只允许标量（`text` / `number` / `decimal` / `boolean` / `date` / `datetime` / `i32` / `enum`）。`reference` 或计算字段上声明 → 拒（跨表唯一与派生值唯一不是同一件事）。
 - 唯一索引由 `uniqueIndexDdl(semantic, blueprintId)` **按模板生成**（部分唯一索引，作用在 `blueprint_records`）。`findUniqueConflicts` **先报告冲突清单**，不直接建索引。**P1** 在装载/写入前幂等 `CREATE UNIQUE INDEX IF NOT EXISTS`（有冲突 → 拒写并报清单）。**P2** 再扩展非空约束，以及冲突时返回可定位错误的完整形态。
 - `relations[].cardinality`：`one` \| `many`。`type === "manyToMany"` → **编译期拒**，要求声明显式中间实体、用两条 reference/many 关系表达。
@@ -823,4 +841,3 @@ P2 的 `required` → DB `CHECK (… IS NOT NULL)` 会在「升级加了一个�
 本轮把「数据范围」定义为**租户隔离**（既有的 `organizationId` 过滤）。入口：`records` 读、三个视图、追溯、适配查询、导入 —— 每个入口都有「他租不可见 / 不可写」的断言。
 
 **部门 / 仓库级的细粒度数据范围本轮不做。** 理由：它需要可信的用户属性 / 声明模型（用户属于哪个部门 / 仓库）。若从请求参数取范围值，等于让调用方自己声明能看什么，那是安全漏洞而不是功能。所以宁可不做，也不做一个假的。
-
