@@ -1,7 +1,7 @@
 // 模块发布前的原子依赖校验（元语不变量 4：依赖不满足就不许发布）
 // 与「模块记录 → 最小蓝图包」的导出。
 import { BadRequestException } from '@nestjs/common'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { BlueprintExportError } from './blueprint-export'
@@ -159,6 +159,46 @@ describe('exportBlueprint（模块记录 → 最小蓝图包）', () => {
       'SalesOrder',
       'Customer',
     ])
+  })
+
+  it('AI 真实包优先于最小骨架', async () => {
+    const packagesDir = mkdtempSync(join(tmpdir(), 'speckit-ai-packages-'))
+    const packageId = 'auto-parts-erp-1.0.0'
+    writeFileSync(join(packagesDir, `${packageId}.erpkg`), 'placeholder')
+    const packageFrom = jest.fn()
+    const manifest = {
+      blueprint: 'auto-parts-erp',
+      version: '1.0.0',
+      runtime: '>=1.0.0 <2.0.0',
+      layers: { public: ['semantic.json'] },
+      files: { 'semantic.json': `sha256:${'a'.repeat(64)}` },
+    }
+    const service = new ModuleRegistryService(
+      {
+        findOne: async () =>
+          moduleRecord({ metadata: { entities: ['SalesOrder'], blueprint: { packageId } } }),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { resolve: async () => ({}) } as never,
+      {
+        packagesDirectory: () => packagesDir,
+        manifestOf: () => manifest,
+        packageFrom,
+      } as never,
+    )
+
+    try {
+      const result = await service.exportBlueprint('module-1', 'org-1')
+      expect(result.source).toBe('package')
+      expect(result.packagePath).toBe(join(packagesDir, `${packageId}.erpkg`))
+      expect(result.manifest).toEqual(manifest)
+      expect(packageFrom).not.toHaveBeenCalled()
+    } finally {
+      rmSync(packagesDir, { recursive: true, force: true })
+    }
   })
 
   it('原子依赖不可解析 → 拒绝导出（不交付"编译必然失败"的包）', async () => {

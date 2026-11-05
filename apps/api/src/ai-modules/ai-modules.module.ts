@@ -10,6 +10,8 @@ import { AIModelsModule } from '../ai-models/ai-models.module'
 import { ModuleRegistryModule } from '../module-registry/module-registry.module'
 import { SystemModule } from '../system/system.module'
 import { AIModuleContextModule } from '../ai-module-context/ai-module-context.module'
+import { BlueprintModule } from '../blueprint/blueprint.module'
+import { AIModuleBlueprintService } from './ai-module-blueprint.service'
 
 @Module({
   imports: [
@@ -18,8 +20,9 @@ import { AIModuleContextModule } from '../ai-module-context/ai-module-context.mo
     AIModelsModule,
     ModuleRegistryModule,
     SystemModule,
+    BlueprintModule,
   ],
-  providers: [AIModulesService],
+  providers: [AIModulesService, AIModuleBlueprintService],
   controllers: [AIModulesController],
   exports: [AIModulesService],
 })

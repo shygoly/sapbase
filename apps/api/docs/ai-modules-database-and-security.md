@@ -8,9 +8,12 @@
   - 六步向导的每一步产出先过 `schemas/ai-definition-*.schema.json`，再写入
     `ai_module_definitions.step1~step6_*`（JSONB）；不合法步骤不会被保存。
   - 完成时调用「根据定义生成」接口，后端**确定性**执行
-    `normalizeDefinitionShape → definitionToBlueprint`，把 Blueprint 五层
-    （semantic / flows / 可选 rules / experience）与 `objects` 写入
-    **`ai_modules.patch_content`**（JSONB）。不再调用第二次 LLM 生成未定义的 “Model DSL”。
+    `normalizeDefinitionShape → definitionToBlueprint → writeBlueprintDir → packageFrom → compile`，
+    把 Blueprint 五层（semantic / flows / 可选 rules / experience）与 `objects` 写入
+    **`ai_modules.patch_content`**（JSONB），并产出/编译 `.erpkg`；
+    `ai_modules.metadata.blueprint` 记录 `packageId` 与 `irDigest`。不再调用第二次 LLM 生成未定义的 “Model DSL”。
+  - AI 修改通过 `POST /api/ai-modules/:id/patches/apply` 应用（object/state 子集），
+    bump patch 版本后重新产包/编译；page/permission/menu patch 在服务端明确拒绝。
   - 即：数据库里只会多一条/更新一条 **AI 模块记录**（表 `ai_modules`），
     `patch_content` 里是 Blueprint 层，**不会**根据这份文档自动执行 `CREATE TABLE` 或迁移。
 
@@ -73,7 +76,7 @@
 
 | 问题 | 答案 |
 |------|------|
-| 六步/Blueprint 会直接生成数据库表吗？ | **不会**。六步定义确定性转换为 Blueprint 层（存在历史字段 `ai_modules.patch_content`），不执行建表或迁移。 |
+| 六步/Blueprint 会直接生成数据库表吗？ | **不会**。六步定义确定性转换为 Blueprint 层并产出/编译 `.erpkg`（`metadata.blueprint`），但不执行建表或迁移。 |
 | 业务表从哪来？ | 目前全部来自手写实体与迁移；若要做「定义 → 表」，需另做「Patch → DDL/迁移 + 审核执行」的流程。 |
 | 谁可以生成/改模块？ | 仅具备 **system:manage** 权限的用户（后端接口级控制）。 |
 | 生成的 Patch 会不会被乱执行？ | 有 **L1/L2/L3** 分级：危险操作为 L3 禁止、敏感操作为 L2 需确认；权限类 Patch 不能越权授予。 |

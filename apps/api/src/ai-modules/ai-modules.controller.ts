@@ -12,6 +12,7 @@ import {
   BadRequestException,
 } from '@nestjs/common'
 import { AIModulesService } from './ai-modules.service'
+import type { DefinitionPatch } from './definition-patch.service'
 import { AIModule, AIModuleStatus } from './ai-module.entity'
 import { AIModuleTest } from './ai-module-test.entity'
 import { AIModuleReview, ReviewDecision } from './ai-module-review.entity'
@@ -143,6 +144,35 @@ export class AIModulesController {
     @OrganizationId() organizationId: string,
   ): Promise<AIModule> {
     return this.aiModulesService.generateFromDefinition(id, body.definition ?? {}, organizationId)
+  }
+
+  /** 应用服务端可表达的 Patch（object/state），bump 版本并重新产包编译。 */
+  @Post(':id/patches/apply')
+  @Auth('system:manage')
+  async applyPatch(
+    @Param('id') id: string,
+    @Body() body: { patch?: DefinitionPatch; confirmed?: boolean },
+    @OrganizationId() organizationId: string,
+  ): Promise<AIModule> {
+    if (!body?.patch || typeof body.patch !== 'object') {
+      throw new BadRequestException('patch is required')
+    }
+    return this.aiModulesService.applyDefinitionPatchToModule(
+      id,
+      body.patch,
+      organizationId,
+      body.confirmed === true,
+    )
+  }
+
+  @Get(':id/blueprint')
+  @Auth('system:manage')
+  async getBlueprint(@Param('id') id: string, @OrganizationId() organizationId: string) {
+    const blueprint = await this.aiModulesService.getBlueprintMetadata(id, organizationId)
+    if (!blueprint) {
+      throw new NotFoundException('Blueprint package not generated for this module')
+    }
+    return blueprint
   }
 
   @Get(':id/definition')

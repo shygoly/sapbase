@@ -81,6 +81,9 @@ export class ModuleRegistryServiceAdapter implements IModuleRegistryService {
       if (patchContent.schemaPath) {
         metadata.schemaPath = patchContent.schemaPath
       }
+      if (patchContent.blueprint && typeof patchContent.blueprint === 'object') {
+        metadata.blueprint = patchContent.blueprint
+      }
     }
 
     return metadata

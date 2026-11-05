@@ -7,6 +7,13 @@ import { AIModuleTest, TestStatus } from './ai-module-test.entity'
 import { AIModuleReview, ReviewDecision } from './ai-module-review.entity'
 import { AIModuleDefinition } from './ai-module-definition.entity'
 import { AIModelsService } from '../ai-models/ai-models.service'
+import { AIModuleBlueprintService } from './ai-module-blueprint.service'
+import {
+  applyDefinitionPatch,
+  bumpPatchVersion,
+  DefinitionPatchError,
+  type DefinitionPatch,
+} from './definition-patch.service'
 import { ModuleRegistryService } from '../module-registry/module-registry.service'
 import { ModuleType, ModuleStatus } from '../module-registry/module-registry.entity'
 import { CapabilityType } from '../module-registry/module-capability.entity'
@@ -35,6 +42,7 @@ export class AIModulesService {
     private aiModuleDefinitionRepository: Repository<AIModuleDefinition>,
     private aiModelsService: AIModelsService,
     private moduleRegistryService: ModuleRegistryService,
+    private aiModuleBlueprints: AIModuleBlueprintService,
   ) {}
 
   async findAll(organizationId: string, status?: AIModuleStatus): Promise<AIModule[]> {
@@ -159,11 +167,90 @@ export class AIModulesService {
   ): Promise<AIModule> {
     const module = await this.findOne(moduleId, organizationId)
     const normalized = normalizeDefinitionShape(definition)
-    assertMergedDefinition(normalized)
+    return this.persistDefinitionAsBlueprint(module, normalized)
+  }
+
+  /**
+   * 应用一个服务端可表达的 Patch（object/state），bump 版本并重新产包编译。
+   * 旧包不覆盖：包 id 含新版本。
+   */
+  async applyDefinitionPatchToModule(
+    moduleId: string,
+    patch: DefinitionPatch,
+    organizationId: string,
+    confirmed = false,
+  ): Promise<AIModule> {
+    const module = await this.findOne(moduleId, organizationId)
+    const stored = await this.getDefinition(moduleId)
+    if (!stored) {
+      throw new BadRequestException('该模块还没有六步定义，无法应用 Patch')
+    }
+    const merged = stored.mergedDefinition
+    const current =
+      merged && typeof merged === 'object' && Object.keys(merged).length > 0
+        ? merged
+        : {
+            objectModel: stored.step1_objectModel,
+            relationships: stored.step2_relationships,
+            stateFlow: stored.step3_stateFlow,
+            pages: stored.step4_pages,
+            permissions: stored.step5_permissions,
+            reports: stored.step6_reports,
+          }
+
+    let applied: ReturnType<typeof applyDefinitionPatch>
+    try {
+      applied = applyDefinitionPatch(current, patch, { confirmed })
+    } catch (error) {
+      if (error instanceof DefinitionPatchError) {
+        throw new BadRequestException({
+          message: error.message,
+          reason: error.reason,
+        })
+      }
+      throw error
+    }
+
+    try {
+      module.version = bumpPatchVersion(module.version)
+    } catch (error) {
+      if (error instanceof DefinitionPatchError) {
+        throw new BadRequestException({ message: error.message, reason: error.reason })
+      }
+      throw error
+    }
+
+    const saved = await this.persistDefinitionAsBlueprint(module, applied.definition)
+    const history = Array.isArray(saved.metadata?.patches) ? saved.metadata.patches : []
+    saved.metadata = {
+      ...(saved.metadata ?? {}),
+      patches: [
+        ...history,
+        {
+          patchId: patch.patchId ?? `patch-${Date.now()}`,
+          scope: patch.scope,
+          operation: patch.operation,
+          target: patch.target,
+          changed: applied.changed,
+          appliedAt: new Date().toISOString(),
+        },
+      ],
+    }
+    return this.aiModuleRepository.save(saved)
+  }
+
+  /**
+   * 六步定义 → Blueprint 层 → `.erpkg` → 编译；失败不更新模块。
+   */
+  private async persistDefinitionAsBlueprint(
+    module: AIModule,
+    definition: Record<string, unknown>,
+  ): Promise<AIModule> {
+    assertMergedDefinition(definition)
 
     let layers: ReturnType<typeof definitionToBlueprint>
     try {
-      layers = definitionToBlueprint(normalized)
+      layers = definitionToBlueprint(definition)
     } catch (error) {
       if (error instanceof DefinitionToBlueprintError) {
         throw new BadRequestException({
@@ -174,10 +261,31 @@ export class AIModulesService {
       throw error
     }
 
+    let materialized: Awaited<ReturnType<AIModuleBlueprintService['materialize']>>
+    try {
+      materialized = await this.aiModuleBlueprints.materialize({
+        name: module.name,
+        version: module.version,
+        layers,
+      })
+    } catch (error) {
+      throw new BadRequestException(
+        `Blueprint 打包/编译失败：${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
+    }
+
     const objects = Object.fromEntries(
       layers.semantic.entities.map((entity) => [entity.name, entity]),
     )
     module.naturalLanguagePrompt = 'Generated from 6-step definition'
+    module.metadata = {
+      ...(module.metadata ?? {}),
+      blueprint: {
+        packageId: materialized.packageId,
+        irDigest: materialized.irDigest,
+        compiledAt: materialized.compiledAt,
+      },
+    }
     module.patchContent = {
       version: '1.0',
       patchId: uuidv4(),
@@ -186,6 +294,10 @@ export class AIModulesService {
       scope: 'blueprint',
       operation: 'add',
       target: { type: 'blueprint', identifier: module.name },
+      blueprint: {
+        packageId: materialized.packageId,
+        irDigest: materialized.irDigest,
+      },
       objects,
       semantic: layers.semantic,
       flows: layers.flows,
@@ -194,7 +306,7 @@ export class AIModulesService {
     }
 
     // 先保存定义再写模块 patch：定义失败时不会留下“patch 已更新、定义没更新”的半状态。
-    await this.saveDefinition(moduleId, normalized)
+    await this.saveDefinition(module.id, definition)
     return this.aiModuleRepository.save(module)
   }
 
@@ -683,6 +795,9 @@ export class AIModulesService {
       if (patchContent.schemaPath) {
         metadata.schemaPath = patchContent.schemaPath
       }
+      if (patchContent.blueprint && typeof patchContent.blueprint === 'object') {
+        metadata.blueprint = patchContent.blueprint
+      }
     }
 
     return metadata
@@ -756,6 +871,18 @@ export class AIModulesService {
     return this.aiModuleDefinitionRepository.findOne({
       where: { aiModuleId: moduleId },
     })
+  }
+
+  /** 已产出包的元数据（无包返回 null）。 */
+  async getBlueprintMetadata(
+    moduleId: string,
+    organizationId: string,
+  ): Promise<Record<string, unknown> | null> {
+    const module = await this.findOne(moduleId, organizationId)
+    const blueprint = module.metadata?.blueprint
+    return blueprint && typeof blueprint === 'object'
+      ? (blueprint as Record<string, unknown>)
+      : null
   }
 
   private extractCapabilitiesFromPatch(patchContent: any): Array<{

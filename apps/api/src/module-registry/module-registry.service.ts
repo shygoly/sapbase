@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ModuleRegistry, ModuleStatus, ModuleType } from './module-registry.entity'
@@ -91,6 +91,8 @@ export class ModuleRegistryService {
     dir: string
     packagePath: string
     manifest: BlueprintManifest
+    /** package = AI 产出的真实包；minimal = 旧模块的最小骨架。 */
+    source: 'package' | 'minimal'
     /** 舍弃的实体候选及原因（不静默丢弃）。 */
     dropped: Array<{ name: string; reason: string }>
   }> {
@@ -111,6 +113,22 @@ export class ModuleRegistryService {
     if (!module) {
       throw new NotFoundException(`Module with ID ${moduleId} not found`)
     }
+
+    // AI 定义产出的真实包优先：它保留了字段/状态机/规则；不要再生成丢字段的骨架。
+    const recordedPackageId = module.metadata?.blueprint?.packageId
+    if (typeof recordedPackageId === 'string' && recordedPackageId.length > 0) {
+      const packagePath = join(this.blueprints.packagesDirectory(), `${recordedPackageId}.erpkg`)
+      if (existsSync(packagePath)) {
+        return {
+          dir: packagePath,
+          packagePath,
+          manifest: this.blueprints.manifestOf(recordedPackageId),
+          source: 'package',
+          dropped: [],
+        }
+      }
+    }
+
     const dependsOnAtomics = module.dependsOnAtomics ?? []
 
     const { names, dropped } = collectEntityNames({
@@ -137,7 +155,7 @@ export class ModuleRegistryService {
     )
 
     const packaged = this.blueprints.packageFrom(dir, options.out)
-    return { dir, packagePath: packaged.packagePath, manifest: packaged.manifest, dropped }
+    return { dir, packagePath: packaged.packagePath, manifest: packaged.manifest, source: 'minimal', dropped }
   }
 
   /**

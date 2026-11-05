@@ -10,6 +10,7 @@ import { AIModuleTest } from './ai-module-test.entity'
 import { AIModuleReview } from './ai-module-review.entity'
 import { AIModelsService } from '../ai-models/ai-models.service'
 import { ModuleRegistryService } from '../module-registry/module-registry.service'
+import { AIModuleBlueprintService } from './ai-module-blueprint.service'
 jest.mock('axios')
 const mockedAxios = axios as jest.Mocked<typeof axios>
 
@@ -29,6 +30,15 @@ describe('AIModulesService', () => {
     findOne: jest.fn(),
     create: jest.fn((row: unknown) => row),
     save: jest.fn(async (row: unknown) => row),
+  }
+  const mockBlueprintService = {
+    materialize: jest.fn(async () => ({
+      packageId: 'ticket-app-1.0.0',
+      packagePath: '/tmp/ticket-app-1.0.0.erpkg',
+      manifest: {},
+      irDigest: 'sha256:' + 'a'.repeat(64),
+      compiledAt: '2026-01-01T00:00:00.000Z',
+    })),
   }
 
   beforeEach(async () => {
@@ -50,6 +60,7 @@ describe('AIModulesService', () => {
           provide: ModuleRegistryService,
           useValue: {},
         },
+        { provide: AIModuleBlueprintService, useValue: mockBlueprintService },
       ],
     }).compile()
 
@@ -183,7 +194,68 @@ describe('AIModulesService', () => {
       expect(Object.keys(result.patchContent.objects)).toEqual(['Ticket'])
       expect(result.patchContent.semantic.entities[0].name).toBe('Ticket')
       expect(result.patchContent.flows.flows).toEqual([])
+      expect(result.patchContent.blueprint.packageId).toBe('ticket-app-1.0.0')
+      expect(result.metadata.blueprint.irDigest).toMatch(/^sha256:/)
+      expect(mockBlueprintService.materialize).toHaveBeenCalled()
       expect(mockDefinitionRepo.save).toHaveBeenCalled()
+    })
+
+    it('applies an object patch, bumps the version, and recompiles', async () => {
+      const moduleRow = {
+        id: 'module-1',
+        name: 'Ticket App',
+        organizationId: 'org-1',
+        version: '1.0.0',
+        patchContent: {},
+        metadata: {},
+      }
+      const definitionRow = {
+        aiModuleId: 'module-1',
+        mergedDefinition: {
+          objectModel: {
+            entities: [
+              { identifier: 'Ticket', fields: [{ name: 'title', type: 'string' }] },
+            ],
+          },
+          relationships: { relationships: [] },
+          stateFlow: {
+            states: [
+              { name: 'draft', initial: true },
+              { name: 'closed', final: true },
+            ],
+            transitions: [{ from: 'draft', to: 'closed' }],
+          },
+        },
+      }
+      mockRepo.findOne.mockResolvedValue(moduleRow)
+      mockRepo.save.mockImplementation(async (row: unknown) => row)
+      mockDefinitionRepo.findOne.mockResolvedValue(definitionRow)
+      mockDefinitionRepo.save.mockImplementation(async (row: unknown) => row)
+      mockBlueprintService.materialize.mockResolvedValue({
+        packageId: 'ticket-app-1.0.1',
+        packagePath: '/tmp/ticket-app-1.0.1.erpkg',
+        manifest: {},
+        irDigest: `sha256:${'b'.repeat(64)}`,
+        compiledAt: '2026-01-01T00:00:00.000Z',
+      })
+
+      const result = await service.applyDefinitionPatchToModule(
+        'module-1',
+        {
+          scope: 'object',
+          operation: 'add',
+          target: { identifier: 'Ticket' },
+          payload: { field: { name: 'priority', type: 'number' } },
+        },
+        'org-1',
+      )
+
+      expect(result.version).toBe('1.0.1')
+      expect(mockBlueprintService.materialize).toHaveBeenCalledWith(
+        expect.objectContaining({ version: '1.0.1' }),
+      )
+      expect(result.metadata.patches).toHaveLength(1)
+      expect(result.patchContent.blueprint.packageId).toBe('ticket-app-1.0.1')
     })
 
     it('rejects an invalid definition before overwriting patchContent', async () => {
