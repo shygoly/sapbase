@@ -66,6 +66,21 @@ function writeSourceDir(): string {
     }),
   )
   writeFileSync(
+    join(dir, 'ui.json'),
+    JSON.stringify({
+      ui: 'blueprint-ui/v1',
+      pages: [{ identifier: 'OrderList', type: 'list', entity: 'Order' }],
+      menus: [{ identifier: 'orders', label: 'Orders', path: '/orders' }],
+    }),
+  )
+  writeFileSync(
+    join(dir, 'permissions.json'),
+    JSON.stringify({
+      permissions: 'blueprint-permissions/v1',
+      rules: [{ role: 'sales', scope: 'own', resources: ['Order'], actions: ['read'] }],
+    }),
+  )
+  writeFileSync(
     join(dir, 'rules.json'),
     JSON.stringify({
       rules: 'blueprint-rules/v1',
@@ -102,6 +117,8 @@ describe('CompiledBlueprint', () => {
     expect(loaded.compiled.template.validation.map((rule) => rule.id)).toEqual(['amount-positive'])
     expect(loaded.compiled.template.approval).toEqual([])
     expect(loaded.compiled.template.accounting).toEqual([])
+    expect(loaded.compiled.ui?.pages[0].identifier).toBe('OrderList')
+    expect(loaded.compiled.permissions?.rules[0].role).toBe('sales')
   })
 
   it('plans unique, not-null and explicit query indexes', async () => {

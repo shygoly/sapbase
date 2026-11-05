@@ -104,12 +104,49 @@ describe('applyDefinitionPatch', () => {
     ])
   })
 
-  it('rejects unsupported scopes instead of silently ignoring them', () => {
-    for (const scope of ['page', 'permission', 'menu'] as const) {
-      expect(() => applyDefinitionPatch(baseDefinition(), patch({ scope }))).toThrow(
-        DefinitionPatchError,
-      )
-    }
+  it('rejects unknown scopes instead of silently ignoring them', () => {
+    expect(() =>
+      applyDefinitionPatch(baseDefinition(), patch({ scope: 'workflow' as never })),
+    ).toThrow(DefinitionPatchError)
+  })
+
+  it('applies page, permission and menu patches', () => {
+    const page = applyDefinitionPatch(
+      baseDefinition(),
+      patch({
+        scope: 'page',
+        payload: { page: { identifier: 'TicketList', type: 'list', entity: 'Ticket' } },
+      }),
+    )
+    expect((page.definition.pages as any).pages).toEqual([
+      { identifier: 'TicketList', type: 'list', entity: 'Ticket' },
+    ])
+
+    const permission = applyDefinitionPatch(
+      page.definition,
+      patch({
+        scope: 'permission',
+        payload: {
+          permission: { role: 'sales', scope: 'own', resources: ['Ticket'], actions: ['read'] },
+        },
+      }),
+    )
+    expect((permission.definition.permissions as any).rules).toEqual([
+      { role: 'sales', scope: 'own', resources: ['Ticket'], actions: ['read'] },
+    ])
+
+    const menu = applyDefinitionPatch(
+      permission.definition,
+      patch({
+        scope: 'menu',
+        payload: {
+          menu: { identifier: 'tickets', label: 'Tickets', path: '/tickets' },
+        },
+      }),
+    )
+    expect((menu.definition.pages as any).menus).toEqual([
+      { identifier: 'tickets', label: 'Tickets', path: '/tickets' },
+    ])
   })
 
   it('enforces L3 and L2 confirmation', () => {

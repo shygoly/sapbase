@@ -113,6 +113,16 @@ export const aiModulesApi = {
     return response.data.data || response.data
   },
 
+  async getBlueprintUi(id: string): Promise<Record<string, any>> {
+    const response = await httpClient.get<any>(`/api/blueprints/${id}/ui`)
+    return response.data.data || response.data
+  },
+
+  async getBlueprintPermissions(id: string): Promise<Record<string, any>> {
+    const response = await httpClient.get<any>(`/api/blueprints/${id}/permissions`)
+    return response.data.data || response.data
+  },
+
   async deliverBlueprint(
     id: string,
     input: {

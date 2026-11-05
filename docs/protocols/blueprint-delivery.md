@@ -433,6 +433,39 @@ change `add-minimal-autoparts-template` 把「包能交付」推进到「包能�
 
 ---
 
+### 8.5 UI 与权限层（可选）
+
+包内可有两层可选文件，均参与 Schema 校验、冲突检测与 `irDigest`：
+
+| 文件 | 协议 | 内容 |
+| --- | --- | --- |
+| `ui.json` | `blueprint-ui/v1` | `pages[]`（identifier/type/entity/route/fields）+ `menus[]` |
+| `permissions.json` | `blueprint-permissions/v1` | `rules[]`（role / scope / resources / actions） |
+
+编译期判据：
+
+- 页面引用的实体必须存在；`fields` 必须是该实体已声明字段；
+- 页面/菜单 identifier 不得重复；
+- 权限资源必须是已声明实体或 `*`；动作只能是 `create/read/update/list/delete`。
+
+运行时读取（经 license/tenant 装载）：
+
+```http
+GET /blueprints/:id/ui
+GET /blueprints/:id/permissions
+```
+
+权限层是**声明**，不是平台 RBAC 的替代：`system:manage` 等权限点仍由 JWT 控制；
+角色名到平台角色的映射是独立变更。
+
+服务端 Patch 支持：
+
+- `page`：`payload.page` 的 add/update/remove
+- `permission`：`payload.permission` 的 add/update/remove
+- `menu`：`payload.menu` 的 add/update/remove（要求已有页面）
+
+---
+
 ## 9. 单据运行时（P1）
 
 入口仍是 `SemanticRuntimeService`（`POST/GET /blueprints/:id/records/:entity`）。状态迁移与删除走同一服务，授权复用 `loadBlueprint`，审计复用 `AuditLogsService`。

@@ -77,6 +77,8 @@
     "semantic": { "$ref": "#/$defs/layerDigest" },
     "rules": { "$ref": "#/$defs/layerDigest" },
     "experience": { "$ref": "#/$defs/layerDigest" },
+    "ui": { "$ref": "#/$defs/layerDigest" },
+    "permissions": { "$ref": "#/$defs/layerDigest" },
     "summary": {
       "type": "object",
       "additionalProperties": false,

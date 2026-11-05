@@ -16,6 +16,9 @@ export interface DefinitionPatch {
     field?: Record<string, unknown>
     state?: Record<string, unknown>
     transition?: Record<string, unknown>
+    page?: Record<string, unknown>
+    permission?: Record<string, unknown>
+    menu?: Record<string, unknown>
   }
   securityLevel?: DefinitionPatchSecurityLevel
 }
@@ -53,7 +56,7 @@ export interface ApplyDefinitionPatchResult {
   changed: string[]
 }
 
-const SUPPORTED_SCOPES = new Set(['object', 'state'])
+const SUPPORTED_SCOPES = new Set(['object', 'state', 'page', 'permission', 'menu'])
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -224,12 +227,162 @@ function applyStatePatch(
   throw new DefinitionPatchError(`state patch 不支持 operation=${patch.operation}`, 'unsupported-operation')
 }
 
+function ensurePages(definition: Record<string, unknown>): Record<string, unknown> {
+  const current = stepValue(definition, 'pages', 'step4_pages')
+  const pages = isRecord(current) && Array.isArray(current.pages) ? current : { pages: [] }
+  if (!Array.isArray(pages.menus)) pages.menus = []
+  definition.pages = pages
+  return pages
+}
+
+function pageIdentifierOf(patch: DefinitionPatch): string {
+  const payload = patch.payload.page
+  const fromPayload = isRecord(payload) && typeof payload.identifier === 'string' ? payload.identifier : ''
+  return fromPayload || patch.target.identifier
+}
+
+function applyPagePatch(
+  definition: Record<string, unknown>,
+  patch: DefinitionPatch,
+  changed: string[],
+): void {
+  if (!isRecord(patch.payload.page)) {
+    throw new DefinitionPatchError('page patch 必须提供 payload.page', 'unsupported-payload')
+  }
+  const pages = ensurePages(definition)
+  const list = pages.pages as Array<Record<string, unknown>>
+  const identifier = pageIdentifierOf(patch)
+  if (!identifier) {
+    throw new DefinitionPatchError('page patch 必须提供 identifier', 'invalid-target')
+  }
+  const index = list.findIndex((item) => item.identifier === identifier)
+  if (patch.operation === 'add') {
+    if (index !== -1) {
+      throw new DefinitionPatchError(`页面已存在：${identifier}`, 'invalid-target')
+    }
+    list.push({ ...patch.payload.page, identifier })
+    changed.push(`add page ${identifier}`)
+    return
+  }
+  if (index === -1) {
+    throw new DefinitionPatchError(`页面不存在：${identifier}`, 'invalid-target')
+  }
+  if (patch.operation === 'remove') {
+    list.splice(index, 1)
+    changed.push(`remove page ${identifier}`)
+    return
+  }
+  if (patch.operation === 'update') {
+    list[index] = { ...list[index], ...patch.payload.page, identifier }
+    changed.push(`update page ${identifier}`)
+    return
+  }
+  throw new DefinitionPatchError(`page patch 不支持 operation=${patch.operation}`, 'unsupported-operation')
+}
+
+function applyPermissionPatch(
+  definition: Record<string, unknown>,
+  patch: DefinitionPatch,
+  changed: string[],
+): void {
+  if (!isRecord(patch.payload.permission)) {
+    throw new DefinitionPatchError(
+      'permission patch 必须提供 payload.permission',
+      'unsupported-payload',
+    )
+  }
+  const current = stepValue(definition, 'permissions', 'step5_permissions')
+  const holder = isRecord(current) && Array.isArray(current.rules) ? current : { rules: [] }
+  definition.permissions = holder
+  const rules = holder.rules as Array<Record<string, unknown>>
+  const permission = patch.payload.permission
+  const role =
+    typeof permission.role === 'string' && permission.role.length > 0
+      ? permission.role
+      : patch.target.identifier
+  if (!role) {
+    throw new DefinitionPatchError('permission patch 必须提供 role', 'invalid-target')
+  }
+  const index = rules.findIndex((item) => item.role === role)
+  if (patch.operation === 'add') {
+    if (index !== -1) {
+      throw new DefinitionPatchError(`权限角色已存在：${role}`, 'invalid-target')
+    }
+    rules.push({ ...permission, role })
+    changed.push(`add permission ${role}`)
+    return
+  }
+  if (index === -1) {
+    throw new DefinitionPatchError(`权限角色不存在：${role}`, 'invalid-target')
+  }
+  if (patch.operation === 'remove') {
+    rules.splice(index, 1)
+    changed.push(`remove permission ${role}`)
+    return
+  }
+  if (patch.operation === 'update') {
+    rules[index] = { ...rules[index], ...permission, role }
+    changed.push(`update permission ${role}`)
+    return
+  }
+  throw new DefinitionPatchError(
+    `permission patch 不支持 operation=${patch.operation}`,
+    'unsupported-operation',
+  )
+}
+
+function applyMenuPatch(
+  definition: Record<string, unknown>,
+  patch: DefinitionPatch,
+  changed: string[],
+): void {
+  if (!isRecord(patch.payload.menu)) {
+    throw new DefinitionPatchError('menu patch 必须提供 payload.menu', 'unsupported-payload')
+  }
+  const pages = ensurePages(definition)
+  if ((pages.pages as unknown[]).length === 0) {
+    throw new DefinitionPatchError('菜单需要至少一个页面（ui.json 要求 pages 非空）', 'invalid-target')
+  }
+  const menus = pages.menus as Array<Record<string, unknown>>
+  const identifier =
+    typeof patch.payload.menu.identifier === 'string'
+      ? patch.payload.menu.identifier
+      : patch.target.identifier
+  if (!identifier) {
+    throw new DefinitionPatchError('menu patch 必须提供 identifier', 'invalid-target')
+  }
+  const index = menus.findIndex((item) => item.identifier === identifier)
+  if (patch.operation === 'add') {
+    if (index !== -1) {
+      throw new DefinitionPatchError(`菜单已存在：${identifier}`, 'invalid-target')
+    }
+    menus.push({ ...patch.payload.menu, identifier })
+    changed.push(`add menu ${identifier}`)
+    return
+  }
+  if (index === -1) {
+    throw new DefinitionPatchError(`菜单不存在：${identifier}`, 'invalid-target')
+  }
+  if (patch.operation === 'remove') {
+    menus.splice(index, 1)
+    changed.push(`remove menu ${identifier}`)
+    return
+  }
+  if (patch.operation === 'update') {
+    menus[index] = { ...menus[index], ...patch.payload.menu, identifier }
+    changed.push(`update menu ${identifier}`)
+    return
+  }
+  throw new DefinitionPatchError(`menu patch 不支持 operation=${patch.operation}`, 'unsupported-operation')
+}
+
 /**
- * 只应用 Blueprint 能表达的 Patch：
- *   · object → 字段 add/update/remove
- *   · state  → 状态/迁移 add/update/remove
- *
- * page/permission/menu 没有 Blueprint 语义，明确拒绝而不是静默忽略。
+ * 应用服务端可表达的 Patch：
+ *   · object     → 字段 add/update/remove
+ *   · state      → 状态/迁移 add/update/remove
+ *   · page       → UI 页面 add/update/remove
+ *   · permission → 角色规则 add/update/remove
+ *   · menu       → 菜单 add/update/remove
  */
 export function applyDefinitionPatch(
   definition: Record<string, unknown>,
@@ -258,8 +411,23 @@ export function applyDefinitionPatch(
   const copy = JSON.parse(JSON.stringify(definition)) as Record<string, unknown>
   const normalized = normalizeDefinitionShape(copy)
   const changed: string[] = []
-  if (patch.scope === 'object') applyObjectPatch(normalized, patch, changed)
-  else applyStatePatch(normalized, patch, changed)
+  switch (patch.scope) {
+    case 'object':
+      applyObjectPatch(normalized, patch, changed)
+      break
+    case 'state':
+      applyStatePatch(normalized, patch, changed)
+      break
+    case 'page':
+      applyPagePatch(normalized, patch, changed)
+      break
+    case 'permission':
+      applyPermissionPatch(normalized, patch, changed)
+      break
+    case 'menu':
+      applyMenuPatch(normalized, patch, changed)
+      break
+  }
   return { definition: normalized, changed }
 }
 

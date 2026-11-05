@@ -1,7 +1,9 @@
 import type {
   AccountingRule,
   ApprovalRule,
+  PermissionsFile,
   SemanticEntity,
+  UiFile,
   ValidationRule,
 } from './compiler'
 import { CompileError } from './compiler'
@@ -42,6 +44,10 @@ export interface CompiledBlueprint {
   compiledAt: string
   template: CompiledTemplate
   indexPlan: CompiledIndexPlanItem[]
+  /** 页面/菜单发布层（可选） */
+  ui?: UiFile
+  /** 角色/资源/数据范围发布层（可选） */
+  permissions?: PermissionsFile
 }
 
 const NUMERIC_TYPES = new Set(['number', 'decimal', 'i32'])
@@ -132,6 +138,29 @@ export function buildCompiledBlueprint(
     }
   }
 
+  let ui: UiFile | undefined
+  const uiBytes = input.files.get('ui.json')
+  if (uiBytes) {
+    try {
+      ui = JSON.parse(uiBytes.toString('utf8')) as UiFile
+    } catch (error) {
+      throw new CompileError(`ui.json 不是合法 JSON：${(error as Error).message}`, 'schema-invalid')
+    }
+  }
+
+  let permissions: PermissionsFile | undefined
+  const permissionBytes = input.files.get('permissions.json')
+  if (permissionBytes) {
+    try {
+      permissions = JSON.parse(permissionBytes.toString('utf8')) as PermissionsFile
+    } catch (error) {
+      throw new CompileError(
+        `permissions.json 不是合法 JSON：${(error as Error).message}`,
+        'schema-invalid',
+      )
+    }
+  }
+
   return {
     format: COMPILED_BLUEPRINT_FORMAT,
     blueprint: input.blueprint,
@@ -145,5 +174,7 @@ export function buildCompiledBlueprint(
       accounting: rules.accounting ?? [],
     },
     indexPlan: buildIndexPlan(semantic.entities),
+    ...(ui ? { ui } : {}),
+    ...(permissions ? { permissions } : {}),
   }
 }

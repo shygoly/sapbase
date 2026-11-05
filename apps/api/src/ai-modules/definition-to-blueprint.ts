@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { Validator } from 'jsonschema'
 import type { BlueprintIrAction } from '@speckit/shared-schemas'
 import { loadSchema } from '../common/protocol/schema-loader'
-import { detectConflicts } from '../blueprint/compiler'
+import { detectConflicts, type PermissionsFile, type UiFile } from '../blueprint/compiler'
 import type { BlueprintMeta } from '../blueprint/packager'
 import { BLUEPRINT_META_FILE } from '../blueprint/packager'
 import { normalizeStep3StateFlow } from './step3-normalizer'
@@ -105,6 +105,8 @@ export interface BlueprintLayers {
     automate: unknown[]
     surfaces: unknown[]
   }
+  ui?: UiFile
+  permissions?: PermissionsFile
 }
 
 function fail(
@@ -330,6 +332,40 @@ function deriveFlows(
   return { flows }
 }
 
+function readUi(rawPages: unknown, rawMenus?: unknown): UiFile | undefined {
+  const pagesSource = unwrap(rawPages)
+  if (!isRecord(pagesSource) || !Array.isArray(pagesSource.pages)) return undefined
+  if (pagesSource.pages.length === 0) return undefined
+
+  const menusSource = Array.isArray(rawMenus)
+    ? rawMenus
+    : isRecord(pagesSource) && Array.isArray(pagesSource.menus)
+      ? pagesSource.menus
+      : undefined
+
+  return {
+    ui: 'blueprint-ui/v1',
+    pages: pagesSource.pages as UiFile['pages'],
+    ...(menusSource ? { menus: menusSource as UiFile['menus'] } : {}),
+  }
+}
+
+function readPermissions(raw: unknown): PermissionsFile | undefined {
+  const source = unwrap(raw)
+  if (Array.isArray(source)) {
+    return source.length > 0
+      ? { permissions: 'blueprint-permissions/v1', rules: source as PermissionsFile['rules'] }
+      : undefined
+  }
+  if (!isRecord(source) || !Array.isArray(source.rules) || source.rules.length === 0) {
+    return undefined
+  }
+  return {
+    permissions: 'blueprint-permissions/v1',
+    rules: source.rules as PermissionsFile['rules'],
+  }
+}
+
 function readBlueprintRules(raw: unknown): BlueprintLayers['rules'] | undefined {
   const unwrapped = unwrap(raw)
   if (!isRecord(unwrapped)) return undefined
@@ -488,10 +524,16 @@ export function definitionToBlueprint(mergedDefinition: Record<string, unknown>)
 
   const rules = readBlueprintRules(definition.rules)
   const experience = readBlueprintExperience(definition.experience)
+  const ui = readUi(stepOf(definition, 'pages', 'step4_pages'), definition.menus)
+  const permissions = readPermissions(
+    stepOf(definition, 'permissions', 'step5_permissions'),
+  )
 
   const layers: BlueprintLayers = { semantic: { entities }, flows }
   if (rules) layers.rules = rules
   if (experience) layers.experience = experience
+  if (ui) layers.ui = ui
+  if (permissions) layers.permissions = permissions
 
   assertLayerSchema('semantic.json', layers.semantic, 'blueprint-semantic.schema.json')
   assertLayerSchema('flows.json', layers.flows, 'blueprint-flows.schema.json')
@@ -499,10 +541,16 @@ export function definitionToBlueprint(mergedDefinition: Record<string, unknown>)
   if (layers.experience) {
     assertLayerSchema('experience.json', layers.experience, 'blueprint-experience.schema.json')
   }
+  if (layers.ui) assertLayerSchema('ui.json', layers.ui, 'blueprint-ui.schema.json')
+  if (layers.permissions) {
+    assertLayerSchema('permissions.json', layers.permissions, 'blueprint-permissions.schema.json')
+  }
 
   const conflicts = detectConflicts(layers.semantic, layers.flows, inferAtomics(layers.flows), {
     rules: layers.rules as never,
     experience: layers.experience as never,
+    ui: layers.ui as never,
+    permissions: layers.permissions as never,
   })
   if (conflicts.length > 0) {
     fail(`转换结果过不了编译期判据：${conflicts.join('; ')}`, 'conflict')
@@ -535,4 +583,6 @@ export function writeBlueprintDir(
   writeJson(dir, 'flows.json', layers.flows)
   if (layers.rules) writeJson(dir, 'rules.json', layers.rules)
   if (layers.experience) writeJson(dir, 'experience.json', layers.experience)
+  if (layers.ui) writeJson(dir, 'ui.json', layers.ui)
+  if (layers.permissions) writeJson(dir, 'permissions.json', layers.permissions)
 }

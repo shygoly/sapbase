@@ -147,6 +147,42 @@ describe('definitionToBlueprint（纯函数）', () => {
     }
   })
 
+  it('把 pages/permissions 映射成 ui/permissions 层', () => {
+    const layers = definitionToBlueprint(
+      completeMerged({
+        pages: {
+          pages: [
+            { identifier: 'TicketList', label: 'Tickets', type: 'list', entity: 'Ticket' },
+          ],
+          menus: [{ identifier: 'tickets', label: 'Tickets', path: '/tickets' }],
+        },
+        permissions: {
+          rules: [{ role: 'sales', scope: 'own', resources: ['Ticket'], actions: ['read'] }],
+        },
+      }),
+    )
+
+    expect(layers.ui?.pages[0]).toEqual(
+      expect.objectContaining({ identifier: 'TicketList', entity: 'Ticket' }),
+    )
+    expect(layers.ui?.menus?.[0].path).toBe('/tickets')
+    expect(layers.permissions?.rules[0]).toEqual(
+      expect.objectContaining({ role: 'sales', resources: ['Ticket'] }),
+    )
+  })
+
+  it('页面引用不存在的实体 → 编译期冲突', () => {
+    expect(() =>
+      definitionToBlueprint(
+        completeMerged({
+          pages: {
+            pages: [{ identifier: 'GhostList', type: 'list', entity: 'Ghost' }],
+          },
+        }),
+      ),
+    ).toThrow(DefinitionToBlueprintError)
+  })
+
   it('接受 wizard 的扁平载荷（entities / states / transitions）', () => {
     const layers = definitionToBlueprint({
       entities: [

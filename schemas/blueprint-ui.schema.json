@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/blueprint-ui.schema.json",
+  "title": "Blueprint UI Layer",
+  "description": "页面/菜单的发布模型。只描述声明，不生成 Next 路由；渲染器按 entity + page.type 映射到 ui-runtime。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ui", "pages"],
+  "properties": {
+    "ui": { "const": "blueprint-ui/v1" },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["identifier", "type", "entity"],
+        "properties": {
+          "identifier": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "type": { "enum": ["list", "form", "detail"] },
+          "entity": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+          "route": { "type": "string", "minLength": 1 },
+          "fields": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" }
+          }
+        }
+      }
+    },
+    "menus": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["identifier", "label", "path"],
+        "properties": {
+          "identifier": { "type": "string", "minLength": 1 },
+          "label": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 },
+          "icon": { "type": "string" },
+          "order": { "type": "integer" },
+          "permissions": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

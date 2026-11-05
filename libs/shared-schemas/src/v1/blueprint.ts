@@ -85,6 +85,10 @@ export interface BlueprintIr {
   rules?: BlueprintIrLayerDigest
   /** 经验策略层摘要（可选：没有 experience.json 的包缺省） */
   experience?: BlueprintIrLayerDigest
+  /** UI 层摘要（可选：没有 ui.json 的包缺省） */
+  ui?: BlueprintIrLayerDigest
+  /** 权限层摘要（可选：没有 permissions.json 的包缺省） */
+  permissions?: BlueprintIrLayerDigest
   summary?: { entities?: number; events?: number; files?: number }
 }
 

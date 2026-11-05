@@ -24,7 +24,7 @@ blueprint.ir.txt    文本形态   —— 审计、代码评审、diff 用
 
 文本形态是顶层语句的线性序列。行首无缩进为顶层语句，缩进两空格为从属动作。
 IR **覆盖五层**：semantic（entity 行 + 内容摘要）、flows（on 行）、dependencies（depends 行）、
-以及可选的 rules / experience 摘要行。没有后两层文件的包，对应行缺省。
+以及可选的 rules / experience / ui / permissions 摘要行。没有对应文件的包，对应行缺省。
 semantic 摘要覆盖字段的类型 / 精度 / 唯一性 / 计算式等内容 —— 改这些而不改字段计数时，`irDigest` 也必须变。
 
 ### 2.1 头部
@@ -72,11 +72,13 @@ depends inventory-core@2.0.0
 
 记录**编译时实际解析到的版本**（不是范围）—— 加载时据此判断依赖漂移。
 
-### 2.5 规则与经验策略摘要（可选）
+### 2.5 规则、经验策略、UI 与权限摘要（可选）
 
 ```text
 rules count=3 digest=sha256:<64hex>
 experience count=4 digest=sha256:<64hex>
+ui count=3 digest=sha256:<64hex>
+permissions count=2 digest=sha256:<64hex>
 ```
 
 - `count` 是该层条目总数；`digest` 是该层规范化 JSON 的 sha256
@@ -102,7 +104,7 @@ semantic count=5 digest=sha256:<64hex>
 - `events[].actions[].kind` 决定必填字段（`check` → `atomic`、`require-approval` → `rule`、`post-accounting` → `entry`），由 Schema 的 `allOf/if-then` 强制
 - `dependencies[]` 是**解析后**的引用字符串
 - `summary` 是派生信息（对象数/事件数/文件数），不参与等价性判断
-- `semantic` / `rules` / `experience` 是可选层摘要（`{ count, digest }`）；缺省等于该层不在包内。`semantic` 现在覆盖语义层**内容**，不只是实体行上的字段计数
+- `semantic` / `rules` / `experience` / `ui` / `permissions` 是可选层摘要（`{ count, digest }`）；缺省等于该层不在包内。`semantic` 现在覆盖语义层**内容**，不只是实体行上的字段计数
 
 ## 4. 与其它协议的关系
 

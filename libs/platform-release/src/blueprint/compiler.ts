@@ -20,6 +20,8 @@ const FILE_SCHEMAS: Record<string, string> = {
   'flows.json': 'blueprint-flows.schema.json',
   'rules.json': 'blueprint-rules.schema.json',
   'experience.json': 'blueprint-experience.schema.json',
+  'ui.json': 'blueprint-ui.schema.json',
+  'permissions.json': 'blueprint-permissions.schema.json',
   'license.json': 'blueprint-license.schema.json',
 }
 
@@ -175,9 +177,48 @@ export interface ExperienceFile {
   surfaces: Array<{ id: string; when: { entity: string; state: string } }>
 }
 
+export interface UiPage {
+  identifier: string
+  label?: string
+  description?: string
+  type: 'list' | 'form' | 'detail'
+  entity: string
+  route?: string
+  fields?: string[]
+}
+
+export interface UiMenu {
+  identifier: string
+  label: string
+  path: string
+  icon?: string
+  order?: number
+  permissions?: string[]
+}
+
+export interface UiFile {
+  ui: 'blueprint-ui/v1'
+  pages: UiPage[]
+  menus?: UiMenu[]
+}
+
+export interface PermissionRule {
+  role: string
+  scope: 'own' | 'team' | 'all'
+  resources: string[]
+  actions?: Array<'create' | 'read' | 'update' | 'delete' | 'list'>
+}
+
+export interface PermissionsFile {
+  permissions: 'blueprint-permissions/v1'
+  rules: PermissionRule[]
+}
+
 export interface DetectConflictsExtras {
   rules?: RulesFile
   experience?: ExperienceFile
+  ui?: UiFile
+  permissions?: PermissionsFile
 }
 
 let validator: Validator | undefined
@@ -233,6 +274,8 @@ export async function compileBlueprint(
   const flows = (jsonFiles.get('flows.json') as FlowsFile | undefined) ?? { flows: [] }
   const rules = jsonFiles.get('rules.json') as RulesFile | undefined
   const experience = jsonFiles.get('experience.json') as ExperienceFile | undefined
+  const ui = jsonFiles.get('ui.json') as UiFile | undefined
+  const permissions = jsonFiles.get('permissions.json') as PermissionsFile | undefined
 
   // ── 2. 依赖闭包（原子走注册表解析；不可满足即拒）──────────────────
   const resolvedDependencies: string[] = []
@@ -261,6 +304,8 @@ export async function compileBlueprint(
   const conflicts = detectConflicts(semantic, flows, manifest.dependencies ?? [], {
     rules,
     experience,
+    ui,
+    permissions,
   })
   if (conflicts.length > 0) {
     throw new CompileError(`蓝图存在 ${conflicts.length} 处冲突`, 'conflict', conflicts)
@@ -282,6 +327,8 @@ export async function compileBlueprint(
     semantic: semanticLayerDigest(semantic),
     ...(rules ? { rules: layerDigest(rules) } : {}),
     ...(experience ? { experience: layerDigest(experience) } : {}),
+    ...(ui ? { ui: layerDigest(ui) } : {}),
+    ...(permissions ? { permissions: layerDigest(permissions) } : {}),
     summary: {
       entities: semantic.entities.length,
       events: flows.flows.reduce((count, flow) => count + flow.steps.length, 0),
@@ -469,6 +516,46 @@ export function detectConflicts(
     conflicts.push(
       ...detectExperienceConflicts(semantic.entities, extras.experience, declaredEvents, declaredAtomics),
     )
+  }
+
+  if (extras.ui) {
+    for (const id of duplicates(extras.ui.pages.map((page) => page.identifier))) {
+      conflicts.push(`重复定义：页面 ${id} 出现多次`)
+    }
+    for (const id of duplicates((extras.ui.menus ?? []).map((menu) => menu.identifier))) {
+      conflicts.push(`重复定义：菜单 ${id} 出现多次`)
+    }
+    for (const page of extras.ui.pages) {
+      if (!entityNames.includes(page.entity)) {
+        conflicts.push(`悬空引用：页面 ${page.identifier} 指向不存在的实体 ${page.entity}`)
+        continue
+      }
+      if (page.fields && page.fields.length > 0) {
+        const entity = semantic.entities.find((candidate) => candidate.name === page.entity)
+        const declared = new Set((entity?.fields ?? []).map((field) => field.name))
+        for (const field of page.fields) {
+          if (!declared.has(field)) {
+            conflicts.push(`悬空引用：页面 ${page.identifier} 的字段 ${field} 未在 ${page.entity} 声明`)
+          }
+        }
+      }
+    }
+  }
+
+  if (extras.permissions) {
+    const allowedActions = new Set(['create', 'read', 'update', 'delete', 'list'])
+    for (const rule of extras.permissions.rules) {
+      for (const resource of rule.resources) {
+        if (resource !== '*' && !entityNames.includes(resource)) {
+          conflicts.push(`悬空引用：权限角色 ${rule.role} 指向不存在的实体 ${resource}`)
+        }
+      }
+      for (const action of rule.actions ?? []) {
+        if (!allowedActions.has(action)) {
+          conflicts.push(`权限角色 ${rule.role} 声明了未知动作 ${action}`)
+        }
+      }
+    }
   }
 
   return conflicts
@@ -1338,6 +1425,12 @@ export function toIrText(ir: BlueprintIr): string {
   if (ir.experience) {
     lines.push(`experience count=${ir.experience.count} digest=${ir.experience.digest}`)
   }
+  if (ir.ui) {
+    lines.push(`ui count=${ir.ui.count} digest=${ir.ui.digest}`)
+  }
+  if (ir.permissions) {
+    lines.push(`permissions count=${ir.permissions.count} digest=${ir.permissions.digest}`)
+  }
   return `${lines.join('\n')}\n`
 }
 
@@ -1367,6 +1460,8 @@ export function parseIrText(text: string): Omit<BlueprintIr, 'summary'> {
   let semantic: BlueprintIr['semantic']
   let rules: BlueprintIr['rules']
   let experience: BlueprintIr['experience']
+  let ui: BlueprintIr['ui']
+  let permissions: BlueprintIr['permissions']
 
   for (const raw of lines) {
     const line = raw.trimEnd()
@@ -1400,12 +1495,14 @@ export function parseIrText(text: string): Omit<BlueprintIr, 'summary'> {
       dependencies.push(trimmed.slice('depends '.length))
       continue
     }
-    const layer = trimmed.match(/^(semantic|rules|experience) count=(\d+) digest=(sha256:[0-9a-f]{64})$/)
+    const layer = trimmed.match(/^(semantic|rules|experience|ui|permissions) count=(\d+) digest=(sha256:[0-9a-f]{64})$/)
     if (layer) {
       const digest = { count: Number(layer[2]), digest: layer[3] }
       if (layer[1] === 'semantic') semantic = digest
       else if (layer[1] === 'rules') rules = digest
-      else experience = digest
+      else if (layer[1] === 'experience') experience = digest
+      else if (layer[1] === 'ui') ui = digest
+      else permissions = digest
       continue
     }
     if (line.startsWith('  ')) {
@@ -1429,6 +1526,8 @@ export function parseIrText(text: string): Omit<BlueprintIr, 'summary'> {
     ...(semantic ? { semantic } : {}),
     ...(rules ? { rules } : {}),
     ...(experience ? { experience } : {}),
+    ...(ui ? { ui } : {}),
+    ...(permissions ? { permissions } : {}),
   }
 }
 

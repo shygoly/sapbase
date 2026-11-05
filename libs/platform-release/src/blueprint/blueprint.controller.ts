@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  NotFoundException,
   UseGuards,
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
@@ -146,8 +147,38 @@ export class BlueprintController {
     @Param('id') id: string,
     @CurrentUser() user?: { organizationId?: string },
   ) {
+    return this.loadAndMap(id, user?.organizationId)
+  }
+
+  @Get(':id/ui')
+  @ApiOperation({ summary: '读取已装载包的 UI 发布层（页面/菜单）' })
+  async ui(
+    @Param('id') id: string,
+    @CurrentUser() user?: { organizationId?: string },
+  ) {
+    const loaded = await this.loadAndMap(id, user?.organizationId)
+    if (!loaded.compiled.ui) {
+      throw new NotFoundException('包未声明 ui.json')
+    }
+    return loaded.compiled.ui
+  }
+
+  @Get(':id/permissions')
+  @ApiOperation({ summary: '读取已装载包的权限发布层（角色/资源/数据范围）' })
+  async permissions(
+    @Param('id') id: string,
+    @CurrentUser() user?: { organizationId?: string },
+  ) {
+    const loaded = await this.loadAndMap(id, user?.organizationId)
+    if (!loaded.compiled.permissions) {
+      throw new NotFoundException('包未声明 permissions.json')
+    }
+    return loaded.compiled.permissions
+  }
+
+  private async loadAndMap(id: string, tenantId?: string) {
     try {
-      return await this.blueprints.load(id, { tenantId: user?.organizationId })
+      return await this.blueprints.load(id, { tenantId })
     } catch (error) {
       if (error instanceof LoadError) {
         throw new BadRequestException({ message: error.message, reason: error.reason })
