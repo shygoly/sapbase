@@ -8,6 +8,8 @@ import { AIModuleReview, ReviewDecision } from './ai-module-review.entity'
 import { AIModuleDefinition } from './ai-module-definition.entity'
 import { AIModelsService } from '../ai-models/ai-models.service'
 import { AIModuleBlueprintService } from './ai-module-blueprint.service'
+import { DeliverError } from '../blueprint/blueprint.service'
+import { LoadError } from '../blueprint/loader'
 import {
   applyDefinitionPatch,
   bumpPatchVersion,
@@ -871,6 +873,65 @@ export class AIModulesService {
     return this.aiModuleDefinitionRepository.findOne({
       where: { aiModuleId: moduleId },
     })
+  }
+
+  /**
+   * 对 AI 包补 license、签名，并按当前租户装载验证。
+   * 只有 load 成功才写 loadedAt；失败不假装“可运行”。
+   */
+  async deliverBlueprint(
+    moduleId: string,
+    organizationId: string,
+    input: {
+      grantedTo: string[]
+      expiresAt?: string
+      issuer?: string
+      resell?: boolean
+    },
+  ): Promise<Record<string, unknown>> {
+    const module = await this.findOne(moduleId, organizationId)
+    const packageId = module.metadata?.blueprint?.packageId
+    if (typeof packageId !== 'string' || packageId.length === 0) {
+      throw new BadRequestException('该模块还没有 Blueprint 包，先生成/应用定义')
+    }
+
+    try {
+      const delivered = await this.aiModuleBlueprints.deliver(packageId, {
+        grantedTo: input.grantedTo,
+        expiresAt: input.expiresAt,
+        issuer: input.issuer,
+        resell: input.resell,
+      })
+      const loaded = await this.aiModuleBlueprints.load(packageId, organizationId)
+      const now = new Date().toISOString()
+      module.metadata = {
+        ...(module.metadata ?? {}),
+        blueprint: {
+          ...(module.metadata?.blueprint ?? {}),
+          packageId,
+          irDigest: loaded.plan.irDigest,
+          signedAt: now,
+          loadedAt: now,
+          grantedTo: input.grantedTo,
+          expiresAt: input.expiresAt ?? null,
+        },
+      }
+      await this.aiModuleRepository.save(module)
+      return {
+        packageId,
+        irDigest: loaded.plan.irDigest,
+        signedAt: now,
+        loadedAt: now,
+        grantedTo: loaded.license?.grantedTo ?? input.grantedTo,
+        expiresAt: loaded.license?.expiresAt ?? input.expiresAt ?? null,
+        manifest: delivered.manifest,
+      }
+    } catch (error) {
+      if (error instanceof DeliverError || error instanceof LoadError) {
+        throw new BadRequestException({ message: error.message, reason: error.reason })
+      }
+      throw error
+    }
   }
 
   /** 已产出包的元数据（无包返回 null）。 */

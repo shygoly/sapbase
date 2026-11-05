@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common'
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { Validator } from 'jsonschema'
 import type { BlueprintCompileResult, BlueprintManifest } from '@speckit/shared-schemas'
 import { loadSchema } from '@sap/platform-core/common/protocol/schema-loader'
@@ -252,14 +252,67 @@ export class BlueprintService {
   /**
    * 一条命令：模板目录 → 已授权、已签名的可交付包。
    *
-   * 顺序写死在本方法里，调用方不各自拼装。
-   * **先签后编会让签名失效**（compiled 在签名覆盖范围内），所以必须
-   * 写 license → 打包 → 编译盖章 → 签名。
+   * 顺序写死：写 license → 打包 → 编译盖章 → 签名。
+   * **先签后编会让签名失效**（compiled 在签名覆盖范围内）。
    */
   async deliver(
     templateId: string,
     licenseInput: DeliverLicenseInput,
   ): Promise<{ id: string; packagePath: string; manifest: BlueprintManifest }> {
+    this.requirePrivateKey()
+    const templateDir = join(this.templatesDir, templateId)
+    if (!existsSync(templateDir)) {
+      throw new DeliverError(`模板不存在：${templateId}`, 'missing-template')
+    }
+
+    mkdirSync(this.packagesDir, { recursive: true })
+    const staging = mkdtempSync(join(tmpdir(), 'bp-deliver-'))
+    try {
+      // 复制到 staging，绝不改 templates/ 源码
+      cpSync(templateDir, staging, { recursive: true })
+      return await this.deliverDirectory(staging, licenseInput)
+    } finally {
+      rmSync(staging, { recursive: true, force: true })
+    }
+  }
+
+  /**
+   * 对**已有** `.erpkg` 补 license 并重签。
+   *
+   * 解包到临时目录 → 写 license → 打包 → 编译盖章 → 签名；覆盖原包。
+   * 这是 AI 包从“能编译”变成“能合法装载”的最后一段。
+   */
+  async deliverPackage(
+    packageId: string,
+    licenseInput: DeliverLicenseInput,
+  ): Promise<{ id: string; packagePath: string; manifest: BlueprintManifest }> {
+    this.requirePrivateKey()
+    const sourcePath = this.packagePathOf(packageId)
+    const unpacked = unpackBlueprint(sourcePath)
+    const staging = mkdtempSync(join(tmpdir(), 'bp-redeliver-'))
+    try {
+      const meta = {
+        blueprint: unpacked.manifest.blueprint,
+        version: unpacked.manifest.version,
+        runtime: unpacked.manifest.runtime,
+        ...(unpacked.manifest.dependencies ? { dependencies: unpacked.manifest.dependencies } : {}),
+      }
+      writeFileSync(join(staging, 'blueprint.json'), `${JSON.stringify(meta, null, 2)}\n`)
+      for (const [rel, bytes] of unpacked.files) {
+        if (rel === 'license.json' || rel === 'blueprint.json' || rel === 'blueprint.manifest.json') {
+          continue
+        }
+        const target = join(staging, rel)
+        mkdirSync(dirname(target), { recursive: true })
+        writeFileSync(target, bytes)
+      }
+      return await this.deliverDirectory(staging, licenseInput, sourcePath)
+    } finally {
+      rmSync(staging, { recursive: true, force: true })
+    }
+  }
+
+  private requirePrivateKey(): string {
     const privateKeyPem = process.env.BLUEPRINT_LICENSE_PRIVATE_KEY
     if (!privateKeyPem) {
       throw new DeliverError(
@@ -267,12 +320,15 @@ export class BlueprintService {
         'missing-private-key',
       )
     }
+    return privateKeyPem
+  }
 
-    const templateDir = join(this.templatesDir, templateId)
-    if (!existsSync(templateDir)) {
-      throw new DeliverError(`模板不存在：${templateId}`, 'missing-template')
-    }
-
+  private async deliverDirectory(
+    staging: string,
+    licenseInput: DeliverLicenseInput,
+    targetPackagePath?: string,
+  ): Promise<{ id: string; packagePath: string; manifest: BlueprintManifest }> {
+    const privateKeyPem = this.requirePrivateKey()
     const license = {
       license: 'blueprint-license/v1',
       grantedTo: licenseInput.grantedTo,
@@ -288,30 +344,22 @@ export class BlueprintService {
       )
     }
 
-    mkdirSync(this.packagesDir, { recursive: true })
-    const staging = mkdtempSync(join(tmpdir(), 'bp-deliver-'))
-    try {
-      // 复制到 staging，绝不改 templates/ 源码
-      cpSync(templateDir, staging, { recursive: true })
-      writeFileSync(join(staging, 'license.json'), `${JSON.stringify(license, null, 2)}\n`)
+    writeFileSync(join(staging, 'license.json'), `${JSON.stringify(license, null, 2)}\n`)
+    const meta = readBlueprintMeta(staging)
+    const packagePath =
+      targetPackagePath ?? join(this.packagesDir, `${meta.blueprint}-${meta.version}.erpkg`)
+    mkdirSync(dirname(packagePath), { recursive: true })
+    packBlueprint(staging, packagePath)
 
-      const meta = readBlueprintMeta(staging)
-      const packagePath = join(this.packagesDir, `${meta.blueprint}-${meta.version}.erpkg`)
-      packBlueprint(staging, packagePath)
-
-      const compiled = await compileBlueprint(unpackBlueprint(packagePath), this.atomicRegistry)
-      stampCompiled(packagePath, {
-        irDigest: compiled.irDigest,
-        compiledAt: new Date().toISOString(),
-      })
-      const manifest = signPackage(packagePath, privateKeyPem)
-      const id = `${meta.blueprint}-${meta.version}`
-      // 同 id/同版本被覆盖时，旧缓存必须失效
-      this.invalidate(id)
-      return { id, packagePath, manifest }
-    } finally {
-      rmSync(staging, { recursive: true, force: true })
-    }
+    const compiled = await compileBlueprint(unpackBlueprint(packagePath), this.atomicRegistry)
+    stampCompiled(packagePath, {
+      irDigest: compiled.irDigest,
+      compiledAt: new Date().toISOString(),
+    })
+    const manifest = signPackage(packagePath, privateKeyPem)
+    const id = `${meta.blueprint}-${meta.version}`
+    this.invalidate(id)
+    return { id, packagePath, manifest }
   }
 
   /** 装载器是纯函数，审计记录由这里落库到既有 AuditLogsService。 */

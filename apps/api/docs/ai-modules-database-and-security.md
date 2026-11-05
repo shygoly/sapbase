@@ -14,6 +14,8 @@
     `ai_modules.metadata.blueprint` 记录 `packageId` 与 `irDigest`。不再调用第二次 LLM 生成未定义的 “Model DSL”。
   - AI 修改通过 `POST /api/ai-modules/:id/patches/apply` 应用（object/state 子集），
     bump patch 版本后重新产包/编译；page/permission/menu patch 在服务端明确拒绝。
+  - 交付通过 `POST /api/ai-modules/:id/blueprint/deliver`：给包补 `license.json`、重签，
+    并按当前租户 `load` 验证；只有验证成功才写 `metadata.blueprint.loadedAt`。
   - 即：数据库里只会多一条/更新一条 **AI 模块记录**（表 `ai_modules`），
     `patch_content` 里是 Blueprint 层，**不会**根据这份文档自动执行 `CREATE TABLE` 或迁移。
 

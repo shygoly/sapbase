@@ -10,6 +10,8 @@ import {
   UseGuards,
   NotFoundException,
   BadRequestException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common'
 import { AIModulesService } from './ai-modules.service'
 import type { DefinitionPatch } from './definition-patch.service'
@@ -163,6 +165,37 @@ export class AIModulesController {
       organizationId,
       body.confirmed === true,
     )
+  }
+
+  /** 给 AI 包补 license、签名，并按当前租户装载验证。 */
+  @Post(':id/blueprint/deliver')
+  @HttpCode(HttpStatus.OK)
+  @Auth('system:manage')
+  async deliverBlueprint(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      grantedTo?: string[]
+      expiresAt?: string
+      issuer?: string
+      resell?: boolean
+    },
+    @OrganizationId() organizationId: string,
+  ): Promise<Record<string, unknown>> {
+    if (!Array.isArray(body?.grantedTo) || body.grantedTo.length === 0) {
+      throw new BadRequestException('grantedTo（租户数组）不能为空')
+    }
+    const allowed = new Set(['grantedTo', 'expiresAt', 'issuer', 'resell'])
+    const unknown = Object.keys(body ?? {}).filter((key) => !allowed.has(key))
+    if (unknown.length > 0) {
+      throw new BadRequestException(`交付请求含未知字段：${unknown.join(', ')}`)
+    }
+    return this.aiModulesService.deliverBlueprint(id, organizationId, {
+      grantedTo: body.grantedTo,
+      expiresAt: body.expiresAt,
+      issuer: body.issuer,
+      resell: body.resell,
+    })
   }
 
   @Get(':id/blueprint')

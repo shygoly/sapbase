@@ -39,6 +39,11 @@ describe('AIModulesService', () => {
       irDigest: 'sha256:' + 'a'.repeat(64),
       compiledAt: '2026-01-01T00:00:00.000Z',
     })),
+    deliver: jest.fn(async () => ({ id: 'ticket-app-1.0.0', manifest: {} })),
+    load: jest.fn(async () => ({
+      plan: { irDigest: 'sha256:' + 'c'.repeat(64) },
+      license: { grantedTo: ['org-1'], resell: false, expiresAt: undefined, issuer: 'test' },
+    })),
   }
 
   beforeEach(async () => {
@@ -256,6 +261,54 @@ describe('AIModulesService', () => {
       )
       expect(result.metadata.patches).toHaveLength(1)
       expect(result.patchContent.blueprint.packageId).toBe('ticket-app-1.0.1')
+    })
+
+    it('delivers and loads the package, recording signed/loaded timestamps', async () => {
+      const moduleRow = {
+        id: 'module-1',
+        name: 'Ticket App',
+        organizationId: 'org-1',
+        version: '1.0.0',
+        patchContent: {},
+        metadata: { blueprint: { packageId: 'ticket-app-1.0.0' } },
+      }
+      mockRepo.findOne.mockResolvedValue(moduleRow)
+      mockRepo.save.mockImplementation(async (row: unknown) => row)
+
+      const result = await service.deliverBlueprint('module-1', 'org-1', {
+        grantedTo: ['org-1'],
+        expiresAt: '2030-01-01T00:00:00.000Z',
+      })
+
+      expect(mockBlueprintService.deliver).toHaveBeenCalledWith(
+        'ticket-app-1.0.0',
+        expect.objectContaining({ grantedTo: ['org-1'] }),
+      )
+      expect(mockBlueprintService.load).toHaveBeenCalledWith('ticket-app-1.0.0', 'org-1')
+      expect(result.packageId).toBe('ticket-app-1.0.0')
+      expect(result.signedAt).toBeDefined()
+      expect(result.loadedAt).toBeDefined()
+      expect((moduleRow.metadata.blueprint as any).loadedAt).toBeDefined()
+      expect(mockRepo.save).toHaveBeenCalled()
+    })
+
+    it('does not record loadedAt when load verification fails', async () => {
+      const moduleRow = {
+        id: 'module-1',
+        name: 'Ticket App',
+        organizationId: 'org-1',
+        version: '1.0.0',
+        patchContent: {},
+        metadata: { blueprint: { packageId: 'ticket-app-1.0.0' } },
+      }
+      mockRepo.findOne.mockResolvedValue(moduleRow)
+      mockBlueprintService.load.mockRejectedValueOnce(new Error('unauthorized'))
+
+      await expect(
+        service.deliverBlueprint('module-1', 'org-1', { grantedTo: ['org-2'] }),
+      ).rejects.toThrow('unauthorized')
+      expect((moduleRow.metadata.blueprint as any).loadedAt).toBeUndefined()
+      expect(mockRepo.save).not.toHaveBeenCalled()
     })
 
     it('rejects an invalid definition before overwriting patchContent', async () => {

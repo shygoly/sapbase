@@ -69,6 +69,35 @@ describe('BlueprintService.deliver', () => {
     expect(loaded.license?.grantedTo).toEqual(['org-a', 'org-b'])
   })
 
+  it('给已有包补 license 并重签后可被新租户装载，旧租户被拒', async () => {
+    const delivered = await service.deliver('auto-parts-min', {
+      grantedTo: ['org-a'],
+      issuer: 'sapbase-platform',
+    })
+
+    const resigned = await service.deliverPackage(delivered.id, {
+      grantedTo: ['org-b'],
+      issuer: 'sapbase-platform',
+      resell: true,
+    })
+    expect(resigned.id).toBe(delivered.id)
+    expect(resigned.manifest.signature).toBeDefined()
+
+    const loaded = await loadBlueprint(resigned.packagePath, registry, {
+      tenantId: 'org-b',
+      env: { BLUEPRINT_LICENSE_PUBLIC_KEYS: JSON.stringify([keys.publicPem]) },
+    })
+    expect(loaded.license?.grantedTo).toEqual(['org-b'])
+    expect(loaded.license?.resell).toBe(true)
+
+    await expect(
+      loadBlueprint(resigned.packagePath, registry, {
+        tenantId: 'org-a',
+        env: { BLUEPRINT_LICENSE_PUBLIC_KEYS: JSON.stringify([keys.publicPem]) },
+      }),
+    ).rejects.toMatchObject({ reason: 'unauthorized' })
+  })
+
   it('未配置私钥 → 拒绝，不产出未签名制品', async () => {
     delete process.env.BLUEPRINT_LICENSE_PRIVATE_KEY
     const bare = new BlueprintService(registry)

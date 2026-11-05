@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common'
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { BlueprintService } from '../blueprint/blueprint.service'
+import {
+  BlueprintService,
+  type DeliverLicenseInput,
+} from '../blueprint/blueprint.service'
+import type { LoadedBlueprint } from '../blueprint/loader'
+import type { BlueprintManifest } from '@speckit/shared-schemas'
 import {
   blueprintIdentity,
   PLATFORM_RUNTIME_RANGE,
@@ -28,6 +33,19 @@ export interface MaterializedAiBlueprint {
 @Injectable()
 export class AIModuleBlueprintService {
   constructor(private readonly blueprints: BlueprintService) {}
+
+  /** 对已有 AI 包补 license 并重签。 */
+  async deliver(
+    packageId: string,
+    license: DeliverLicenseInput,
+  ): Promise<{ id: string; packagePath: string; manifest: BlueprintManifest }> {
+    return this.blueprints.deliverPackage(packageId, license)
+  }
+
+  /** 按租户装载验证（验签/授权/绑定都会跑）。 */
+  async load(packageId: string, tenantId: string): Promise<LoadedBlueprint> {
+    return this.blueprints.load(packageId, { tenantId })
+  }
 
   async materialize(input: {
     name: string
