@@ -58,11 +58,8 @@ export class MenuService {
         ...item,
         children: item.children ? this.filterByPermissions(item.children, permissions) : [],
       }))
-      // Keep parent items even if they have no children (they might be expandable)
-      .filter((item) => {
-        // Keep if has children (after filtering) OR has no permission requirements
-        return item.children.length > 0 || !item.permissions || item.permissions.length === 0
-      })
+      // 第一层 filter 已保证：要么无权限要求，要么权限匹配。
+      // 之前这里还会把「有权限要求的叶子节点」过滤掉，导致侧边栏永远为空。
   }
 
   async create(menuItem: Partial<MenuItem>, organizationId: string): Promise<MenuItem> {
