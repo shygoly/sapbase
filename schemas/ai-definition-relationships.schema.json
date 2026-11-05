@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/ai-definition-relationships.schema.json",
+  "title": "AI Definition Step 2 — Relationships",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["relationships"],
+  "properties": {
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "target", "type"],
+        "properties": {
+          "source": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+          "target": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+          "type": {
+            "enum": [
+              "one-to-one",
+              "one-to-many",
+              "many-to-many",
+              "many-to-one",
+              "hasOne",
+              "hasMany",
+              "belongsTo",
+              "manyToMany"
+            ]
+          },
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    }
+  }
+}

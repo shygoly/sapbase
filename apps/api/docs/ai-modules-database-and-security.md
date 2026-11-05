@@ -2,11 +2,17 @@
 
 ## 数据库如何处理？
 
-### 当前设计：**不会**根据六步定义或 Patch DSL 自动生成业务表
+### 当前设计：**不会**根据六步定义或 Blueprint 层自动生成业务表
 
 - **后端存储**
-  - 六步向导产出的结构化定义只在完成时用于调用「根据定义生成」接口，生成结果写入 **`ai_modules.patch_content`**（JSONB）。  
-  - 即：数据库里只会多一条/更新一条 **AI 模块记录**（表 `ai_modules`），其 `patch_content` 字段里存的是 **Patch DSL 文档**（对象、页面、权限、状态机等描述），**不会**根据这份文档自动执行 `CREATE TABLE` 或迁移。
+  - 六步向导的每一步产出先过 `schemas/ai-definition-*.schema.json`，再写入
+    `ai_module_definitions.step1~step6_*`（JSONB）；不合法步骤不会被保存。
+  - 完成时调用「根据定义生成」接口，后端**确定性**执行
+    `normalizeDefinitionShape → definitionToBlueprint`，把 Blueprint 五层
+    （semantic / flows / 可选 rules / experience）与 `objects` 写入
+    **`ai_modules.patch_content`**（JSONB）。不再调用第二次 LLM 生成未定义的 “Model DSL”。
+  - 即：数据库里只会多一条/更新一条 **AI 模块记录**（表 `ai_modules`），
+    `patch_content` 里是 Blueprint 层，**不会**根据这份文档自动执行 `CREATE TABLE` 或迁移。
 
 - **业务表从哪里来**
   - 系统现有的业务表（用户、角色、菜单、设置、审计日志、AI 模块本身等）来自 **手写的 TypeORM 实体 + 迁移**（如 `migrations/` 下的脚本），与 AI 生成的 Patch 无关。
@@ -15,6 +21,20 @@
 - **若要让「定义 → 真实表」**
   - 需要额外实现一层：例如根据 Patch 中的 `object` 定义生成 DDL 或 TypeORM 迁移，再由管理员审核后执行 `migration:run`。  
   - 当前代码库中 **没有** 这层实现；所有与 DB 表结构相关的变更仍依赖人工编写迁移。
+
+---
+
+## 六步定义如何校验？
+
+- 判据只有一份：`apps/api/src/ai-modules/definition-schema.ts` 按 stepId 映射到
+  `schemas/ai-definition-*.schema.json`，`generateDefinitionStep`、
+  `generateAllDefinitionSteps`、`saveDefinition` 都走它。
+- 校验失败返回 400，带 stepId 与字段路径；不写库、不覆盖旧 `patch_content`。
+- AI 响应文本解析（Kimi `content[0].text` / OpenAI `choices[0].message.content` / 嵌套
+  `data.content`）统一走 `ai-response.ts`；无 JSON / 非法 JSON / 非对象一律报错，
+  不再回退成默认空 patch。
+- 定义 → Blueprint 支持两种形状：嵌套（`objectModel`/`stateFlow`）与 wizard 扁平
+  （`entities`/`states`/`transitions`）。
 
 ---
 
@@ -53,7 +73,7 @@
 
 | 问题 | 答案 |
 |------|------|
-| 六步/Patch 会直接生成数据库表吗？ | **不会**。只生成并存储 Patch DSL（存在 `ai_modules.patch_content`），不执行建表或迁移。 |
+| 六步/Blueprint 会直接生成数据库表吗？ | **不会**。六步定义确定性转换为 Blueprint 层（存在历史字段 `ai_modules.patch_content`），不执行建表或迁移。 |
 | 业务表从哪来？ | 目前全部来自手写实体与迁移；若要做「定义 → 表」，需另做「Patch → DDL/迁移 + 审核执行」的流程。 |
 | 谁可以生成/改模块？ | 仅具备 **system:manage** 权限的用户（后端接口级控制）。 |
 | 生成的 Patch 会不会被乱执行？ | 有 **L1/L2/L3** 分级：危险操作为 L3 禁止、敏感操作为 L2 需确认；权限类 Patch 不能越权授予。 |

@@ -11,7 +11,14 @@ import { ModuleRegistryService } from '../module-registry/module-registry.servic
 import { ModuleType, ModuleStatus } from '../module-registry/module-registry.entity'
 import { CapabilityType } from '../module-registry/module-capability.entity'
 import { getDefinitionStepPrompt } from './definition-step-prompts'
-import { DEFINITION_STEP_IDS } from './definition-step-prompts'
+import { DEFINITION_STEP_IDS, type DefinitionStepId } from './definition-step-prompts'
+import { assertDefinitionStep, assertMergedDefinition } from './definition-schema'
+import { extractAiJsonObject } from './ai-response'
+import {
+  definitionToBlueprint,
+  DefinitionToBlueprintError,
+  normalizeDefinitionShape,
+} from './definition-to-blueprint'
 import { normalizeStep3ForSave } from './step3-normalizer'
 import axios from 'axios'
 
@@ -139,9 +146,11 @@ export class AIModulesService {
   }
 
   /**
-   * Generate Model DSL from the 6-step definition (object model, relationships, state flow, pages, permissions, reports).
-   * The definition is the merged "generated" outputs from each step.
-   * Note: This generates a complete Model DSL (not a Patch DSL). Patch DSL is only used for modifying existing modules.
+   * 六步定义 → Blueprint 五层（确定性，不再调用 LLM 生成未定义的 “Model DSL”）。
+   *
+   * 产物写进 patchContent：保留 objects（publish 侧 metadata / capability 提取仍可用）
+   * 以及 semantic/flows/rules/experience（预览与后续打包可直接用）。
+   * 任何转换失败都抛 400，不覆盖旧 patchContent。
    */
   async generateFromDefinition(
     moduleId: string,
@@ -149,63 +158,44 @@ export class AIModulesService {
     organizationId: string,
   ): Promise<AIModule> {
     const module = await this.findOne(moduleId, organizationId)
-    const defaultModel = await this.aiModelsService.findDefault()
+    const normalized = normalizeDefinitionShape(definition)
+    assertMergedDefinition(normalized)
 
-    if (!defaultModel) {
-      throw new BadRequestException('No active AI model configured')
-    }
-
-    const definitionJson = JSON.stringify(definition, null, 2)
-    const systemPrompt = `You are a Model DSL generator. You will receive a structured module definition with: entities (and fields), relationships, states/transitions, pages (list/form/detail), permission rules, and reports. Generate a single valid Model DSL JSON that implements this module. The Model DSL should define objects (from entities), relations (from relationships), state machines if applicable, pages, permissions, and reports. Return valid JSON only, no markdown or explanation.`
-
+    let layers: ReturnType<typeof definitionToBlueprint>
     try {
-      const baseUrl = defaultModel.baseUrl || 'https://api.kimi.com/coding/'
-      const apiUrl = `${baseUrl.replace(/\/$/, '')}/v1/messages`
-
-      const response = await axios.post(
-        apiUrl,
-        {
-          model: defaultModel.model || 'kimi-for-coding',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Module definition:\n${definitionJson}` },
-          ],
-          max_tokens: 4000,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${defaultModel.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 120000,
-        },
-      )
-
-      const raw = this.extractPatchFromResponse(response.data)
-      const modelDsl = this.normalizePatchContent(raw, 'ai')
-
-      module.naturalLanguagePrompt = 'Generated from 6-step definition'
-      // Store Model DSL in patchContent field (historical naming, but contains Model DSL)
-      module.patchContent = modelDsl
-      module.aiModel = defaultModel as any
-      module.aiModelId = defaultModel.id
-
-      const savedModule = await this.aiModuleRepository.save(module)
-
-      // Save the 6-step definition to database
-      try {
-        await this.saveDefinition(moduleId, definition)
-      } catch (error) {
-        // Log but don't fail if definition save fails
-        console.warn('Failed to save definition:', error)
-      }
-
-      return savedModule
+      layers = definitionToBlueprint(normalized)
     } catch (error) {
-      throw new BadRequestException(
-        `Failed to generate from definition: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      )
+      if (error instanceof DefinitionToBlueprintError) {
+        throw new BadRequestException({
+          message: `定义无法转换为 Blueprint：${error.message}`,
+          reason: error.reason,
+        })
+      }
+      throw error
     }
+
+    const objects = Object.fromEntries(
+      layers.semantic.entities.map((entity) => [entity.name, entity]),
+    )
+    module.naturalLanguagePrompt = 'Generated from 6-step definition'
+    module.patchContent = {
+      version: '1.0',
+      patchId: uuidv4(),
+      timestamp: new Date().toISOString(),
+      actor: 'ai',
+      scope: 'blueprint',
+      operation: 'add',
+      target: { type: 'blueprint', identifier: module.name },
+      objects,
+      semantic: layers.semantic,
+      flows: layers.flows,
+      ...(layers.rules ? { rules: layers.rules } : {}),
+      ...(layers.experience ? { experience: layers.experience } : {}),
+    }
+
+    // 先保存定义再写模块 patch：定义失败时不会留下“patch 已更新、定义没更新”的半状态。
+    await this.saveDefinition(moduleId, normalized)
+    return this.aiModuleRepository.save(module)
   }
 
   async modifyExistingModule(
@@ -355,10 +345,15 @@ export class AIModulesService {
         },
       )
 
-      const extracted = this.extractJsonFromAiResponse(response.data)
-      if (extracted === null) {
-        throw new BadRequestException('AI response did not contain valid JSON')
+      let extracted = extractAiJsonObject(response.data)
+      if (stepId === 'state-flow') {
+        const normalized = normalizeStep3ForSave(extracted)
+        if ('error' in normalized) {
+          throw new BadRequestException(`State flow invalid: ${normalized.error}`)
+        }
+        extracted = normalized.normalized as unknown as Record<string, unknown>
       }
+      assertDefinitionStep(stepId as DefinitionStepId, extracted)
       return extracted
     } catch (error) {
       if (error instanceof BadRequestException) throw error
@@ -462,39 +457,6 @@ export class AIModulesService {
     return out
   }
 
-  /**
-   * Extract JSON from AI API response. Supports:
-   * - Kimi/Moonshot: response.content[0].text or response.content (string)
-   * - OpenAI-style: response.choices[0].message.content
-   * - Nested: response.data.content[0].text
-   */
-  private extractJsonFromAiResponse(response: any): Record<string, any> | null {
-    let text = ''
-    if (response?.content != null) {
-      if (Array.isArray(response.content) && response.content[0] != null) {
-        const first = response.content[0]
-        text = first.text ?? (typeof first.content === 'string' ? first.content : '')
-      } else if (typeof response.content === 'string') {
-        text = response.content
-      }
-    }
-    if (!text && response?.choices?.[0]?.message?.content != null) {
-      text = response.choices[0].message.content
-    }
-    if (!text && response?.data?.content != null) {
-      const c = response.data.content
-      text = Array.isArray(c) && c[0] != null ? (c[0].text ?? c[0].content ?? '') : (typeof c === 'string' ? c : '')
-    }
-    if (!text || typeof text !== 'string') return null
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return null
-    try {
-      return JSON.parse(jsonMatch[0]) as Record<string, any>
-    } catch {
-      return null
-    }
-  }
-
   /** Ensure patch has version, patchId, timestamp, actor, scope, operation, target, payload for protocol; preserve objects, apiBasePath, schemaPath for metadata. */
   private normalizePatchContent(
     raw: Record<string, any>,
@@ -519,27 +481,7 @@ export class AIModulesService {
   }
 
   private extractPatchFromResponse(response: any): Record<string, any> {
-    // Try to extract JSON from response
-    if (response.content && Array.isArray(response.content)) {
-      const text = response.content[0]?.text || ''
-      // Try to parse JSON from text
-      try {
-        const jsonMatch = text.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
-          return JSON.parse(jsonMatch[0])
-        }
-      } catch (e) {
-        // Fallback to default patch structure
-      }
-    }
-    // Return default patch structure if parsing fails
-    return {
-      version: '1.0',
-      scope: 'object',
-      operation: 'add',
-      target: { type: 'object', identifier: 'NewObject' },
-      payload: {},
-    }
+    return extractAiJsonObject(response)
   }
 
   async runTests(moduleId: string, organizationId: string): Promise<AIModuleTest[]> {
@@ -763,6 +705,9 @@ export class AIModulesService {
     const step4 = definition.pages || null
     const step5 = definition.permissions || null
     const step6 = definition.reports || null
+
+    // 六步输出入库前必须过同一份 Schema；只校验存在的步骤，兼容旧的部分定义。
+    assertMergedDefinition(definition)
 
     // Normalize and validate step3_stateFlow before save (single source of truth for workflow)
     if (step3 != null) {

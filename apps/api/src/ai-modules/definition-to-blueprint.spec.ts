@@ -146,4 +146,28 @@ describe('definitionToBlueprint（纯函数）', () => {
       rmSync(dir, { recursive: true, force: true })
     }
   })
+
+  it('接受 wizard 的扁平载荷（entities / states / transitions）', () => {
+    const layers = definitionToBlueprint({
+      entities: [
+        {
+          identifier: 'Ticket',
+          fields: [{ name: 'title', type: 'string', required: true }],
+        },
+      ],
+      relationships: [],
+      states: [
+        { name: 'draft', initial: true },
+        { name: 'closed', final: true },
+      ],
+      transitions: [{ from: 'draft', to: 'closed' }],
+    })
+
+    expect(layers.semantic.entities[0].name).toBe('Ticket')
+    expect(layers.semantic.entities[0].states.map((state) => state.name)).toEqual([
+      'draft',
+      'closed',
+    ])
+    expect(layers.flows.flows).toEqual([])
+  })
 })

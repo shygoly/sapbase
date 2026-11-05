@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
 import axios from 'axios'
 import { AIModelsService } from '../../../ai-models/ai-models.service'
+import { extractAiJsonObject } from '../../../ai-modules/ai-response'
 import type { IAIModelService, AIModel } from '../../domain/services'
 
 @Injectable()
@@ -110,24 +111,7 @@ export class AIModelService implements IAIModelService {
   }
 
   private extractPatchFromResponse(response: any): Record<string, any> {
-    if (response.content && Array.isArray(response.content)) {
-      const text = response.content[0]?.text || ''
-      try {
-        const jsonMatch = text.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
-          return JSON.parse(jsonMatch[0])
-        }
-      } catch (e) {
-        // Fallback to default patch structure
-      }
-    }
-    return {
-      version: '1.0',
-      scope: 'object',
-      operation: 'add',
-      target: { type: 'object', identifier: 'NewObject' },
-      payload: {},
-    }
+    return extractAiJsonObject(response)
   }
 
   private normalizePatchContent(

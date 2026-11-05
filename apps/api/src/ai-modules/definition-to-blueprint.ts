@@ -391,14 +391,60 @@ function inferAtomics(flows: BlueprintLayers['flows']): Array<{ atomic: string; 
 }
 
 /**
+ * 统一两种定义形状：
+ *   · 嵌套：{ objectModel, relationships, stateFlow, pages, permissions, reports }
+ *   · 扁平：wizard 的 { entities, relationships, states, transitions, pages, rules, reports }
+ *
+ * 只补键，不修改入参；缺失的步骤仍由 `definitionToBlueprint` 按既有规则拒绝。
+ */
+export function normalizeDefinitionShape(
+  input: Record<string, unknown>,
+): Record<string, unknown> {
+  const unwrapped = unwrap(input)
+  if (!isRecord(unwrapped)) return input
+  const normalized: Record<string, unknown> = { ...unwrapped }
+  if (normalized.objectModel === undefined && Array.isArray(normalized.entities)) {
+    normalized.objectModel = { entities: normalized.entities }
+  }
+  if (normalized.stateFlow === undefined) {
+    if (Array.isArray(normalized.states) || Array.isArray(normalized.transitions)) {
+      normalized.stateFlow = {
+        states: normalized.states,
+        transitions: normalized.transitions,
+      }
+    } else if (Array.isArray(normalized.entities)) {
+      // 扁平载荷里实体自带 states 的情况（每实体一份状态机）
+      normalized.stateFlow = { entities: normalized.entities }
+    }
+  }
+  if (Array.isArray(normalized.relationships)) {
+    normalized.relationships = { relationships: normalized.relationships }
+  } else if (normalized.relationships === undefined && Array.isArray(normalized.relations)) {
+    normalized.relationships = { relationships: normalized.relations }
+  }
+  if (Array.isArray(normalized.pages)) {
+    normalized.pages = { pages: normalized.pages }
+  }
+  if (normalized.permissions === undefined && Array.isArray(normalized.rules)) {
+    normalized.permissions = { rules: normalized.rules }
+  }
+  if (Array.isArray(normalized.reports)) {
+    normalized.reports = { reports: normalized.reports }
+  }
+  return normalized
+}
+
+/**
  * 纯函数：mergedDefinition → 五层。缺 rules / experience 则为 undefined。
  */
 export function definitionToBlueprint(mergedDefinition: Record<string, unknown>): BlueprintLayers {
-  if (!isRecord(mergedDefinition)) fail('mergedDefinition 必须是对象')
+  const normalized = normalizeDefinitionShape(mergedDefinition)
+  if (!isRecord(normalized)) fail('mergedDefinition 必须是对象')
+  const definition = normalized
 
-  const objectModel = stepOf(mergedDefinition, 'objectModel', 'step1_objectModel')
-  const relationships = stepOf(mergedDefinition, 'relationships', 'step2_relationships')
-  const stateFlow = stepOf(mergedDefinition, 'stateFlow', 'step3_stateFlow')
+  const objectModel = stepOf(definition, 'objectModel', 'step1_objectModel')
+  const relationships = stepOf(definition, 'relationships', 'step2_relationships')
+  const stateFlow = stepOf(definition, 'stateFlow', 'step3_stateFlow')
   if (objectModel === undefined) fail('mergedDefinition 缺少 objectModel')
   if (stateFlow === undefined) {
     fail('mergedDefinition 缺少 stateFlow（每个实体必须有状态机，不许编造）')
@@ -434,14 +480,14 @@ export function definitionToBlueprint(mergedDefinition: Record<string, unknown>)
     if (extra && extra.length > 0) entity.relations = extra
   }
 
-  const explicitFlows = unwrap(mergedDefinition.flows)
+  const explicitFlows = unwrap(definition.flows)
   const flows =
     isRecord(explicitFlows) && Array.isArray(explicitFlows.flows)
       ? (explicitFlows as BlueprintLayers['flows'])
       : deriveFlows(entities, actionsByEntity)
 
-  const rules = readBlueprintRules(mergedDefinition.rules)
-  const experience = readBlueprintExperience(mergedDefinition.experience)
+  const rules = readBlueprintRules(definition.rules)
+  const experience = readBlueprintExperience(definition.experience)
 
   const layers: BlueprintLayers = { semantic: { entities }, flows }
   if (rules) layers.rules = rules
