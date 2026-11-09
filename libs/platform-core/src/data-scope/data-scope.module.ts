@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 import { DataPolicy } from './entities/data-policy.entity'
 import { ScopeBinding } from './entities/scope-binding.entity'
 import { ScopeDimension } from './entities/scope-dimension.entity'
@@ -18,6 +19,7 @@ import { DataScopeController } from './data-scope.controller'
  */
 @Module({
   imports: [
+    AuditLogsModule,
     TypeOrmModule.forFeature([
       ScopeDimension,
       ScopeNode,

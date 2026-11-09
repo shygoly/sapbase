@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, BadRequestException } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Auth } from '../common/decorators/auth.decorator'
 import { CurrentUser } from '../auth/current-user.decorator'
@@ -172,5 +172,19 @@ export class DataScopeController {
         permissions: [],
       },
     })
+  }
+
+  @Get('preflight')
+  @Auth('data-scope:read')
+  preflight(
+    @OrganizationId() organizationId: string,
+    @Query('packageId') packageId?: string,
+    @Query('entity') entity?: string,
+    @Query('field') field?: string,
+  ) {
+    if (!packageId || !entity || !field) {
+      throw new BadRequestException('packageId / entity / field 必填')
+    }
+    return this.dataScope.preflightBlueprintField(organizationId, packageId, entity, field)
   }
 }

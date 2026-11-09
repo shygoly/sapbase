@@ -93,14 +93,26 @@ export class ScopeEvaluator {
         const memberships = input.memberships.filter(
           (membership) =>
             this.membershipMatchesActor(membership, input.actor, now) &&
-            (!spec.positions || spec.positions.includes(membership.positionKey)) &&
-            membership.node?.dimensionKey === spec.dimension,
+            (!spec.positions || spec.positions.includes(membership.positionKey)),
         )
+        const targetNodes = input.nodes.filter((node) => node.dimensionKey === spec.dimension)
         const nodeIds = new Set<string>()
         for (const membership of memberships) {
           const anchor = membership.node
           if (!anchor) continue
-          for (const id of this.expandNode(anchor, input.nodes, spec.depth)) nodeIds.add(id)
+          if (anchor.dimensionKey === spec.dimension) {
+            for (const id of this.expandNode(anchor, targetNodes, spec.depth)) nodeIds.add(id)
+            continue
+          }
+          // 跨维度祖先：例如 campus 成员 + class 维度策略；路径共享前缀时才允许。
+          if (
+            spec.depth === 'subtree' &&
+            targetNodes.some((node) => node.path.startsWith(`${anchor.path}/`))
+          ) {
+            for (const node of targetNodes) {
+              if (node.path.startsWith(`${anchor.path}/`)) nodeIds.add(node.id)
+            }
+          }
         }
         if (nodeIds.size === 0) return NONE
         return inList(

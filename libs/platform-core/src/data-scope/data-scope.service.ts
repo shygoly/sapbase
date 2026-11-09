@@ -23,6 +23,7 @@ import { ScopeDimension } from './entities/scope-dimension.entity'
 import { ScopeMembership } from './entities/scope-membership.entity'
 import { ScopeNode } from './entities/scope-node.entity'
 import { ScopeVersion } from './entities/scope-version.entity'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 
 export interface ResolveScopeInput {
   organizationId: string
@@ -109,6 +110,7 @@ export class DataScopeService {
     private readonly versions: Repository<ScopeVersion>,
     private readonly evaluator: ScopeEvaluator,
     @Optional() @Inject(CACHE_MANAGER) private readonly cacheManager?: Cache,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async resolve(input: ResolveScopeInput): Promise<ResolvedScope> {
@@ -197,6 +199,9 @@ export class DataScopeService {
       config: input.config ?? null,
     })
     const saved = await this.dimensions.save(row)
+    await this.recordAudit(organizationId, 'data-scope.dimension.create', 'ScopeDimension', saved.id, {
+      key: saved.key,
+    })
     await this.bumpVersion(organizationId)
     return saved
   }
@@ -204,6 +209,7 @@ export class DataScopeService {
   async deleteDimension(organizationId: string, id: string): Promise<void> {
     const result = await this.dimensions.delete({ id, organizationId })
     if (!result.affected) throw new NotFoundException('Scope dimension not found')
+    await this.recordAudit(organizationId, 'data-scope.dimension.delete', 'ScopeDimension', id)
     await this.bumpVersion(organizationId)
   }
 
@@ -243,6 +249,10 @@ export class DataScopeService {
       metadata: input.metadata ?? null,
     })
     const saved = await this.nodes.save(row)
+    await this.recordAudit(organizationId, 'data-scope.node.create', 'ScopeNode', saved.id, {
+      dimensionId: saved.dimensionId,
+      path: saved.path,
+    })
     await this.bumpVersion(organizationId)
     return saved
   }
@@ -250,6 +260,7 @@ export class DataScopeService {
   async deleteNode(organizationId: string, id: string): Promise<void> {
     const result = await this.nodes.delete({ id, organizationId })
     if (!result.affected) throw new NotFoundException('Scope node not found')
+    await this.recordAudit(organizationId, 'data-scope.node.delete', 'ScopeNode', id)
     await this.bumpVersion(organizationId)
   }
 
@@ -295,6 +306,11 @@ export class DataScopeService {
         [newPath, node.path.length + 1, depthDelta, organizationId, node.dimensionId, `${node.path}/%`],
       )
     })
+    await this.recordAudit(organizationId, 'data-scope.node.move', 'ScopeNode', node.id, {
+      fromPath: node.path,
+      toPath: newPath,
+      parentId: parent?.id ?? null,
+    })
     await this.bumpVersion(organizationId)
     return this.nodes.findOneByOrFail({ id: node.id })
   }
@@ -324,6 +340,11 @@ export class DataScopeService {
       metadata: input.metadata ?? null,
     })
     const saved = await this.memberships.save(row)
+    await this.recordAudit(organizationId, 'data-scope.membership.create', 'ScopeMembership', saved.id, {
+      nodeId: saved.nodeId,
+      positionKey: saved.positionKey,
+      subjectType: saved.subjectType,
+    })
     await this.bumpVersion(organizationId)
     return saved
   }
@@ -331,6 +352,7 @@ export class DataScopeService {
   async deleteMembership(organizationId: string, id: string): Promise<void> {
     const result = await this.memberships.delete({ id, organizationId })
     if (!result.affected) throw new NotFoundException('Scope membership not found')
+    await this.recordAudit(organizationId, 'data-scope.membership.delete', 'ScopeMembership', id)
     await this.bumpVersion(organizationId)
   }
 
@@ -355,6 +377,11 @@ export class DataScopeService {
       writable: input.writable ?? true,
     })
     const saved = await this.bindings.save(row)
+    await this.recordAudit(organizationId, 'data-scope.binding.create', 'ScopeBinding', saved.id, {
+      resourceKey: saved.resourceKey,
+      dimensionKey: saved.dimensionKey,
+      kind: saved.kind,
+    })
     await this.bumpVersion(organizationId)
     return saved
   }
@@ -362,6 +389,7 @@ export class DataScopeService {
   async deleteBinding(organizationId: string, id: string): Promise<void> {
     const result = await this.bindings.delete({ id, organizationId })
     if (!result.affected) throw new NotFoundException('Scope binding not found')
+    await this.recordAudit(organizationId, 'data-scope.binding.delete', 'ScopeBinding', id)
     await this.bumpVersion(organizationId)
   }
 
@@ -387,6 +415,10 @@ export class DataScopeService {
       priority: input.priority ?? 0,
     })
     const saved = await this.policies.save(row)
+    await this.recordAudit(organizationId, 'data-scope.policy.create', 'DataPolicy', saved.id, {
+      resourceKey: saved.resourceKey,
+      effect: saved.effect,
+    })
     await this.bumpVersion(organizationId)
     return saved
   }
@@ -394,11 +426,57 @@ export class DataScopeService {
   async deletePolicy(organizationId: string, id: string): Promise<void> {
     const result = await this.policies.delete({ id, organizationId })
     if (!result.affected) throw new NotFoundException('Data policy not found')
+    await this.recordAudit(organizationId, 'data-scope.policy.delete', 'DataPolicy', id)
     await this.bumpVersion(organizationId)
   }
 
   async preview(input: ResolveScopeInput): Promise<ResolvedScope> {
     return this.resolve(input)
+  }
+
+  /**
+   * 空绑定预检：统计 blueprint 记录里绑定字段为空/缺失的行数。
+   * 启用 dataScope 前必须跑；空绑定按 fail-closed 会被隐藏。
+   */
+  async preflightBlueprintField(
+    organizationId: string,
+    packageId: string,
+    entity: string,
+    field: string,
+  ): Promise<{ total: number; missing: number }> {
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(field)) {
+      throw new BadRequestException('field 必须是合法字段名')
+    }
+    const rows = (await this.bindings.manager.query(
+      `SELECT COUNT(*)::int AS total,
+              COUNT(*) FILTER (
+                WHERE data->>$4 IS NULL OR data->>$4 = ''
+              )::int AS missing
+         FROM public.blueprint_records
+        WHERE "organizationId" = $1
+          AND "blueprintId" = $2
+          AND entity = $3`,
+      [organizationId, packageId, entity, field],
+    )) as Array<{ total: number; missing: number }>
+    return { total: rows[0]?.total ?? 0, missing: rows[0]?.missing ?? 0 }
+  }
+
+  private async recordAudit(
+    organizationId: string,
+    action: string,
+    resource: string,
+    resourceId: string | null,
+    metadata: Record<string, unknown> = {},
+  ): Promise<void> {
+    await this.auditLogs?.create({
+      action,
+      resource,
+      resourceId: resourceId ?? undefined,
+      actor: 'data-scope',
+      status: 'success',
+      organizationId,
+      metadata,
+    })
   }
 
   private cacheKey(input: ResolveScopeInput, version: number): string {

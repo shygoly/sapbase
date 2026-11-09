@@ -2,6 +2,7 @@
  * Export all API services
  */
 
+export { dataScopeApi, type ScopeDimension, type ScopeNode, type ScopeMembership, type ScopeBinding, type DataPolicy, type ScopePreview } from './data-scope.api'
 export { authApi } from './auth.api'
 export { menuApi } from './menu.api'
 export { usersApi } from './users.api'

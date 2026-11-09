@@ -24,6 +24,7 @@
     "./api/chat.api": "./src/api/chat.api.ts",
     "./api/client": "./src/api/client.ts",
     "./api/departments.api": "./src/api/departments.api.ts",
+    "./api/data-scope.api": "./src/api/data-scope.api.ts",
     "./api": "./src/api/index.ts",
     "./api/menu.api": "./src/api/menu.api.ts",
     "./api/module-registry.api": "./src/api/module-registry.api.ts",

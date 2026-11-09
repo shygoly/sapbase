@@ -62,7 +62,7 @@ import { materializeDefaults, type SemanticEntity, type ValidationRule } from '.
 import { mapConstraintError, RecordWriteError } from './record-write-error'
 import { DataScopeService } from '../data-scope/data-scope.service'
 import { compileScopeExpr } from '../data-scope/scope-sql-compiler'
-import type { ScopeBindingView } from '../data-scope/data-scope.types'
+import type { ScopeBindingView, ScopeSpec } from '../data-scope/data-scope.types'
 import { applyUniqueIndexes } from './unique-index'
 import {
   assembleFitmentCandidates,
@@ -588,10 +588,34 @@ export class SemanticRuntimeService {
   ): Promise<Map<string, RelatedRecord>> {
     const found = new Map<string, RelatedRecord>()
     if (ids.length === 0) return found
+    const params: unknown[] = [blueprintId, organizationId, entity, ids]
+    let where =
+      '"blueprintId" = $1 AND "organizationId" = $2 AND entity = $3 AND id = ANY($4::uuid[])'
+    if (declared) {
+      const scope = await this.resolveBlueprintDataScope(
+        blueprintId,
+        declared,
+        organizationId,
+        actor,
+        'list',
+      )
+      if (scope?.expr.op === 'none') return found
+      if (scope && scope.expr.op !== 'all') {
+        const compiled = compileScopeExpr(scope.expr, {
+          alias: 'blueprint_records',
+          rowAlias: 'blueprint_records',
+          organizationId,
+          actorId: actorId(actor) ?? '',
+          paramOffset: params.length,
+        })
+        where += ` AND (${compiled.sql})`
+        params.push(...compiled.params)
+      }
+    }
     const rows = (await this.dataSource.query(
       `SELECT id, data FROM public.blueprint_records
-        WHERE "blueprintId" = $1 AND "organizationId" = $2 AND entity = $3 AND id = ANY($4::uuid[])`,
-      [blueprintId, organizationId, entity, ids],
+        WHERE ${where}`,
+      params,
     )) as Array<{ id: string; data: Record<string, unknown> }>
     for (const row of rows) {
       const data = declared
@@ -1668,6 +1692,13 @@ export class SemanticRuntimeService {
       field: binding.field ?? null,
       relation: binding.relation ?? null,
     }))
+    const loaded = await this.loadOrThrow(blueprintId, organizationId)
+    const packageCap = this.permissionCapFor(
+      loaded.compiled?.permissions,
+      entity,
+      action,
+      actor,
+    )
     return this.dataScope.resolve({
       organizationId,
       actor: {
@@ -1680,7 +1711,63 @@ export class SemanticRuntimeService {
       action,
       declared: true,
       bindings,
+      packageCap,
     })
+  }
+
+  private permissionCapFor(
+    layer:
+      | {
+          rules?: Array<{
+            role: string
+            scope: string
+            resources: string[]
+            actions?: string[]
+            dataScope?: {
+              dimension: string
+              depth: 'exact' | 'subtree' | 'ancestors'
+              positions?: string[]
+              relation?: { entity?: string; table?: string; fromField: string; actorField: string }
+            }
+          }>
+        }
+      | null
+      | undefined,
+    entity: SemanticEntity,
+    action: string,
+    actor: RuntimeActor | undefined,
+  ): ScopeSpec | null {
+    if (!layer?.rules) return null
+    for (const rule of layer.rules) {
+      if (!rule.resources.includes('*') && !rule.resources.includes(entity.name)) continue
+      if (rule.actions && !rule.actions.includes(action)) continue
+      const roleMatches =
+        actor?.role === rule.role || actorPermissions(actor).includes(rule.role)
+      if (!roleMatches) continue
+
+      if (rule.scope === 'all') return { kind: 'all' }
+      if (rule.scope === 'own') return { kind: 'self' }
+      if (rule.scope === 'team') {
+        const dimension = entity.dataScope?.bindings[0]?.dimension
+        if (!dimension) return null
+        return { kind: 'node', dimension, anchor: 'membership', depth: 'exact' }
+      }
+      if (rule.scope === 'policy') {
+        if (!rule.dataScope) return null
+        if (rule.dataScope.relation) {
+          return { kind: 'relation', relation: rule.dataScope.relation }
+        }
+        return {
+          kind: 'node',
+          dimension: rule.dataScope.dimension,
+          anchor: 'membership',
+          depth: rule.dataScope.depth,
+          positions: rule.dataScope.positions,
+        }
+      }
+      return null
+    }
+    return null
   }
 
   private async assertRecordInDataScope(

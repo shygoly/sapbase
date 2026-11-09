@@ -19,7 +19,13 @@ const entity: SemanticEntity = {
 function serviceWith(dataScope: unknown = { resolve: jest.fn() }) {
   const dataSource = { query: jest.fn(async () => []) }
   return new SemanticRuntimeService(
-    {} as never,
+    {
+      load: jest.fn(async () => ({
+        manifest: { blueprint: 'pkg-1', version: '1' },
+        compiled: {},
+      })),
+      packagesDirectory: () => '',
+    } as never,
     {} as never,
     dataSource as never,
     {} as never,
@@ -84,7 +90,13 @@ describe('SemanticRuntimeService dataScope integration helpers', () => {
     const query = jest.fn(async () => [])
     const dataSource = { query }
     const service = new SemanticRuntimeService(
-      {} as never,
+      {
+        load: jest.fn(async () => ({
+          manifest: { blueprint: 'pkg-1', version: '1' },
+          compiled: {},
+        })),
+        packagesDirectory: () => '',
+      } as never,
       {} as never,
       dataSource as never,
       {} as never,
@@ -104,10 +116,54 @@ describe('SemanticRuntimeService dataScope integration helpers', () => {
     expect(query).not.toHaveBeenCalled()
   })
 
+  it('permissions policy → packageCap', () => {
+    const service = serviceWith()
+    const cap = (service as unknown as {
+      permissionCapFor: (
+        layer: unknown,
+        entity: SemanticEntity,
+        action: string,
+        actor: { id: string; role: string },
+      ) => unknown
+    }).permissionCapFor(
+      {
+        rules: [
+          {
+            role: 'head_teacher',
+            scope: 'policy',
+            resources: ['Student'],
+            actions: ['read'],
+            dataScope: {
+              dimension: 'class',
+              depth: 'subtree',
+              positions: ['head_teacher'],
+            },
+          },
+        ],
+      },
+      entity,
+      'read',
+      { id: 'u1', role: 'head_teacher' },
+    )
+    expect(cap).toEqual({
+      kind: 'node',
+      dimension: 'class',
+      anchor: 'membership',
+      depth: 'subtree',
+      positions: ['head_teacher'],
+    })
+  })
+
   it('create 越界 → 403', async () => {
     const dataSource = { query: jest.fn(async () => []) }
     const service = new SemanticRuntimeService(
-      {} as never,
+      {
+        load: jest.fn(async () => ({
+          manifest: { blueprint: 'pkg-1', version: '1' },
+          compiled: {},
+        })),
+        packagesDirectory: () => '',
+      } as never,
       {} as never,
       dataSource as never,
       {} as never,

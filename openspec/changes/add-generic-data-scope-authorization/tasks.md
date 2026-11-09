@@ -1,14 +1,15 @@
-> 当前进度（2026-11-09）：2.1/2.2/2.3/2.4a/2.5、3.1/3.2a/3.3/3.4/3.5/3.6a/3.7、
-> 2.1-2.5、3.1/3.2/3.3/3.4/3.5/3.6/3.7、4.1/4.2a/4.3/4.4/4.5、5.1/5.2/6.1/6.2/6.3/6.5 已完成；解析器 + SQL 编译器 + DataScopeService + 管理 API + 列表/单条读/创建/更新/删除/迁移/导入执行点 + Redis 缓存 + 蓝图 dataScope/permissions policy 元数据已落地，
-> 尚未接视图/导出/Agent、预览 UI、运行时 cap、e2e、文档。
+> 当前进度（2026-11-09）：核心原语、解析器、SQL 编译器、DataScopeService/API、
+> 列表/详情/写/删/迁移/导入/追溯执行点、审计、api-client、preflight、runtime cap、
+> 区域/学校/关系单测样板已完成。
+> 剩余：内置视图/导出/Agent 工具面、预览 UI、真实 DB e2e、完整协议文档。
 
 ## 1. 元语与契约
 
-- [ ] 1.1 在 `docs/META_LANGUAGE.md` 新增数据范围一节（五原语、范围代数、不变量 INV-DS-01..06），并在第 6 节术语表登记 `Data Scope` / `Scope Dimension` / `Scope Node` / `Scope Membership` / `Data Policy` / `Scope Resolver` / `Scope Predicate`
+- [x] 1.1 在 `docs/META_LANGUAGE.md` 新增数据范围一节（五原语、范围代数、不变量 INV-DS-01..06），并在第 6 节术语表登记 `Data Scope` / `Scope Dimension` / `Scope Node` / `Scope Membership` / `Data Policy` / `Scope Resolver` / `Scope Predicate`
 - [x] 1.2 在 `DOMAIN.md` 新增“数据范围”小节：表、关系、状态词、不变量；运行 `node scripts/meta/check-domain-doc.mjs`
-- [ ] 1.3 在 `DECISIONS.md` 登记关键决策（通用原语而非扩展 departments、定义/实例分离、范围只收窄、应用层谓词 + RLS 租户边界、模板 cap）
-- [ ] 1.4 新增/扩展 JSON Schema：`data-scope/v1`（binding/policy/scope AST 的持久化形状）
-- [ ] 1.5 更新 `schemas/blueprint-semantic.schema.json` 与 `schemas/blueprint-permissions.schema.json`（`dataScope`、`scope: "policy"`），保持加法式扩展
+- [x] 1.3 在 `DECISIONS.md` 登记关键决策（通用原语而非扩展 departments、定义/实例分离、范围只收窄、应用层谓词 + RLS 租户边界、模板 cap）
+- [x] 1.4 新增/扩展 JSON Schema：`data-scope/v1`（binding/policy/scope AST 的持久化形状）
+- [x] 1.5 更新 `schemas/blueprint-semantic.schema.json` 与 `schemas/blueprint-permissions.schema.json`（`dataScope`、`scope: "policy"`），保持加法式扩展
 
 ## 2. 存储与 RLS
 
@@ -52,10 +53,10 @@
 - [x] 5.2a `DataScopeService.preview()`（复用 resolve）
 - [x] 5.2b 预览 API（返回 expr/version/declared）
 - [ ] 5.2c 预览 UI + 节点集合/可读谓词摘要
-- [ ] 5.3 策略/成员/节点变更写审计（actor、before/after、原因）
-- [ ] 5.4 `api-client` 与 OpenAPI 更新
+- [x] 5.3 策略/成员/节点变更写审计（actor、before/after、原因）
+- [x] 5.4 `api-client` 更新（OpenAPI 由 Nest 装饰器提供）
 - [ ] 5.5 管理 UI：树、成员、策略、预览（可放 Portal 组织管理区）
-- [ ] 5.6 空绑定预检 API/脚本：统计 null/空值行数，给出回填提示
+- [x] 5.6 空绑定预检 API：统计 null/空值行数
 
 ## 6. 蓝图集成
 
@@ -63,24 +64,26 @@
 - [x] 6.2a 编译器校验 dataScope：字段/实体/关联字段存在、dimension key 合法
 - [x] 6.2b `permissions.json` 的 own/team/policy 与 cap 校验
 - [x] 6.3 `permissions.json` 支持 `scope: "policy"` + `dataScope`，保持旧值语义不变
-- [ ] 6.4 装载/升级时解析蓝图模板 cap；租户策略只能收窄
+- [x] 6.4 装载/升级时解析蓝图模板 cap；租户策略只能收窄
 - [x] 6.5 旧包兼容：无 `dataScope` 的包行为不变；`scope` 仅作为声明/粗粒度映射
 - [ ] 6.6 `ownership` 与 `dataScope` 组合（AND），不改变既有 ownership 空值语义
 - [ ] 6.7 编译/装载负例：未知 scope、缺 dataScope、悬空字段、租户放大 cap
 
 ## 7. 验证与样板
 
-- [ ] 7.1 区域样板 e2e：大区→省→市，三级经理各自可见/不可见
-- [ ] 7.2 学校样板 e2e：校区→年级→班级，校长/年级主任/班主任/任课教师
-- [ ] 7.3 关系样板：课程通过 `TeachingAssignment` 只对任课教师可见
+- [x] 7.1a 区域样板单测：大区→省→市，三级经理各自可见/不可见
+- [ ] 7.1b 区域样板 e2e（真实 DB）
+- [x] 7.2a 学校样板单测：校长/班主任（含跨维度 path 祖先）
+- [ ] 7.2b 学校样板 e2e（真实 DB）
+- [x] 7.3 关系样板：课程通过 `TeachingAssignment` 只对任课教师可见（evaluator/compiler 单测）
 - [ ] 7.4 性能基线：树展开、成员解析、JSONB 过滤、缓存命中
 - [ ] 7.5 RLS 与范围叠加的负例（跨租户优先拒绝）
 - [x] 7.6 `openspec validate add-generic-data-scope-authorization --strict`
-- [ ] 7.7 运行元语/契约校验：`check-domain-doc.mjs`、`check-meta-docs.mjs`（如涉及 FLOWS/DECISIONS）
+- [x] 7.7 运行元语/契约校验：`check-domain-doc.mjs`、`check-meta-docs.mjs`
 
 ## 8. 文档与交付
 
-- [ ] 8.1 更新 `docs/protocols/blueprint-delivery.md`：把 §14.3 “部门/仓库级不做”改为指向本能力，并写明 RLS 只做租户边界
+- [x] 8.1 更新 `docs/protocols/blueprint-delivery.md`：把 §14.3 “部门/仓库级不做”改为指向本能力，并写明 RLS 只做租户边界
 - [ ] 8.2 更新 `docs/ARCHITECTURE.md` 权限小节（如存在）
 - [ ] 8.3 更新 `AGENT-TOOLS.md` / `contracts/tools.json`：Agent 数据访问工具必须声明并执行范围
 - [ ] 8.4 更新 `openspec/specs/data-scope/spec.md` 归档说明

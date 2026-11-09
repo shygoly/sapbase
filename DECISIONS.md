@@ -90,6 +90,48 @@ code_markers:
   - apps/api/src/business-apps/business-apps.service.ts
 ```
 
+### D-5：数据范围是平台原语，不是部门树扩展
+
+```yaml decision
+id: D-5
+title: 数据范围用通用 scope 原语，不把 departments 改造成树
+status: accepted
+date: 2026-11
+context: |
+  大区/省/市与校区/年级/班级是不同维度的树；把 departments 加 parentId 只能表达一种树，
+  后续垂直行业仍要改平台代码。
+decision: |
+  新增 scope_dimensions/scope_nodes/scope_memberships/scope_bindings/data_policies/scope_versions；
+  departments 保留为 HR/展示，需要时用适配器接入。行业词只作为配置值。
+references:
+  - INV-DS-01
+  - docs/OPENSPEC_CHANGE_DEPENDENCIES.md
+code_markers:
+  - libs/platform-core/src/data-scope/data-scope.service.ts
+  - apps/api/src/migrations/1793100000000-CreateDataScope.ts
+```
+
+### D-6：数据范围只收窄，声明即执行
+
+```yaml decision
+id: D-6
+title: 数据范围只收窄，未声明保持旧行为，解析失败 fail-closed
+status: accepted
+date: 2026-11
+context: |
+  数据范围若能从请求参数或租户策略扩大，会变成绕过功能权限的新通道。
+decision: |
+  最终可见集合 = 租户 ∩ 功能权限 ∩ 数据范围；蓝图模板 cap 与租户策略取交集；
+  声明 dataScope 的资源解析失败按 none；未声明资源保持租户隔离旧行为。
+references:
+  - INV-DS-02
+  - INV-DS-03
+  - INV-DS-05
+code_markers:
+  - libs/platform-core/src/data-scope/scope-evaluator.ts
+  - libs/platform-core/src/data-scope/data-scope.service.ts
+```
+
 ---
 
 ## 附录：命名空间约定

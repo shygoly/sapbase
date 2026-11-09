@@ -224,6 +224,31 @@ Organization（客户）
 
 真源：[`schemas/business-app-installation.schema.json`](../schemas/business-app-installation.schema.json)。
 
+### 3.11 Data Scope（数据范围）
+
+数据范围是**平台原语**，不是某个垂直行业的部门树：
+
+- **范围域** `scope_dimensions`：可配置的树维度（region/campus/class…），行业词只是配置值。
+- **范围节点** `scope_nodes`：物化路径 `parentId/path/depth`，任意深度。
+- **范围成员** `scope_memberships`：主体（user/role/group）→ 节点 + 岗位 + 有效期。
+- **资源绑定** `scope_bindings`：资源 → 维度 → 字段/归属/关系。
+- **数据策略** `data_policies`：主体 + 资源 + 动作 + allow/deny + scope。
+- **范围版本** `scope_versions`：组织级递增版本，缓存按它失效。
+
+执行语义：
+
+```text
+最终可见 = 租户隔离 ∩ 功能权限 ∩ 数据范围
+范围只收窄，不授予功能权限
+蓝图模板 cap ∩ 租户策略；租户不能放大
+未声明 dataScope → 旧行为（租户隔离）
+声明 dataScope 但解析失败 → none（fail-closed）
+```
+
+实现落点：`libs/platform-core/src/data-scope/`（`ScopeEvaluator` / `ScopeSqlCompiler` /
+`DataScopeService`），语义运行时列表/详情/写/删/迁移/导入已接入；内置视图/追溯与
+Agent 工具面按消费方逐步接入。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -244,6 +269,12 @@ Organization（客户）
 12. **一份判定逻辑只写一次**：准入侧与执行侧共享同一实现（两份必然漂移）。
 13. **设计时产物一律表达为增量（Delta）**：不得旁路改写语义对象集合，
     也不得让 LLM 直接产出最终结构。
+14. **数据范围只收窄**：最终可见 = 租户 ∩ 功能权限 ∩ 范围；范围不授予功能权限（INV-DS-01）。
+15. **范围来自可信身份**：只从服务端身份/成员/策略解析，不接受客户端范围声明（INV-DS-02）。
+16. **声明即执行**：声明 `dataScope` 即按范围过滤；未声明保持旧行为；解析失败按 none（INV-DS-03）。
+17. **租户边界先于范围**：RLS 只做组织隔离，行级范围在应用层执行并可审计（INV-DS-04）。
+18. **定义/实例分离**：蓝图模板 cap ∩ 租户策略，租户不得放大（INV-DS-05）。
+19. **范围缓存按版本失效**：任何成员/策略/节点变更 bump `scopeVersion`（INV-DS-06）。
 
 ---
 
@@ -350,6 +381,10 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 主从结构 | Header-Line | `children` / `parent`；头行一件事务 | ✅ |
 | 唯一性 | Uniqueness | `unique: true` → DB 唯一索引（按租户/蓝图隔离） | ✅ |
 | 金额精度 | Money Precision | `decimal(p,s)` + `apps/api/src/blueprint/money.ts`；禁止浮点 | ✅ |
+| 数据范围 | Data Scope | `ScopeEvaluator` / `ScopeSqlCompiler` / `DataScopeService` | 🟡 |
+| 范围节点 | Scope Node | `ScopeNode`；`scope_nodes` | 🟡 |
+| 范围成员 | Scope Membership | `ScopeMembership`；`scope_memberships` | 🟡 |
+| 数据策略 | Data Policy | `DataPolicy`；`data_policies` | 🟡 |
 
 ---
 
