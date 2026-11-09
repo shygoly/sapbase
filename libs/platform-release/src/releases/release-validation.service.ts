@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { BlueprintService } from '../blueprint/blueprint.service'
-import type { ReleaseEvalPort } from './release-ports'
+import type { ReleaseEvalPort, ReleaseTestEvidencePort } from './release-ports'
 import { resolveRepoRoot } from '@sap/platform-core/common/repo-root'
 
 export interface GateEvidence {
@@ -26,6 +26,8 @@ export interface ValidationInput {
     testPlan: Record<string, unknown>
     rollbackPlan: Record<string, unknown>
   }
+  organizationId?: string
+  appKey?: string
   blueprintId?: string
   previewUrl?: string
   releaseId?: string
@@ -38,6 +40,7 @@ export class ReleaseValidationService {
   constructor(
     private readonly blueprints: BlueprintService,
     private readonly evalService: ReleaseEvalPort,
+    private readonly testEvidence?: ReleaseTestEvidencePort,
   ) {}
 
   async validate(input: ValidationInput): Promise<{ ok: boolean; gates: Record<string, GateEvidence> }> {
@@ -46,7 +49,7 @@ export class ReleaseValidationService {
     gates.G1 = input.blueprintId ? await this.runBlueprintCompile(input.blueprintId) : this.na('未提供 blueprintId')
     gates.G2 = this.permissionGate(input.proposal)
     gates.G3 = this.migrationGate(input.proposal)
-    gates.G4 = this.testGate(input.proposal)
+    gates.G4 = await this.testGate(input)
     gates.G5 = await this.resolveEvalGate(input)
     gates.G6 = input.previewUrl ? { status: 'passed', evidence: input.previewUrl } : this.na('未提供预览冒烟记录')
     gates.G7 = { status: 'pending', evidence: '等待人工审批' }
@@ -133,10 +136,20 @@ export class ReleaseValidationService {
     return { status: 'passed', evidence: `rollbackPlan=${String(strategy)}` }
   }
 
-  private testGate(proposal: ValidationInput['proposal']): GateEvidence {
+  private async testGate(input: ValidationInput): Promise<GateEvidence> {
+    const proposal = input.proposal
     const keys = Object.keys(proposal.testPlan ?? {})
     if (keys.length === 0) {
       return { status: 'failed', gate: 'G4', rule: 'test-plan-required', path: 'proposal.testPlan', howToFix: 'add at least one test or eval case', error: '缺少测试计划' }
+    }
+    if (input.organizationId && input.appKey && this.testEvidence) {
+      const fresh = await this.testEvidence.findFresh(input.organizationId, input.appKey)
+      if (fresh) {
+        return {
+          status: 'passed',
+          evidence: `cached test evidence ${fresh.jestOutputDigest} ranAt=${fresh.ranAt.toISOString()} source=${fresh.commitSha ?? 'unknown'}`,
+        }
+      }
     }
     if (process.env.RELEASE_G4_RUN_TESTS === 'false') {
       return { status: 'passed', evidence: `test plan: ${keys.join(',')} (G4 execution disabled by RELEASE_G4_RUN_TESTS=false)` }

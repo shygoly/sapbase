@@ -33,6 +33,7 @@ import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { ChatModule } from './chat/chat.module'
 import { BusinessAppsModule } from './business-apps/business-apps.module'
 import { ReleasesModule } from './releases/releases.module'
+import { DashboardModule } from './dashboard/dashboard.module'
 import { AgentSessionsModule } from './agent-sessions/agent-sessions.module'
 import { AgentKnowledgeModule } from './agent-knowledge/agent-knowledge.module'
 import { AgentEvalModule } from './agent-eval/agent-eval.module'
@@ -126,6 +127,7 @@ try {
     AgentEvalModule,
     AgentFeedbackModule,
     ReleaseAutomationModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [PlatformEntityRegistrationCheck],

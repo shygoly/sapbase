@@ -174,6 +174,8 @@ export class ReleasesService {
     }
     const validation = await this.validation.validate({
       proposal,
+      organizationId,
+      appKey: proposal.appKey,
       blueprintId: extra?.blueprintId,
       previewUrl: extra?.previewUrl,
       releaseId: extra?.releaseId ?? proposal.baseReleaseId ?? undefined,
@@ -217,7 +219,12 @@ export class ReleasesService {
     if (input.modifiedDiff) {
       proposal.risk = { ...risk, originalDiff: proposal.diff, modifiedBy: input.approverId }
       proposal.diff = input.modifiedDiff
-      const revalidation = await this.validation.validate({ proposal, releaseId: proposal.baseReleaseId ?? undefined })
+      const revalidation = await this.validation.validate({
+        proposal,
+        organizationId: proposal.organizationId,
+        appKey: proposal.appKey,
+        releaseId: proposal.baseReleaseId ?? undefined,
+      })
       if (!revalidation.ok) {
         proposal.risk = { ...proposal.risk, gates: revalidation.gates }
         await this.proposals.save(proposal)

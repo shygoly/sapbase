@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { Client } from 'pg'
 
-const base = 'http://localhost:3001/api'
+const base = (process.env.SAPBASE_API_URL ?? 'http://localhost:3051').replace(/\/$/, '') + '/api'
 const org = '11111111-1111-4111-8111-111111111111'
 const user = '22222222-2222-4222-8222-222222222222'
 const installation = '33333333-3333-4333-8333-333333333333'
@@ -68,7 +68,7 @@ function assert(condition, label) {
 }
 
 async function cleanup() {
-  const client = new Client({ connectionString: 'postgres://postgres:postgres@localhost:55432/sapbase_rebuild_e2e' })
+  const client = new Client({ connectionString: process.env.SAPBASE_E2E_DATABASE_URL ?? 'postgres://postgres:postgres@localhost:55432/sapbase_rebuild_e2e' })
   await client.connect()
   await client.query(`TRUNCATE TABLE app_release_activations, app_user_release_views, app_release_events, app_release_items, app_release_approvals, app_releases, app_change_proposals, app_drafts, agent_feedback, agent_feedback_topics, agent_knowledge_entries, agent_skill_versions, agent_eval_runs, agent_eval_cases, release_automation_runs, release_automation_policies, agent_conversations, agent_turns, agent_tool_calls RESTART IDENTITY CASCADE`)
   await client.end()

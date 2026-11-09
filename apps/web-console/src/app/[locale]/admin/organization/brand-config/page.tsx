@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useBrandConfig } from '@sap/app-shared/contexts/brand-config-context'
 import { useOrganizationStore } from '@sap/app-shared/core/store/organization.store'
 import { Button } from '@sap/app-shared/components/ui/button'
@@ -12,11 +12,13 @@ import { FileUpload } from '@sap/app-shared/components/brand/file-upload'
 import { useToast } from '@sap/app-shared/hooks/use-toast'
 import { brandConfigApi } from '@sap/app-shared/lib/api/brand-config'
 import type { UpdateBrandConfigDto } from '@sap/app-shared/lib/api/brand-config'
+import { brandConfigSchema } from './brand-config-schema'
 
 export default function BrandConfigPage() {
   const { config, updateConfig, loading, refreshConfig } = useBrandConfig()
   const currentOrganization = useOrganizationStore((state) => state.currentOrganization)
   const { toast } = useToast()
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formData, setFormData] = useState<UpdateBrandConfigDto>({
     logoUrl: config?.logoUrl ?? null,
     faviconUrl: config?.faviconUrl ?? null,
@@ -62,6 +64,14 @@ export default function BrandConfigPage() {
           Customize your organization&apos;s branding and appearance
         </p>
       </div>
+
+      {Object.keys(fieldErrors).length > 0 ? (
+        <div className="rounded border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+          {Object.entries(fieldErrors).map(([key, value]) => (
+            <div key={key}>{key}: {value}</div>
+          ))}
+        </div>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>

@@ -69,3 +69,35 @@ describe('ReleaseValidationService model change', () => {
     expect(result.gates.G5.status).toBe('failed')
   })
 })
+
+
+describe('ReleaseValidationService G4 evidence cache', () => {
+  it('uses fresh evidence before live tests', async () => {
+    const evidence = {
+      findFresh: jest.fn(async () => ({
+        jestOutputDigest: 'sha256:test',
+        ranAt: new Date(),
+        commitSha: 'abc123',
+      })),
+    }
+    const service = new ReleaseValidationService(
+      { compile: jest.fn() } as never,
+      { listRuns: jest.fn(async () => []), gate: jest.fn(() => ({ ok: true, reasons: [] })) } as never,
+      evidence as never,
+    )
+    const result = await service.validate({
+      organizationId: 'o1',
+      appKey: 'erp',
+      proposal: {
+        type: 'form',
+        areas: ['form'],
+        diff: {},
+        risk: { breaking: false, permissionChange: false, migration: false, agentBehaviorChange: false },
+        testPlan: { unit: ['proposal.spec.ts'] },
+        rollbackPlan: { strategy: 'deactivate' },
+      },
+    })
+    expect(result.gates.G4.status).toBe('passed')
+    expect(result.gates.G4.evidence).toContain('cached test evidence')
+  })
+})

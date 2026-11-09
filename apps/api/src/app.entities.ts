@@ -44,6 +44,7 @@ import {
   AppReleaseEvent,
   AppReleaseItem,
   AppUserReleaseView,
+  AppReleaseTestEvidence,
 } from './releases/entities'
 import { BlueprintApproval } from './semantic-runtime/blueprint-approval.entity'
 import { BlueprintDocCounter } from './semantic-runtime/blueprint-doc-counter.entity'
@@ -92,6 +93,7 @@ export const APP_ENTITIES = [
   AppReleaseApproval,
   AppReleaseEvent,
   AppUserReleaseView,
+  AppReleaseTestEvidence,
   AgentConversation,
   AgentTurn,
   AgentToolCall,

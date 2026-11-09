@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
+import { useLocalePrefix } from '@sap/app-shared/hooks/use-locale'
 import { Badge } from '@sap/app-shared/components/ui/badge'
 import { Button } from '@sap/app-shared/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@sap/app-shared/components/ui/card'
@@ -34,6 +36,7 @@ interface ImpactDiff {
 }
 
 export default function ReleaseDetailPage() {
+  const prefix = useLocalePrefix()
   const params = useParams<{ id: string }>()
   const id = params?.id as string
   const [release, setRelease] = useState<ReleaseView | null>(null)

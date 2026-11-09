@@ -64,6 +64,7 @@
 | app_release_approvals | 发布生命周期 |
 | app_release_events | 发布生命周期 |
 | app_user_release_views | 发布生命周期 |
+| app_release_test_evidence | 发布生命周期 |
 | agent_conversations | PiAgent 会话 |
 | agent_turns | PiAgent 会话 |
 | agent_tool_calls | PiAgent 会话 |
@@ -381,7 +382,7 @@ spec: apps/api/src/outbox/outbox.service.spec.ts
 
 ## 发布生命周期
 
-覆盖表：app_drafts, app_change_proposals, app_releases, app_release_items, app_release_activations, app_release_approvals, app_release_events, app_user_release_views
+覆盖表：app_drafts, app_change_proposals, app_releases, app_release_items, app_release_activations, app_release_approvals, app_release_events, app_user_release_views, app_release_test_evidence
 
 发布生命周期聚合。`app_drafts` 是可编辑工作副本；`app_change_proposals` 是变更提议；
 `app_releases` 是不可变发布物；`app_release_items` 是发布项；`app_release_activations` 是追加式激活记录；
@@ -404,6 +405,7 @@ spec: apps/api/src/outbox/outbox.service.spec.ts
 | app_release_events.releaseId | app_releases.id | 事件归属发布 | none | 只追加 |
 | app_user_release_views.appInstallationId | app_installations.id | 未读游标归属安装 | none | 每用户每应用一条 |
 | app_user_release_views.lastSeenReleaseId | app_releases.id | 最后看到的发布 | none | 用于 NEW/UPDATED 徽标 |
+| app_release_test_evidence.organizationId | organizations.id | 证据归属组织 | none | 按组织隔离 |
 
 ### 状态词
 

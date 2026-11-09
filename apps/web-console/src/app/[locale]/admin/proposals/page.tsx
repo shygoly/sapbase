@@ -15,6 +15,7 @@ import {
 } from '@sap/app-shared/components/ui/table'
 import { useLocalePrefix } from '@sap/app-shared/hooks/use-locale'
 import { releasesApi, type ProposalView } from '@sap/app-shared/lib/api/releases.api'
+import { CreateProposalDialog } from './components/create-proposal-dialog'
 
 const STATUS_LABEL: Record<string, string> = {
   draft: '草稿',
@@ -43,6 +44,7 @@ export default function ProposalsPage() {
   const [proposals, setProposals] = useState<ProposalView[]>([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)

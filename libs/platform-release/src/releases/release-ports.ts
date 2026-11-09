@@ -71,3 +71,7 @@ export interface ReleaseEvalPort {
   listRuns(releaseId: string): Promise<ReleaseEvalRunView[]>
   gate(input: ReleaseEvalGateInput): { ok: boolean; reasons: string[] }
 }
+
+export interface ReleaseTestEvidencePort {
+  findFresh(organizationId: string, appKey: string, hours?: number): Promise<{ jestOutputDigest: string; ranAt: Date; commitSha?: string | null } | null>
+}

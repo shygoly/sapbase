@@ -19,6 +19,7 @@
     "./components/nav-main": "./src/components/nav-main.tsx",
     "./components/nav-projects": "./src/components/nav-projects.tsx",
     "./components/nav-user": "./src/components/nav-user.tsx",
+    "./components/notification-bell": "./src/components/notification-bell.tsx",
     "./components/notification-container": "./src/components/notification-container.tsx",
     "./components/org-switcher": "./src/components/org-switcher.tsx",
     "./components/search-input": "./src/components/search-input.tsx",

@@ -17,8 +17,10 @@ import { AGENT_KNOWLEDGE_DDL } from '../agent-knowledge/agent-knowledge.ddl'
 import { AGENT_EVAL_DDL } from '../agent-eval/agent-eval.ddl'
 import { AGENT_SESSIONS_DDL } from '../agent-sessions/agent-sessions.ddl'
 import { RELEASE_LIFECYCLE_DDL } from '../releases/release-lifecycle.ddl'
+import { RELEASE_TEST_EVIDENCE_DDL } from '../releases/release-test-evidence.ddl'
 import { BUSINESS_APP_INSTALLATIONS_DDL } from '../business-apps/business-app-installation.ddl'
 import { TENANT_RLS_DDL } from '../common/rls/tenant-rls.ddl'
+import { RELEASE_AGENT_RLS_DDL } from '../common/rls/release-agent-rls.ddl'
 
 export const SCHEMA_BASELINE_SQL: string[] = [
   `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`,
@@ -606,10 +608,12 @@ export const SCHEMA_BASELINE_SQL: string[] = [
   ...AGENT_CONFIRMATION_TOKENS_DDL,
   ...BUSINESS_APP_INSTALLATIONS_DDL,
   ...RELEASE_LIFECYCLE_DDL,
+  ...RELEASE_TEST_EVIDENCE_DDL,
   ...AGENT_SESSIONS_DDL,
   ...AGENT_KNOWLEDGE_DDL,
   ...AGENT_EVAL_DDL,
   ...AGENT_FEEDBACK_DDL,
   ...RELEASE_AUTOMATION_DDL,
   ...TENANT_RLS_DDL,
+  ...RELEASE_AGENT_RLS_DDL,
 ]

@@ -9,6 +9,7 @@ import { UserNav } from './user-nav';
 import { ThemeSelector } from '@sap/ui-theme/theme-selector';
 import { ThemeModeToggle } from '@sap/ui-theme/theme-mode-toggle';
 import CtaGithub from './cta-github';
+import { NotificationBell } from '../components/notification-bell';
 
 export default function Header() {
   return (
@@ -24,6 +25,7 @@ export default function Header() {
         <div className='hidden md:flex'>
           <SearchInput />
         </div>
+        <NotificationBell />
         <UserNav />
         <ThemeModeToggle />
         <ThemeSelector />

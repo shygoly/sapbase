@@ -5,6 +5,7 @@ import { CurrentUser } from '@sap/platform-core/auth/current-user.decorator'
 import { OrganizationId } from '@sap/platform-core/organizations/decorators/organization-id.decorator'
 import { ReleasesService } from './releases.service'
 import { ReleaseIdempotencyService } from './release-idempotency.service'
+import { ReleaseTestEvidenceService } from './release-test-evidence.service'
 
 type UserLike = { id?: string; email?: string; roles?: string[] }
 
@@ -14,6 +15,7 @@ export class ReleasesBuilderController {
   constructor(
     private readonly releases: ReleasesService,
     private readonly idempotency: ReleaseIdempotencyService,
+    private readonly testEvidence: ReleaseTestEvidenceService,
   ) {}
 
   @Post('apps/:appKey/drafts')
@@ -85,6 +87,23 @@ export class ReleasesBuilderController {
   @Auth()
   proposal(@Param('id') id: string, @OrganizationId() organizationId: string) {
     return this.releases.getProposal(id, organizationId)
+  }
+
+  @Post('test-evidence')
+  @Auth('app:release:validate')
+  recordTestEvidence(
+    @Body() body: { appKey: string; commitSha?: string; suiteSummary: Record<string, unknown>; jestOutputDigest: string; ranAt?: string; ranBy?: string },
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.testEvidence.record({
+      organizationId,
+      appKey: body.appKey,
+      commitSha: body.commitSha ?? null,
+      suiteSummary: body.suiteSummary ?? {},
+      jestOutputDigest: body.jestOutputDigest,
+      ranAt: body.ranAt ? new Date(body.ranAt) : new Date(),
+      ranBy: body.ranBy ?? null,
+    })
   }
 
   @Post('proposals/from-ai-module')

@@ -42,6 +42,16 @@ export class NotificationsController {
     return { notifications }
   }
 
+  @Get('unread-count')
+  @ApiOperation({ summary: '当前用户未读通知数量' })
+  async unreadCount(@CurrentUser() user?: NotificationUser) {
+    const userId = user?.id ?? user?.userId ?? ''
+    const organizationId = user?.organizationId
+    if (!userId || !organizationId) return { count: 0 }
+    const notifications = await this.notifications.listForUser(userId, organizationId, false)
+    return { count: notifications.length }
+  }
+
   @Post(':id/read')
   @ApiOperation({ summary: '已读持久' })
   async markRead(@Param('id') id: string, @CurrentUser() user?: NotificationUser) {

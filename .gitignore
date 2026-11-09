@@ -65,3 +65,4 @@ out/
 
 # compat package build output
 shared-schemas/dist/
+test-results/

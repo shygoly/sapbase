@@ -26,6 +26,8 @@ import { ReleasesService } from './releases.service'
 import { ReleaseValidationService } from './release-validation.service'
 import { ReleaseIdempotencyService } from './release-idempotency.service'
 import { ReleaseNotificationAdapter } from './release-notification.adapter'
+import { AppReleaseTestEvidence } from './entities/app-release-test-evidence.entity'
+import { ReleaseTestEvidenceService } from './release-test-evidence.service'
 
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { ReleaseNotificationAdapter } from './release-notification.adapter'
       AppReleaseApproval,
       AppReleaseEvent,
       AppUserReleaseView,
+      AppReleaseTestEvidence,
       NotificationRecord,
     ]),
     BlueprintModule,
@@ -50,12 +53,16 @@ import { ReleaseNotificationAdapter } from './release-notification.adapter'
     ReleaseIdempotencyService,
     ReleaseCacheService,
     ReleaseNotificationAdapter,
+    ReleaseTestEvidenceService,
     {
       // platform-release 只声明端口；应用层在这里把具体实现注入进去。
       provide: ReleaseValidationService,
-      useFactory: (blueprints: BlueprintService, evalService: AgentEvalService) =>
-        new ReleaseValidationService(blueprints, evalService),
-      inject: [BlueprintService, AgentEvalService],
+      useFactory: (
+        blueprints: BlueprintService,
+        evalService: AgentEvalService,
+        evidence: ReleaseTestEvidenceService,
+      ) => new ReleaseValidationService(blueprints, evalService, evidence),
+      inject: [BlueprintService, AgentEvalService, ReleaseTestEvidenceService],
     },
     {
       provide: ReleasesService,

@@ -48,7 +48,7 @@ function readGraphFrom(file) {
 function readGraph() {
   if (opts.graph) return readGraphFrom(resolve(ctx.repoRoot, opts.graph))
 
-  const nxBin = join(ctx.repoRoot, 'node_modules', '.bin', 'nx')
+  const nxBin = join(ctx.repoRoot, 'node_modules', 'nx', 'dist', 'bin', 'nx.js')
   if (!existsSync(nxBin)) {
     throw new Error(
       `找不到 ${nxBin}；请先在仓库根执行 npm install，或用 --graph 指定已导出的图`,
@@ -57,7 +57,7 @@ function readGraph() {
   const dir = mkdtempSync(join(tmpdir(), 'sap-boundaries-'))
   const file = join(dir, 'graph.json')
   try {
-    const run = spawnSync(nxBin, ['graph', `--file=${file}`], {
+    const run = spawnSync(process.execPath, [nxBin, 'graph', `--file=${file}`], {
       cwd: ctx.repoRoot,
       encoding: 'utf8',
     })

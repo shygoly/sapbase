@@ -924,6 +924,19 @@
         "startedAt",
         "completedAt"
       ]
+    },
+    "app_release_test_evidence": {
+      "columns": [
+        "id",
+        "createdAt",
+        "organizationId",
+        "appKey",
+        "commitSha",
+        "suiteSummary",
+        "jestOutputDigest",
+        "ranAt",
+        "ranBy"
+      ]
     }
   }
 }

@@ -1,3 +1,5 @@
+'use client'
+
 import PageContainer from '@sap/app-shared/components/layout/page-container';
 import { Badge } from '@sap/app-shared/components/ui/badge';
 import {
@@ -9,7 +11,8 @@ import {
   CardFooter
 } from '@sap/app-shared/components/ui/card';
 import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { dashboardApi, type DashboardSummary } from '@sap/api-client';
 
 export default function OverViewLayout({
   sales,
@@ -22,6 +25,15 @@ export default function OverViewLayout({
   bar_stats: React.ReactNode;
   area_stats: React.ReactNode;
 }) {
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    dashboardApi.summary().then(setSummary).catch(() => setSummary(null)).finally(() => setLoading(false));
+  }, []);
+
+  const metric = (value: number | undefined) => (loading ? '…' : String(value ?? 0));
+
   return (
     <PageContainer>
       <div className='flex flex-1 flex-col space-y-2'>
@@ -34,9 +46,9 @@ export default function OverViewLayout({
         <div className='*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:grid-cols-4'>
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>Total Revenue</CardDescription>
+              <CardDescription>Users</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                $1,250.00
+                {metric(summary?.users)}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
@@ -47,7 +59,7 @@ export default function OverViewLayout({
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                Trending up this month <IconTrendingUp className='size-4' />
+                Organization members <IconTrendingUp className='size-4' />
               </div>
               <div className='text-muted-foreground'>
                 Visitors for the last 6 months
@@ -56,9 +68,9 @@ export default function OverViewLayout({
           </Card>
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>New Customers</CardDescription>
+              <CardDescription>Roles</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                1,234
+                {metric(summary?.roles)}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
@@ -69,7 +81,7 @@ export default function OverViewLayout({
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                Down 20% this period <IconTrendingDown className='size-4' />
+                Organization roles <IconTrendingDown className='size-4' />
               </div>
               <div className='text-muted-foreground'>
                 Acquisition needs attention
@@ -78,9 +90,9 @@ export default function OverViewLayout({
           </Card>
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>Active Accounts</CardDescription>
+              <CardDescription>App Installations</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                45,678
+                {metric(summary?.appInstallations)}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
@@ -91,7 +103,7 @@ export default function OverViewLayout({
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                Strong user retention <IconTrendingUp className='size-4' />
+                Installed apps <IconTrendingUp className='size-4' />
               </div>
               <div className='text-muted-foreground'>
                 Engagement exceed targets
@@ -100,9 +112,9 @@ export default function OverViewLayout({
           </Card>
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>Growth Rate</CardDescription>
+              <CardDescription>Pending Proposals</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                4.5%
+                {metric(summary?.pendingProposals)}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
@@ -112,8 +124,7 @@ export default function OverViewLayout({
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='line-clamp-1 flex gap-2 font-medium'>
-                Steady performance increase{' '}
+              <div className='line-clamp-1 flex gap-2 font-medium'>Awaiting review
                 <IconTrendingUp className='size-4' />
               </div>
               <div className='text-muted-foreground'>

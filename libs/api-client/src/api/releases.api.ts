@@ -69,6 +69,11 @@ export const releasesApi = {
   async createDraft(appKey: string, content: Record<string, unknown> = {}): Promise<unknown> {
     return unwrap(await httpClient.post(`/api/builder/apps/${appKey}/drafts`, { content }))
   },
+  async current(appKey: string, appInstallationId: string): Promise<ReleaseView | null> {
+    return unwrap<ReleaseView | null>(
+      await httpClient.get(`/api/apps/${appKey}/release?appInstallationId=${encodeURIComponent(appInstallationId)}`),
+    )
+  },
   async whatsNew(appKey: string, appInstallationId: string): Promise<{ release: ReleaseView | null; items: unknown[]; unread: boolean }> {
     return unwrap(
       await httpClient.get(`/api/apps/${appKey}/whats-new?appInstallationId=${encodeURIComponent(appInstallationId)}`),

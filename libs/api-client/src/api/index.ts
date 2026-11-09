@@ -19,6 +19,8 @@ export { systemApi } from './system.api'
 export { chatApi } from './chat.api'
 export { agentToolsApi } from './agent-tools.api'
 export { businessAppsApi } from './business-apps.api'
+export { notificationsApi, type NotificationItem } from './notifications.api'
+export { dashboardApi, type DashboardSummary } from './dashboard.api'
 export { constantsApi } from './shipping/constants.api'
 export { apiClient, httpClient } from './client'
 
