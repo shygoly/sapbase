@@ -29,13 +29,14 @@
 - [x] 4.2a JWT 增加 `sid`；`JwtStrategy` 校验 DB 会话状态
 - [ ] 4.2b Redis 会话缓存（多实例）
 - [x] 4.3a `logout` 吊销当前会话；refresh token 哈希字段与 `rotateRefresh`
-- [ ] 4.3b refresh token 端点与轮换 e2e
+- [x] 4.3b refresh token 端点与轮换（`POST /auth/refresh`，旧 session 吊销）
 - [x] 4.4a 管理员强制下线服务：单会话/全会话
 - [x] 4.4b 管理 API：按 sid / 按用户强制下线
 - [ ] 4.4c WebSocket 同步断开
 - [ ] 4.5 密码修改/角色变更/账号停用触发吊销策略
 - [x] 4.6a 单测：吊销/过期/批量吊销/轮换
-- [ ] 4.6b 负例：吊销后 JWT 401、并发会话上限
+- [x] 4.6b 负例：吊销后 JWT 401、过期 refresh、旧无 sid token 兼容
+- [ ] 4.6c 并发会话上限策略与测试
 
 ## 5. SSO 与身份映射
 

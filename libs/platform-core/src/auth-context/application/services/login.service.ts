@@ -1,4 +1,5 @@
 import { Inject, Injectable, Optional } from '@nestjs/common'
+import { randomBytes, randomUUID } from 'node:crypto'
 import { AuthenticationError } from '../../domain/errors'
 import { CredentialValidator, OrganizationSelector } from '../../domain/domain-services'
 import type { IUserRepository } from '../../domain/repositories'
@@ -17,6 +18,7 @@ import type { IEventPublisher } from '../../domain/events'
 import { UserLoggedInEvent } from '../../domain/events'
 import { OrganizationMemberRolesService } from '../../../identity/organization-member-roles.service'
 import { AuthLoginEventsService } from '../../../identity/auth-login-events.service'
+import { AuthSessionsService, hashRefreshToken } from '../../../identity/auth-sessions.service'
 
 export interface LoginCommand {
   email: string
@@ -37,6 +39,8 @@ export interface LoginResult {
   }
   organizations: Array<{ id: string; name: string; slug: string }>
   currentOrganizationId: string | undefined
+  sessionId?: string
+  refreshToken?: string
 }
 
 @Injectable()
@@ -56,6 +60,7 @@ export class LoginService {
     private readonly effectivePermissionsResolver: IEffectivePermissionsResolver,
     @Optional() private readonly memberRoles?: OrganizationMemberRolesService,
     @Optional() private readonly loginEvents?: AuthLoginEventsService,
+    @Optional() private readonly sessions?: AuthSessionsService,
   ) {}
 
   async execute(command: LoginCommand): Promise<LoginResult> {
@@ -98,6 +103,19 @@ export class LoginService {
       additionalRoles,
     )
 
+    const sid = selectedOrgId ? randomUUID() : undefined
+    const refreshToken = sid ? randomBytes(32).toString('hex') : undefined
+    if (sid && selectedOrgId && refreshToken) {
+      await this.sessions?.create({
+        organizationId: selectedOrgId,
+        userId: user.id,
+        sid,
+        refreshTokenHash: hashRefreshToken(refreshToken),
+        ip: command.ip ?? null,
+        userAgent: command.userAgent ?? null,
+      })
+    }
+
     // Build JWT payload
     const payload: JwtPayload = {
       sub: user.id,
@@ -105,6 +123,7 @@ export class LoginService {
       role: user.role,
       permissions,
       organizationId: selectedOrgId,
+      sid,
     }
 
     // Sign token
@@ -142,6 +161,8 @@ export class LoginService {
         slug: org.slug,
       })),
       currentOrganizationId: selectedOrgId,
+      sessionId: sid,
+      refreshToken,
     }
   }
 

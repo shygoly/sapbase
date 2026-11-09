@@ -41,6 +41,14 @@ export class AuthController {
     }
   }
 
+  @Post('refresh')
+  async refresh(@Body() body: { sid: string; refreshToken: string }) {
+    if (!body?.sid || !body?.refreshToken) {
+      throw new BadRequestException('sid 与 refreshToken 必填')
+    }
+    return this.authService.refresh(body.sid, body.refreshToken)
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post('switch-organization')
   async switchOrganization(@Request() req: any, @Body() body: { organizationId: string }) {

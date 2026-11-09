@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { MoreThan, Repository } from 'typeorm'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { AuthSession } from './auth-session.entity'
 
 export interface CreateSessionInput {
@@ -15,6 +15,10 @@ export interface CreateSessionInput {
 }
 
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000
+
+export function hashRefreshToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex')
+}
 
 /**
  * 持久会话：JWT 只携带 sid，吊销/过期以本表为准。

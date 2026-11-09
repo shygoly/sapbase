@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
 import { UsersService } from '../users/users.service'
 import { OrganizationsService } from '../organizations/organizations.service'
 import { User } from '../users/user.entity'
 import { Optional } from '@nestjs/common'
-import { randomUUID } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
 import { EffectivePermissionsService } from '../roles/effective-permissions.service'
 import { OrganizationMemberRolesService } from '../identity/organization-member-roles.service'
-import { AuthSessionsService } from '../identity/auth-sessions.service'
+import { AuthSessionsService, hashRefreshToken } from '../identity/auth-sessions.service'
 
 export interface JwtPayload {
   sub: string
@@ -66,11 +66,13 @@ export class AuthService {
     })
 
     const sid = selectedOrgId ? randomUUID() : undefined
-    if (sid && selectedOrgId) {
+    const refreshToken = sid ? randomBytes(32).toString('hex') : undefined
+    if (sid && selectedOrgId && refreshToken) {
       await this.sessions?.create({
         organizationId: selectedOrgId,
         userId: user.id,
         sid,
+        refreshTokenHash: hashRefreshToken(refreshToken),
       })
     }
     const payload: JwtPayload = {
@@ -85,6 +87,7 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
       sessionId: sid,
+      refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -102,7 +105,7 @@ export class AuthService {
   async switchOrganization(
     userId: string,
     organizationId: string,
-  ): Promise<{ access_token: string; sessionId?: string }> {
+  ): Promise<{ access_token: string; sessionId?: string; refreshToken?: string }> {
     const user = await this.usersService.findOne(userId)
     if (!user) {
       throw new Error('User not found')
@@ -121,7 +124,13 @@ export class AuthService {
     })
 
     const sid = randomUUID()
-    await this.sessions?.create({ organizationId, userId: user.id, sid })
+    const refreshToken = randomBytes(32).toString('hex')
+    await this.sessions?.create({
+      organizationId,
+      userId: user.id,
+      sid,
+      refreshTokenHash: hashRefreshToken(refreshToken),
+    })
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
@@ -134,6 +143,56 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
       sessionId: sid,
+      refreshToken,
+    }
+  }
+
+  async refresh(
+    sid: string,
+    refreshToken: string,
+  ): Promise<{ access_token: string; sessionId: string; refreshToken: string }> {
+    const session = await this.sessions?.findActive(sid)
+    if (!session) throw new UnauthorizedException('会话已失效，请重新登录')
+    if (
+      !session.refreshTokenHash ||
+      session.refreshTokenHash !== hashRefreshToken(refreshToken)
+    ) {
+      throw new UnauthorizedException('refresh token 无效')
+    }
+    const user = await this.usersService.findOne(session.userId)
+    if (!user) throw new UnauthorizedException('用户不存在')
+    const roleName = user.roleName || user.role || 'user'
+    const additionalRoles = await this.memberRoles?.activeRoleNames(
+      session.organizationId,
+      user.id,
+    )
+    const permissions = await this.effectivePermissions.resolve({
+      role: roleName,
+      additionalRoles,
+      directPermissions: user.permissions || [],
+      organizationId: session.organizationId,
+    })
+    const nextSid = randomUUID()
+    const nextRefresh = randomBytes(32).toString('hex')
+    await this.sessions?.create({
+      organizationId: session.organizationId,
+      userId: user.id,
+      sid: nextSid,
+      refreshTokenHash: hashRefreshToken(nextRefresh),
+    })
+    await this.sessions?.revoke(sid, 'rotated')
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: roleName,
+      permissions,
+      organizationId: session.organizationId,
+      sid: nextSid,
+    }
+    return {
+      access_token: this.jwtService.sign(payload),
+      sessionId: nextSid,
+      refreshToken: nextRefresh,
     }
   }
 
