@@ -72,6 +72,17 @@ describe('AuthSessionsService', () => {
     await expect(service.revoke('sid-1')).resolves.toBe(false)
   })
 
+
+  it('revokeScoped：只吊销本组织 sid', async () => {
+    const repo = repoWith([
+      { id: 's1', sid: 'sid-1', status: 'active', organizationId: 'org-1', userId: 'u1' },
+      { id: 's2', sid: 'sid-2', status: 'active', organizationId: 'org-2', userId: 'u1' },
+    ])
+    const service = new AuthSessionsService(repo as never)
+    await expect(service.revokeScoped('org-1', 'sid-1')).resolves.toBe(true)
+    await expect(service.revokeScoped('org-1', 'sid-2')).resolves.toBe(false)
+  })
+
   it('revokeAll：按组织+用户批量吊销', async () => {
     const repo = repoWith([
       { id: 's1', sid: 'sid-1', status: 'active', organizationId: 'org-1', userId: 'u1' },

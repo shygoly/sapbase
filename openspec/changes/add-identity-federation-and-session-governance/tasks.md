@@ -31,7 +31,8 @@
 - [x] 4.3a `logout` 吊销当前会话；refresh token 哈希字段与 `rotateRefresh`
 - [ ] 4.3b refresh token 端点与轮换 e2e
 - [x] 4.4a 管理员强制下线服务：单会话/全会话
-- [ ] 4.4b 管理 API + WebSocket 同步断开
+- [x] 4.4b 管理 API：按 sid / 按用户强制下线
+- [ ] 4.4c WebSocket 同步断开
 - [ ] 4.5 密码修改/角色变更/账号停用触发吊销策略
 - [x] 4.6a 单测：吊销/过期/批量吊销/轮换
 - [ ] 4.6b 负例：吊销后 JWT 401、并发会话上限
@@ -39,7 +40,7 @@
 ## 5. SSO 与身份映射
 
 - [x] 5.1a `IdentityProvider` 管理 service（CRUD + key 校验 + secretRef）
-- [ ] 5.1b 管理 API + secretRef 解析
+- [x] 5.1b 管理 API（`/identity/providers` CRUD）+ secretRef
 - [ ] 5.2 CAS adapter（redirect + ticket 校验 + 属性映射）
 - [ ] 5.3 OAuth2/OIDC adapter（state/nonce/PKCE、userinfo/id_token）
 - [ ] 5.4 SAML adapter（签名/时间窗/断言解析）
@@ -59,7 +60,8 @@
 ## 7. 异常登录与审计
 
 - [x] 7.1a `auth_login_events` service + 登录成功写入（ip/ua/provider）
-- [ ] 7.1b 登录失败/异常规则写入与查询 API
+- [x] 7.1b 登录事件查询 API（`/identity/login-events`）
+- [ ] 7.1c 登录失败写入 + 连续失败锁定/新设备规则
 - [ ] 7.2 规则：连续失败锁定、新设备/新 IP 通知、管理员查询
 - [ ] 7.3 告警接 `notification-center-and-announcements`
 - [ ] 7.4 登录/登出/强制下线/角色变更/令牌创建与吊销写 `audit_logs`

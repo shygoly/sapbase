@@ -73,6 +73,18 @@ export class AuthSessionsService {
     return (result.affected ?? 0) > 0
   }
 
+  async revokeScoped(
+    organizationId: string,
+    sid: string,
+    reason = 'forced-offline',
+  ): Promise<boolean> {
+    const result = await this.repository.update(
+      { organizationId, sid, status: 'active' },
+      { status: 'revoked', revokedAt: new Date(), revokedReason: reason },
+    )
+    return (result.affected ?? 0) > 0
+  }
+
   async revokeAll(
     organizationId: string,
     userId: string,

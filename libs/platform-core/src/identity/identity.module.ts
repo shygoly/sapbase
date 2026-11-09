@@ -7,6 +7,7 @@ import { AuthLoginEvent } from './auth-login-event.entity'
 import { AuthSessionsService } from './auth-sessions.service'
 import { IdentityProvidersService } from './identity-providers.service'
 import { AuthLoginEventsService } from './auth-login-events.service'
+import { IdentityController } from './identity.controller'
 import { OrganizationMemberRolesService } from './organization-member-roles.service'
 
 @Module({
@@ -16,6 +17,7 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
       IdentityProvider,
       AuthLoginEvent,
     ])],
+  controllers: [IdentityController],
   providers: [
     OrganizationMemberRolesService,
     AuthSessionsService,
