@@ -15,6 +15,9 @@ import { IdentitySsoController } from './identity-sso.controller'
 import { IdentitySourceAdapterRegistry } from './identity-source'
 import { IdentitySyncService } from './identity-sync.service'
 import { IdentitySyncController } from './identity-sync.controller'
+import { DelegatedIdentityService } from './delegated-identity.service'
+import { OrganizationsModule } from '../organizations/organizations.module'
+import { EffectivePermissionsService } from '../roles/effective-permissions.service'
 import { IdentityLink } from './identity-link.entity'
 import { IdentitySyncRun } from './identity-sync-run.entity'
 import { UsersModule } from '../users/users.module'
@@ -26,6 +29,7 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
   imports: [
     UsersModule,
     RolesModule,
+    OrganizationsModule,
     TypeOrmModule.forFeature([
       OrganizationMemberRole,
       AuthSession,
@@ -46,6 +50,8 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
     IdentitySsoService,
     IdentitySourceAdapterRegistry,
     IdentitySyncService,
+    DelegatedIdentityService,
+    EffectivePermissionsService,
   ],
   exports: [
     OrganizationMemberRolesService,
@@ -57,6 +63,7 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
     IdentitySsoService,
     IdentitySourceAdapterRegistry,
     IdentitySyncService,
+    DelegatedIdentityService,
     TypeOrmModule,
   ],
 })

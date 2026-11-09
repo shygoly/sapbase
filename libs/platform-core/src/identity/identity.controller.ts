@@ -14,6 +14,7 @@ import { Auth } from '../common/decorators/auth.decorator'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import { AuthLoginEventsService } from './auth-login-events.service'
 import { AuthSessionsService } from './auth-sessions.service'
+import { DelegatedIdentityService } from './delegated-identity.service'
 import {
   ServiceClientsService,
   type CreateServiceClientInput,
@@ -33,6 +34,7 @@ export class IdentityController {
     private readonly sessions: AuthSessionsService,
     private readonly loginEvents: AuthLoginEventsService,
     private readonly serviceClients: ServiceClientsService,
+    private readonly delegated: DelegatedIdentityService,
   ) {}
 
   @Get('providers')
@@ -134,6 +136,17 @@ export class IdentityController {
   @ApiOperation({ summary: '轮换服务客户端 secret（旧 secret 立即失效）' })
   rotateServiceClient(@OrganizationId() organizationId: string, @Param('id') id: string) {
     return this.serviceClients.rotate(organizationId, id)
+  }
+
+  @Post('delegation/resolve')
+  @Auth('identity:manage')
+  @ApiOperation({ summary: '服务令牌代用户：服务端重新解析角色/权限（不信任调用方声明）' })
+  resolveDelegation(
+    @OrganizationId() organizationId: string,
+    @Body() body: { userId: string },
+  ) {
+    if (!body?.userId) throw new BadRequestException('userId 必填')
+    return this.delegated.resolve(organizationId, body.userId)
   }
 
   @Get('login-events')
