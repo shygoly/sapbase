@@ -47,6 +47,7 @@ describe('SemanticRuntimeService 落库闸', () => {
       } as never,
       { create: jest.fn().mockResolvedValue({}) } as never,
       { publish: jest.fn().mockResolvedValue({}) } as never,
+      { resolve: jest.fn(async () => ({ expr: { op: 'all' }, version: 1, declared: false })) } as never,
     )
   })
 
@@ -167,6 +168,7 @@ describe('SemanticRuntimeService 只读接口', () => {
       } as never,
       { create: jest.fn().mockResolvedValue({}) } as never,
       { publish: jest.fn().mockResolvedValue({}) } as never,
+      { resolve: jest.fn(async () => ({ expr: { op: 'all' }, version: 1, declared: false })) } as never,
     )
   })
 
@@ -260,6 +262,7 @@ describe('SemanticRuntimeService 结构化日志（N3）', () => {
       } as never,
       { create: jest.fn().mockResolvedValue({}) } as never,
       { publish: jest.fn().mockResolvedValue({}) } as never,
+      { resolve: jest.fn(async () => ({ expr: { op: 'all' }, version: 1, declared: false })) } as never,
     )
   })
 
@@ -345,6 +348,7 @@ describe('SemanticRuntimeService 结构化日志（N3）', () => {
       } as never,
       { create: jest.fn().mockResolvedValue({}) } as never,
       { publish: jest.fn().mockResolvedValue({}) } as never,
+      { resolve: jest.fn(async () => ({ expr: { op: 'all' }, version: 1, declared: false })) } as never,
     )
     const lines = await collectLogsAsync(async () => {
       await service.approve(

@@ -1,0 +1,106 @@
+import { NotFoundException } from '@nestjs/common'
+import { SemanticRuntimeService } from './semantic-runtime.service'
+import type { SemanticEntity } from './record-validator'
+
+const entity: SemanticEntity = {
+  name: 'Student',
+  fields: [
+    { name: 'name', type: 'text' },
+    { name: 'classId', type: 'text' },
+    { name: 'headTeacherId', type: 'text' },
+  ],
+  states: [{ name: 'active', initial: true }],
+  dataScope: {
+    ownerField: 'headTeacherId',
+    bindings: [{ dimension: 'class', kind: 'field', field: 'classId' }],
+  },
+}
+
+function serviceWith(dataScope: unknown = { resolve: jest.fn() }) {
+  const dataSource = { query: jest.fn(async () => []) }
+  return new SemanticRuntimeService(
+    {} as never,
+    {} as never,
+    dataSource as never,
+    {} as never,
+    {} as never,
+    dataScope as never,
+  )
+}
+
+describe('SemanticRuntimeService dataScope integration helpers', () => {
+  it('把蓝图 dataScope 映射成 ScopeBindingView 并交给 DataScopeService', async () => {
+    const resolve = jest.fn(async () => ({ expr: { op: 'all' }, version: 1, declared: true }))
+    const service = serviceWith({ resolve })
+
+    const result = await (service as unknown as {
+      resolveBlueprintDataScope: (
+        blueprintId: string,
+        entity: SemanticEntity,
+        organizationId: string,
+        actor: { id: string; role: string },
+        action: string,
+      ) => Promise<unknown>
+    }).resolveBlueprintDataScope('pkg-1', entity, 'org-1', { id: 'u1', role: 'teacher' }, 'list')
+
+    expect(result).toEqual({ expr: { op: 'all' }, version: 1, declared: true })
+    expect(resolve).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: 'org-1',
+        resourceKey: 'blueprint:pkg-1:Student',
+        action: 'list',
+        declared: true,
+        actor: expect.objectContaining({ userId: 'u1', roleKeys: ['teacher'] }),
+        bindings: [
+          {
+            resourceKey: 'blueprint:pkg-1:Student',
+            dimensionKey: 'class',
+            kind: 'field',
+            field: 'classId',
+            relation: null,
+          },
+        ],
+      }),
+    )
+  })
+
+  it('none → 单条读按 404 处理', async () => {
+    const service = serviceWith({ resolve: jest.fn(async () => ({ expr: { op: 'none' }, version: 1, declared: true })) })
+    await expect(
+      (service as unknown as {
+        assertRecordInDataScope: (
+          blueprintId: string,
+          entity: SemanticEntity,
+          row: { id: string },
+          organizationId: string,
+          actor: { id: string },
+          action: string,
+        ) => Promise<void>
+      }).assertRecordInDataScope('pkg-1', entity, { id: 'r1' }, 'org-1', { id: 'u1' }, 'read'),
+    ).rejects.toBeInstanceOf(NotFoundException)
+  })
+
+  it('all → 不额外查询', async () => {
+    const query = jest.fn(async () => [])
+    const dataSource = { query }
+    const service = new SemanticRuntimeService(
+      {} as never,
+      {} as never,
+      dataSource as never,
+      {} as never,
+      {} as never,
+      { resolve: jest.fn(async () => ({ expr: { op: 'all' }, version: 1, declared: true })) } as never,
+    )
+    await (service as unknown as {
+      assertRecordInDataScope: (
+        blueprintId: string,
+        entity: SemanticEntity,
+        row: { id: string },
+        organizationId: string,
+        actor: { id: string },
+        action: string,
+      ) => Promise<void>
+    }).assertRecordInDataScope('pkg-1', entity, { id: 'r1' }, 'org-1', { id: 'u1' }, 'read')
+    expect(query).not.toHaveBeenCalled()
+  })
+})

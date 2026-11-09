@@ -208,3 +208,91 @@ describe('P1 编译期判据', () => {
     ).toMatch(/只允许用在 reference 上/)
   })
 })
+
+describe('数据范围 dataScope（P1）', () => {
+  const BASE = {
+    name: 'Student',
+    fields: [
+      { name: 'name', type: 'text' },
+      { name: 'classId', type: 'text' },
+      { name: 'headTeacherId', type: 'text' },
+    ],
+    states: ACTIVE_STATES,
+    transitions: ACTIVE_TRANSITIONS,
+  }
+
+  it('Schema 接受合法 dataScope', () => {
+    const result = schemaOf({
+      entities: [
+        {
+          ...BASE,
+          dataScope: {
+            ownerField: 'headTeacherId',
+            bindings: [{ dimension: 'class', kind: 'field', field: 'classId' }],
+          },
+        },
+      ],
+    })
+    expect(result.valid).toBe(true)
+  })
+
+  it('编译期拒绝缺失绑定字段', () => {
+    expect(
+      detect({
+        entities: [
+          {
+            ...BASE,
+            dataScope: {
+              bindings: [{ dimension: 'class', kind: 'field', field: 'missingClassId' }],
+            },
+          },
+        ],
+      }).join('\n'),
+    ).toMatch(/missingClassId.*不是本实体字段/)
+  })
+
+  it('编译期拒绝非法 dimension key', () => {
+    expect(
+      detect({
+        entities: [
+          {
+            ...BASE,
+            dataScope: {
+              bindings: [{ dimension: 'Class', kind: 'field', field: 'classId' }],
+            },
+          },
+        ],
+      }).join('\n'),
+    ).toMatch(/dimension「Class」必须是 snake_case key/)
+  })
+
+  it('编译期拒绝悬空 relation entity', () => {
+    expect(
+      detect({
+        entities: [
+          {
+            ...BASE,
+            dataScope: {
+              bindings: [
+                {
+                  dimension: 'class',
+                  kind: 'relation',
+                  relation: {
+                    entity: 'TeachingAssignment',
+                    fromField: 'courseId',
+                    actorField: 'teacherId',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }).join('\n'),
+    ).toMatch(/relation\.entity「TeachingAssignment」未声明/)
+  })
+
+  it('未声明 dataScope 的旧实体不受影响', () => {
+    expect(detect({ entities: [BASE] })).toEqual([])
+    expect(schemaOf({ entities: [BASE] }).valid).toBe(true)
+  })
+})

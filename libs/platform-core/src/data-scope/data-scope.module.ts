@@ -7,6 +7,8 @@ import { ScopeMembership } from './entities/scope-membership.entity'
 import { ScopeNode } from './entities/scope-node.entity'
 import { ScopeVersion } from './entities/scope-version.entity'
 import { ScopeEvaluator } from './scope-evaluator'
+import { DataScopeService } from './data-scope.service'
+import { DataScopeController } from './data-scope.controller'
 
 /**
  * 数据范围基座。
@@ -25,7 +27,8 @@ import { ScopeEvaluator } from './scope-evaluator'
       ScopeVersion,
     ]),
   ],
-  providers: [ScopeEvaluator],
-  exports: [ScopeEvaluator, TypeOrmModule],
+  providers: [ScopeEvaluator, DataScopeService],
+  controllers: [DataScopeController],
+  exports: [ScopeEvaluator, DataScopeService, TypeOrmModule],
 })
 export class DataScopeModule {}

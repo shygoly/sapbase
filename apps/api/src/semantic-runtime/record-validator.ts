@@ -35,6 +35,23 @@ export interface SemanticNumberingDecl {
   width: number
 }
 
+export interface SemanticDataScopeBinding {
+  dimension: string
+  kind: 'field' | 'owner' | 'relation'
+  field?: string
+  relation?: {
+    entity?: string
+    table?: string
+    fromField: string
+    actorField: string
+  }
+}
+
+export interface SemanticDataScope {
+  ownerField?: string
+  bindings: SemanticDataScopeBinding[]
+}
+
 export interface SemanticEntity {
   name: string
   fields: SemanticField[]
@@ -47,6 +64,7 @@ export interface SemanticEntity {
   numbering?: SemanticNumberingDecl
   rollups?: Array<{ field: string; over: string; of: string; fn: 'sum' | 'count' | 'max' | 'min' }>
   ownership?: { field: string; readAllPermission: string }
+  dataScope?: SemanticDataScope
 }
 
 export interface ValidationRule {

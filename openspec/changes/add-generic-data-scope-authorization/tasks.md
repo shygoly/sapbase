@@ -1,5 +1,6 @@
-> 当前进度（2026-11-09）：2.1/2.2/2.3/2.4a/2.5、3.1/3.2a/3.3/3.4/3.5/3.7 已完成；
-> 解析器先以纯逻辑 + 单测落地，尚未接 DataScopeService/语义运行时/管理 API。
+> 当前进度（2026-11-09）：2.1/2.2/2.3/2.4a/2.5、3.1/3.2a/3.3/3.4/3.5/3.6a/3.7、
+> 4.1a/4.2a/4.3、5.1a/5.1b/5.2a/5.2b、6.1/6.2a 已完成；解析器 + SQL 编译器 + DataScopeService + 管理 API + 列表/单条读执行点 + 蓝图 dataScope 元数据已落地，
+> 尚未接写入/迁移/导入/视图/导出/Agent、Redis 缓存、预览 UI、permissions scope/cap、e2e。
 
 ## 1. 元语与契约
 
@@ -26,15 +27,18 @@
 - [x] 3.3 实现成员解析：用户/角色/组、岗位过滤、有效期过滤
 - [x] 3.4 实现策略组合：allow 并集、deny 覆盖、多角色并集、模板 cap 交集
 - [x] 3.5 实现关系解析：蓝图关联实体单跳 + 平台关联表单跳
-- [ ] 3.6 实现 `scopeVersion` 与缓存（Redis + 内存实现），变更即 bump
+- [x] 3.6a 实现 `scopeVersion` + 内存缓存，变更即 bump
+- [ ] 3.6b Redis 缓存（多实例）
 - [x] 3.7 单元测试：五种 scope、空绑定 fail-closed、无策略 fail-closed、跨维度非法、过期成员、deny 优先、cap 收窄
 - [ ] 3.8 失败路径测试：解析异常、非法节点、循环树、伪造主体
 
 ## 4. 统一执行点
 
-- [ ] 4.1 新增 `DataScopeService`：`resolve(actor, resourceKey, action)` + `assertRowInScope` + `assertCreateInScope`
-- [ ] 4.2 TypeORM 适配器：`applyScope(qb, expr, alias)`，支持 column 与 jsonb FieldRef
-- [ ] 4.3 语义运行时列表/详情/单条读接入范围谓词（与字段权限、ownership 组合）
+- [x] 4.1a `DataScopeService.resolve(actor, resourceKey, action)` + 预算缓存
+- [ ] 4.1b `assertRowInScope` + `assertCreateInScope`
+- [x] 4.2a `ScopeSqlCompiler`：ScopeExpr → SQL/params，支持 column/jsonb/exists
+- [ ] 4.2b TypeORM `applyScope(qb, expr, alias)`
+- [x] 4.3 语义运行时列表/详情/单条读接入范围谓词（与字段权限、ownership 组合）
 - [ ] 4.4 语义运行时写/更新/删除/状态迁移接入：目标行越界拒绝，创建校验写入节点在可写范围
 - [ ] 4.5 导入接入：逐行校验，批量不部分落库；错误可定位到行与字段
 - [ ] 4.6 导出/统计/视图/追溯接入同一谓词
@@ -43,8 +47,11 @@
 
 ## 5. 管理面与预览
 
-- [ ] 5.1 维度/节点/成员/策略 CRUD API（`data-scope:read` / `data-scope:manage`）
-- [ ] 5.2 有效范围预览 API：`userId + resourceKey + action` → 节点集合 + 谓词摘要（不返回业务行）
+- [x] 5.1a 维度/节点/成员/绑定/策略 service CRUD
+- [x] 5.1b 管理 API + 权限点（`data-scope:read` / `data-scope:manage`）
+- [x] 5.2a `DataScopeService.preview()`（复用 resolve）
+- [x] 5.2b 预览 API（返回 expr/version/declared）
+- [ ] 5.2c 预览 UI + 节点集合/可读谓词摘要
 - [ ] 5.3 策略/成员/节点变更写审计（actor、before/after、原因）
 - [ ] 5.4 `api-client` 与 OpenAPI 更新
 - [ ] 5.5 管理 UI：树、成员、策略、预览（可放 Portal 组织管理区）
@@ -52,8 +59,9 @@
 
 ## 6. 蓝图集成
 
-- [ ] 6.1 `blueprint-semantic` 实体支持 `dataScope`（`ownerField` + `bindings`）
-- [ ] 6.2 编译器校验：字段/实体/关联字段存在；`own` 需要 owner；`team`/`policy` 需要绑定
+- [x] 6.1 `blueprint-semantic` 实体支持 `dataScope`（`ownerField` + `bindings`）
+- [x] 6.2a 编译器校验 dataScope：字段/实体/关联字段存在、dimension key 合法
+- [ ] 6.2b `permissions.json` 的 own/team/policy 与 cap 校验
 - [ ] 6.3 `permissions.json` 支持 `scope: "policy"` + `dataScope`，保持旧值语义不变
 - [ ] 6.4 装载/升级时解析蓝图模板 cap；租户策略只能收窄
 - [ ] 6.5 旧包兼容：无 `dataScope` 的包行为不变；`scope` 仅作为声明/粗粒度映射

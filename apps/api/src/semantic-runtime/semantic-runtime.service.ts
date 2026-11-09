@@ -60,6 +60,9 @@ import {
 } from './record-query'
 import { materializeDefaults, type SemanticEntity, type ValidationRule } from './record-validator'
 import { mapConstraintError, RecordWriteError } from './record-write-error'
+import { DataScopeService } from '../data-scope/data-scope.service'
+import { compileScopeExpr } from '../data-scope/scope-sql-compiler'
+import type { ScopeBindingView } from '../data-scope/data-scope.types'
 import { applyUniqueIndexes } from './unique-index'
 import {
   assembleFitmentCandidates,
@@ -191,6 +194,7 @@ export class SemanticRuntimeService {
     private readonly dataSource: DataSource,
     private readonly auditLogs: AuditLogsService,
     private readonly outbox: OutboxService,
+    private readonly dataScope: DataScopeService,
   ) {}
 
   async write(
@@ -599,6 +603,14 @@ export class SemanticRuntimeService {
     this.assertEntityAccess(loaded, entity, ['list', 'read'], actor)
 
     if (!hasQueryParams(query)) {
+      if (declared.dataScope) {
+        return this.listAllWithDataScope(
+          loaded.manifest.blueprint,
+          declared,
+          organizationId,
+          actor,
+        )
+      }
       const rows = await this.records.find({
         where: {
           blueprintId: loaded.manifest.blueprint,
@@ -649,6 +661,14 @@ export class SemanticRuntimeService {
     }
     this.assertEntityAccess(loaded, entity, 'read', actor)
     const row = await this.findRecordOrThrow(loaded.manifest.blueprint, organizationId, entity, recordId)
+    await this.assertRecordInDataScope(
+      loaded.manifest.blueprint,
+      declared,
+      row,
+      organizationId,
+      actor,
+      'read',
+    )
     return this.withResolvedState(row, declared, actor)
   }
 
@@ -1554,6 +1574,115 @@ export class SemanticRuntimeService {
     }
   }
 
+  private async listAllWithDataScope(
+    blueprintId: string,
+    entity: SemanticEntity,
+    organizationId: string,
+    actor?: RuntimeActor,
+  ): Promise<BlueprintRecord[]> {
+    const params: unknown[] = [blueprintId, organizationId, entity.name]
+    const clauses = ['"blueprintId" = $1', '"organizationId" = $2', 'entity = $3']
+    const scope = await this.resolveBlueprintDataScope(
+      blueprintId,
+      entity,
+      organizationId,
+      actor,
+      'list',
+    )
+    if (scope) {
+      if (scope.expr.op === 'none') return []
+      if (scope.expr.op !== 'all') {
+        const compiled = compileScopeExpr(scope.expr, {
+          alias: 'blueprint_records',
+          rowAlias: 'blueprint_records',
+          organizationId,
+          actorId: actorId(actor) ?? '',
+          paramOffset: params.length,
+        })
+        clauses.push(compiled.sql)
+        params.push(...compiled.params)
+      }
+    }
+    const rows = (await this.dataSource.query(
+      `SELECT * FROM public.blueprint_records
+        WHERE ${clauses.join(' AND ')}
+        ORDER BY "createdAt" ASC`,
+      params,
+    )) as BlueprintRecord[]
+    return filterOwnedRows(entity, rows, actor).map((row) =>
+      this.withResolvedState(row, entity, actor),
+    )
+  }
+
+  private async resolveBlueprintDataScope(
+    blueprintId: string,
+    entity: SemanticEntity,
+    organizationId: string,
+    actor: RuntimeActor | undefined,
+    action: string,
+  ) {
+    const decl = entity.dataScope
+    if (!decl) return null
+    const resourceKey = `blueprint:${blueprintId}:${entity.name}`
+    const bindings: ScopeBindingView[] = decl.bindings.map((binding) => ({
+      resourceKey,
+      dimensionKey: binding.dimension,
+      kind: binding.kind,
+      field: binding.field ?? null,
+      relation: binding.relation ?? null,
+    }))
+    return this.dataScope.resolve({
+      organizationId,
+      actor: {
+        userId: actorId(actor) ?? '',
+        roleKeys: actor?.role ? [actor.role] : [],
+        groupKeys: [],
+        permissions: actorPermissions(actor),
+      },
+      resourceKey,
+      action,
+      declared: true,
+      bindings,
+    })
+  }
+
+  private async assertRecordInDataScope(
+    blueprintId: string,
+    entity: SemanticEntity,
+    row: BlueprintRecord,
+    organizationId: string,
+    actor: RuntimeActor | undefined,
+    action: string,
+  ): Promise<void> {
+    const scope = await this.resolveBlueprintDataScope(
+      blueprintId,
+      entity,
+      organizationId,
+      actor,
+      action,
+    )
+    if (!scope || scope.expr.op === 'all') return
+    if (scope.expr.op === 'none') {
+      throw new NotFoundException('记录不存在或无权访问')
+    }
+    const compiled = compileScopeExpr(scope.expr, {
+      alias: 'blueprint_records',
+      rowAlias: 'blueprint_records',
+      organizationId,
+      actorId: actorId(actor) ?? '',
+      paramOffset: 2,
+    })
+    const rows = (await this.dataSource.query(
+      `SELECT 1 FROM public.blueprint_records
+        WHERE id = $1 AND "organizationId" = $2 AND (${compiled.sql})
+        LIMIT 1`,
+      [row.id, organizationId, ...compiled.params],
+    )) as Array<{ '?column?': number }>
+    if (rows.length === 0) {
+      throw new NotFoundException('记录不存在或无权访问')
+    }
+  }
+
   private async listEnvelope(
     blueprintId: string,
     entity: SemanticEntity,
@@ -1573,6 +1702,30 @@ export class SemanticRuntimeService {
       )
       params.push(who)
       next += 1
+    }
+
+    const dataScope = await this.resolveBlueprintDataScope(
+      blueprintId,
+      entity,
+      organizationId,
+      actor,
+      'list',
+    )
+    if (dataScope) {
+      if (dataScope.expr.op === 'none') {
+        clauses.push('1=0')
+      } else if (dataScope.expr.op !== 'all') {
+        const compiled = compileScopeExpr(dataScope.expr, {
+          alias: 'blueprint_records',
+          rowAlias: 'blueprint_records',
+          organizationId,
+          actorId: actorId(actor) ?? '',
+          paramOffset: next,
+        })
+        clauses.push(compiled.sql)
+        params.push(...compiled.params)
+        next += compiled.params.length
+      }
     }
 
     if (parsed.state !== null) {

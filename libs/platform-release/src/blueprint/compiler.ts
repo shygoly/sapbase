@@ -112,6 +112,15 @@ export interface SemanticEntity {
   numbering?: SemanticNumbering
   rollups?: Array<{ field: string; over: string; of: string; fn: string }>
   ownership?: { field: string; readAllPermission: string }
+  dataScope?: {
+    ownerField?: string
+    bindings: Array<{
+      dimension: string
+      kind: 'field' | 'owner' | 'relation'
+      field?: string
+      relation?: { entity?: string; table?: string; fromField: string; actorField: string }
+    }>
+  }
 }
 
 /** 与运行时列 / 载荷保留键冲突的字段名；模板不得声明。 */
@@ -640,6 +649,7 @@ function detectSemanticP0Conflicts(semantic: { entities: SemanticEntity[] }): st
       pushFieldP0Conflicts(conflicts, entity.name, field, fieldByName, fieldNames)
     }
     conflicts.push(...detectOwnershipConflicts(entity, fieldByName))
+    conflicts.push(...detectDataScopeConflicts(semantic.entities, entity, fieldByName))
 
     const edges = new Map<string, string[]>()
     for (const field of entity.fields) {
@@ -866,6 +876,84 @@ function detectOwnershipConflicts(
     conflicts.push(
       `权限非法：${path}.readAllPermission「${entity.ownership.readAllPermission}」必须是点分权限`,
     )
+  }
+  return conflicts
+}
+
+function detectDataScopeConflicts(
+  entities: SemanticEntity[],
+  entity: SemanticEntity,
+  fieldByName: Map<string, SemanticField>,
+): string[] {
+  const conflicts: string[] = []
+  const scope = entity.dataScope
+  if (!scope) return conflicts
+  const path = `${entity.name}.dataScope`
+
+  if (!Array.isArray(scope.bindings) || scope.bindings.length === 0) {
+    conflicts.push(`数据范围非法：${path}.bindings 不能为空`)
+    return conflicts
+  }
+
+  if (scope.ownerField) {
+    const field = fieldByName.get(scope.ownerField)
+    if (!field) {
+      conflicts.push(`数据范围非法：${path}.ownerField「${scope.ownerField}」不是本实体字段`)
+    } else if (field.type !== 'text') {
+      conflicts.push(`数据范围非法：${path}.ownerField「${scope.ownerField}」必须是 type=text`)
+    }
+  }
+
+  for (const [index, binding] of scope.bindings.entries()) {
+    const bindingPath = `${path}.bindings[${index}]`
+    if (!/^[a-z][a-z0-9_]*$/.test(binding.dimension)) {
+      conflicts.push(`数据范围非法：${bindingPath}.dimension「${binding.dimension}」必须是 snake_case key`)
+    }
+    if (binding.kind !== 'field' && binding.kind !== 'owner' && binding.kind !== 'relation') {
+      conflicts.push(`数据范围非法：${bindingPath}.kind=${binding.kind} 只接受 field | owner | relation`)
+      continue
+    }
+    if (binding.kind === 'field' || binding.kind === 'owner') {
+      if (!binding.field) {
+        conflicts.push(`数据范围非法：${bindingPath} 的 ${binding.kind} 必须声明 field`)
+        continue
+      }
+      const field = fieldByName.get(binding.field)
+      if (!field) {
+        conflicts.push(`数据范围非法：${bindingPath}.field「${binding.field}」不是本实体字段`)
+      } else if (field.type !== 'text' && field.type !== 'reference') {
+        conflicts.push(`数据范围非法：${bindingPath}.field「${binding.field}」必须是 text 或 reference`)
+      }
+      continue
+    }
+
+    const relation = binding.relation
+    if (!relation) {
+      conflicts.push(`数据范围非法：${bindingPath} 的 relation 必须声明 relation 配置`)
+      continue
+    }
+    if (!relation.entity && !relation.table) {
+      conflicts.push(`数据范围非法：${bindingPath}.relation 必须声明 entity 或 table`)
+    }
+    if (!relation.fromField || !relation.actorField) {
+      conflicts.push(`数据范围非法：${bindingPath}.relation 必须声明 fromField/actorField`)
+      continue
+    }
+    if (relation.entity) {
+      const target = entities.find((candidate) => candidate.name === relation.entity)
+      if (!target) {
+        conflicts.push(`数据范围非法：${bindingPath}.relation.entity「${relation.entity}」未声明`)
+      } else {
+        for (const name of [relation.fromField, relation.actorField]) {
+          const targetField = target.fields.find((field) => field.name === name)
+          if (!targetField) {
+            conflicts.push(
+              `数据范围非法：${bindingPath}.relation.${name} 不是 ${relation.entity} 的已声明字段`,
+            )
+          }
+        }
+      }
+    }
   }
   return conflicts
 }
