@@ -51,6 +51,7 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 - `DECISIONS.md`：代码里的独立 `D-x` 标记必须登记（`TD-x` 在 `docs/tech-debt.md`）。
 - `AGENT-TOOLS.md`：与 `contracts/tools.json` 对拍；写工具必须 `confirmation: required`。
 - `DOMAIN.md`：表/列/关系/不变量；跑 `check-domain-doc.mjs`。
+- `docs/OPENSPEC_CHANGES.md`：change 台账；改 `openspec/changes/**` 后跑 `npm run meta:openspec-ledger`，CI 会校验；交互浏览用 `openspec view`。
 
 **AGENT RULE**：PiAgent 只能经 `contracts/tools.json` 的工具面操作；写操作必须确认令牌；不得批准/发布自己起草的提议；不得把未发布知识带入回答。
 

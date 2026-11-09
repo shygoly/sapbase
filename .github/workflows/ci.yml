@@ -295,6 +295,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # 台账“最近更新”取每个 change 的最后一个提交日期；浅克隆会让 CI 与本地不一致
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -304,6 +307,10 @@ jobs:
       # 四份契约只读校验：秒级、零依赖；采用初期 --warn-only，存量进 meta-baseline.json
       - name: Validate meta contracts
         run: npm run check:ci
+
+      # OpenSpec change 台账必须与 changes/archive 同步；过期会阻断 CI
+      - name: Validate OpenSpec change ledger
+        run: npm run check:openspec-ledger
 
       - name: Validate agents
         run: node scripts/ci/validate-agents.js

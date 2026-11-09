@@ -1,6 +1,6 @@
 # 校验器（参考实现）
 
-零依赖，Node 18+。三个 checker 分别对拍四份契约中的三份；`check-all.mjs` 顺序运行。
+零依赖，Node 18+。多个 checker 对拍四份契约与 OpenSpec changes；`check-all.mjs` 顺序运行契约类 checker。
 
 ```text
 check-domain-doc.mjs      DOMAIN.md ↔ schema manifest / SQL / 代码
@@ -117,6 +117,24 @@ sapbase 当前用 TypeORM：用 `schema-manifest.typeorm.mjs` 生成 manifest。
 - `strictHandlers: true` 时，处理器与契约不一致为 ERR；默认 WARN，便于渐进接入。
 - 文档里处理器写 `-` 表示平台内置/由 registry 分派，不检查具体符号。
 
+### 3.4 OpenSpec change ledger
+
+`openspec-ledger.mjs` 从仓库文件生成 `docs/OPENSPEC_CHANGES.md`：
+按 `openspec/changes/**` 与 `openspec/changes/archive/**` 汇总 change、标题、任务进度、
+规格数量、入口链接与最近更新时间。它不依赖全局 `openspec` CLI，CI 可直接跑。
+
+```bash
+npm run meta:openspec-ledger     # 生成/更新台账
+npm run check:openspec-ledger    # 台账过期则退出 1
+node scripts/meta/openspec-ledger.mjs --json   # 机器可读
+```
+
+规则：
+
+- 任务数只认 `tasks.md` 的 `- [ ]` / `- [x]`；`openspec status` 的 artifact 完成度不等于实现完成。
+- 已完成但未归档的 change 归入“已完成未归档”；归档以 `changes/archive/` 为准。
+- 修改 change 的 proposal/tasks/specs 后必须重新生成台账，CI 会校验。
+
 ---
 
 ## 4. 基线
@@ -180,6 +198,7 @@ scripts/
 ├─ check-meta-docs.mjs
 ├─ check-agent-tools.mjs
 ├─ check-all.mjs
+├─ openspec-ledger.mjs
 ├─ schema-manifest.typeorm.mjs
 ├─ meta.config.example.json
 └─ README.md

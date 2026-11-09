@@ -33,6 +33,8 @@
     "check:boundaries": "node scripts/meta/check-boundaries.mjs",
     "test:meta": "node --test scripts/meta/lib/*.test.mjs",
     "check:links": "node scripts/meta/check-doc-links.mjs",
+    "meta:openspec-ledger": "node scripts/meta/openspec-ledger.mjs",
+    "check:openspec-ledger": "node scripts/meta/openspec-ledger.mjs --check",
     "dev:portal": "npm run dev --workspace @sap/web-portal",
     "dev:console": "npm run dev --workspace @sap/web-console",
     "build:web": "npm run build --workspace @sap/web-portal && npm run build --workspace @sap/web-console",
