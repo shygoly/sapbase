@@ -30,6 +30,7 @@ const DIRECT_TABLES = [
   'scope_bindings',
   'data_policies',
   'scope_versions',
+  'jobs',
 ] as const
 
 const CHILD_TABLES = [
@@ -69,6 +70,16 @@ const CHILD_TABLES = [
     table: 'outbox_deliveries',
     column: 'eventId',
     parent: 'outbox_events',
+  },
+  {
+    table: 'job_attempts',
+    column: 'jobId',
+    parent: 'jobs',
+  },
+  {
+    table: 'job_events',
+    column: 'jobId',
+    parent: 'jobs',
   },
 ] as const
 

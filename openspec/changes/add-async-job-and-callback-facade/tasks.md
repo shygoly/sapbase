@@ -1,5 +1,5 @@
-> 当前进度（2026-11-09）：纯状态机/退避/租约判定已落地（`libs/platform-core/src/jobs/job-state.ts` + 6 项单测）；
-> 持久化、worker、API、回调尚未开始。
+> 当前进度（2026-11-09）：纯状态机/退避/租约判定 + jobs/job_attempts/job_events 持久化/RLS/迁移已落地；
+> worker、任务类型注册、外部 API、回调尚未开始。
 
 ## 1. 契约与元语
 
@@ -11,10 +11,11 @@
 
 ## 2. 存储与 RLS
 
-- [ ] 2.1 迁移：`jobs` / `job_attempts` / `job_events`
-- [ ] 2.2 索引：`(status, runAt, priority)`、`(organizationId, status, createdAt)`、幂等唯一约束
-- [ ] 2.3 新表加入 `TENANT_RLS_DDL`；跨租户负例
-- [ ] 2.4 TypeORM 实体与模块注册
+- [x] 2.1 迁移：`jobs` / `job_attempts` / `job_events`
+- [x] 2.2 索引：`(status, runAt, priority)`、`(organizationId, status, createdAt)`、幂等唯一约束
+- [x] 2.3a 新表加入 `TENANT_RLS_DDL`
+- [ ] 2.3b 跨租户负例
+- [x] 2.4 TypeORM 实体与模块注册
 
 ## 3. 任务类型注册
 

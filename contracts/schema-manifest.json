@@ -1021,6 +1021,62 @@
         "organizationId",
         "version"
       ]
+    },
+    "jobs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appInstallationId",
+        "type",
+        "typeVersion",
+        "status",
+        "priority",
+        "payload",
+        "result",
+        "error",
+        "progress",
+        "idempotencyKey",
+        "attempts",
+        "maxAttempts",
+        "runAt",
+        "startedAt",
+        "finishedAt",
+        "leaseUntil",
+        "workerId",
+        "cancelRequested",
+        "callbackUrl",
+        "callbackSecretRef",
+        "callbackStatus",
+        "callbackAttempts",
+        "createdBy"
+      ]
+    },
+    "job_attempts": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "jobId",
+        "attempt",
+        "status",
+        "error",
+        "startedAt",
+        "finishedAt",
+        "durationMs"
+      ]
+    },
+    "job_events": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "jobId",
+        "seq",
+        "type",
+        "payload"
+      ]
     }
   }
 }

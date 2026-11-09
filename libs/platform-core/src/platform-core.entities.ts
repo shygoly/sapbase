@@ -12,6 +12,9 @@ import { BrandConfig } from './organizations/brand-config.entity'
 import { DataPolicy } from './data-scope/entities/data-policy.entity'
 import { Department } from './departments/department.entity'
 import { Invitation } from './organizations/invitation.entity'
+import { Job } from './jobs/job.entity'
+import { JobAttempt } from './jobs/job-attempt.entity'
+import { JobEvent } from './jobs/job-event.entity'
 import { Organization } from './organizations/organization.entity'
 import { OrganizationActivity } from './organizations/organization-activity.entity'
 import { OrganizationMember } from './organizations/organization-member.entity'
@@ -49,6 +52,9 @@ export const PLATFORM_CORE_ENTITIES = [
   ScopeBinding,
   DataPolicy,
   ScopeVersion,
+  Job,
+  JobAttempt,
+  JobEvent,
 ] as const
 
 export type PlatformCoreEntity = (typeof PLATFORM_CORE_ENTITIES)[number]

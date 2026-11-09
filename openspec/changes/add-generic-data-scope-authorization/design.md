@@ -435,6 +435,14 @@ async function resolve(input: ResolveInput): Promise<ScopeExpr> {
 | 空绑定字段误伤历史数据 | 启用前空值预检；fail-closed；提供回填脚本 |
 | RLS 不能表达行级范围 | 明确 RLS 只做租户边界；应用层谓词 + 负例；不宣称 DB 级保证 |
 
+
+## Rollout Note
+
+- 声明 `dataScope` 即执行；未声明实体保持租户隔离旧行为。
+- 空绑定按 fail-closed 隐藏；启用前跑 `/data-scope/preflight` 并回填。
+- 蓝图模板 cap ∩ 租户策略；租户只能收窄，不能放大。
+- 先接平台表/单实体，再接视图/导出/Agent；所有入口复用同一 `ScopeExpr`。
+
 ## Open Questions
 
 - `departments` 是否在后续变更中迁移为 `department` 维度？（本变更只做适配器。）

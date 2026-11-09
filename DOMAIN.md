@@ -34,6 +34,9 @@
 | scope_bindings | 数据范围 |
 | data_policies | 数据范围 |
 | scope_versions | 数据范围 |
+| jobs | 异步任务 |
+| job_attempts | 异步任务 |
+| job_events | 异步任务 |
 | app_installations | 应用安装 |
 | app_installation_revisions | 应用安装 |
 | agent_confirmation_tokens | 应用安装 |
@@ -173,6 +176,42 @@ enforcement:
   - test:apps/api/src/data-scope/scope-evaluator.spec.ts#ScopeEvaluator
 db: none
 spec: apps/api/src/data-scope/scope-evaluator.spec.ts
+```
+
+---
+
+## 异步任务
+
+覆盖表：jobs, job_attempts, job_events
+
+异步任务聚合。`jobs` 是任务真源（PostgreSQL），worker 用 `FOR UPDATE SKIP LOCKED` 领取；
+Redis 只做唤醒，cron 兜底扫描。`job_attempts` 记录每次尝试，`job_events` 记录进度/阶段事件。
+任务状态机、重试/退避、lease 过期与 DLQ 判定见 `libs/platform-core/src/jobs/job-state.ts`。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| jobs.organizationId | organizations.id | 任务归属组织 | none | 租户隔离；RLS 兜底 |
+| job_attempts.jobId | jobs.id | 尝试归属任务 | none | 删除任务级联删除尝试 |
+| job_events.jobId | jobs.id | 事件归属任务 | none | 删除任务级联删除事件 |
+
+### 状态词
+
+任务状态使用 `queued` / `running` / `waiting` / `succeeded` / `failed` / `cancelled` / `dead`；
+非法迁移由 `assertJobTransition` 拒绝。禁止在 UI/API/DB 各造一套同义词。
+
+### 不变量
+
+```yaml invariant
+id: INV-JOB-01
+tables: [jobs, job_attempts, job_events]
+desc: 任务至少一次执行 + 幂等键；超时/失败按策略重试，超过上限进 dead(DLQ)；lease 过期可重新领取。
+trigger: 任务入队/领取/重试/取消/回调
+enforcement:
+  - test:apps/api/src/jobs/jobs.ddl.spec.ts#ASYNC_JOB_DDL
+db: none
+spec: apps/api/src/jobs/jobs.ddl.spec.ts
 ```
 
 ---

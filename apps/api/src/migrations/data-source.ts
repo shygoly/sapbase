@@ -29,6 +29,7 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1791900000000-EnableTenantRls.ts'),
     path.join(__dirname, '1792000000000-PreserveLegacyUserRole.ts'),
     path.join(__dirname, '1793100000000-CreateDataScope.ts'),
+    path.join(__dirname, '1793200000000-CreateAsyncJobs.ts'),
   ],
   synchronize: false,
   logging: true,

@@ -17,7 +17,7 @@
 - [x] 2.2 索引：`scope_nodes(organizationId, dimensionId, path)`、`scope_memberships(organizationId, subjectType, subjectId)`、`data_policies(organizationId, resourceKey, status)`
 - [x] 2.3 外键与唯一约束：维度 key 按组织唯一；节点父级同维度同组织；绑定 `(organizationId, resourceKey, dimensionKey, kind)` 唯一
 - [x] 2.4a 把新表加入 `TENANT_RLS_DDL.DIRECT_TABLES`
-- [ ] 2.4b 补 RLS e2e（跨租户不可见/不可写）
+- [x] 2.4b 补 RLS e2e（真实 Postgres 非 owner 角色，跨租户不可见/不可写）
 - [x] 2.5 TypeORM 实体与模块注册；确保实体注册检查通过
 
 ## 3. 范围解析器
@@ -78,7 +78,7 @@
 - [ ] 7.2b 学校样板 e2e（真实 DB）
 - [x] 7.3 关系样板：课程通过 `TeachingAssignment` 只对任课教师可见（evaluator/compiler 单测）
 - [x] 7.4 性能基线：10k 节点 × 5 次解析 < 1000ms（实测 ~24ms）
-- [ ] 7.5 RLS 与范围叠加的负例（跨租户优先拒绝）
+- [x] 7.5 RLS 跨租户负例（真实 Postgres 非 owner 角色 + 越权 INSERT）
 - [x] 7.6 `openspec validate add-generic-data-scope-authorization --strict`
 - [x] 7.7 运行元语/契约校验：`check-domain-doc.mjs`、`check-meta-docs.mjs`
 
@@ -88,4 +88,4 @@
 - [x] 8.2 更新 `docs/ARCHITECTURE.md` 权限小节（如存在）
 - [x] 8.3 更新 `AGENT-TOOLS.md`：Agent 数据访问工具必须执行范围
 - [ ] 8.4 更新 `openspec/specs/data-scope/spec.md` 归档说明
-- [ ] 8.5 发布说明：声明即执行、空绑定 fail-closed、租户只能收窄
+- [x] 8.5 发布说明：声明即执行、空绑定 fail-closed、租户只能收窄
