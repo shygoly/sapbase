@@ -1111,6 +1111,80 @@
         "revokedAt",
         "revokedReason"
       ]
+    },
+    "identity_providers": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "key",
+        "name",
+        "type",
+        "config",
+        "secretRef",
+        "defaultRoleName",
+        "status"
+      ]
+    },
+    "identity_links": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "providerId",
+        "externalId",
+        "userId",
+        "attributes",
+        "lastLoginAt"
+      ]
+    },
+    "auth_login_events": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "email",
+        "provider",
+        "status",
+        "ip",
+        "userAgent",
+        "reason",
+        "metadata"
+      ]
+    },
+    "identity_sync_runs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "providerId",
+        "status",
+        "stats",
+        "error",
+        "startedAt",
+        "finishedAt"
+      ]
+    },
+    "service_clients": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "key",
+        "name",
+        "secretHash",
+        "scopes",
+        "status",
+        "expiresAt",
+        "lastUsedAt",
+        "ipAllowlist"
+      ]
     }
   }
 }

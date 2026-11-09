@@ -33,6 +33,11 @@ const DIRECT_TABLES = [
   'jobs',
   'organization_member_roles',
   'auth_sessions',
+  'identity_providers',
+  'identity_links',
+  'auth_login_events',
+  'identity_sync_runs',
+  'service_clients',
 ] as const
 
 const CHILD_TABLES = [

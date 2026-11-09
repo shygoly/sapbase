@@ -1,19 +1,19 @@
 ## 1. 契约与元语
 
-- [ ] 1.1 定义 `identity-provider`、`identity-link`、`session`、`service-client` 的持久化形状与 JSON Schema
-- [ ] 1.2 在 `docs/META_LANGUAGE.md` 登记身份联邦/会话/服务令牌术语与不变量（INV-ID-01..06）
-- [ ] 1.3 在 `DOMAIN.md` 新增身份与会话小节，运行 `node scripts/meta/check-domain-doc.mjs`
+- [x] 1.1 定义 `identity-provider`、`identity-link`、`session`、`service-client` 的持久化形状与 JSON Schema（`schemas/identity.schema.json`）
+- [x] 1.2 在 `docs/META_LANGUAGE.md` 登记身份联邦/会话/服务令牌术语与不变量（INV-ID-01..04，05/06 随 SSO/服务令牌实现补）
+- [x] 1.3 在 `DOMAIN.md` 新增身份与会话小节，运行 `node scripts/meta/check-domain-doc.mjs`
 - [ ] 1.4 在 `DECISIONS.md` 登记关键决策（多角色按组织、sid 吊销、服务令牌二次校验、fail-closed）
 - [ ] 1.5 更新 `openspec/project.md` 的认证/多租户约定（如需要）
 
 ## 2. 存储与 RLS
 
 - [x] 2.1a 迁移/实体：`organization_member_roles`（多角色绑定）
-- [ ] 2.1b 迁移/实体：`identity_providers` / `identity_links` / `auth_sessions` / `auth_login_events` / `identity_sync_runs` / `service_clients`
+- [x] 2.1b 迁移/实体：`identity_providers` / `identity_links` / `auth_sessions` / `auth_login_events` / `identity_sync_runs` / `service_clients`
 - [ ] 2.2 索引与唯一约束：provider key、identity link、活跃角色绑定、session 状态、login event 时间
 - [ ] 2.3 新表加入 `TENANT_RLS_DDL.DIRECT_TABLES`，补跨租户 RLS e2e
 - [x] 2.4a `organization_member_roles` 实体/模块/RLS 注册
-- [ ] 2.4b 其余身份/会话实体注册
+- [x] 2.4b 其余身份/会话实体注册
 
 ## 3. 多角色与有效权限
 

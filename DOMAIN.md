@@ -24,6 +24,11 @@
 | organization_members | 平台与租户 |
 | organization_member_roles | 身份与会话 |
 | auth_sessions | 身份与会话 |
+| identity_providers | 身份与会话 |
+| identity_links | 身份与会话 |
+| auth_login_events | 身份与会话 |
+| identity_sync_runs | 身份与会话 |
+| service_clients | 身份与会话 |
 | organization_activities | 平台与租户 |
 | settings | 平台与租户 |
 | brand_configs | 平台与租户 |
@@ -263,12 +268,14 @@ spec: apps/api/src/jobs/job-callback.spec.ts
 
 ## 身份与会话
 
-覆盖表：organization_member_roles, auth_sessions
+覆盖表：organization_member_roles, auth_sessions, identity_providers, identity_links, auth_login_events, identity_sync_runs, service_clients
 
 组织内多角色绑定。`organization_member_roles` 把用户映射到组织内角色，携带来源
 （manual/legacy/sso/sync）、状态与有效期；有效权限 = 本组织内 active 且未过期的角色并集
 ∪ 用户直授权限。`users.roleId` 保留为兼容回退，不删除。
 `auth_sessions` 是持久会话：JWT 只携带 `sid`，吊销/过期以本表为准；旧 token 无 `sid` 时保持兼容。
+`identity_providers`/`identity_links` 是 SSO 配置与外部身份映射；`auth_login_events` 记录登录成功/失败；
+`identity_sync_runs` 记录同步批次；`service_clients` 是服务令牌客户端（secretHash 只存哈希）。
 
 ### 关系
 
@@ -279,11 +286,16 @@ spec: apps/api/src/jobs/job-callback.spec.ts
 | organization_member_roles.roleId | roles.id | 绑定角色（可空） | none | roleName 为兼容/展示键 |
 | auth_sessions.organizationId | organizations.id | 会话归属组织 | none | RLS 兜底 |
 | auth_sessions.userId | users.id | 会话归属用户 | none | 吊销按用户批量 |
+| identity_links.providerId | identity_providers.id | 外部身份归属 provider | none | 删 provider 级联删 link |
+| identity_links.userId | users.id | 外部身份归属用户 | none | JIT 建号后写入 |
+| identity_sync_runs.providerId | identity_providers.id | 同步批次归属 provider | none | 删除 provider 级联删 run |
+| service_clients.organizationId | organizations.id | 服务客户端归属组织 | none | RLS 兜底 |
 
 ### 状态词
 
 绑定状态使用 `active` / `inactive`；来源使用 `manual` / `legacy` / `sso` / `sync`。
-有效期用 `validFrom` / `validTo` 表达。会话状态使用 `active` / `revoked` / `expired`。
+有效期用 `validFrom` / `validTo` 表达。会话状态使用 `active` / `revoked` / `expired`；provider 状态使用 `active` / `inactive`；
+登录事件状态使用 `success` / `failure`；同步状态使用 `running` / `succeeded` / `failed` / `partial`。
 禁止在 UI/API/DB 各造一套同义词。
 
 ### 不变量

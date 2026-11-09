@@ -274,6 +274,31 @@ Agent run 状态归 Agent Runtime；job 只携带 agentRunId 并桥接事件
 实现落点：`libs/platform-core/src/jobs/`；契约：`schemas/async-job.schema.json`；
 领域表：`DOMAIN.md`「异步任务」；决策：`DECISIONS.md` D-7/D-8/D-9。
 
+### 3.13 Identity Federation & Sessions（身份联邦与会话）
+
+身份与会话是平台边界，不是某个行业的账号表：
+
+- **身份提供方** `identity_providers`：按组织配置 CAS/OAuth2/OIDC/SAML，secret 走 secretRef。
+- **身份映射** `identity_links`：外部 subject ↔ 平台用户；JIT 建号只给默认角色。
+- **多角色绑定** `organization_member_roles`：组织 + 用户 + 角色 + 来源 + 有效期。
+- **持久会话** `auth_sessions`：JWT 携带 `sid`；吊销/过期以本表为准。
+- **登录事件** `auth_login_events`：成功/失败/ip/ua/provider，用于异常登录。
+- **同步批次** `identity_sync_runs`：生命周期同步的差异与失败记录。
+- **服务客户端** `service_clients`：客户端凭证、scope、过期/吊销/白名单；secret 只存哈希。
+
+执行语义：
+
+```text
+有效权限 = 本组织 active 角色并集 ∪ 直授；users.roleId 仅作回退
+JWT 带 sid → 守卫校验会话；吊销后立即 401
+SSO 失败/同步源不可用 → fail-closed，不降级到“信任调用方”
+服务令牌代用户调用 → 服务端重新解析权限与数据范围
+外部 subject 只用于映射，不直接作为平台 userId
+```
+
+实现落点：`libs/platform-core/src/identity/`；契约：`schemas/identity.schema.json`；
+领域表：`DOMAIN.md`「身份与会话」；决策：`DECISIONS.md` D-10。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -306,6 +331,9 @@ Agent run 状态归 Agent Runtime；job 只携带 agentRunId 并桥接事件
 23. **任务上下文来自可信身份**：组织/应用上下文不接受 body 覆盖；RLS 兜底（INV-JOB-04）。
 24. **回调安全**：默认 https、禁私网/重定向、HMAC 签名；回调失败不改任务结果（INV-JOB-05）。
 25. **多角色按组织**：有效权限 = 本组织 active 角色并集 ∪ 直授；`users.roleId` 仅作回退（INV-ID-01）。
+26. **会话以 sid 为准**：JWT 携带 sid；吊销/过期后守卫必须拒绝，旧无 sid token 仅按过期时间兼容（INV-ID-02）。
+27. **SSO/同步 fail-closed**：源不可用、签名/state/nonce 失败不得降级为信任调用方（INV-ID-03）。
+28. **服务令牌不携带用户权限真相**：代用户调用必须服务端重解析权限与数据范围（INV-ID-04）。
 
 ---
 
