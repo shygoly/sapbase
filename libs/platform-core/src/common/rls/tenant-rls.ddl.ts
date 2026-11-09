@@ -38,6 +38,9 @@ const DIRECT_TABLES = [
   'auth_login_events',
   'identity_sync_runs',
   'service_clients',
+  'assets',
+  'asset_variants',
+  'asset_upload_sessions',
 ] as const
 
 const CHILD_TABLES = [

@@ -24,6 +24,9 @@ import { IdentityLink } from './identity/identity-link.entity'
 import { AuthLoginEvent } from './identity/auth-login-event.entity'
 import { IdentitySyncRun } from './identity/identity-sync-run.entity'
 import { ServiceClient } from './identity/service-client.entity'
+import { Asset } from './assets/asset.entity'
+import { AssetVariant } from './assets/asset-variant.entity'
+import { AssetUploadSession } from './assets/asset-upload-session.entity'
 import { OrganizationMember } from './organizations/organization-member.entity'
 import { Permission } from './permissions/permission.entity'
 import { Role } from './roles/role.entity'
@@ -55,6 +58,9 @@ export const PLATFORM_CORE_ENTITIES = [
   AuthLoginEvent,
   IdentitySyncRun,
   ServiceClient,
+  Asset,
+  AssetVariant,
+  AssetUploadSession,
   Department,
   Role,
   AuditLog,

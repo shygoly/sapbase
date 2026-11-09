@@ -1186,6 +1186,66 @@
         "lastUsedAt",
         "ipAllowlist"
       ]
+    },
+    "assets": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appInstallationId",
+        "ownerId",
+        "kind",
+        "status",
+        "objectKey",
+        "originalName",
+        "mimeType",
+        "size",
+        "checksum",
+        "width",
+        "height",
+        "durationMs",
+        "pageCount",
+        "metadata",
+        "isPublic",
+        "retentionUntil",
+        "deletedAt",
+        "createdBy"
+      ]
+    },
+    "asset_variants": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "assetId",
+        "kind",
+        "objectKey",
+        "mimeType",
+        "size",
+        "width",
+        "height",
+        "metadata"
+      ]
+    },
+    "asset_upload_sessions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "objectKey",
+        "originalName",
+        "mimeType",
+        "expectedSize",
+        "checksum",
+        "status",
+        "parts",
+        "expiresAt",
+        "completedAt"
+      ]
     }
   }
 }

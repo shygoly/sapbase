@@ -29,6 +29,9 @@
 | auth_login_events | 身份与会话 |
 | identity_sync_runs | 身份与会话 |
 | service_clients | 身份与会话 |
+| assets | 资产 |
+| asset_variants | 资产 |
+| asset_upload_sessions | 资产 |
 | organization_activities | 平台与租户 |
 | settings | 平台与租户 |
 | brand_configs | 平台与租户 |
@@ -262,6 +265,42 @@ enforcement:
   - test:apps/api/src/jobs/job-callback.spec.ts#JobCallbackService
 db: none
 spec: apps/api/src/jobs/job-callback.spec.ts
+```
+
+---
+
+## 资产
+
+覆盖表：assets, asset_variants, asset_upload_sessions
+
+资产注册表。`assets` 是业务可引用的资产真源（kind/status/mime/size/checksum/objectKey）；
+`asset_variants` 存缩略图/预览/转码等派生物；`asset_upload_sessions` 是分片上传会话。
+对象 key 按 `org/<organizationId>/...` 组织，存储实现必须拒绝路径穿越。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| assets.organizationId | organizations.id | 资产归属组织 | none | RLS 兜底 |
+| asset_variants.assetId | assets.id | 变体归属资产 | none | 删除资产级联删除变体（DDL FK） |
+| asset_upload_sessions.organizationId | organizations.id | 上传会话归属组织 | none | 过期清理 |
+
+### 状态词
+
+资产状态使用 `uploading` / `scanning` / `processing` / `ready` / `failed` / `quarantined` / `deleted`；
+上传会话状态使用 `uploading` / `completed` / `aborted` / `expired`。禁止同义词。
+
+### 不变量
+
+```yaml invariant
+id: INV-AS-01
+tables: [assets, asset_variants, asset_upload_sessions]
+desc: 资产对象 key 必须在组织前缀内且不可路径穿越；infected/quarantined 资产不可下载；跨租户 assetId 不可解析。
+trigger: 上传/完成/下载/删除/变体查询
+enforcement:
+  - test:apps/api/src/assets/assets.ddl.spec.ts#ASSET_DDL
+db: rls:assets
+spec: apps/api/src/assets/assets.ddl.spec.ts
 ```
 
 ---

@@ -1,2 +1,7 @@
 export * from './object-storage'
 export * from './local-object-storage'
+export * from './assets.ddl'
+export * from './asset.entity'
+export * from './asset-variant.entity'
+export * from './asset-upload-session.entity'
+export * from './asset-state'

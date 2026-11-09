@@ -25,9 +25,9 @@
 
 ## 4. 资产注册表
 
-- [ ] 4.1 `assets` 表与状态机（uploading/scanning/processing/ready/failed/quarantined/deleted）
-- [ ] 4.2 `asset_variants` 表与查询
-- [ ] 4.3 元数据：宽高、时长、页数、EXIF 剥离标记、标签
+- [x] 4.1 `assets` 表与状态机（uploading/scanning/processing/ready/failed/quarantined/deleted）
+- [x] 4.2 `asset_variants` 表与查询
+- [x] 4.3 元数据列：宽高、时长、页数、metadata（EXIF 剥离标记由处理器写入）
 - [ ] 4.4 去重：同组织 checksum/size 复用对象；业务引用独立
 - [ ] 4.5 软删除/恢复/保留期
 - [ ] 4.6 RLS 与跨租户负例
