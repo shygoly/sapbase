@@ -12,7 +12,11 @@ import { ServiceClientsService } from './service-clients.service'
 import { ServiceClientAuthGuard } from './service-client-auth.guard'
 import { IdentitySsoService } from './identity-sso.service'
 import { IdentitySsoController } from './identity-sso.controller'
+import { IdentitySourceAdapterRegistry } from './identity-source'
+import { IdentitySyncService } from './identity-sync.service'
+import { IdentitySyncController } from './identity-sync.controller'
 import { IdentityLink } from './identity-link.entity'
+import { IdentitySyncRun } from './identity-sync-run.entity'
 import { UsersModule } from '../users/users.module'
 import { RolesModule } from '../roles/roles.module'
 import { ServiceClient } from './service-client.entity'
@@ -29,8 +33,9 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
       AuthLoginEvent,
       ServiceClient,
       IdentityLink,
+      IdentitySyncRun,
     ])],
-  controllers: [IdentityController, IdentitySsoController],
+  controllers: [IdentityController, IdentitySsoController, IdentitySyncController],
   providers: [
     OrganizationMemberRolesService,
     AuthSessionsService,
@@ -39,6 +44,8 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
     ServiceClientsService,
     ServiceClientAuthGuard,
     IdentitySsoService,
+    IdentitySourceAdapterRegistry,
+    IdentitySyncService,
   ],
   exports: [
     OrganizationMemberRolesService,
@@ -48,6 +55,8 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
     ServiceClientsService,
     ServiceClientAuthGuard,
     IdentitySsoService,
+    IdentitySourceAdapterRegistry,
+    IdentitySyncService,
     TypeOrmModule,
   ],
 })
