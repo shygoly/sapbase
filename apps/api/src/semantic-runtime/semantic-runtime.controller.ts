@@ -61,7 +61,7 @@ export class SemanticRuntimeController {
     @CurrentUser() user?: RuntimeUser,
   ) {
     try {
-      return await this.runtime.viewStock(id, user?.organizationId ?? '')
+      return await this.runtime.viewStock(id, user?.organizationId ?? '', user)
     } catch (error) {
       toHttpException(error)
     }
@@ -74,7 +74,7 @@ export class SemanticRuntimeController {
     @CurrentUser() user?: RuntimeUser,
   ) {
     try {
-      return await this.runtime.viewInTransit(id, user?.organizationId ?? '')
+      return await this.runtime.viewInTransit(id, user?.organizationId ?? '', user)
     } catch (error) {
       toHttpException(error)
     }
@@ -87,7 +87,7 @@ export class SemanticRuntimeController {
     @CurrentUser() user?: RuntimeUser,
   ) {
     try {
-      return await this.runtime.viewReceivable(id, user?.organizationId ?? '')
+      return await this.runtime.viewReceivable(id, user?.organizationId ?? '', user)
     } catch (error) {
       toHttpException(error)
     }

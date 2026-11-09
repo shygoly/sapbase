@@ -288,13 +288,25 @@ export class SemanticRuntimeService {
     }
 
     const batchNo = code.trim()
-    const batches = (await this.dataSource.query(
-      `SELECT id, data FROM public.blueprint_records
-        WHERE "blueprintId" = $1 AND "organizationId" = $2
-          AND entity = 'Batch' AND data->>'batchNo' = $3
-        ORDER BY id ASC`,
-      [loaded.manifest.blueprint, organizationId, batchNo],
-    )) as RelatedRecord[]
+    const batchScope = await this.dataScopeSqlFor(
+      packageId,
+      'Batch',
+      organizationId,
+      actor,
+      'list',
+      'blueprint_records',
+      3,
+    )
+    const batches = batchScope?.none
+      ? []
+      : ((await this.dataSource.query(
+          `SELECT id, data FROM public.blueprint_records
+            WHERE "blueprintId" = $1 AND "organizationId" = $2
+              AND entity = 'Batch' AND data->>'batchNo' = $3
+              ${batchScope ? `AND (${batchScope.sql})` : ''}
+            ORDER BY id ASC`,
+          [loaded.manifest.blueprint, organizationId, batchNo, ...(batchScope?.params ?? [])],
+        )) as RelatedRecord[])
 
     const partIds = batches.map((row) => row.data.part).filter((id): id is string => typeof id === 'string')
     const orderIds = batches.map((row) => row.data.order).filter((id): id is string => typeof id === 'string')
@@ -714,8 +726,18 @@ export class SemanticRuntimeService {
     return this.withResolvedState(row, declared, actor)
   }
 
-  async viewStock(packageId: string, organizationId: string) {
+  async viewStock(packageId: string, organizationId: string, actor?: RuntimeActor) {
     return this.runBuiltinView(packageId, organizationId, 'stock', async (blueprintId) => {
+      const scope = await this.dataScopeSqlFor(
+        packageId,
+        'StockItem',
+        organizationId,
+        actor,
+        'list',
+        's',
+        2,
+      )
+      if (scope?.none) return []
       const rows = (await this.dataSource.query(
         `SELECT s.data->>'part' AS "partId",
                 p.data->>'partNo' AS "partNo",
@@ -733,16 +755,27 @@ export class SemanticRuntimeService {
           WHERE s."blueprintId" = $1
             AND s."organizationId" = $2
             AND s.entity = 'StockItem'
+            ${scope ? `AND (${scope.sql})` : ''}
           GROUP BY s.data->>'part', p.data->>'partNo'
           ORDER BY p.data->>'partNo' NULLS LAST, s.data->>'part'`,
-        [blueprintId, organizationId],
+        [blueprintId, organizationId, ...(scope?.params ?? [])],
       )) as StockAggRow[]
       return assembleStockView(rows)
     })
   }
 
-  async viewInTransit(packageId: string, organizationId: string) {
+  async viewInTransit(packageId: string, organizationId: string, actor?: RuntimeActor) {
     return this.runBuiltinView(packageId, organizationId, 'in-transit', async (blueprintId) => {
+      const scope = await this.dataScopeSqlFor(
+        packageId,
+        'StockItem',
+        organizationId,
+        actor,
+        'list',
+        's',
+        2,
+      )
+      if (scope?.none) return []
       const rows = (await this.dataSource.query(
         `SELECT s.data->>'part' AS "partId",
                 p.data->>'partNo' AS "partNo",
@@ -756,19 +789,30 @@ export class SemanticRuntimeService {
           WHERE s."blueprintId" = $1
             AND s."organizationId" = $2
             AND s.entity = 'StockItem'
+            ${scope ? `AND (${scope.sql})` : ''}
           GROUP BY s.data->>'part', p.data->>'partNo'
           ORDER BY p.data->>'partNo' NULLS LAST, s.data->>'part'`,
-        [blueprintId, organizationId],
+        [blueprintId, organizationId, ...(scope?.params ?? [])],
       )) as InTransitAggRow[]
       return assembleInTransitView(rows)
     })
   }
 
-  async viewReceivable(packageId: string, organizationId: string) {
+  async viewReceivable(packageId: string, organizationId: string, actor?: RuntimeActor) {
     return this.runBuiltinView(packageId, organizationId, 'receivable', async (blueprintId) => {
       const template = this.readTemplate(packageId)
       const line = template.entities.find((item) => item.name === 'SalesOrderLine')
       const fallback = declaredMoneyCurrency(line?.fields ?? []) ?? 'CNY'
+      const scope = await this.dataScopeSqlFor(
+        packageId,
+        'SalesOrder',
+        organizationId,
+        actor,
+        'list',
+        'o',
+        3,
+      )
+      if (scope?.none) return []
       const rows = (await this.dataSource.query(
         `SELECT o.data->>'customer' AS "customerId",
                 c.data->>'name' AS "customerName",
@@ -792,11 +836,12 @@ export class SemanticRuntimeService {
             AND o."organizationId" = $2
             AND o.entity = 'SalesOrder'
             AND o.state IN ('confirmed', 'shipped')
+            ${scope ? `AND (${scope.sql})` : ''}
           GROUP BY o.data->>'customer', c.data->>'name',
                    COALESCE(NULLIF(l.data->>'${STAMPED_CURRENCY_KEY}', ''), $3)
           ORDER BY COALESCE(NULLIF(l.data->>'${STAMPED_CURRENCY_KEY}', ''), $3),
                    c.data->>'name' NULLS LAST, o.data->>'customer'`,
-        [blueprintId, organizationId, fallback],
+        [blueprintId, organizationId, fallback, ...(scope?.params ?? [])],
       )) as ReceivableAggRow[]
       return assembleReceivableView(rows)
     })
@@ -1633,6 +1678,36 @@ export class SemanticRuntimeService {
         }
       }
     }
+  }
+
+  private async dataScopeSqlFor(
+    packageId: string,
+    entityName: string,
+    organizationId: string,
+    actor: RuntimeActor | undefined,
+    action: string,
+    alias: string,
+    paramOffset: number,
+  ): Promise<{ sql: string; params: unknown[]; none: boolean } | null> {
+    const entity = this.readTemplate(packageId).entities.find((item) => item.name === entityName)
+    if (!entity?.dataScope) return null
+    const scope = await this.resolveBlueprintDataScope(
+      packageId,
+      entity,
+      organizationId,
+      actor,
+      action,
+    )
+    if (!scope || scope.expr.op === 'all') return null
+    if (scope.expr.op === 'none') return { sql: '1=0', params: [], none: true }
+    const compiled = compileScopeExpr(scope.expr, {
+      alias,
+      rowAlias: alias,
+      organizationId,
+      actorId: actorId(actor) ?? '',
+      paramOffset,
+    })
+    return { sql: compiled.sql, params: compiled.params, none: false }
   }
 
   private async listAllWithDataScope(
