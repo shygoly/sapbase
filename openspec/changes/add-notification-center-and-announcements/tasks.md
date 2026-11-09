@@ -2,34 +2,38 @@
 
 - [ ] 1.1 定义通知分类/优先级/偏好/公告/audience/delivery 的持久化形状与 Schema
 - [ ] 1.2 在 `docs/META_LANGUAGE.md` 登记通知/公告术语与不变量（INV-NT-01..05）
-- [ ] 1.3 在 `DOMAIN.md` 新增通知/公告小节，运行 `node scripts/meta/check-domain-doc.mjs`
+- [x] 1.3 在 `DOMAIN.md` 新增通知/公告小节，运行 `node scripts/meta/check-domain-doc.mjs`
 - [ ] 1.4 在 `DECISIONS.md` 登记分类/偏好/公告扇出/撤回/保留期决策
 - [ ] 1.5 更新 `openspec/specs/notification-outbox/spec.md` 的待办/通知边界（如需要）
 
 ## 2. 存储与 RLS
 
-- [ ] 2.1 扩展 `notifications`：`category/priority/actionUrl/expiresAt/readAt/mandatory`
-- [ ] 2.2 回填旧数据：`category='system'`、`priority='normal'`、`readAt` 由 `read` 推导
-- [ ] 2.3 新增 `notification_preferences` / `announcements` / `announcement_audiences` / `announcement_deliveries`
-- [ ] 2.4 索引与 RLS；跨租户负例
-- [ ] 2.5 TypeORM 实体与模块注册
+- [x] 2.1 扩展 `notifications`：`category/priority/actionUrl/expiresAt/readAt/mandatory`
+- [x] 2.2 回填旧数据：`category='system'`、`priority='normal'`、`readAt` 由 `read` 推导
+- [x] 2.3 新增 `notification_preferences` / `announcements` / `announcement_audiences` / `announcement_deliveries`
+- [x] 2.4a 索引与 RLS 登记
+- [ ] 2.4b 跨租户负例 e2e
+- [x] 2.5 TypeORM 实体与模块注册
 
 ## 3. 通知中心
 
-- [ ] 3.1 `NotificationCenter.publish()`：分类/优先级/动作链接/幂等
-- [ ] 3.2 列表/未读计数/按分类筛选/分页
-- [ ] 3.3 单条/批量已读/删除；批量操作幂等
-- [ ] 3.4 过期通知过滤/清理
-- [ ] 3.5 WebSocket 实时推送；断线补发
-- [ ] 3.6 单测：幂等、批量、未读计数、跨租户
+- [x] 3.1 `NotificationService.publish()`：分类/优先级/动作链接/幂等（sourceEventId）
+- [x] 3.2 列表/未读计数/按分类/优先级筛选
+- [x] 3.3 单条/批量已读；批量幂等
+- [x] 3.4a 过期通知过滤（列表默认排除）
+- [ ] 3.4b 过期通知清理 job
+- [x] 3.5a WebSocket 实时推送/未读补发（现有 connect 路径）
+- [ ] 3.5b 断线重连 e2e
+- [x] 3.6a 单测：未读计数/批量已读/偏好
+- [ ] 3.6b 幂等/跨租户 e2e
 
 ## 4. 用户偏好
 
-- [ ] 4.1 `notification_preferences` CRUD
-- [ ] 4.2 分类/渠道开关、免打扰、强制通知策略
+- [x] 4.1 `notification_preferences` CRUD
+- [x] 4.2 分类/渠道开关、免打扰、mandatory 绕过
 - [ ] 4.3 偏好对投递的生效逻辑（站内持久化不受影响）
 - [ ] 4.4 偏好变更审计（可选）
-- [ ] 4.5 单测：关闭类别、免打扰、mandatory 绕过
+- [x] 4.5 单测：关闭类别、免打扰、mandatory 绕过
 
 ## 5. 公告
 

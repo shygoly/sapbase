@@ -19,11 +19,19 @@ describe('NotificationsController', () => {
     }
     const controller = new NotificationsController(notifications as never)
     const unread = await controller.list(undefined, { id: 'u1', organizationId: 'org-1' })
-    expect(notifications.listForUser).toHaveBeenCalledWith('u1', 'org-1', false)
+    expect(notifications.listForUser).toHaveBeenCalledWith('u1', 'org-1', false, {
+      category: undefined,
+      priority: undefined,
+      includeExpired: false,
+    })
     expect(unread.notifications[0].read).toBe(false)
 
     const all = await controller.list('true', { userId: 'u1', organizationId: 'org-1' })
-    expect(notifications.listForUser).toHaveBeenCalledWith('u1', 'org-1', true)
+    expect(notifications.listForUser).toHaveBeenCalledWith('u1', 'org-1', true, {
+      category: undefined,
+      priority: undefined,
+      includeExpired: false,
+    })
     expect(all.notifications[0].read).toBe(true)
   })
 

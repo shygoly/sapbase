@@ -29,6 +29,10 @@
 | auth_login_events | 身份与会话 |
 | identity_sync_runs | 身份与会话 |
 | service_clients | 身份与会话 |
+| notification_preferences | 通知与公告 |
+| announcements | 通知与公告 |
+| announcement_audiences | 通知与公告 |
+| announcement_deliveries | 通知与公告 |
 | assets | 资产 |
 | asset_variants | 资产 |
 | asset_upload_sessions | 资产 |
@@ -265,6 +269,43 @@ enforcement:
   - test:apps/api/src/jobs/job-callback.spec.ts#JobCallbackService
 db: none
 spec: apps/api/src/jobs/job-callback.spec.ts
+```
+
+---
+
+## 通知与公告
+
+覆盖表：notification_preferences, announcements, announcement_audiences, announcement_deliveries
+
+通知中心扩展。`notifications` 增加分类/优先级/动作链接/过期/已读时间/强制标记；
+`notification_preferences` 存分类渠道开关与免打扰；`announcements` 是公告草稿/发布/撤回；
+`announcement_audiences` 存 audience 明细；`announcement_deliveries` 存逐用户投递/已读状态。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| notification_preferences.organizationId | organizations.id | 偏好归属组织 | none | 唯一键含 user/category |
+| announcements.organizationId | organizations.id | 公告归属组织 | none | RLS 兜底 |
+| announcement_audiences.announcementId | announcements.id | 受众归属公告 | none | 删除公告级联 |
+| announcement_deliveries.announcementId | announcements.id | 投递归属公告 | none | 逐用户唯一 |
+
+### 状态词
+
+公告状态使用 `draft` / `scheduled` / `published` / `withdrawn` / `expired`；
+投递状态使用 `pending` / `delivered` / `read` / `failed`。通知优先级使用 `low` / `normal` / `high` / `urgent`。
+
+### 不变量
+
+```yaml invariant
+id: INV-NT-01
+tables: [notification_preferences, announcements, announcement_audiences, announcement_deliveries]
+desc: 公告 audience 必须同组织；mandatory 通知不受偏好静音影响；重复投递按 (announcementId,userId) 幂等。
+trigger: 通知发布/公告发布/撤回/偏好变更
+enforcement:
+  - test:apps/api/src/notifications/notification-center.ddl.spec.ts#NOTIFICATION_CENTER_DDL
+db: rls:notifications
+spec: apps/api/src/notifications/notification-center.ddl.spec.ts
 ```
 
 ---

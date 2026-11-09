@@ -1246,6 +1246,62 @@
         "expiresAt",
         "completedAt"
       ]
+    },
+    "notification_preferences": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "category",
+        "inApp",
+        "email",
+        "push",
+        "mutedUntil"
+      ]
+    },
+    "announcements": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "title",
+        "body",
+        "status",
+        "audienceType",
+        "publishAt",
+        "expiresAt",
+        "publishedAt",
+        "withdrawnAt",
+        "createdBy"
+      ]
+    },
+    "announcement_audiences": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "announcementId",
+        "audienceType",
+        "audienceValue"
+      ]
+    },
+    "announcement_deliveries": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "announcementId",
+        "userId",
+        "status",
+        "deliveredAt",
+        "readAt",
+        "error"
+      ]
     }
   }
 }

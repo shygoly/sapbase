@@ -1,6 +1,8 @@
 import {
+  Body,
   Controller,
   Get,
+  Optional,
   NotFoundException,
   Param,
   Post,
@@ -11,6 +13,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { NotificationService } from '../websocket/services/notification.service'
+import { NotificationPreferencesService } from './notification-preferences.service'
 
 type NotificationUser = {
   id?: string
@@ -23,13 +26,19 @@ type NotificationUser = {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class NotificationsController {
-  constructor(private readonly notifications: NotificationService) {}
+  constructor(
+    private readonly notifications: NotificationService,
+    @Optional() private readonly preferences?: NotificationPreferencesService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: '当前用户的通知（默认未读；?all=true 含已读）' })
   async list(
     @Query('all') all?: string,
     @CurrentUser() user?: NotificationUser,
+    @Query('category') category?: string,
+    @Query('priority') priority?: string,
+    @Query('includeExpired') includeExpired?: string,
   ) {
     const userId = user?.id ?? user?.userId ?? ''
     const organizationId = user?.organizationId
@@ -38,6 +47,7 @@ export class NotificationsController {
       userId,
       organizationId,
       all === 'true',
+      { category, priority, includeExpired: includeExpired === 'true' },
     )
     return { notifications }
   }
@@ -48,8 +58,47 @@ export class NotificationsController {
     const userId = user?.id ?? user?.userId ?? ''
     const organizationId = user?.organizationId
     if (!userId || !organizationId) return { count: 0 }
-    const notifications = await this.notifications.listForUser(userId, organizationId, false)
-    return { count: notifications.length }
+    return { count: await this.notifications.unreadCount(userId, organizationId) }
+  }
+
+  @Post('read-all')
+  @ApiOperation({ summary: '全部标记已读' })
+  async markAllRead(@CurrentUser() user?: NotificationUser) {
+    const userId = user?.id ?? user?.userId ?? ''
+    const organizationId = user?.organizationId
+    if (!userId || !organizationId) return { updated: 0 }
+    return { updated: await this.notifications.markAllRead(userId, organizationId) }
+  }
+
+  @Get('preferences')
+  @ApiOperation({ summary: '通知偏好（分类/渠道/免打扰）' })
+  async listPreferences(@CurrentUser() user?: NotificationUser) {
+    const userId = user?.id ?? user?.userId ?? ''
+    const organizationId = user?.organizationId
+    if (!userId || !organizationId) return []
+    return this.preferences?.list(organizationId, userId) ?? []
+  }
+
+  @Post('preferences/:category')
+  @ApiOperation({ summary: '更新通知偏好' })
+  async updatePreference(
+    @Param('category') category: string,
+    @Body() body: { inApp?: boolean; email?: boolean; push?: boolean; mutedUntil?: string | null },
+    @CurrentUser() user?: NotificationUser,
+  ) {
+    const userId = user?.id ?? user?.userId ?? ''
+    const organizationId = user?.organizationId
+    if (!userId || !organizationId) throw new NotFoundException('用户上下文缺失')
+    if (!this.preferences) throw new NotFoundException('通知偏好未启用')
+    return this.preferences.upsert(organizationId, userId, category as never, {
+      ...body,
+      mutedUntil:
+        body.mutedUntil === undefined
+          ? undefined
+          : body.mutedUntil === null
+            ? null
+            : new Date(body.mutedUntil),
+    })
   }
 
   @Post(':id/read')

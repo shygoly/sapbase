@@ -2,7 +2,12 @@ import { Injectable, Logger } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { Server } from 'socket.io'
 import { DataSource } from 'typeorm'
-import { NotificationRecord, type NotificationType } from '../../notifications/notification.entity'
+import {
+  NotificationRecord,
+  type NotificationCategory,
+  type NotificationPriority,
+  type NotificationType,
+} from '../../notifications/notification.entity'
 import { isUniqueViolation } from '../../semantic-runtime/record-write-error'
 
 export interface Notification {
@@ -16,6 +21,12 @@ export interface Notification {
   read: boolean
   createdAt: Date
   sourceEventId?: string | null
+  category?: NotificationCategory
+  priority?: NotificationPriority
+  actionUrl?: string | null
+  expiresAt?: Date | null
+  readAt?: Date | null
+  mandatory?: boolean
 }
 
 export type SendNotificationInput = Omit<Notification, 'id' | 'userId' | 'read' | 'createdAt'>
@@ -82,6 +93,12 @@ export class NotificationService {
           read: false,
           sourceEventId: sourceEventId ?? null,
           metadata: notification.data ?? null,
+          category: notification.category ?? 'system',
+          priority: notification.priority ?? 'normal',
+          actionUrl: notification.actionUrl ?? null,
+          expiresAt: notification.expiresAt ?? null,
+          readAt: null,
+          mandatory: notification.mandatory ?? false,
           createdAt,
           updatedAt: createdAt,
         }),
@@ -149,7 +166,7 @@ export class NotificationService {
         userId,
         ...(organizationId ? { organizationId } : {}),
       },
-      { read: true },
+      { read: true, readAt: new Date() },
     )
     const updated = (result.affected ?? 0) > 0
     if (updated) {
@@ -158,22 +175,74 @@ export class NotificationService {
     return updated
   }
 
+  async publish(
+    userId: string,
+    notification: SendNotificationInput,
+    sourceEventId?: string,
+  ): Promise<void> {
+    await this.sendToUser(userId, notification, sourceEventId)
+  }
+
   async listForUser(
     userId: string,
     organizationId: string | undefined,
     all: boolean,
+    filters: {
+      category?: string
+      priority?: string
+      includeExpired?: boolean
+    } = {},
   ): Promise<Notification[]> {
     if (!userId) return []
     const repo = this.dataSource.getRepository(NotificationRecord)
-    const rows = await repo.find({
+    if (!filters.category && !filters.priority && !filters.includeExpired) {
+      const rows = await repo.find({
+        where: {
+          userId,
+          ...(organizationId ? { organizationId } : {}),
+          ...(all ? {} : { read: false }),
+        },
+        order: { createdAt: 'ASC', id: 'ASC' },
+      })
+      return rows.map((row) => this.toNotification(row))
+    }
+    const qb = repo.createQueryBuilder('n')
+    qb.where('n.userId = :userId', { userId })
+    if (organizationId) qb.andWhere('n.organizationId = :organizationId', { organizationId })
+    if (!all) qb.andWhere('n.read = false')
+    if (filters.category) qb.andWhere('n.category = :category', { category: filters.category })
+    if (filters.priority) qb.andWhere('n.priority = :priority', { priority: filters.priority })
+    if (!filters.includeExpired) {
+      qb.andWhere('(n.expiresAt IS NULL OR n.expiresAt > now())')
+    }
+    const rows = await qb.orderBy('n.createdAt', 'ASC').addOrderBy('n.id', 'ASC').getMany()
+    return rows.map((row) => this.toNotification(row))
+  }
+
+  async unreadCount(userId: string, organizationId?: string): Promise<number> {
+    if (!userId) return 0
+    const repo = this.dataSource.getRepository(NotificationRecord)
+    return repo.count({
       where: {
         userId,
         ...(organizationId ? { organizationId } : {}),
-        ...(all ? {} : { read: false }),
+        read: false,
       },
-      order: { createdAt: 'ASC', id: 'ASC' },
     })
-    return rows.map((row) => this.toNotification(row))
+  }
+
+  async markAllRead(userId: string, organizationId?: string): Promise<number> {
+    if (!userId) return 0
+    const repo = this.dataSource.getRepository(NotificationRecord)
+    const result = await repo.update(
+      {
+        userId,
+        ...(organizationId ? { organizationId } : {}),
+        read: false,
+      },
+      { read: true, readAt: new Date() },
+    )
+    return result.affected ?? 0
   }
 
   private toNotification(row: NotificationRecord): Notification {
@@ -188,6 +257,12 @@ export class NotificationService {
       read: row.read,
       createdAt: row.createdAt,
       sourceEventId: row.sourceEventId,
+      category: row.category,
+      priority: row.priority,
+      actionUrl: row.actionUrl,
+      expiresAt: row.expiresAt,
+      readAt: row.readAt,
+      mandatory: row.mandatory,
     }
   }
 

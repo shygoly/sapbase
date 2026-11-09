@@ -30,6 +30,10 @@ import { ModuleRegistry } from './module-registry/module-registry.entity'
 import { ModuleRelationship } from './module-registry/module-relationship.entity'
 import { ModuleStatistics } from './module-registry/module-statistics.entity'
 import { NotificationRecord } from './notifications/notification.entity'
+import { NotificationPreference } from './notifications/notification-preference.entity'
+import { Announcement } from './notifications/announcement.entity'
+import { AnnouncementAudience } from './notifications/announcement-audience.entity'
+import { AnnouncementDelivery } from './notifications/announcement-delivery.entity'
 import { OutboxDelivery } from './outbox/outbox-delivery.entity'
 import { OutboxEvent } from './outbox/outbox-event.entity'
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
@@ -82,6 +86,10 @@ export const APP_ENTITIES = [
   OutboxEvent,
   OutboxDelivery,
   NotificationRecord,
+  NotificationPreference,
+  Announcement,
+  AnnouncementAudience,
+  AnnouncementDelivery,
   AgentConfirmationToken,
   BusinessAppInstallation,
   BusinessAppInstallationRevision,
