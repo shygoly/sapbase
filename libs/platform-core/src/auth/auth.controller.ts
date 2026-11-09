@@ -56,7 +56,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(@Request() req: any) {
-    // Token invalidation would be handled by client-side removal
+    await this.authService.logout(req.user?.sid)
     return { message: 'Logged out successfully' }
   }
 

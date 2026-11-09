@@ -5,8 +5,10 @@ import { UsersService } from '../users/users.service'
 import { OrganizationsService } from '../organizations/organizations.service'
 import { User } from '../users/user.entity'
 import { Optional } from '@nestjs/common'
+import { randomUUID } from 'node:crypto'
 import { EffectivePermissionsService } from '../roles/effective-permissions.service'
 import { OrganizationMemberRolesService } from '../identity/organization-member-roles.service'
+import { AuthSessionsService } from '../identity/auth-sessions.service'
 
 export interface JwtPayload {
   sub: string
@@ -14,6 +16,7 @@ export interface JwtPayload {
   role: string
   permissions: string[]
   organizationId?: string
+  sid?: string
 }
 
 @Injectable()
@@ -24,6 +27,7 @@ export class AuthService {
     private organizationsService: OrganizationsService,
     private effectivePermissions: EffectivePermissionsService,
     @Optional() private memberRoles?: OrganizationMemberRolesService,
+    @Optional() private sessions?: AuthSessionsService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -61,16 +65,26 @@ export class AuthService {
       organizationId: selectedOrgId,
     })
 
+    const sid = selectedOrgId ? randomUUID() : undefined
+    if (sid && selectedOrgId) {
+      await this.sessions?.create({
+        organizationId: selectedOrgId,
+        userId: user.id,
+        sid,
+      })
+    }
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: roleName,
       permissions,
       organizationId: selectedOrgId,
+      sid,
     }
 
     return {
       access_token: this.jwtService.sign(payload),
+      sessionId: sid,
       user: {
         id: user.id,
         name: user.name,
@@ -85,7 +99,10 @@ export class AuthService {
     }
   }
 
-  async switchOrganization(userId: string, organizationId: string): Promise<{ access_token: string }> {
+  async switchOrganization(
+    userId: string,
+    organizationId: string,
+  ): Promise<{ access_token: string; sessionId?: string }> {
     const user = await this.usersService.findOne(userId)
     if (!user) {
       throw new Error('User not found')
@@ -103,17 +120,26 @@ export class AuthService {
       organizationId,
     })
 
+    const sid = randomUUID()
+    await this.sessions?.create({ organizationId, userId: user.id, sid })
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: roleName,
       permissions,
       organizationId,
+      sid,
     }
 
     return {
       access_token: this.jwtService.sign(payload),
+      sessionId: sid,
     }
+  }
+
+  async logout(sid?: string): Promise<{ revoked: boolean }> {
+    if (!sid) return { revoked: false }
+    return { revoked: (await this.sessions?.revoke(sid, 'logout')) ?? false }
   }
 
   async validateToken(token: string): Promise<JwtPayload | null> {

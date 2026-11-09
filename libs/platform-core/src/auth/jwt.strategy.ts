@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
-import { AuthService } from './auth.service'
+import { AuthSessionService } from './auth-session.port'
 
 export interface JwtPayload {
   sub: string
@@ -10,13 +10,14 @@ export interface JwtPayload {
   role: string
   permissions: string[]
   organizationId?: string
+  sid?: string
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private authService: AuthService,
     config: ConfigService,
+    @Optional() private sessions?: AuthSessionService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -27,6 +28,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
+    if (payload.sid) {
+      await this.sessions?.assertActive(payload.sid)
+    }
     return {
       id: payload.sub,
       userId: payload.sub,
@@ -34,6 +38,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       role: payload.role,
       permissions: payload.permissions,
       organizationId: payload.organizationId,
+      sid: payload.sid,
     }
   }
 }

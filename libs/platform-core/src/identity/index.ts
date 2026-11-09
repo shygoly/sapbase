@@ -1,4 +1,6 @@
 export * from './identity.ddl'
 export * from './organization-member-role.entity'
+export * from './auth-session.entity'
+export * from './auth-sessions.service'
 export * from './organization-member-roles.service'
 export * from './identity.module'

@@ -1093,6 +1093,24 @@
         "validTo",
         "createdBy"
       ]
+    },
+    "auth_sessions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "sid",
+        "refreshTokenHash",
+        "status",
+        "ip",
+        "userAgent",
+        "expiresAt",
+        "lastSeenAt",
+        "revokedAt",
+        "revokedReason"
+      ]
     }
   }
 }
