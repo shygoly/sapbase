@@ -28,7 +28,8 @@
 ## 4. 机器检测
 
 - [x] 4.1 `CheckProvider` 接口 + registry
-- [ ] 4.2 `check` 步骤通过 `add-async-job-and-callback-facade` 执行
+- [x] 4.2a `review.check` JobTypeDefinition（走 async-job 队列/重试/事件）
+- [ ] 4.2b 注册到 app JobsModule + 结果回写审批步骤
 - [x] 4.3 pass/fail/warn 状态；warn 保留人工确认；provider 异常/超时 fail-closed
 - [ ] 4.4 检测证据（provider/version/input/output）写入步骤与审计
 - [x] 4.5 单测：pass、fail、warn、超时、provider 异常
@@ -36,13 +37,13 @@
 ## 5. 人工动作与轮次
 
 - [x] 5.1a `approve` / `reject` / `request-changes`
-- [ ] 5.1b `resubmit` 新 round
+- [x] 5.1b `resubmit` 新 round（旧 round 只读）
 - [x] 5.2 只有当前步骤合法审批人可操作；越权 403（role/assignee/selector）
-- [ ] 5.3 `resubmit` 创建新 round，旧 round 只读
+- [x] 5.3 `resubmit` 创建新 round，旧 round 只读
 - [x] 5.4a 评论写入 review_comments
 - [ ] 5.4b 附件走 asset-pipeline
 - [ ] 5.5 委托：`review_delegations` + 代决定审计
-- [ ] 5.6 发布/状态迁移在整体 approved 前拒绝
+- [x] 5.6 发布/状态迁移在整体 approved 前拒绝（最新 round 判定）
 - [ ] 5.7 e2e：提交→机器检测→人工驳回→修改→重提→通过
 
 ## 6. 通用工作项

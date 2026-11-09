@@ -88,6 +88,82 @@ export class ReviewDecisionService {
     return saved
   }
 
+  async resubmit(
+    organizationId: string,
+    approvalId: string,
+    actor: ReviewDecisionActor,
+    comment?: string,
+  ): Promise<BlueprintApproval[]> {
+    const anchor = await this.approvals.findOne({
+      where: { id: approvalId, organizationId },
+    })
+    if (!anchor) throw new NotFoundException('Approval step not found')
+    const rows = await this.approvals.find({
+      where: {
+        organizationId,
+        recordId: anchor.recordId,
+        ruleId: anchor.ruleId,
+      },
+      order: { round: 'DESC', stepIndex: 'ASC' },
+    })
+    const latestRound = rows[0]?.round ?? 1
+    const latest = rows.filter((row) => row.round === latestRound)
+    if (latest.some((row) => row.status === 'pending')) {
+      throw new ConflictException('当前轮次仍有待审步骤，不能重提')
+    }
+    if (!latest.some((row) => this.isAllowed(row, actor))) {
+      throw new ForbiddenException('不是当前轮次的合法审批人')
+    }
+    const nextRound = latestRound + 1
+    const created: BlueprintApproval[] = []
+    for (const row of latest) {
+      const next = this.approvals.create({
+        organizationId: row.organizationId,
+        blueprintId: row.blueprintId,
+        blueprintVersion: row.blueprintVersion,
+        entity: row.entity,
+        recordId: row.recordId,
+        ruleId: row.ruleId,
+        round: nextRound,
+        stepIndex: row.stepIndex,
+        role: row.role,
+        kind: row.kind,
+        selector: row.selector,
+        assignee: row.assignee,
+        checkProvider: row.checkProvider,
+        dueAt: row.dueAt,
+        status: 'pending',
+        actor: null,
+        decidedBy: null,
+        decidedAt: null,
+        comment: null,
+        checkResult: null,
+      } as never)
+      const saved = (await this.approvals.save(next as never)) as unknown as BlueprintApproval
+      created.push(saved)
+      await this.workItems.project({
+        organizationId,
+        sourceType: 'approval',
+        sourceId: saved.id,
+        title: `审批 ${saved.entity}:${saved.recordId}`,
+        priority: 'normal',
+        dueAt: saved.dueAt,
+        metadata: { ruleId: saved.ruleId, round: nextRound, stepIndex: saved.stepIndex },
+      })
+    }
+    await this.events.save(
+      this.events.create({
+        organizationId,
+        approvalId: anchor.id,
+        recordId: anchor.recordId,
+        type: 'resubmit',
+        actorId: actor.userId,
+        payload: { fromRound: latestRound, toRound: nextRound, comment: comment ?? null },
+      }),
+    )
+    return created
+  }
+
   isAllowed(approval: BlueprintApproval, actor: ReviewDecisionActor): boolean {
     if (approval.role && !actor.roleKeys?.includes(approval.role)) return false
     if (approval.assignee && typeof approval.assignee === 'object') {

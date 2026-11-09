@@ -75,4 +75,66 @@ describe('ReviewDecisionService', () => {
       expect.objectContaining({ type: 'reject' }),
     )
   })
+  it('resubmit：基于最新轮次创建 round+1 pending，写事件/工作项', async () => {
+    const latest = [
+      {
+        id: 'a1',
+        organizationId: 'org-1',
+        blueprintId: 'bp-1',
+        blueprintVersion: '1.0.0',
+        entity: 'Student',
+        recordId: 'r1',
+        ruleId: 'rule-1',
+        round: 1,
+        stepIndex: 0,
+        role: 'teacher',
+        kind: 'human',
+        selector: null,
+        assignee: null,
+        checkProvider: null,
+        dueAt: null,
+        status: 'rejected',
+      },
+    ]
+    const approvals = {
+      findOne: jest.fn(async () => latest[0]),
+      find: jest.fn(async () => latest),
+      create: jest.fn((row) => row),
+      save: jest.fn(async (row) => ({ id: 'a2', ...row })),
+    }
+    const events = { create: jest.fn((row) => ({ id: 'e1', ...row })), save: jest.fn(async (row) => row) }
+    const workItems = { project: jest.fn(async (row) => row) }
+    const service = new ReviewDecisionService(
+      approvals as never,
+      events as never,
+      { create: jest.fn(), save: jest.fn() } as never,
+      workItems as never,
+    )
+    const created = await service.resubmit(
+      'org-1',
+      'a1',
+      { userId: 'u1', roleKeys: ['teacher'] },
+      'fixed',
+    )
+    expect(created).toHaveLength(1)
+    expect(created[0]).toMatchObject({ round: 2, status: 'pending' })
+    expect(events.save).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'resubmit', payload: expect.objectContaining({ toRound: 2 }) }),
+    )
+    expect(workItems.project).toHaveBeenCalled()
+  })
+
+  it('resubmit：当前轮次仍有 pending → 409', async () => {
+    const pending = [{ id: 'a1', round: 1, status: 'pending', organizationId: 'org-1', recordId: 'r1', ruleId: 'rule-1', role: 'teacher' }]
+    const service = new ReviewDecisionService(
+      { findOne: jest.fn(async () => pending[0]), find: jest.fn(async () => pending) } as never,
+      { create: jest.fn(), save: jest.fn() } as never,
+      { create: jest.fn(), save: jest.fn() } as never,
+      { project: jest.fn() } as never,
+    )
+    await expect(
+      service.resubmit('org-1', 'a1', { userId: 'u1', roleKeys: ['teacher'] }),
+    ).rejects.toBeInstanceOf(ConflictException)
+  })
+
 })

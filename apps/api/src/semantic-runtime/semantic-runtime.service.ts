@@ -1433,10 +1433,12 @@ export class SemanticRuntimeService {
         throw new RecordWriteError(`审批条件求值失败：${judged.error}`, 'approval-eval-failed', undefined, rule.id)
       }
       if (!judged.value) continue
-      const existing = await repo.find({
+      const allRounds = await repo.find({
         where: { blueprintId, organizationId, entity, recordId: row.id, ruleId: rule.id },
-        order: { stepIndex: 'ASC' },
+        order: { round: 'DESC', stepIndex: 'ASC' },
       })
+      const latestRound = allRounds[0]?.round ?? 1
+      const existing = allRounds.filter((item) => item.round === latestRound)
       const steps: ApprovalStepState[] = existing.map((item) => ({
         index: item.stepIndex,
         role: item.role,
