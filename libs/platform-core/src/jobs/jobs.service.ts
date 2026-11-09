@@ -14,6 +14,7 @@ import type { JobCallbackOptions } from './job-callback'
 import { JobQueue } from './job-queue'
 import type { JobListFilters } from './job-queue'
 import { JobTypeRegistry } from './job-types'
+import { JobWakeupService } from './job-wakeup'
 import type { JobRecord } from './job-types'
 
 export interface CreateJobInput {
@@ -48,6 +49,7 @@ export class JobsService {
     private readonly queue: JobQueue,
     private readonly registry: JobTypeRegistry,
     private readonly callbacks: JobCallbackService,
+    @Optional() private readonly wakeup?: JobWakeupService,
     @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
@@ -109,6 +111,7 @@ export class JobsService {
       createdBy: actor.userId ?? null,
     })
 
+    await this.wakeup?.publish(job.id)
     await this.audit(organizationId, 'job.create', job.id, {
       type: job.type,
       created,

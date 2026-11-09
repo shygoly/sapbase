@@ -29,7 +29,7 @@
 ## 4. 队列与 worker
 
 - [x] 4.1 `JobQueue` 接口 + PG 实现（`FOR UPDATE SKIP LOCKED`）
-- [ ] 4.2 Redis 唤醒 + cron 兜底扫描
+- [x] 4.2 Redis 唤醒 + poll 兜底（无 Redis 自动退化；未启用 cron）
 - [x] 4.3 worker 领取/lease/heartbeat/超时重新入队
 - [x] 4.4a 并发/优先级（按类型并发上限 + priority/runAt 排序）
 - [x] 4.4b 限流（按组织/分钟窗口，超限 429）
@@ -50,7 +50,7 @@
 - [x] 6.1 唯一键 `(organizationId, type, idempotencyKey)`
 - [x] 6.2 重复入队返回已存在任务
 - [x] 6.3a handler 幂等约定写入 META/DECISIONS（至少一次）
-- [ ] 6.3b handler 重复执行/幂等测试
+- [x] 6.3b handler 重复执行/幂等测试（worker tick + 幂等键 + attempts=1）
 - [x] 6.4 外部 Idempotency-Key 头/字段
 
 ## 7. 外部任务 API

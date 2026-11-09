@@ -11,6 +11,7 @@ import { ASYNC_JOB_DDL } from '../src/jobs/jobs.ddl'
 import { Job, JobAttempt, JobEvent } from '../src/jobs/entities'
 import { JobQueue } from '../src/jobs/job-queue'
 import { JobTypeRegistry } from '../src/jobs/job-types'
+import { JobWorkerService } from '../src/jobs/job-worker'
 
 const RUN = process.env.RUN_ASYNC_JOB_E2E === '1'
 const describeDb = RUN ? describe : describe.skip
@@ -222,6 +223,7 @@ describeDb('Jobs HTTP API (real Postgres)', () => {
     expect(response.body.total).toBeGreaterThanOrEqual(1)
   })
 
+
   it('取消 queued 任务 → cancelled', async () => {
     const response = await request(server()).post(`/jobs/${jobId}/cancel`).send({})
     expect(response.status).toBe(201)
@@ -237,6 +239,38 @@ describeDb('Jobs HTTP API (real Postgres)', () => {
     const after = await request(server()).get(`/jobs/${jobId}/events?afterSeq=1`)
     expect(after.body.map((event: { seq: number }) => event.seq)).toEqual([2])
   })
+
+  it('重复幂等键 + worker 执行：handler 只执行一次', async () => {
+    await dataSource.query(`UPDATE public.jobs SET status = 'cancelled' WHERE status = 'queued'`)
+    const first = await request(server()).post('/jobs').send({
+      type: 'test.echo',
+      payload: { value: 7 },
+      idempotencyKey: 'run-once',
+    })
+    expect(first.status).toBe(201)
+    const jobId = first.body.job.id
+
+    const worker = app.get(JobWorkerService)
+    await worker.tick()
+
+    const duplicate = await request(server()).post('/jobs').send({
+      type: 'test.echo',
+      payload: { value: 8 },
+      idempotencyKey: 'run-once',
+    })
+    expect(duplicate.body.created).toBe(false)
+    expect(duplicate.body.job.id).toBe(jobId)
+    expect(duplicate.body.job.status).toBe('succeeded')
+    expect(duplicate.body.job.result).toEqual({ value: 7 })
+
+    await worker.tick()
+    const attempts = (await dataSource.query(
+      `SELECT COUNT(*)::int AS count FROM public.job_attempts WHERE "jobId" = $1`,
+      [jobId],
+    )) as Array<{ count: number }>
+    expect(attempts[0].count).toBe(1)
+  })
+
 
   it('dead 任务可手动重放为 queued', async () => {
     const { job } = await queue.enqueue({

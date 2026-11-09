@@ -9,6 +9,7 @@ import {
 } from './job-state'
 import { JobQueue } from './job-queue'
 import { JobTypeRegistry } from './job-types'
+import { JobWakeupService } from './job-wakeup'
 import type { JobContext, JobRecord, JobResult } from './job-types'
 
 export interface JobWorkerOptions {
@@ -61,6 +62,7 @@ export class JobWorkerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly queue: JobQueue,
     private readonly registry: JobTypeRegistry,
+    private readonly wakeup?: JobWakeupService,
   ) {
     this.workerId =
       process.env.JOBS_WORKER_ID ?? `${hostname()}:${process.pid}:${randomUUID().slice(0, 8)}`
@@ -82,6 +84,9 @@ export class JobWorkerService implements OnModuleInit, OnModuleDestroy {
   start(): void {
     if (this.running) return
     this.running = true
+    void this.wakeup?.subscribe(() => {
+      void this.tick()
+    })
     this.timer = setInterval(() => {
       void this.tick()
     }, this.pollMs)
