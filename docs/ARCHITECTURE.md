@@ -350,6 +350,8 @@ sap:prod:org_123:sse:turn:<turnId>
 - 错误码固定：`INVALID_INPUT` / `DENIED` / `NOT_FOUND` / `CONFLICT` / `TIMEOUT` / `UNAVAILABLE` / `INTERNAL`。
 - Guard 顺序：`JwtAuthGuard → OrgContextGuard → AppContextGuard → PermissionGuard`。
 - 审计：写操作统一走 `AuditLogsService`；成功/失败都记；敏感字段按 `sensitiveArgs` 脱敏。
+- 数据范围：列表/详情/写/删/迁移/导入/追溯统一走 `DataScopeService` + `ScopeSqlCompiler`；
+  RLS 只做租户隔离，行级范围在应用层；声明 `dataScope` 的资源解析失败按 none。
 - OpenAPI：`/api/docs`；新增端点必须带 `@ApiOperation` 与权限说明。
 - 不在 Controller 里开事务；事务边界在 `app-*` 用例。
 

@@ -4,6 +4,8 @@
 > 本文件是人读索引，必须与 `tools.json` 完全一致；`node scripts/meta/check-agent-tools.mjs` 做集合对拍。
 > 规则：未声明的工具在运行时不存在；写工具必须 `confirmation: required`；权限由平台 all-of 判定。
 > v1 尚未引入多个智能体 profile，`allowedAgents` 一律写 `-`；处理器由 `AgentToolRegistry` 直接分派时写 `-`。
+> 数据范围：Agent 工具调用必须按 actor + resourceKey + action 执行 `DataScopeService`；
+> 工具结果不得绕过范围；网关/处理器统一注入，不在各工具里另写判定。
 
 ---
 

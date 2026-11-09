@@ -38,7 +38,7 @@
 - [x] 4.1a `DataScopeService.resolve(actor, resourceKey, action)` + 预算缓存
 - [x] 4.1b `assertRowInScope` + `assertCreateInScope`
 - [x] 4.2a `ScopeSqlCompiler`：ScopeExpr → SQL/params，支持 column/jsonb/exists
-- [ ] 4.2b TypeORM `applyScope(qb, expr, alias)`
+- [x] 4.2b TypeORM `applyScopeToQueryBuilder(qb, expr, alias)`
 - [x] 4.3 语义运行时列表/详情/单条读接入范围谓词（与字段权限、ownership 组合）
 - [x] 4.4 语义运行时写/更新/删除/状态迁移接入：目标行越界拒绝，创建校验写入节点在可写范围
 - [x] 4.5 导入接入：逐行校验，批量不部分落库；错误可定位到行与字段
@@ -67,7 +67,7 @@
 - [x] 6.4 装载/升级时解析蓝图模板 cap；租户策略只能收窄
 - [x] 6.5 旧包兼容：无 `dataScope` 的包行为不变；`scope` 仅作为声明/粗粒度映射
 - [ ] 6.6 `ownership` 与 `dataScope` 组合（AND），不改变既有 ownership 空值语义
-- [ ] 6.7 编译/装载负例：未知 scope、缺 dataScope、悬空字段、租户放大 cap
+- [x] 6.7 编译/装载负例：未知 scope、缺 dataScope、悬空字段、租户放大 cap
 
 ## 7. 验证与样板
 
@@ -84,7 +84,7 @@
 ## 8. 文档与交付
 
 - [x] 8.1 更新 `docs/protocols/blueprint-delivery.md`：把 §14.3 “部门/仓库级不做”改为指向本能力，并写明 RLS 只做租户边界
-- [ ] 8.2 更新 `docs/ARCHITECTURE.md` 权限小节（如存在）
-- [ ] 8.3 更新 `AGENT-TOOLS.md` / `contracts/tools.json`：Agent 数据访问工具必须声明并执行范围
+- [x] 8.2 更新 `docs/ARCHITECTURE.md` 权限小节（如存在）
+- [x] 8.3 更新 `AGENT-TOOLS.md`：Agent 数据访问工具必须执行范围
 - [ ] 8.4 更新 `openspec/specs/data-scope/spec.md` 归档说明
 - [ ] 8.5 发布说明：声明即执行、空绑定 fail-closed、租户只能收窄

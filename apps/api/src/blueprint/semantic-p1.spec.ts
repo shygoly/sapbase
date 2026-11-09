@@ -428,3 +428,30 @@ describe('权限层 scope/dataScope（P1）', () => {
     ).toMatch(/scope=team 要求 Bare 声明 dataScope\.bindings/)
   })
 })
+
+describe('权限层负例补充', () => {
+  it('拒绝未知 scope', () => {
+    expect(
+      detectConflicts(
+        {
+          entities: [
+            {
+              name: 'Student',
+              fields: [{ name: 'name', type: 'text' }],
+              states: ACTIVE_STATES,
+              transitions: ACTIVE_TRANSITIONS,
+            },
+          ],
+        } as never,
+        { flows: [] },
+        [],
+        {
+          permissions: {
+            permissions: 'blueprint-permissions/v1',
+            rules: [{ role: 'x', scope: 'weird', resources: ['Student'], actions: ['read'] }],
+          } as never,
+        },
+      ).join('\n'),
+    ).toMatch(/未知 scope weird/)
+  })
+})
