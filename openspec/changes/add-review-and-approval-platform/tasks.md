@@ -17,19 +17,21 @@
 
 ## 3. 审批人解析
 
-- [ ] 3.1 `AssigneeSelector` 解析：role / user / position / creator
+- [x] 3.1 `AssigneeSelector` 解析：role / user / position / creator
 - [ ] 3.2 `position + anchor=record`：按记录 `dataScope` 绑定找节点，再查 `scope_memberships`
-- [ ] 3.3 解析失败阻塞并告警，不自动跳过
+- [x] 3.3a 解析为空返回空集合，调用方阻塞
+- [ ] 3.3b 解析失败告警
 - [ ] 3.4 审批人变更/离职时重新解析未决步骤
-- [ ] 3.5 单测：角色/用户/岗位、跨组织隔离、空节点、无成员
+- [x] 3.5a 单测：角色/用户/岗位/creator、去重
+- [ ] 3.5b 跨组织隔离/空节点/无成员 e2e
 
 ## 4. 机器检测
 
-- [ ] 4.1 `CheckProvider` 接口 + registry
+- [x] 4.1 `CheckProvider` 接口 + registry
 - [ ] 4.2 `check` 步骤通过 `add-async-job-and-callback-facade` 执行
-- [ ] 4.3 `pass/fail/warn` 状态机；warn 必须人工确认；provider 异常 fail-closed
+- [x] 4.3 pass/fail/warn 状态；warn 保留人工确认；provider 异常/超时 fail-closed
 - [ ] 4.4 检测证据（provider/version/input/output）写入步骤与审计
-- [ ] 4.5 单测：pass、fail、warn、超时、provider 异常
+- [x] 4.5 单测：pass、fail、warn、超时、provider 异常
 
 ## 5. 人工动作与轮次
 
@@ -43,11 +45,12 @@
 
 ## 6. 通用工作项
 
-- [ ] 6.1 `work_items` 投影：审批/复核/教学任务/申诉等 sourceType
+- [x] 6.1 `work_items` 投影：通用 sourceType + 幂等 upsert
 - [ ] 6.2 事件驱动更新（outbox/事务内）；源表仍为真源
 - [ ] 6.3 `inbox` 双读兼容：work_items + 旧 approvals
 - [ ] 6.4 批量处理/已读/红点/优先级排序
-- [ ] 6.5 重建/对账 job；单测投影一致性
+- [x] 6.5a 单测：投影幂等/关闭
+- [ ] 6.5b 重建/对账 job
 
 ## 7. SLA、提醒与升级
 
