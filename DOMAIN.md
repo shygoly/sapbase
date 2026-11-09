@@ -322,6 +322,17 @@ db: rls:auth_sessions
 spec: apps/api/src/identity/auth-sessions.service.spec.ts
 ```
 
+```yaml invariant
+id: INV-ID-03
+tables: [identity_providers, identity_links]
+desc: SSO 失败/签名/state/nonce 校验不通过必须拒绝，不得降级为信任调用方；external subject 只用于映射。
+trigger: SSO 登录回调/身份同步
+enforcement:
+  - test:apps/api/src/identity/sso.spec.ts#CasSsoAdapter
+db: none
+spec: apps/api/src/identity/sso.spec.ts
+```
+
 ---
 
 ## 应用安装
