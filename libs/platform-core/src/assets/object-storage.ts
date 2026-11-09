@@ -1,3 +1,5 @@
+export const OBJECT_STORAGE = Symbol('OBJECT_STORAGE')
+
 export interface StoredObject {
   key: string
   size: number

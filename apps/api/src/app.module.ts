@@ -13,6 +13,7 @@ import { AuthModule } from './auth/auth.module'
 import { DepartmentsModule } from './departments/departments.module'
 import { DataScopeModule } from './data-scope/data-scope.module'
 import { JobsModule } from './jobs/jobs.module'
+import { AssetsModule } from './assets/assets.module'
 import { RolesModule } from './roles/roles.module'
 import { AuditLogsModule } from './audit-logs/audit-logs.module'
 import { SettingsModule } from './settings/settings.module'
@@ -104,6 +105,7 @@ try {
     DepartmentsModule,
     DataScopeModule,
     JobsModule,
+    AssetsModule,
     RolesModule,
     AuditLogsModule,
     SettingsModule,

@@ -72,6 +72,10 @@ export class AssetsService {
     return row
   }
 
+  async findByObjectKey(organizationId: string, objectKey: string): Promise<Asset | null> {
+    return this.assets.findOne({ where: { organizationId, objectKey } })
+  }
+
   async list(organizationId: string, input: ListAssetsInput = {}) {
     const page = Math.max(1, Math.floor(input.page ?? 1))
     const pageSize = Math.max(1, Math.min(100, Math.floor(input.pageSize ?? 20)))
