@@ -37,22 +37,30 @@
 
 ## 5. 公告
 
-- [ ] 5.1 公告 CRUD（草稿/编辑/复制/删除）
+- [x] 5.1a 公告 CRUD（草稿/编辑）
+- [ ] 5.1b 复制/删除
 - [ ] 5.2 富文本/Markdown 渲染 + XSS 过滤 + 附件
-- [ ] 5.3 Audience：all/role/user/scope_node/scope_subtree；并集
-- [ ] 5.4 发布：立即/定时；权限校验
-- [ ] 5.5 撤回/过期：未读删除、已读标记、统计保留
-- [ ] 5.6 已读统计：delivered/read/failed；分页明细
+- [x] 5.3a Audience：all/role/user 并集
+- [ ] 5.3b scope_node/scope_subtree audience
+- [x] 5.4a 立即发布 + 权限校验
+- [ ] 5.4b 定时发布
+- [x] 5.5a 撤回 + 统计保留
+- [ ] 5.5b 过期/未读删除
+- [x] 5.6a 已读统计 delivered/read/failed
+- [ ] 5.6b 分页明细
 - [ ] 5.7 公告复用/模板（可选）
-- [ ] 5.8 单测：audience 解析、跨租户节点拒绝、撤回
+- [x] 5.8a 单测：all/role/空 audience/撤回/统计
+- [ ] 5.8b 跨租户 scope 节点拒绝 e2e
 
 ## 6. 扇出与投递
 
-- [ ] 6.1 发布时创建 deliveries（分批）
+- [x] 6.1 发布时创建 deliveries（逐用户幂等）
 - [ ] 6.2 通过 `add-async-job-and-callback-facade` 扇出；进度/取消/重试
-- [ ] 6.3 每批写 notifications + WebSocket；幂等
+- [x] 6.3a 逐用户写 notifications + WebSocket；sourceEventId 幂等
+- [ ] 6.3b 分批/批量优化
 - [ ] 6.4 大组织阈值/并发/限流
-- [ ] 6.5 单测：重复发布、部分失败重试、取消
+- [x] 6.5a 单测：重复发布不重复 delivery、空 audience
+- [ ] 6.5b 部分失败重试/取消
 
 ## 7. 保留期与清理
 

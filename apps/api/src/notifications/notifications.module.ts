@@ -15,6 +15,8 @@ import { AnnouncementDelivery } from './announcement-delivery.entity'
 import { NotificationSubscriber } from './notification-subscriber'
 import { NotificationsController } from './notifications.controller'
 import { NotificationPreferencesService } from './notification-preferences.service'
+import { AnnouncementsService } from './announcements.service'
+import { AnnouncementsController } from './announcements.controller'
 
 @Module({
   imports: [
@@ -30,13 +32,19 @@ import { NotificationPreferencesService } from './notification-preferences.servi
       BlueprintApproval,
     ]),
   ],
-  controllers: [NotificationsController, InboxController],
+  controllers: [NotificationsController, InboxController, AnnouncementsController],
   providers: [
     NotificationService,
     NotificationSubscriber,
     InboxService,
     NotificationPreferencesService,
+    AnnouncementsService,
   ],
-  exports: [NotificationService, InboxService, NotificationPreferencesService],
+  exports: [
+    NotificationService,
+    InboxService,
+    NotificationPreferencesService,
+    AnnouncementsService,
+  ],
 })
 export class NotificationsModule {}
