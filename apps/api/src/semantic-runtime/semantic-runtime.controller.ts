@@ -139,6 +139,27 @@ export class SemanticRuntimeController {
     }
   }
 
+  @Get(':id/export/:entity')
+  @ApiOperation({ summary: '按租户导出某实体（应用 dataScope/ownership；JSON 数据，供批量导出消费）' })
+  async exportRecords(
+    @Param('id') id: string,
+    @Param('entity') entity: string,
+    @Query() query: Record<string, string | undefined>,
+    @CurrentUser() user?: RuntimeUser,
+  ) {
+    try {
+      return await this.runtime.exportRecords(
+        id,
+        entity,
+        user?.organizationId ?? '',
+        query,
+        user,
+      )
+    } catch (error) {
+      toHttpException(error)
+    }
+  }
+
   @Get(':id/records/:entity')
   @ApiOperation({ summary: '按租户读回某实体的实例（无查询参数仍返回裸数组）' })
   async list(

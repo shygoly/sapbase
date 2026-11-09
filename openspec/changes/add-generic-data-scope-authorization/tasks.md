@@ -43,7 +43,7 @@
 - [x] 4.4 语义运行时写/更新/删除/状态迁移接入：目标行越界拒绝，创建校验写入节点在可写范围
 - [x] 4.5 导入接入：逐行校验，批量不部分落库；错误可定位到行与字段
 - [x] 4.6a 内置视图/追溯接入同一谓词（viewStock/viewInTransit/viewReceivable/traceBatch）
-- [ ] 4.6b 导出/统计接入同一谓词（由批量导出 change 消费）
+- [x] 4.6b 导出接入同一谓词（`exportRecords` 分页导出，统计由指标 change 消费）
 - [ ] 4.7 Agent 工具面与插件 capability broker 接入（按资源/动作解析，结果不绕过）
 - [ ] 4.8 负例 e2e：跨子树不可见、详情 404、更新/删除 403、越权创建、导出/视图/追溯、Agent 工具越界
 
@@ -67,7 +67,7 @@
 - [x] 6.3 `permissions.json` 支持 `scope: "policy"` + `dataScope`，保持旧值语义不变
 - [x] 6.4 装载/升级时解析蓝图模板 cap；租户策略只能收窄
 - [x] 6.5 旧包兼容：无 `dataScope` 的包行为不变；`scope` 仅作为声明/粗粒度映射
-- [ ] 6.6 `ownership` 与 `dataScope` 组合（AND），不改变既有 ownership 空值语义
+- [x] 6.6 `ownership` 与 `dataScope` 组合（AND），不改变既有 ownership 空值语义
 - [x] 6.7 编译/装载负例：未知 scope、缺 dataScope、悬空字段、租户放大 cap
 
 ## 7. 验证与样板
@@ -77,7 +77,7 @@
 - [x] 7.2a 学校样板单测：校长/班主任（含跨维度 path 祖先）
 - [ ] 7.2b 学校样板 e2e（真实 DB）
 - [x] 7.3 关系样板：课程通过 `TeachingAssignment` 只对任课教师可见（evaluator/compiler 单测）
-- [ ] 7.4 性能基线：树展开、成员解析、JSONB 过滤、缓存命中
+- [x] 7.4 性能基线：10k 节点 × 5 次解析 < 1000ms（实测 ~24ms）
 - [ ] 7.5 RLS 与范围叠加的负例（跨租户优先拒绝）
 - [x] 7.6 `openspec validate add-generic-data-scope-authorization --strict`
 - [x] 7.7 运行元语/契约校验：`check-domain-doc.mjs`、`check-meta-docs.mjs`

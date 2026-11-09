@@ -116,6 +116,63 @@ describe('SemanticRuntimeService dataScope integration helpers', () => {
     expect(query).not.toHaveBeenCalled()
   })
 
+  it('ownership 与 dataScope 组合为 AND', async () => {
+    const queries: string[] = []
+    const query = jest.fn(async (sql: string) => {
+      queries.push(sql)
+      if (sql.includes('SELECT COUNT')) return [{ total: 0 }]
+      return []
+    })
+    const service = new SemanticRuntimeService(
+      {
+        load: jest.fn(async () => ({
+          manifest: { blueprint: 'pkg-1', version: '1' },
+          compiled: {},
+        })),
+        packagesDirectory: () => '',
+      } as never,
+      {} as never,
+      { query } as never,
+      {} as never,
+      {} as never,
+      { resolve: jest.fn() } as never,
+    )
+    jest
+      .spyOn(
+        service as unknown as {
+          resolveBlueprintDataScope: (...args: unknown[]) => Promise<unknown>
+        },
+        'resolveBlueprintDataScope',
+      )
+      .mockResolvedValue({
+        expr: {
+          op: 'in',
+          field: { kind: 'jsonb', column: 'data', path: 'classId' },
+          values: [{ kind: 'literal', value: 'class-1' }],
+        },
+        version: 1,
+        declared: true,
+      })
+
+    const composed = {
+      ...entity,
+      ownership: { field: 'ownerId', readAllPermission: 'student.readall' },
+    }
+    await (service as unknown as {
+      listEnvelope: (
+        blueprintId: string,
+        entity: SemanticEntity,
+        organizationId: string,
+        query: Record<string, string | undefined>,
+        actor: { id: string; permissions: string[] },
+      ) => Promise<unknown>
+    }).listEnvelope('pkg-1', composed, 'org-1', {}, { id: 'u1', permissions: [] })
+
+    const sql = queries[0]
+    expect(sql).toContain(`data->>'ownerId'`)
+    expect(sql).toContain(`"blueprint_records"."data"->>'classId'`)
+  })
+
   it('permissions policy → packageCap', () => {
     const service = serviceWith()
     const cap = (service as unknown as {

@@ -1710,6 +1710,37 @@ export class SemanticRuntimeService {
     return { sql: compiled.sql, params: compiled.params, none: false }
   }
 
+  async exportRecords(
+    packageId: string,
+    entity: string,
+    organizationId: string,
+    query: Record<string, string | undefined>,
+    actor?: RuntimeActor,
+  ): Promise<{ entity: string; total: number; items: BlueprintRecord[] }> {
+    const loaded = await this.loadOrThrow(packageId, organizationId)
+    const template = this.readTemplate(packageId)
+    const declared = template.entities.find((item) => item.name === entity)
+    if (!declared) {
+      throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
+    }
+    this.assertEntityAccess(loaded, entity, ['list', 'read'], actor)
+    const items: BlueprintRecord[] = []
+    let total = 0
+    for (let page = 1; page <= 1000; page++) {
+      const envelope = await this.listEnvelope(
+        loaded.manifest.blueprint,
+        declared,
+        organizationId,
+        { ...query, page: String(page), pageSize: '100' },
+        actor,
+      )
+      total = envelope.total
+      items.push(...envelope.items)
+      if (envelope.items.length === 0 || items.length >= total) break
+    }
+    return { entity, total, items }
+  }
+
   private async listAllWithDataScope(
     blueprintId: string,
     entity: SemanticEntity,
