@@ -1,0 +1,6 @@
+export * from '@sap/platform-core/data-scope/entities/scope-dimension.entity'
+export * from '@sap/platform-core/data-scope/entities/scope-node.entity'
+export * from '@sap/platform-core/data-scope/entities/scope-membership.entity'
+export * from '@sap/platform-core/data-scope/entities/scope-binding.entity'
+export * from '@sap/platform-core/data-scope/entities/data-policy.entity'
+export * from '@sap/platform-core/data-scope/entities/scope-version.entity'

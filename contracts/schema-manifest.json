@@ -937,6 +937,90 @@
         "ranAt",
         "ranBy"
       ]
+    },
+    "scope_dimensions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "key",
+        "name",
+        "description",
+        "config",
+        "status"
+      ]
+    },
+    "scope_nodes": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "dimensionId",
+        "parentId",
+        "path",
+        "depth",
+        "name",
+        "code",
+        "metadata",
+        "status"
+      ]
+    },
+    "scope_memberships": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "subjectType",
+        "subjectId",
+        "nodeId",
+        "positionKey",
+        "validFrom",
+        "validTo",
+        "metadata"
+      ]
+    },
+    "scope_bindings": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "resourceKey",
+        "dimensionKey",
+        "kind",
+        "field",
+        "relation",
+        "writable"
+      ]
+    },
+    "data_policies": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "name",
+        "subject",
+        "resourceKey",
+        "actions",
+        "effect",
+        "scope",
+        "priority",
+        "status",
+        "version"
+      ]
+    },
+    "scope_versions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "version"
+      ]
     }
   }
 }

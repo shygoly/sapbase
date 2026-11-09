@@ -1,28 +1,33 @@
+> 当前进度（2026-11-09）：2.1/2.2/2.3/2.4a/2.5、3.1/3.2a/3.3/3.4/3.5/3.7 已完成；
+> 解析器先以纯逻辑 + 单测落地，尚未接 DataScopeService/语义运行时/管理 API。
+
 ## 1. 元语与契约
 
 - [ ] 1.1 在 `docs/META_LANGUAGE.md` 新增数据范围一节（五原语、范围代数、不变量 INV-DS-01..06），并在第 6 节术语表登记 `Data Scope` / `Scope Dimension` / `Scope Node` / `Scope Membership` / `Data Policy` / `Scope Resolver` / `Scope Predicate`
-- [ ] 1.2 在 `DOMAIN.md` 新增“数据范围”小节：表、关系、状态词、不变量；运行 `node scripts/meta/check-domain-doc.mjs`
+- [x] 1.2 在 `DOMAIN.md` 新增“数据范围”小节：表、关系、状态词、不变量；运行 `node scripts/meta/check-domain-doc.mjs`
 - [ ] 1.3 在 `DECISIONS.md` 登记关键决策（通用原语而非扩展 departments、定义/实例分离、范围只收窄、应用层谓词 + RLS 租户边界、模板 cap）
 - [ ] 1.4 新增/扩展 JSON Schema：`data-scope/v1`（binding/policy/scope AST 的持久化形状）
 - [ ] 1.5 更新 `schemas/blueprint-semantic.schema.json` 与 `schemas/blueprint-permissions.schema.json`（`dataScope`、`scope: "policy"`），保持加法式扩展
 
 ## 2. 存储与 RLS
 
-- [ ] 2.1 迁移：`scope_dimensions` / `scope_nodes` / `scope_memberships` / `scope_bindings` / `data_policies` / `scope_versions`
-- [ ] 2.2 索引：`scope_nodes(organizationId, dimensionId, path)`、`scope_memberships(organizationId, subjectType, subjectId)`、`data_policies(organizationId, resourceKey, status)`
-- [ ] 2.3 外键与唯一约束：维度 key 按组织唯一；节点父级同维度同组织；绑定 `(organizationId, resourceKey, dimensionKey, kind)` 唯一
-- [ ] 2.4 把新表加入 `TENANT_RLS_DDL.DIRECT_TABLES`，补 RLS e2e（跨租户不可见/不可写）
-- [ ] 2.5 TypeORM 实体与模块注册；确保实体注册检查通过
+- [x] 2.1 迁移：`scope_dimensions` / `scope_nodes` / `scope_memberships` / `scope_bindings` / `data_policies` / `scope_versions`
+- [x] 2.2 索引：`scope_nodes(organizationId, dimensionId, path)`、`scope_memberships(organizationId, subjectType, subjectId)`、`data_policies(organizationId, resourceKey, status)`
+- [x] 2.3 外键与唯一约束：维度 key 按组织唯一；节点父级同维度同组织；绑定 `(organizationId, resourceKey, dimensionKey, kind)` 唯一
+- [x] 2.4a 把新表加入 `TENANT_RLS_DDL.DIRECT_TABLES`
+- [ ] 2.4b 补 RLS e2e（跨租户不可见/不可写）
+- [x] 2.5 TypeORM 实体与模块注册；确保实体注册检查通过
 
 ## 3. 范围解析器
 
-- [ ] 3.1 定义 `ScopeSpec` / `ScopeExpr` / `FieldRef` / `RelationSpec` / `ScopePredicate` 类型
-- [ ] 3.2 实现树展开：`exact` / `subtree` / `ancestors`，路径维护与环检测
-- [ ] 3.3 实现成员解析：用户/角色/组、岗位过滤、有效期过滤
-- [ ] 3.4 实现策略组合：allow 并集、deny 覆盖、多角色并集、模板 cap 交集
-- [ ] 3.5 实现关系解析：蓝图关联实体单跳 + 平台关联表单跳
+- [x] 3.1 定义 `ScopeSpec` / `ScopeExpr` / `FieldRef` / `RelationSpec` / `ScopePredicate` 类型
+- [x] 3.2a 实现树展开：`exact` / `subtree` / `ancestors`
+- [ ] 3.2b 路径维护与环检测
+- [x] 3.3 实现成员解析：用户/角色/组、岗位过滤、有效期过滤
+- [x] 3.4 实现策略组合：allow 并集、deny 覆盖、多角色并集、模板 cap 交集
+- [x] 3.5 实现关系解析：蓝图关联实体单跳 + 平台关联表单跳
 - [ ] 3.6 实现 `scopeVersion` 与缓存（Redis + 内存实现），变更即 bump
-- [ ] 3.7 单元测试：五种 scope、空绑定 fail-closed、无策略 fail-closed、跨维度非法、过期成员、deny 优先、cap 收窄
+- [x] 3.7 单元测试：五种 scope、空绑定 fail-closed、无策略 fail-closed、跨维度非法、过期成员、deny 优先、cap 收窄
 - [ ] 3.8 失败路径测试：解析异常、非法节点、循环树、伪造主体
 
 ## 4. 统一执行点
@@ -62,7 +67,7 @@
 - [ ] 7.3 关系样板：课程通过 `TeachingAssignment` 只对任课教师可见
 - [ ] 7.4 性能基线：树展开、成员解析、JSONB 过滤、缓存命中
 - [ ] 7.5 RLS 与范围叠加的负例（跨租户优先拒绝）
-- [ ] 7.6 `openspec validate add-generic-data-scope-authorization --strict`
+- [x] 7.6 `openspec validate add-generic-data-scope-authorization --strict`
 - [ ] 7.7 运行元语/契约校验：`check-domain-doc.mjs`、`check-meta-docs.mjs`（如涉及 FLOWS/DECISIONS）
 
 ## 8. 文档与交付

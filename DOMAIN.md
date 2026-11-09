@@ -28,6 +28,12 @@
 | menu_items | 平台与租户 |
 | notifications | 平台与租户 |
 | audit_logs | 平台与租户 |
+| scope_dimensions | 数据范围 |
+| scope_nodes | 数据范围 |
+| scope_memberships | 数据范围 |
+| scope_bindings | 数据范围 |
+| data_policies | 数据范围 |
+| scope_versions | 数据范围 |
 | app_installations | 应用安装 |
 | app_installation_revisions | 应用安装 |
 | agent_confirmation_tokens | 应用安装 |
@@ -124,6 +130,49 @@ enforcement:
   - none
 db: none
 spec: apps/api/test/rls.e2e-spec.ts
+```
+
+---
+
+## 数据范围
+
+覆盖表：scope_dimensions, scope_nodes, scope_memberships, scope_bindings, data_policies, scope_versions
+
+数据范围聚合。`scope_dimensions` 是可配置的树维度（如 region / campus / class）；
+`scope_nodes` 是树节点（物化路径）；`scope_memberships` 把主体映射到节点 + 岗位；
+`scope_bindings` 声明资源到维度/字段/关系；`data_policies` 是租户侧策略；
+`scope_versions` 是组织级范围版本（缓存失效）。行业词只作为配置值，不进入平台表结构。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| scope_dimensions.organizationId | organizations.id | 维度归属组织 | none | 租户隔离；RLS 兜底 |
+| scope_nodes.organizationId | organizations.id | 节点归属组织 | none | 与维度同组织 |
+| scope_nodes.dimensionId | scope_dimensions.id | 节点归属维度 | none | 删除维度级联删除节点 |
+| scope_nodes.parentId | scope_nodes.id | 节点父子关系 | none | 同维度同组织；成环由服务层校验 |
+| scope_memberships.organizationId | organizations.id | 成员关系归属组织 | none | 主体可为 user/role/group |
+| scope_memberships.nodeId | scope_nodes.id | 成员关系归属节点 | none | 删除节点级联删除成员 |
+| scope_bindings.organizationId | organizations.id | 资源绑定归属组织 | none | 资源键带命名空间 |
+| data_policies.organizationId | organizations.id | 策略归属组织 | none | 租户策略只能收窄蓝图 cap |
+| scope_versions.organizationId | organizations.id | 范围版本归属组织 | none | 每组织一条，变更即递增 |
+
+### 状态词
+
+维度/节点/策略状态使用 `active` / `inactive`；策略效果使用 `allow` / `deny`；
+成员关系用 `validFrom` / `validTo` 表达有效期。禁止在 UI/API/DB 各造一套同义词。
+
+### 不变量
+
+```yaml invariant
+id: INV-DS-01
+tables: [scope_dimensions, scope_nodes, scope_memberships, scope_bindings, data_policies, scope_versions]
+desc: 数据范围只收窄；声明 dataScope 的资源解析失败按 none；范围来自可信身份；租户策略不得扩大蓝图 cap；范围变更必须 bump scope_versions。
+trigger: 任意数据范围解析/策略变更
+enforcement:
+  - test:apps/api/src/data-scope/scope-evaluator.spec.ts#ScopeEvaluator
+db: none
+spec: apps/api/src/data-scope/scope-evaluator.spec.ts
 ```
 
 ---

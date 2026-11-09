@@ -9,6 +9,7 @@
  */
 import { AuditLog } from './audit-logs/audit-log.entity'
 import { BrandConfig } from './organizations/brand-config.entity'
+import { DataPolicy } from './data-scope/entities/data-policy.entity'
 import { Department } from './departments/department.entity'
 import { Invitation } from './organizations/invitation.entity'
 import { Organization } from './organizations/organization.entity'
@@ -16,6 +17,11 @@ import { OrganizationActivity } from './organizations/organization-activity.enti
 import { OrganizationMember } from './organizations/organization-member.entity'
 import { Permission } from './permissions/permission.entity'
 import { Role } from './roles/role.entity'
+import { ScopeBinding } from './data-scope/entities/scope-binding.entity'
+import { ScopeDimension } from './data-scope/entities/scope-dimension.entity'
+import { ScopeMembership } from './data-scope/entities/scope-membership.entity'
+import { ScopeNode } from './data-scope/entities/scope-node.entity'
+import { ScopeVersion } from './data-scope/entities/scope-version.entity'
 import { Setting } from './settings/setting.entity'
 import { User } from './users/user.entity'
 
@@ -37,6 +43,12 @@ export const PLATFORM_CORE_ENTITIES = [
   AuditLog,
   Setting,
   Permission,
+  ScopeDimension,
+  ScopeNode,
+  ScopeMembership,
+  ScopeBinding,
+  DataPolicy,
+  ScopeVersion,
 ] as const
 
 export type PlatformCoreEntity = (typeof PLATFORM_CORE_ENTITIES)[number]

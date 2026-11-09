@@ -12,6 +12,12 @@ describe('tenant RLS DDL', () => {
       'app_installation_revisions',
       'agent_confirmation_tokens',
       'outbox_events',
+      'scope_dimensions',
+      'scope_nodes',
+      'scope_memberships',
+      'scope_bindings',
+      'data_policies',
+      'scope_versions',
     ]) {
       expect(joined).toContain(`to_regclass('public.${table}') IS NOT NULL`)
       expect(joined).toContain(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`)

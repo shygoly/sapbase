@@ -24,6 +24,12 @@ const DIRECT_TABLES = [
   'workflow_instances',
   'workflow_auto_suggestion_logs',
   'plugins',
+  'scope_dimensions',
+  'scope_nodes',
+  'scope_memberships',
+  'scope_bindings',
+  'data_policies',
+  'scope_versions',
 ] as const
 
 const CHILD_TABLES = [
