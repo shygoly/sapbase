@@ -35,6 +35,20 @@ export class IdentitySsoService {
     private readonly adapterFactory: (provider: IdentityProvider) => SsoAdapter = createSsoAdapter,
   ) {}
 
+  async authorizationUrl(
+    organizationId: string,
+    providerKey: string,
+    input: { state?: string; nonce?: string; codeChallenge?: string } = {},
+  ): Promise<string> {
+    const provider = await this.providers.findOne({
+      where: { organizationId, key: providerKey, status: 'active' },
+    })
+    if (!provider) {
+      throw new SsoError(`身份提供方不存在或已停用：${providerKey}`, 'not-configured')
+    }
+    return this.adapterFactory(provider).authorizationUrl(input)
+  }
+
   async authenticate(
     organizationId: string,
     providerKey: string,

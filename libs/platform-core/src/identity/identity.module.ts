@@ -11,6 +11,7 @@ import { IdentityController } from './identity.controller'
 import { ServiceClientsService } from './service-clients.service'
 import { ServiceClientAuthGuard } from './service-client-auth.guard'
 import { IdentitySsoService } from './identity-sso.service'
+import { IdentitySsoController } from './identity-sso.controller'
 import { IdentityLink } from './identity-link.entity'
 import { UsersModule } from '../users/users.module'
 import { RolesModule } from '../roles/roles.module'
@@ -29,7 +30,7 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
       ServiceClient,
       IdentityLink,
     ])],
-  controllers: [IdentityController],
+  controllers: [IdentityController, IdentitySsoController],
   providers: [
     OrganizationMemberRolesService,
     AuthSessionsService,
