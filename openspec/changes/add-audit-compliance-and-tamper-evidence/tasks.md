@@ -45,8 +45,9 @@
 
 ## 6. 检查点与验证
 
-- [ ] 6.1 `audit_checkpoints` 生成（定时/手动）
-- [ ] 6.2 checkpoint 签名（HMAC/Ed25519）
+- [x] 6.1 `audit_checkpoints` 生成（手动）
+- [ ] 6.1b 定时 checkpoint
+- [x] 6.2 checkpoint HMAC-SHA256 签名
 - [x] 6.3 `AuditVerificationService.verify`：从 genesis 重算（checkpoint 锚点后续接入）
 - [x] 6.4 验证 API（`GET /audit-logs/verify`）
 - [ ] 6.5 定时验证 job；失败告警
@@ -56,10 +57,11 @@
 ## 7. 保留/归档/法律保留
 
 - [ ] 7.1 `retentionClass` → `retentionUntil` 策略
-- [ ] 7.2 归档：JSONL + manifest + checkpoint → 资产
+- [x] 7.2 归档：JSONL + manifest → 对象存储（checkpoint 关联后续补）
 - [ ] 7.3 恢复：回灌 + 再验证
-- [ ] 7.4 清理 job：分批/幂等/审计；跳过 legal hold/未归档
-- [ ] 7.5 单测：到期清理、法律保留、归档恢复
+- [x] 7.4 清理：break-glass 事务，跳过 legalHold/未归档；分批 job 后续补
+- [x] 7.5a 单测：归档/清理/未配置存储
+- [ ] 7.5b 法律保留/恢复测试
 
 ## 8. 查询/导出/告警
 

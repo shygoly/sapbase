@@ -5,11 +5,27 @@ import { AuditLogsService } from './audit-logs.service'
 import { AuditLogsController } from './audit-logs.controller'
 import { AuditChainService } from './audit-chain.service'
 import { AuditVerificationService } from './audit-verification.service'
+import { AuditCheckpointService } from './audit-checkpoint.service'
+import { AuditRetentionService } from './audit-retention.service'
+import { AuditCheckpoint } from './audit-checkpoint.entity'
+import { AuditArchive } from './audit-archive.entity'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AuditLog])],
-  providers: [AuditLogsService, AuditChainService, AuditVerificationService],
+  imports: [TypeOrmModule.forFeature([AuditLog, AuditCheckpoint, AuditArchive])],
+  providers: [
+    AuditLogsService,
+    AuditChainService,
+    AuditVerificationService,
+    AuditCheckpointService,
+    AuditRetentionService,
+  ],
   controllers: [AuditLogsController],
-  exports: [AuditLogsService, AuditChainService, AuditVerificationService],
+  exports: [
+    AuditLogsService,
+    AuditChainService,
+    AuditVerificationService,
+    AuditCheckpointService,
+    AuditRetentionService,
+  ],
 })
 export class AuditLogsModule {}

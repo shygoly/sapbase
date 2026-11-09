@@ -8,6 +8,8 @@
  *   `PlatformEntityRegistrationCheck` 再在启动时反向核对 forFeature 覆盖。
  */
 import { AuditLog } from './audit-logs/audit-log.entity'
+import { AuditCheckpoint } from './audit-logs/audit-checkpoint.entity'
+import { AuditArchive } from './audit-logs/audit-archive.entity'
 import { BrandConfig } from './organizations/brand-config.entity'
 import { DataPolicy } from './data-scope/entities/data-policy.entity'
 import { Department } from './departments/department.entity'
@@ -64,6 +66,8 @@ export const PLATFORM_CORE_ENTITIES = [
   Department,
   Role,
   AuditLog,
+  AuditCheckpoint,
+  AuditArchive,
   Setting,
   Permission,
   ScopeDimension,

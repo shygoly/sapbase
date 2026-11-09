@@ -13,6 +13,8 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
 import { Optional } from '@nestjs/common'
 import { AuditVerificationService } from './audit-verification.service'
+import { AuditCheckpointService } from './audit-checkpoint.service'
+import { AuditRetentionService } from './audit-retention.service'
 import { AuditLogsService } from './audit-logs.service'
 import { AuditLog } from './audit-log.entity'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
@@ -27,6 +29,8 @@ export class AuditLogsController {
   constructor(
     private auditLogsService: AuditLogsService,
     @Optional() private readonly verification?: AuditVerificationService,
+    @Optional() private readonly checkpoints?: AuditCheckpointService,
+    @Optional() private readonly retention?: AuditRetentionService,
   ) {}
 
   @Get()
@@ -74,6 +78,27 @@ export class AuditLogsController {
       return { valid: false, checked: 0, reason: 'organizationId 必填' }
     }
     return this.verification.verify(organizationId)
+  }
+
+  @Post('checkpoint')
+  @ApiOperation({ summary: '生成审计链检查点（HMAC 签名）' })
+  async checkpoint(@Body() body: { organizationId: string; signer?: string }) {
+    if (!this.checkpoints) return { created: false, reason: 'checkpoint 服务未装配' }
+    return this.checkpoints.create(body.organizationId, body.signer)
+  }
+
+  @Post('archive')
+  @ApiOperation({ summary: '归档审计日志到对象存储（JSONL + manifest）' })
+  async archive(@Body() body: { organizationId: string; toSeq: number }) {
+    if (!this.retention) return { archived: 0, reason: 'retention 服务未装配' }
+    return this.retention.archive(body.organizationId, body.toSeq)
+  }
+
+  @Post('cleanup')
+  @ApiOperation({ summary: '清理已归档/过期/非 legalHold 审计日志' })
+  async cleanup(@Body() body: { organizationId: string }) {
+    if (!this.retention) return { deleted: 0, reason: 'retention 服务未装配' }
+    return { deleted: await this.retention.cleanup(body.organizationId) }
   }
 
   @Get(':id')
