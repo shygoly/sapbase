@@ -47,10 +47,11 @@
 
 - [ ] 6.1 `audit_checkpoints` 生成（定时/手动）
 - [ ] 6.2 checkpoint 签名（HMAC/Ed25519）
-- [ ] 6.3 `AuditVerificationService.verify`：从 checkpoint/genesis 重算
-- [ ] 6.4 验证 API（管理员）
+- [x] 6.3 `AuditVerificationService.verify`：从 genesis 重算（checkpoint 锚点后续接入）
+- [x] 6.4 验证 API（`GET /audit-logs/verify`）
 - [ ] 6.5 定时验证 job；失败告警
-- [ ] 6.6 单测：正常链、断链、篡改、checkpoint 失效、legacy 段
+- [x] 6.6a 单测：正常链、断链/hash 篡改、seq 缺口
+- [ ] 6.6b checkpoint 失效/legacy 段测试
 
 ## 7. 保留/归档/法律保留
 

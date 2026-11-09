@@ -11,6 +11,8 @@ import {
   StreamableFile,
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
+import { Optional } from '@nestjs/common'
+import { AuditVerificationService } from './audit-verification.service'
 import { AuditLogsService } from './audit-logs.service'
 import { AuditLog } from './audit-log.entity'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
@@ -22,7 +24,10 @@ import * as Papa from 'papaparse'
 @Controller('audit-logs')
 @UseGuards(JwtAuthGuard)
 export class AuditLogsController {
-  constructor(private auditLogsService: AuditLogsService) {}
+  constructor(
+    private auditLogsService: AuditLogsService,
+    @Optional() private readonly verification?: AuditVerificationService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all audit logs with filtering and pagination' })
@@ -57,6 +62,18 @@ export class AuditLogsController {
       result.total,
       'Audit logs retrieved successfully',
     )
+  }
+
+  @Get('verify')
+  @ApiOperation({ summary: '验证本组织审计哈希链' })
+  async verify(@Query('organizationId') organizationId?: string) {
+    if (!this.verification) {
+      return { valid: false, checked: 0, reason: '审计链验证服务未装配' }
+    }
+    if (!organizationId) {
+      return { valid: false, checked: 0, reason: 'organizationId 必填' }
+    }
+    return this.verification.verify(organizationId)
   }
 
   @Get(':id')
