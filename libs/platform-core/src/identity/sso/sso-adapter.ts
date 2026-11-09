@@ -11,6 +11,7 @@ export interface SsoAuthorizationInput {
 
 export interface SsoCallbackInput {
   ticket?: string
+  samlResponse?: string
   code?: string
   codeVerifier?: string
   state?: string

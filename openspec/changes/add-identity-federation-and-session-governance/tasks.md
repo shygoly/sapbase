@@ -45,7 +45,8 @@
 - [x] 5.2 CAS adapter（redirect + ticket 校验 + 属性映射）
 - [x] 5.3 OIDC adapter（state/nonce/PKCE、token exchange、id_token 验签）
 - [ ] 5.3b OAuth2-only（无 id_token）adapter
-- [ ] 5.4 SAML adapter（签名/时间窗/断言解析）
+- [x] 5.4a SAML adapter：断言解析/时间窗/签名 verifier 端口（fail-closed）
+- [ ] 5.4b 生产 XML DSig verifier（证书/指纹固定）
 - [x] 5.5 `identity_links` 映射 + JIT 建号 + 默认角色校验
 - [x] 5.6a SSO 授权/回调 HTTP e2e + adapter 失败/nonce 负例
 - [ ] 5.6b 真实 CAS/OIDC provider 端到端联调

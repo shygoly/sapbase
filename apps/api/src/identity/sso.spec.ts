@@ -4,6 +4,7 @@ import {
   OidcSsoAdapter,
 } from '@sap/platform-core/identity/sso/oidc-sso.adapter'
 import { SsoError } from '@sap/platform-core/identity/sso/sso-adapter'
+import { SamlSsoAdapter } from '@sap/platform-core/identity/sso/saml-sso.adapter'
 
 describe('CasSsoAdapter', () => {
   const config = { baseUrl: 'https://cas.example.com/cas', serviceUrl: 'https://app.example.com/sso/cas' }
@@ -41,6 +42,52 @@ describe('CasSsoAdapter', () => {
     })) as unknown as typeof fetch
     const adapter = new CasSsoAdapter(config, { fetcher })
     await expect(adapter.authenticate({ ticket: 'bad' })).rejects.toBeInstanceOf(SsoError)
+  })
+})
+
+
+describe('SamlSsoAdapter', () => {
+  const config = {
+    entryPoint: 'https://idp.example.com/saml/login',
+    issuer: 'https://app.example.com/saml',
+    certificate: 'CERT',
+  }
+
+  function response(extra = '') {
+    return Buffer.from(
+      `<saml2:Assertion><saml2:Conditions NotBefore="2020-01-01T00:00:00Z" NotOnOrAfter="2099-01-01T00:00:00Z"/>${extra}<saml2:Subject><saml2:NameID>ext-1</saml2:NameID></saml2:Subject><saml2:AttributeStatement><saml2:Attribute Name="email"><saml2:AttributeValue>a@example.com</saml2:AttributeValue></saml2:Attribute></saml2:AttributeStatement></saml2:Assertion>`,
+    ).toString('base64')
+  }
+
+  it('生成 IdP URL 带 RelayState', () => {
+    const adapter = new SamlSsoAdapter(config)
+    expect(adapter.authorizationUrl({ state: 's1' })).toContain('RelayState=s1')
+  })
+
+  it('验签通过 + 时间窗内 → 返回 NameID/attributes', async () => {
+    const adapter = new SamlSsoAdapter(config, { verifier: () => true })
+    await expect(adapter.authenticate({ samlResponse: response() })).resolves.toEqual({
+      externalId: 'ext-1',
+      attributes: { email: 'a@example.com' },
+    })
+  })
+
+  it('签名失败 → SsoError', async () => {
+    const adapter = new SamlSsoAdapter(config, { verifier: () => false })
+    await expect(adapter.authenticate({ samlResponse: response() })).rejects.toBeInstanceOf(SsoError)
+  })
+
+  it('未配置证书 → fail-closed', async () => {
+    const adapter = new SamlSsoAdapter({ ...config, certificate: undefined }, { verifier: () => true })
+    await expect(adapter.authenticate({ samlResponse: response() })).rejects.toBeInstanceOf(SsoError)
+  })
+
+  it('断言过期 → SsoError', async () => {
+    const xml = Buffer.from(
+      '<saml2:Assertion><saml2:Conditions NotOnOrAfter="2020-01-01T00:00:00Z"/><saml2:NameID>ext-1</saml2:NameID></saml2:Assertion>',
+    ).toString('base64')
+    const adapter = new SamlSsoAdapter(config, { verifier: () => true })
+    await expect(adapter.authenticate({ samlResponse: xml })).rejects.toBeInstanceOf(SsoError)
   })
 })
 

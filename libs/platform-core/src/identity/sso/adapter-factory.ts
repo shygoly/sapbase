@@ -1,6 +1,7 @@
 import type { IdentityProvider } from '../identity-provider.entity'
 import { CasSsoAdapter } from './cas-sso.adapter'
 import { OidcSsoAdapter } from './oidc-sso.adapter'
+import { SamlSsoAdapter } from './saml-sso.adapter'
 import { SsoError, type SsoAdapter } from './sso-adapter'
 
 export function createSsoAdapter(provider: IdentityProvider): SsoAdapter {
@@ -10,10 +11,11 @@ export function createSsoAdapter(provider: IdentityProvider): SsoAdapter {
       return new CasSsoAdapter(config)
     case 'oidc':
       return new OidcSsoAdapter(config)
-    case 'oauth2':
     case 'saml':
+      return new SamlSsoAdapter(config)
+    case 'oauth2':
       throw new SsoError(
-        `identity provider ${provider.key} 的 ${provider.type} adapter 尚未实现`,
+        `identity provider ${provider.key} 的 oauth2-only adapter 尚未实现`,
         'not-configured',
       )
     default:
