@@ -29,6 +29,10 @@
 | auth_login_events | 身份与会话 |
 | identity_sync_runs | 身份与会话 |
 | service_clients | 身份与会话 |
+| review_comments | 复核与审批 |
+| review_events | 复核与审批 |
+| review_delegations | 复核与审批 |
+| work_items | 复核与审批 |
 | notification_preferences | 通知与公告 |
 | announcements | 通知与公告 |
 | announcement_audiences | 通知与公告 |
@@ -307,6 +311,43 @@ enforcement:
   - test:apps/api/src/jobs/job-callback.spec.ts#JobCallbackService
 db: none
 spec: apps/api/src/jobs/job-callback.spec.ts
+```
+
+---
+
+## 复核与审批
+
+覆盖表：review_comments, review_events, review_delegations, work_items
+
+`blueprint_approvals` 扩展轮次/类型/selector/assignee/机器检测/截止时间；
+`review_comments` 存评论与附件引用；`review_events` 存提交/检测/通过/驳回/重提/委托事件；
+`review_delegations` 存委托；`work_items` 是审批/任务/申诉等源表的待办投影（源表仍为真源）。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| review_comments.approvalId | blueprint_approvals.id | 评论归属步骤 | none | 删除审批级联由服务层处理 |
+| review_events.approvalId | blueprint_approvals.id | 事件归属步骤 | none | 追加式 |
+| review_delegations.approvalId | blueprint_approvals.id | 委托归属步骤 | none | 有效期 |
+| work_items.organizationId | organizations.id | 工作项归属组织 | none | 唯一 (org, sourceType, sourceId) |
+
+### 状态词
+
+审批状态使用 `pending` / `approved` / `rejected`；步骤类型使用 `human` / `check`；
+工作项状态使用 `open` / `done` / `dismissed`；优先级使用 `low` / `normal` / `high` / `urgent`。
+
+### 不变量
+
+```yaml invariant
+id: INV-RV-01
+tables: [blueprint_approvals, review_comments, review_events, review_delegations, work_items]
+desc: 只有当前步骤合法审批人可操作；机器检测 fail-closed；warn 必须人工确认；resubmit 新 round 旧 round 只读；work_items 只是投影。
+trigger: 提交/检测/审批/驳回/重提/委托/工作项投影
+enforcement:
+  - test:apps/api/src/review/review.ddl.spec.ts#REVIEW_APPROVAL_DDL
+db: rls:work_items
+spec: apps/api/src/review/review.ddl.spec.ts
 ```
 
 ---

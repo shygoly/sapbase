@@ -792,7 +792,16 @@
         "role",
         "status",
         "actor",
-        "decidedAt"
+        "decidedAt",
+        "round",
+        "kind",
+        "selector",
+        "assignee",
+        "checkProvider",
+        "checkResult",
+        "comment",
+        "decidedBy",
+        "dueAt"
       ]
     },
     "blueprint_doc_counters": {
@@ -1341,6 +1350,65 @@
         "objectKey",
         "manifest",
         "status"
+      ]
+    },
+    "review_comments": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "approvalId",
+        "recordId",
+        "authorId",
+        "body",
+        "parentId",
+        "attachments",
+        "visibility"
+      ]
+    },
+    "review_events": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "approvalId",
+        "recordId",
+        "type",
+        "actorId",
+        "payload"
+      ]
+    },
+    "review_delegations": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "approvalId",
+        "fromUserId",
+        "toUserId",
+        "reason",
+        "validFrom",
+        "validTo",
+        "status"
+      ]
+    },
+    "work_items": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "sourceType",
+        "sourceId",
+        "title",
+        "status",
+        "assigneeId",
+        "priority",
+        "dueAt",
+        "metadata"
       ]
     }
   }

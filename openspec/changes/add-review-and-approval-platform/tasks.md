@@ -2,17 +2,18 @@
 
 - [ ] 1.1 定义 `review-step`、`assignee-selector`、`check-result`、`work-item` 的持久化形状与 JSON Schema
 - [ ] 1.2 在 `docs/META_LANGUAGE.md` 登记复核/审批/工作项术语与不变量（INV-RV-01..05）
-- [ ] 1.3 在 `DOMAIN.md` 新增复核与工作项小节，运行 `node scripts/meta/check-domain-doc.mjs`
+- [x] 1.3 在 `DOMAIN.md` 新增复核与工作项小节，运行 `node scripts/meta/check-domain-doc.mjs`
 - [ ] 1.4 在 `DECISIONS.md` 登记关键决策（扩展现有审批、work item 投影、机器检测 fail-closed）
 - [ ] 1.5 更新 `docs/protocols/blueprint-delivery.md` 的审批/复核小节
 
 ## 2. 存储与迁移
 
-- [ ] 2.1 扩展 `blueprint_approvals`：`round/kind/selector/assignee/checkProvider/checkResult/comment/decidedBy/dueAt`
-- [ ] 2.2 唯一约束改为 `(recordId, ruleId, round, stepIndex)`；旧行回填 `round=1, kind='human'`
-- [ ] 2.3 新增 `review_comments` / `review_events` / `review_delegations` / `work_items`
-- [ ] 2.4 索引与 RLS；新表加入 `TENANT_RLS_DDL`
-- [ ] 2.5 TypeORM 实体与模块注册
+- [x] 2.1 扩展 `blueprint_approvals`：`round/kind/selector/assignee/checkProvider/checkResult/comment/decidedBy/dueAt`
+- [x] 2.2 唯一约束改为 `(recordId, ruleId, round, stepIndex)`；旧行回填 `round=1, kind='human'`
+- [x] 2.3 新增 `review_comments` / `review_events` / `review_delegations` / `work_items`
+- [x] 2.4a 索引与 RLS；新表加入 `TENANT_RLS_DDL`
+- [ ] 2.4b 跨租户负例 e2e
+- [x] 2.5 TypeORM 实体与 app.entities 注册
 
 ## 3. 审批人解析
 
@@ -70,5 +71,5 @@
 - [ ] 9.2 旧 `blueprint_approvals` 数据可读、可继续审批
 - [ ] 9.3 旧 inbox 行为不变
 - [ ] 9.4 负例：越权审批、跳过机器检测、warn 当 pass、驳回后直接发布
-- [ ] 9.5 `openspec validate add-review-and-approval-platform --strict`
-- [ ] 9.6 运行 `check-domain-doc.mjs` / `check-meta-docs.mjs`
+- [x] 9.5 `openspec validate add-review-and-approval-platform --strict`
+- [x] 9.6 运行 `check-domain-doc.mjs` / `check-meta-docs.mjs`

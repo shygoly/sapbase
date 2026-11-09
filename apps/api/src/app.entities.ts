@@ -30,6 +30,10 @@ import { ModuleRegistry } from './module-registry/module-registry.entity'
 import { ModuleRelationship } from './module-registry/module-relationship.entity'
 import { ModuleStatistics } from './module-registry/module-statistics.entity'
 import { NotificationRecord } from './notifications/notification.entity'
+import { ReviewComment } from './review/review-comment.entity'
+import { ReviewEvent } from './review/review-event.entity'
+import { ReviewDelegation } from './review/review-delegation.entity'
+import { WorkItem } from './review/work-item.entity'
 import { NotificationPreference } from './notifications/notification-preference.entity'
 import { Announcement } from './notifications/announcement.entity'
 import { AnnouncementAudience } from './notifications/announcement-audience.entity'
@@ -86,6 +90,10 @@ export const APP_ENTITIES = [
   OutboxEvent,
   OutboxDelivery,
   NotificationRecord,
+  ReviewComment,
+  ReviewEvent,
+  ReviewDelegation,
+  WorkItem,
   NotificationPreference,
   Announcement,
   AnnouncementAudience,
