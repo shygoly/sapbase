@@ -213,8 +213,19 @@ export class SemanticRuntimeService {
 
     const loaded = await this.loadOrThrow(packageId, organizationId)
     const template = this.readTemplate(packageId)
+    const declared = template.entities.find((item) => item.name === entity)
+    if (!declared) {
+      throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
+    }
     this.assertEntityAccess(loaded, entity, 'create', actor)
     this.assertWritablePayload(template.entities, entity, data, actor)
+    await this.assertCreateInDataScope(
+      loaded.manifest.blueprint,
+      declared,
+      data,
+      organizationId,
+      actor,
+    )
     await this.applyIndexesOrThrow(
       loaded.manifest.blueprint,
       loaded.manifest.version,
@@ -799,6 +810,16 @@ export class SemanticRuntimeService {
         throw new RecordWriteError(`记录 ${entity}:${recordId} 不存在`, 'not-found')
       }
 
+      await this.assertRecordInDataScope(
+        loaded.manifest.blueprint,
+        declared,
+        row,
+        organizationId,
+        user,
+        'update',
+        manager,
+      )
+
       assertRecordStateDeclared(declared, row.state)
       const { from } = assertTransitionLegal(declared, row.state, body.to as string)
       await this.assertApprovalsAllowTransition(
@@ -1219,6 +1240,15 @@ export class SemanticRuntimeService {
       if (!row) {
         throw new RecordWriteError(`记录 ${entity}:${recordId} 不存在`, 'not-found')
       }
+      await this.assertRecordInDataScope(
+        loaded.manifest.blueprint,
+        declared,
+        row,
+        organizationId,
+        actor,
+        'delete',
+        manager,
+      )
       await deleteRecordWithIntegrity(manager, {
         blueprintId: loaded.manifest.blueprint,
         organizationId,
@@ -1653,6 +1683,7 @@ export class SemanticRuntimeService {
     organizationId: string,
     actor: RuntimeActor | undefined,
     action: string,
+    manager?: EntityManager,
   ): Promise<void> {
     const scope = await this.resolveBlueprintDataScope(
       blueprintId,
@@ -1672,7 +1703,7 @@ export class SemanticRuntimeService {
       actorId: actorId(actor) ?? '',
       paramOffset: 2,
     })
-    const rows = (await this.dataSource.query(
+    const rows = (await (manager ?? this.dataSource).query(
       `SELECT 1 FROM public.blueprint_records
         WHERE id = $1 AND "organizationId" = $2 AND (${compiled.sql})
         LIMIT 1`,
@@ -1680,6 +1711,43 @@ export class SemanticRuntimeService {
     )) as Array<{ '?column?': number }>
     if (rows.length === 0) {
       throw new NotFoundException('记录不存在或无权访问')
+    }
+  }
+
+  private async assertCreateInDataScope(
+    blueprintId: string,
+    entity: SemanticEntity,
+    data: Record<string, unknown>,
+    organizationId: string,
+    actor: RuntimeActor | undefined,
+  ): Promise<void> {
+    const scope = await this.resolveBlueprintDataScope(
+      blueprintId,
+      entity,
+      organizationId,
+      actor,
+      'create',
+    )
+    if (!scope || scope.expr.op === 'all') return
+    if (scope.expr.op === 'none') {
+      throw new RecordWriteError('无权在该范围内创建记录', 'data-scope-denied', undefined, undefined, 403)
+    }
+    const compiled = compileScopeExpr(scope.expr, {
+      alias: 'blueprint_records',
+      rowAlias: 'blueprint_records',
+      organizationId,
+      actorId: actorId(actor) ?? '',
+      paramOffset: 2,
+    })
+    const rows = (await this.dataSource.query(
+      `SELECT 1
+         FROM (SELECT $1::jsonb AS data, $2::uuid AS id) AS blueprint_records
+        WHERE (${compiled.sql})
+        LIMIT 1`,
+      [data, randomUUID(), ...compiled.params],
+    )) as Array<{ '?column?': number }>
+    if (rows.length === 0) {
+      throw new RecordWriteError('无权在该范围内创建记录', 'data-scope-denied', undefined, undefined, 403)
     }
   }
 

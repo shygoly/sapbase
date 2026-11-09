@@ -103,4 +103,37 @@ describe('SemanticRuntimeService dataScope integration helpers', () => {
     }).assertRecordInDataScope('pkg-1', entity, { id: 'r1' }, 'org-1', { id: 'u1' }, 'read')
     expect(query).not.toHaveBeenCalled()
   })
+
+  it('create 越界 → 403', async () => {
+    const dataSource = { query: jest.fn(async () => []) }
+    const service = new SemanticRuntimeService(
+      {} as never,
+      {} as never,
+      dataSource as never,
+      {} as never,
+      {} as never,
+      {
+        resolve: jest.fn(async () => ({
+          expr: {
+            op: 'in',
+            field: { kind: 'jsonb', column: 'data', path: 'classId' },
+            values: [{ kind: 'literal', value: 'class-1' }],
+          },
+          version: 1,
+          declared: true,
+        })),
+      } as never,
+    )
+    await expect(
+      (service as unknown as {
+        assertCreateInDataScope: (
+          blueprintId: string,
+          entity: SemanticEntity,
+          data: Record<string, unknown>,
+          organizationId: string,
+          actor: { id: string },
+        ) => Promise<void>
+      }).assertCreateInDataScope('pkg-1', entity, { classId: 'class-2' }, 'org-1', { id: 'u1' }),
+    ).rejects.toMatchObject({ status: 403, reason: 'data-scope-denied' })
+  })
 })

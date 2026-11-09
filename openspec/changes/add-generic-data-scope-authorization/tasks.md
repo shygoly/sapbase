@@ -1,6 +1,6 @@
 > 当前进度（2026-11-09）：2.1/2.2/2.3/2.4a/2.5、3.1/3.2a/3.3/3.4/3.5/3.6a/3.7、
-> 4.1a/4.2a/4.3、5.1a/5.1b/5.2a/5.2b、6.1/6.2a 已完成；解析器 + SQL 编译器 + DataScopeService + 管理 API + 列表/单条读执行点 + 蓝图 dataScope 元数据已落地，
-> 尚未接写入/迁移/导入/视图/导出/Agent、Redis 缓存、预览 UI、permissions scope/cap、e2e。
+> 4.1a/4.1b/4.2a/4.3/4.4、5.1a/5.1b/5.2a/5.2b、6.1/6.2a 已完成；解析器 + SQL 编译器 + DataScopeService + 管理 API + 列表/单条读/创建/更新/删除/迁移执行点 + 蓝图 dataScope 元数据已落地，
+> 尚未接导入/视图/导出/Agent、Redis 缓存、预览 UI、permissions scope/cap、e2e。
 
 ## 1. 元语与契约
 
@@ -35,11 +35,11 @@
 ## 4. 统一执行点
 
 - [x] 4.1a `DataScopeService.resolve(actor, resourceKey, action)` + 预算缓存
-- [ ] 4.1b `assertRowInScope` + `assertCreateInScope`
+- [x] 4.1b `assertRowInScope` + `assertCreateInScope`
 - [x] 4.2a `ScopeSqlCompiler`：ScopeExpr → SQL/params，支持 column/jsonb/exists
 - [ ] 4.2b TypeORM `applyScope(qb, expr, alias)`
 - [x] 4.3 语义运行时列表/详情/单条读接入范围谓词（与字段权限、ownership 组合）
-- [ ] 4.4 语义运行时写/更新/删除/状态迁移接入：目标行越界拒绝，创建校验写入节点在可写范围
+- [x] 4.4 语义运行时写/更新/删除/状态迁移接入：目标行越界拒绝，创建校验写入节点在可写范围
 - [ ] 4.5 导入接入：逐行校验，批量不部分落库；错误可定位到行与字段
 - [ ] 4.6 导出/统计/视图/追溯接入同一谓词
 - [ ] 4.7 Agent 工具面与插件 capability broker 接入（按资源/动作解析，结果不绕过）
