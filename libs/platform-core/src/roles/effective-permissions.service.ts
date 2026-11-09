@@ -3,6 +3,8 @@ import { RolesService } from './roles.service'
 
 export interface EffectivePermissionsInput {
   role: string
+  /** 组织内多角色：本组织 active 角色并集；缺省只解析 role。 */
+  additionalRoles?: readonly string[]
   directPermissions: readonly string[]
   organizationId?: string
 }
@@ -16,10 +18,14 @@ export class EffectivePermissionsService {
     if (!input.organizationId) {
       return direct
     }
+    const organizationId = input.organizationId
 
-    const role = await this.rolesService.findByName(input.role, input.organizationId)
-    const fromRole = uniquify(role?.permissions ?? [])
-    return uniquify([...fromRole, ...direct])
+    const roleNames = uniquify([input.role, ...(input.additionalRoles ?? [])])
+    const roles = await Promise.all(
+      roleNames.map((name) => this.rolesService.findByName(name, organizationId)),
+    )
+    const fromRoles = uniquify(roles.flatMap((role) => role?.permissions ?? []))
+    return uniquify([...fromRoles, ...direct])
   }
 }
 

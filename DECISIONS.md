@@ -192,6 +192,26 @@ code_markers:
   - libs/platform-core/src/jobs/job-types.ts
 ```
 
+### D-10：多角色按组织绑定，`users.roleId` 仅作回退
+
+```yaml decision
+id: D-10
+title: 多角色按组织绑定，users.roleId 仅作兼容回退
+status: accepted
+date: 2026-11
+context: |
+  同一用户在不同组织/岗位需要不同角色；把多角色塞回 users.roleId 单列
+  会丢失组织边界、有效期与来源，也无法表达“同一组织多角色”。
+decision: |
+  新增 organization_member_roles（组织 + 用户 + 角色 + 来源 + 有效期）；
+  有效权限 = 本组织 active 角色并集 ∪ 直授权限；users.roleId 保留为兼容回退，不删除。
+references:
+  - INV-ID-01
+code_markers:
+  - libs/platform-core/src/identity/organization-member-roles.service.ts
+  - libs/platform-core/src/roles/effective-permissions.service.ts
+```
+
 ---
 
 ## 附录：命名空间约定

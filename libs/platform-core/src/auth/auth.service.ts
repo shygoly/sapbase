@@ -4,7 +4,9 @@ import * as bcrypt from 'bcrypt'
 import { UsersService } from '../users/users.service'
 import { OrganizationsService } from '../organizations/organizations.service'
 import { User } from '../users/user.entity'
+import { Optional } from '@nestjs/common'
 import { EffectivePermissionsService } from '../roles/effective-permissions.service'
+import { OrganizationMemberRolesService } from '../identity/organization-member-roles.service'
 
 export interface JwtPayload {
   sub: string
@@ -21,6 +23,7 @@ export class AuthService {
     private jwtService: JwtService,
     private organizationsService: OrganizationsService,
     private effectivePermissions: EffectivePermissionsService,
+    @Optional() private memberRoles?: OrganizationMemberRolesService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -46,10 +49,14 @@ export class AuthService {
     }
 
     const roleName = user.roleName || user.role || 'user'
-    // 角色权限由 EffectivePermissionsService 按「本次选中组织 + 同名 active 角色」解析，
+    const additionalRoles = selectedOrgId
+      ? await this.memberRoles?.activeRoleNames(selectedOrgId, user.id)
+      : []
+    // 角色权限由 EffectivePermissionsService 按「本次选中组织 + active 角色并集」解析，
     // 再与直授权限取并集。不要用 user.rolePermissions：那是未经 active/组织校验的预载值。
     const permissions = await this.effectivePermissions.resolve({
       role: roleName,
+      additionalRoles,
       directPermissions: user.permissions || [],
       organizationId: selectedOrgId,
     })
@@ -88,8 +95,10 @@ export class AuthService {
     await this.organizationsService.findOne(organizationId, userId)
 
     const roleName = user.roleName || user.role || 'user'
+    const additionalRoles = await this.memberRoles?.activeRoleNames(organizationId, user.id)
     const permissions = await this.effectivePermissions.resolve({
       role: roleName,
+      additionalRoles,
       directPermissions: user.permissions || [],
       organizationId,
     })

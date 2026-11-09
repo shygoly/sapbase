@@ -305,6 +305,7 @@ Agent run 状态归 Agent Runtime；job 只携带 agentRunId 并桥接事件
 22. **未知类型/非法 payload 不入队**：类型是启动时注册的白名单，payload 不执行任意代码（INV-JOB-03）。
 23. **任务上下文来自可信身份**：组织/应用上下文不接受 body 覆盖；RLS 兜底（INV-JOB-04）。
 24. **回调安全**：默认 https、禁私网/重定向、HMAC 签名；回调失败不改任务结果（INV-JOB-05）。
+25. **多角色按组织**：有效权限 = 本组织 active 角色并集 ∪ 直授；`users.roleId` 仅作回退（INV-ID-01）。
 
 ---
 

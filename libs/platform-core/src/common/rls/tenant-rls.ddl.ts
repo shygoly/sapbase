@@ -31,6 +31,7 @@ const DIRECT_TABLES = [
   'data_policies',
   'scope_versions',
   'jobs',
+  'organization_member_roles',
 ] as const
 
 const CHILD_TABLES = [

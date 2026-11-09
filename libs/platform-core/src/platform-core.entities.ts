@@ -17,6 +17,7 @@ import { JobAttempt } from './jobs/job-attempt.entity'
 import { JobEvent } from './jobs/job-event.entity'
 import { Organization } from './organizations/organization.entity'
 import { OrganizationActivity } from './organizations/organization-activity.entity'
+import { OrganizationMemberRole } from './identity/organization-member-role.entity'
 import { OrganizationMember } from './organizations/organization-member.entity'
 import { Permission } from './permissions/permission.entity'
 import { Role } from './roles/role.entity'
@@ -41,6 +42,7 @@ export const PLATFORM_CORE_ENTITIES = [
   Invitation,
   BrandConfig,
   OrganizationActivity,
+  OrganizationMemberRole,
   Department,
   Role,
   AuditLog,

@@ -8,18 +8,20 @@
 
 ## 2. 存储与 RLS
 
-- [ ] 2.1 迁移：`identity_providers` / `identity_links` / `organization_member_roles` / `auth_sessions` / `auth_login_events` / `identity_sync_runs` / `service_clients`
+- [x] 2.1a 迁移/实体：`organization_member_roles`（多角色绑定）
+- [ ] 2.1b 迁移/实体：`identity_providers` / `identity_links` / `auth_sessions` / `auth_login_events` / `identity_sync_runs` / `service_clients`
 - [ ] 2.2 索引与唯一约束：provider key、identity link、活跃角色绑定、session 状态、login event 时间
 - [ ] 2.3 新表加入 `TENANT_RLS_DDL.DIRECT_TABLES`，补跨租户 RLS e2e
-- [ ] 2.4 TypeORM 实体与模块注册
+- [x] 2.4a `organization_member_roles` 实体/模块/RLS 注册
+- [ ] 2.4b 其余身份/会话实体注册
 
 ## 3. 多角色与有效权限
 
-- [ ] 3.1 `organization_member_roles` 服务：授予/撤销/列表/有效期
-- [ ] 3.2 有效权限解析改为“本组织角色并集 ∪ 直授”，保留 `users.roleId` 回退
+- [x] 3.1 `organization_member_roles` 服务：授予/撤销/列表/有效期
+- [x] 3.2 有效权限解析改为“本组织角色并集 ∪ 直授”，保留 `users.roleId` 回退
 - [ ] 3.3 权限版本 `permissionVersion` 与 JWT/缓存刷新
 - [ ] 3.4 迁移脚本：`users.roleId` 回填主组织角色绑定 + 差异报告
-- [ ] 3.5 单测：多角色并集、跨组织隔离、停用角色、过期绑定、旧字段回退
+- [x] 3.5 单测：多角色并集、跨组织隔离、停用角色、过期绑定、旧字段回退
 
 ## 4. 会话治理
 

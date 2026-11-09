@@ -38,6 +38,26 @@ describe('EffectivePermissionsService', () => {
     ).resolves.toEqual(['shared:perm', 'role:only', 'direct:only'])
   })
 
+
+  it('多角色：本组织内多个角色权限取并集，并保持角色顺序', async () => {
+    const findByName = jest.fn(async (name: string) => {
+      if (name === 'teacher') return { permissions: ['student:read'] }
+      if (name === 'head_teacher') return { permissions: ['student:read', 'grade:write'] }
+      return null
+    }) as unknown as RolesService['findByName']
+    const service = build(findByName)
+
+    await expect(
+      service.resolve({
+        role: 'teacher',
+        additionalRoles: ['head_teacher', 'teacher'],
+        directPermissions: ['direct:keep'],
+        organizationId: 'org-1',
+      }),
+    ).resolves.toEqual(['student:read', 'grade:write', 'direct:keep'])
+    expect(findByName).toHaveBeenCalledTimes(2)
+  })
+
   it('其它组织的同名角色不生效：findByName 在选中组织内返回 null 时只留直授', async () => {
     const findByName = jest.fn(async () => null) as unknown as RolesService['findByName']
     const service = build(findByName)

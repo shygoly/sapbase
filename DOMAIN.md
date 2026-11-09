@@ -22,6 +22,7 @@
 | permissions | 平台与租户 |
 | invitations | 平台与租户 |
 | organization_members | 平台与租户 |
+| organization_member_roles | 身份与会话 |
 | organization_activities | 平台与租户 |
 | settings | 平台与租户 |
 | brand_configs | 平台与租户 |
@@ -255,6 +256,42 @@ enforcement:
   - test:apps/api/src/jobs/job-callback.spec.ts#JobCallbackService
 db: none
 spec: apps/api/src/jobs/job-callback.spec.ts
+```
+
+---
+
+## 身份与会话
+
+覆盖表：organization_member_roles
+
+组织内多角色绑定。`organization_member_roles` 把用户映射到组织内角色，携带来源
+（manual/legacy/sso/sync）、状态与有效期；有效权限 = 本组织内 active 且未过期的角色并集
+∪ 用户直授权限。`users.roleId` 保留为兼容回退，不删除。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| organization_member_roles.organizationId | organizations.id | 绑定归属组织 | none | RLS 兜底 |
+| organization_member_roles.userId | users.id | 绑定归属用户 | none | 同组织校验由服务层做 |
+| organization_member_roles.roleId | roles.id | 绑定角色（可空） | none | roleName 为兼容/展示键 |
+
+### 状态词
+
+绑定状态使用 `active` / `inactive`；来源使用 `manual` / `legacy` / `sso` / `sync`。
+有效期用 `validFrom` / `validTo` 表达。禁止在 UI/API/DB 各造一套同义词。
+
+### 不变量
+
+```yaml invariant
+id: INV-ID-01
+tables: [organization_member_roles]
+desc: 有效角色只取本组织 active 且未过期的绑定；角色并集 ∪ 直授，users.roleId 仅作回退；跨组织绑定不可见。
+trigger: 登录/切换组织/授权变更
+enforcement:
+  - test:apps/api/src/identity/organization-member-roles.service.spec.ts#OrganizationMemberRolesService
+db: rls:organization_member_roles
+spec: apps/api/src/identity/organization-member-roles.service.spec.ts
 ```
 
 ---

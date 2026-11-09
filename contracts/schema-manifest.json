@@ -1077,6 +1077,22 @@
         "type",
         "payload"
       ]
+    },
+    "organization_member_roles": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "roleId",
+        "roleName",
+        "source",
+        "status",
+        "validFrom",
+        "validTo",
+        "createdBy"
+      ]
     }
   }
 }
