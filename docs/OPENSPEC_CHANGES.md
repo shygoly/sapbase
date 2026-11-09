@@ -7,11 +7,11 @@
 
 | 指标 | 数量 |
 | --- | --- |
-| 进行中 | 33 |
-| 已完成未归档 | 24 |
+| 进行中 | 32 |
+| 已完成未归档 | 25 |
 | 无任务/骨架 | 2 |
 | 已归档 | 14 |
-| 活跃任务 | 1137/2268 |
+| 活跃任务 | 1144/2268 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -27,7 +27,6 @@
 | [add-document-intelligence](../openspec/changes/add-document-intelligence/) | 文档智能（解析 → 结构化 → 确认） | 0/52 | 8 req / 1 文件 | [P](../openspec/changes/add-document-intelligence/proposal.md) [D](../openspec/changes/add-document-intelligence/design.md) [T](../openspec/changes/add-document-intelligence/tasks.md) [S](../openspec/changes/add-document-intelligence/specs) | 2026-11-09 |
 | [add-education-reference-blueprint](../openspec/changes/add-education-reference-blueprint/) | 教育参考蓝图（Education Reference Blueprint） | 0/74 | 12 req / 1 文件 | [P](../openspec/changes/add-education-reference-blueprint/proposal.md) [D](../openspec/changes/add-education-reference-blueprint/design.md) [T](../openspec/changes/add-education-reference-blueprint/tasks.md) [S](../openspec/changes/add-education-reference-blueprint/specs) | 2026-11-09 |
 | [add-external-integration-connector](../openspec/changes/add-external-integration-connector/) | 外部集成连接器 | 0/58 | 10 req / 1 文件 | [P](../openspec/changes/add-external-integration-connector/proposal.md) [D](../openspec/changes/add-external-integration-connector/design.md) [T](../openspec/changes/add-external-integration-connector/tasks.md) [S](../openspec/changes/add-external-integration-connector/specs) | 2026-11-09 |
-| [add-generic-data-scope-authorization](../openspec/changes/add-generic-data-scope-authorization/) | 通用数据范围授权（组织树 + 关系） | 56/63 | 17 req / 4 文件 | [P](../openspec/changes/add-generic-data-scope-authorization/proposal.md) [D](../openspec/changes/add-generic-data-scope-authorization/design.md) [T](../openspec/changes/add-generic-data-scope-authorization/tasks.md) [S](../openspec/changes/add-generic-data-scope-authorization/specs) | 2026-11-09 |
 | [add-identity-federation-and-session-governance](../openspec/changes/add-identity-federation-and-session-governance/) | 身份联邦与会话治理 | 0/53 | 13 req / 2 文件 | [P](../openspec/changes/add-identity-federation-and-session-governance/proposal.md) [D](../openspec/changes/add-identity-federation-and-session-governance/design.md) [T](../openspec/changes/add-identity-federation-and-session-governance/tasks.md) [S](../openspec/changes/add-identity-federation-and-session-governance/specs) | 2026-11-09 |
 | [add-metrics-and-dashboard-platform](../openspec/changes/add-metrics-and-dashboard-platform/) | 指标、看板与预警平台 | 0/53 | 10 req / 1 文件 | [P](../openspec/changes/add-metrics-and-dashboard-platform/proposal.md) [D](../openspec/changes/add-metrics-and-dashboard-platform/design.md) [T](../openspec/changes/add-metrics-and-dashboard-platform/tasks.md) [S](../openspec/changes/add-metrics-and-dashboard-platform/specs) | 2026-11-09 |
 | [add-notification-center-and-announcements](../openspec/changes/add-notification-center-and-announcements/) | 通知中心与公告 | 0/50 | 10 req / 1 文件 | [P](../openspec/changes/add-notification-center-and-announcements/proposal.md) [D](../openspec/changes/add-notification-center-and-announcements/design.md) [T](../openspec/changes/add-notification-center-and-announcements/tasks.md) [S](../openspec/changes/add-notification-center-and-announcements/specs) | 2026-11-09 |
@@ -57,6 +56,7 @@
 
 | Change | 标题 | 任务 | 规格 | 入口 | 最近更新 |
 | --- | --- | --- | --- | --- | --- |
+| [add-generic-data-scope-authorization](../openspec/changes/add-generic-data-scope-authorization/) | 通用数据范围授权（组织树 + 关系） | 63/63 | 17 req / 4 文件 | [P](../openspec/changes/add-generic-data-scope-authorization/proposal.md) [D](../openspec/changes/add-generic-data-scope-authorization/design.md) [T](../openspec/changes/add-generic-data-scope-authorization/tasks.md) [S](../openspec/changes/add-generic-data-scope-authorization/specs) | 2026-11-09 |
 | [add-ai-blueprint-signing-and-load](../openspec/changes/add-ai-blueprint-signing-and-load/) | AI Blueprint 签名、授权与装载验证 | 13/13 | 2 req / 1 文件 | [P](../openspec/changes/add-ai-blueprint-signing-and-load/proposal.md) [D](../openspec/changes/add-ai-blueprint-signing-and-load/design.md) [T](../openspec/changes/add-ai-blueprint-signing-and-load/tasks.md) [S](../openspec/changes/add-ai-blueprint-signing-and-load/specs) | 2026-11-05 |
 | [add-blueprint-ui-and-permissions-layers](../openspec/changes/add-blueprint-ui-and-permissions-layers/) | Blueprint 增加 UI 与权限发布层 | 18/18 | 5 req / 3 文件 | [P](../openspec/changes/add-blueprint-ui-and-permissions-layers/proposal.md) [D](../openspec/changes/add-blueprint-ui-and-permissions-layers/design.md) [T](../openspec/changes/add-blueprint-ui-and-permissions-layers/tasks.md) [S](../openspec/changes/add-blueprint-ui-and-permissions-layers/specs) | 2026-11-05 |
 | [add-blueprint-ui-runtime-consumer](../openspec/changes/add-blueprint-ui-runtime-consumer/) | Blueprint UI 运行时消费者与权限执行 | 13/13 | 3 req / 3 文件 | [P](../openspec/changes/add-blueprint-ui-runtime-consumer/proposal.md) [D](../openspec/changes/add-blueprint-ui-runtime-consumer/design.md) [T](../openspec/changes/add-blueprint-ui-runtime-consumer/tasks.md) [S](../openspec/changes/add-blueprint-ui-runtime-consumer/specs) | 2026-11-05 |

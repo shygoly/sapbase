@@ -30,6 +30,8 @@ export interface AgentToolContract {
   sensitiveArgs?: string[]
   agentInvocable?: boolean
   allowedAgents?: string[]
+  /** 可选：调用前必须通过的数据范围（resourceKey + action） */
+  dataScope?: { resourceKey: string; action: string }
 }
 
 export interface ToolCatalog {

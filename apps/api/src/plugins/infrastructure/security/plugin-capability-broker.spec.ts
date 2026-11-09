@@ -8,6 +8,7 @@ import {
   assertCapability,
   checkCapability,
   createAuthorizer,
+  dataScopeRequestFor,
   permissionPointsOf,
   requiredPointsFor,
 } from './plugin-capability-broker'
@@ -62,8 +63,30 @@ describe('请求 → 所需权限点', () => {
   })
 })
 
-describe('判定：all-of', () => {
-  const declaration = {
+describe('能力 → 数据范围请求', () => {
+  it('数据库能力映射到 platform:<table>，动作与操作一致', () => {
+    expect(dataScopeRequestFor('database.read', { table: 'orders' })).toEqual({
+      resourceKey: 'platform:orders',
+      action: 'read',
+    })
+    expect(dataScopeRequestFor('database.write', { table: 'orders' })).toEqual({
+      resourceKey: 'platform:orders',
+      action: 'update',
+    })
+    expect(dataScopeRequestFor('database.delete', { table: 'orders' })).toEqual({
+      resourceKey: 'platform:orders',
+      action: 'delete',
+    })
+  })
+
+  it('不出数据的能力不产生范围请求（避免把日志/模块能力误判成越权）', () => {
+    expect(dataScopeRequestFor('log.write', { message: 'hi' })).toBeNull()
+    expect(dataScopeRequestFor('modules.extend', { name: 'crm' })).toBeNull()
+    expect(dataScopeRequestFor('api.call', { path: '/api/orders', method: 'GET' })).toBeNull()
+  })
+})
+
+describe('判定：all-of', () => {  const declaration = {
     database: { tables: ['orders'], operations: ['read'] },
     api: { endpoints: ['/api/orders'], methods: ['GET'] },
   }

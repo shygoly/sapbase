@@ -178,4 +178,16 @@ export const dataScopeApi = {
   async preview(input: { resourceKey: string; action: string }): Promise<ScopePreview> {
     return unwrap(await httpClient.post('/api/data-scope/preview', input))
   },
+
+  async preflight(input: {
+    packageId: string
+    entity: string
+    field: string
+  }): Promise<{ total: number; missing: number }> {
+    return unwrap(
+      await httpClient.get('/api/data-scope/preflight', {
+        params: input,
+      }),
+    )
+  },
 }

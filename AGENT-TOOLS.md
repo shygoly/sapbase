@@ -6,6 +6,8 @@
 > v1 尚未引入多个智能体 profile，`allowedAgents` 一律写 `-`；处理器由 `AgentToolRegistry` 直接分派时写 `-`。
 > 数据范围：Agent 工具调用必须按 actor + resourceKey + action 执行 `DataScopeService`；
 > 工具结果不得绕过范围；网关/处理器统一注入，不在各工具里另写判定。
+> 契约可选字段 `dataScope: { resourceKey, action }` 声明调用前必须过的范围闸；
+> 声明了但运行时未装配 `DataScopeGuard` 按 fail-closed 拒绝。
 
 ---
 

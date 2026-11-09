@@ -250,3 +250,89 @@ describe('SemanticRuntimeService dataScope integration helpers', () => {
     ).rejects.toMatchObject({ status: 403, reason: 'data-scope-denied' })
   })
 })
+
+describe('内置视图/追溯在 dataScope=none 时不查业务行', () => {
+  function serviceWithScopeNone() {
+    const query = jest.fn(async () => [])
+    const auditCreate = jest.fn(async (row: unknown) => row)
+    const service = new SemanticRuntimeService(
+      {
+        load: jest.fn(async () => ({
+          manifest: { blueprint: 'pkg-1', version: '1' },
+          compiled: {},
+        })),
+        compiledTemplate: () => ({
+          entities: [
+            { name: 'SalesOrderLine', fields: [] },
+            { name: 'Batch', fields: [] },
+          ],
+        }),
+        packagesDirectory: () => '',
+      } as never,
+      {} as never,
+      { query } as never,
+      { create: auditCreate } as never,
+      {} as never,
+      { resolve: jest.fn() } as never,
+    )
+    jest
+      .spyOn(
+        service as unknown as {
+          dataScopeSqlFor: (...args: unknown[]) => Promise<unknown>
+        },
+        'dataScopeSqlFor',
+      )
+      .mockResolvedValue({ none: true, sql: '1=0', params: [] })
+    return { service, query, auditCreate }
+  }
+
+  it('viewStock → []，不执行聚合查询', async () => {
+    const { service, query } = serviceWithScopeNone()
+    await expect(service.viewStock('pkg-1', 'org-1', { id: 'u1' })).resolves.toEqual([])
+    expect(query).not.toHaveBeenCalled()
+  })
+
+  it('viewReceivable → []，不执行聚合查询', async () => {
+    const { service, query } = serviceWithScopeNone()
+    await expect(service.viewReceivable('pkg-1', 'org-1', { id: 'u1' })).resolves.toEqual([])
+    expect(query).not.toHaveBeenCalled()
+  })
+
+  it('traceBatch → found:false，不查关联单据', async () => {
+    const { service, query } = serviceWithScopeNone()
+    await expect(
+      service.traceBatch('pkg-1', 'B-1', 'org-1', { id: 'u1' }),
+    ).resolves.toMatchObject({ found: false })
+    expect(query).not.toHaveBeenCalled()
+  })
+
+  it('update/delete 目标行越界 → 404', async () => {
+    const service = serviceWithScopeNone().service
+    jest
+      .spyOn(
+        service as unknown as {
+          resolveBlueprintDataScope: (...args: unknown[]) => Promise<unknown>
+        },
+        'resolveBlueprintDataScope',
+      )
+      .mockResolvedValue({ expr: { op: 'none' }, version: 1, declared: true })
+    const assertRecord = (
+      service as unknown as {
+        assertRecordInDataScope: (
+          blueprintId: string,
+          entity: SemanticEntity,
+          row: { id: string },
+          organizationId: string,
+          actor: { id: string },
+          action: string,
+        ) => Promise<void>
+      }
+    ).assertRecordInDataScope.bind(service)
+    await expect(
+      assertRecord('pkg-1', entity, { id: 'r1' }, 'org-1', { id: 'u1' }, 'update'),
+    ).rejects.toBeInstanceOf(NotFoundException)
+    await expect(
+      assertRecord('pkg-1', entity, { id: 'r1' }, 'org-1', { id: 'u1' }, 'delete'),
+    ).rejects.toBeInstanceOf(NotFoundException)
+  })
+})

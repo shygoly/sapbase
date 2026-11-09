@@ -44,8 +44,8 @@
 - [x] 4.5 导入接入：逐行校验，批量不部分落库；错误可定位到行与字段
 - [x] 4.6a 内置视图/追溯接入同一谓词（viewStock/viewInTransit/viewReceivable/traceBatch）
 - [x] 4.6b 导出接入同一谓词（`exportRecords` 分页导出，统计由指标 change 消费）
-- [ ] 4.7 Agent 工具面与插件 capability broker 接入（按资源/动作解析，结果不绕过）
-- [ ] 4.8 负例 e2e：跨子树不可见、详情 404、更新/删除 403、越权创建、导出/视图/追溯、Agent 工具越界
+- [x] 4.7 Agent 工具面与插件 capability broker 接入（Agent `dataScope` 契约字段 + fail-closed guard；插件 database.* 映射 `platform:<table>` 并在执行前过 guard）
+- [x] 4.8 负例 e2e/集成：跨子树不可见（真实 DB）、详情/更新/删除 404、越权创建 403、导出/视图/追溯 none 不查业务行、Agent 工具越界/未装配 fail-closed；管理 API HTTP e2e（权限 403、落库、预览、404）
 
 ## 5. 管理面与预览
 
@@ -53,10 +53,10 @@
 - [x] 5.1b 管理 API + 权限点（`data-scope:read` / `data-scope:manage`）
 - [x] 5.2a `DataScopeService.preview()`（复用 resolve）
 - [x] 5.2b 预览 API（返回 expr/version/declared）
-- [ ] 5.2c 预览 UI + 节点集合/可读谓词摘要
+- [x] 5.2c 预览 UI + 谓词摘要（web-console `/admin/data-scope` 预览页，展示 expr/version/declared）
 - [x] 5.3 策略/成员/节点变更写审计（actor、before/after、原因）
 - [x] 5.4 `api-client` 更新（OpenAPI 由 Nest 装饰器提供）
-- [ ] 5.5 管理 UI：树、成员、策略、预览（可放 Portal 组织管理区）
+- [x] 5.5 管理 UI：维度/树/成员/绑定/策略/预览/预检（web-console `/admin/data-scope`）
 - [x] 5.6 空绑定预检 API：统计 null/空值行数
 
 ## 6. 蓝图集成
@@ -73,9 +73,9 @@
 ## 7. 验证与样板
 
 - [x] 7.1a 区域样板单测：大区→省→市，三级经理各自可见/不可见
-- [ ] 7.1b 区域样板 e2e（真实 DB）
+- [x] 7.1b 区域样板 e2e（真实 DB：省经理/市经理）
 - [x] 7.2a 学校样板单测：校长/班主任（含跨维度 path 祖先）
-- [ ] 7.2b 学校样板 e2e（真实 DB）
+- [x] 7.2b 学校样板 e2e（真实 DB：校长/班主任）
 - [x] 7.3 关系样板：课程通过 `TeachingAssignment` 只对任课教师可见（evaluator/compiler 单测）
 - [x] 7.4 性能基线：10k 节点 × 5 次解析 < 1000ms（实测 ~24ms）
 - [x] 7.5 RLS 跨租户负例（真实 Postgres 非 owner 角色 + 越权 INSERT）
@@ -87,5 +87,5 @@
 - [x] 8.1 更新 `docs/protocols/blueprint-delivery.md`：把 §14.3 “部门/仓库级不做”改为指向本能力，并写明 RLS 只做租户边界
 - [x] 8.2 更新 `docs/ARCHITECTURE.md` 权限小节（如存在）
 - [x] 8.3 更新 `AGENT-TOOLS.md`：Agent 数据访问工具必须执行范围
-- [ ] 8.4 更新 `openspec/specs/data-scope/spec.md` 归档说明
+- [x] 8.4 更新 `openspec/specs/data-scope/spec.md` 归档说明
 - [x] 8.5 发布说明：声明即执行、空绑定 fail-closed、租户只能收窄

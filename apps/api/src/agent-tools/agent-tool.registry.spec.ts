@@ -19,6 +19,7 @@ function createRegistry(overrides?: {
   auditCreate?: jest.Mock
   consume?: jest.Mock
   issue?: jest.Mock
+  dataScopeAssert?: jest.Mock
 }) {
   const blueprints = {
     list: overrides?.list ?? jest.fn(async () => [{ id: 'bp-1' }]),
@@ -45,6 +46,9 @@ function createRegistry(overrides?: {
     issue: overrides?.issue ?? jest.fn(),
     consume: overrides?.consume ?? jest.fn(async () => undefined),
   }
+  const dataScopeGuard = overrides?.dataScopeAssert
+    ? { assertAllowed: overrides.dataScopeAssert }
+    : undefined
 
   const registry = new AgentToolRegistry(
     blueprints as never,
@@ -56,8 +60,18 @@ function createRegistry(overrides?: {
     tokens as never,
     { list: jest.fn(async () => []) } as never,
     { createProposal: jest.fn(), issuePreviewToken: jest.fn(), validateProposal: jest.fn() } as never,
+    dataScopeGuard as never,
   )
-  return { registry, blueprints, modules, executor, auditLogs, tokens, atomics }
+  return {
+    registry,
+    blueprints,
+    modules,
+    executor,
+    auditLogs,
+    tokens,
+    atomics,
+    dataScopeGuard,
+  }
 }
 
 const ACTOR = {
@@ -330,6 +344,110 @@ describe('AgentToolRegistry 调用链', () => {
   })
 })
 
+
+describe('AgentToolRegistry 数据范围执行点', () => {
+  function catalogWithDataScope(): ToolCatalog {
+    const base = readCatalog().tools.find((tool) => tool.name === 'erp_blueprint_list')
+    if (!base) throw new Error('测试契约缺少 erp_blueprint_list')
+    return {
+      version: 1,
+      tools: [
+        {
+          ...base,
+          dataScope: { resourceKey: 'platform:blueprints', action: 'list' },
+        },
+      ],
+    }
+  }
+
+  it('声明 dataScope → 调用前经过 guard，且带可信 actor/权限', async () => {
+    const assertAllowed = jest.fn(async () => undefined)
+    const { registry, blueprints } = createRegistry({ dataScopeAssert: assertAllowed })
+    const catalog = catalogWithDataScope()
+
+    await registry.invoke(
+      { ...ACTOR, name: 'erp_blueprint_list', args: {} },
+      catalog,
+    )
+
+    expect(assertAllowed).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: 'org-1',
+        resourceKey: 'platform:blueprints',
+        action: 'list',
+        declared: true,
+        actor: expect.objectContaining({
+          userId: 'user@example.com',
+          permissions: ACTOR.grantedPermissions,
+        }),
+      }),
+    )
+    expect(blueprints.list).toHaveBeenCalledTimes(1)
+  })
+
+  it('guard 判定 none（抛 403）→ 不执行、不写审计', async () => {
+    const assertAllowed = jest.fn(async () => {
+      throw new ForbiddenException('数据范围拒绝')
+    })
+    const { registry, blueprints, auditLogs } = createRegistry({
+      dataScopeAssert: assertAllowed,
+    })
+
+    await expect(
+      registry.invoke({ ...ACTOR, name: 'erp_blueprint_list', args: {} }, catalogWithDataScope()),
+    ).rejects.toBeInstanceOf(ForbiddenException)
+    expect(blueprints.list).not.toHaveBeenCalled()
+    expect(auditLogs.create).not.toHaveBeenCalled()
+  })
+
+  it('声明了 dataScope 但运行时未装配 guard → fail-closed', async () => {
+    const { registry, blueprints } = createRegistry()
+    await expect(
+      registry.invoke({ ...ACTOR, name: 'erp_blueprint_list', args: {} }, catalogWithDataScope()),
+    ).rejects.toThrow(/未装配 DataScopeGuard/)
+    expect(blueprints.list).not.toHaveBeenCalled()
+  })
+
+  it('未声明 dataScope → 不调用 guard（旧行为）', async () => {
+    const assertAllowed = jest.fn(async () => undefined)
+    const { registry } = createRegistry({ dataScopeAssert: assertAllowed })
+    await registry.invoke({ ...ACTOR, name: 'erp_blueprint_list', args: {} })
+    expect(assertAllowed).not.toHaveBeenCalled()
+  })
+
+  it('数据范围判定先于确认令牌消费：越权不能烧令牌', async () => {
+    const assertAllowed = jest.fn(async () => {
+      throw new ForbiddenException('数据范围拒绝')
+    })
+    const consume = jest.fn(async () => undefined)
+    const issue = jest.fn(async () => ({ token: 't' }))
+    const { registry } = createRegistry({ dataScopeAssert: assertAllowed, consume, issue })
+    const base = readCatalog().tools.find((tool) => tool.name === 'erp_module_export')
+    if (!base) throw new Error('测试契约缺少 erp_module_export')
+    const catalog: ToolCatalog = {
+      version: 1,
+      tools: [
+        {
+          ...base,
+          dataScope: { resourceKey: 'platform:modules', action: 'export' },
+        },
+      ],
+    }
+
+    await expect(
+      registry.invoke(
+        {
+          ...ACTOR,
+          name: 'erp_module_export',
+          args: { id: 'mod-1' },
+          confirmationToken: 'token-1',
+        },
+        catalog,
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException)
+    expect(consume).not.toHaveBeenCalled()
+  })
+})
 
 describe('isAgentAllowed', () => {
   const { isAgentAllowed } = require('./agent-tool.registry')

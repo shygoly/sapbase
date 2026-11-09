@@ -21,6 +21,8 @@ import { AtomicRegistryService } from '../atomic-registry/atomic-registry.servic
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { BlueprintService } from '../blueprint/blueprint.service'
 import { ReleasesService } from '../releases/releases.service'
+import { DataScopeModule } from '../data-scope/data-scope.module'
+import { DataScopeGuard } from '../data-scope/data-scope.guard'
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { ReleasesService } from '../releases/releases.service'
     BusinessAppsModule,
     AgentFeedbackModule,
     ReleasesModule,
+    DataScopeModule,
   ],
   controllers: [AgentToolsController],
   providers: [
@@ -51,6 +54,7 @@ import { ReleasesService } from '../releases/releases.service'
         tokens: ConfirmationTokenService,
         feedback: AgentFeedbackService,
         releases: ReleasesService,
+        dataScopeGuard: DataScopeGuard,
       ) =>
         new AgentToolRegistry(
           blueprints,
@@ -62,6 +66,7 @@ import { ReleasesService } from '../releases/releases.service'
           tokens,
           feedback,
           releases,
+          dataScopeGuard,
         ),
       inject: [
         BlueprintService,
@@ -73,6 +78,7 @@ import { ReleasesService } from '../releases/releases.service'
         ConfirmationTokenService,
         AgentFeedbackService,
         ReleasesService,
+        DataScopeGuard,
       ],
     },
   ],

@@ -90,6 +90,34 @@ export function requiredPointsFor(
   }
 }
 
+export interface PluginDataScopeRequest {
+  resourceKey: string
+  action: string
+}
+
+/**
+ * 能力请求 → 数据范围请求（没有行级数据访问的能力返回 null）。
+ *
+ * 插件数据库能力按 `platform:<table>` 资源键解析；行级范围仍在应用层执行，
+ * 不把范围值交给插件自己声明。`api.call` 的授权由目标端点自己的权限/范围判定，
+ * 这里不重复造一套。
+ */
+export function dataScopeRequestFor(
+  capability: string,
+  args: Record<string, unknown>,
+): PluginDataScopeRequest | null {
+  switch (capability) {
+    case 'database.read':
+      return { resourceKey: `platform:${String(args.table)}`, action: 'read' }
+    case 'database.write':
+      return { resourceKey: `platform:${String(args.table)}`, action: 'update' }
+    case 'database.delete':
+      return { resourceKey: `platform:${String(args.table)}`, action: 'delete' }
+    default:
+      return null
+  }
+}
+
 export interface CapabilityCheck {
   allowed: boolean
   /** 缺哪些声明（空数组表示放行）。 */

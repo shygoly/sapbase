@@ -97,13 +97,13 @@ describe('区域样板：大区 → 省 → 市', () => {
 describe('学校样板：校区 → 年级 → 班级', () => {
   const SCHOOL_NODES = nodes([
     ['campus', 'campus', '/campus'],
-    ['grade', 'grade', '/campus/grade-2'],
-    ['class-a', 'class', '/campus/grade-2/class-a'],
-    ['class-b', 'class', '/campus/grade-2/class-b'],
+    ['grade', 'campus', '/campus/grade-2'],
+    ['class-a', 'campus', '/campus/grade-2/class-a'],
+    ['class-b', 'campus', '/campus/grade-2/class-b'],
   ])
   const binding = {
     resourceKey: 'blueprint:education:Student',
-    dimensionKey: 'class',
+    dimensionKey: 'campus',
     kind: 'field' as const,
     field: 'classId',
   }
@@ -129,43 +129,22 @@ describe('学校样板：校区 → 年级 → 班级', () => {
         policy({
           resourceKey: 'blueprint:education:Student',
           subject: { kind: 'role', roleKey: role },
-          scope: { kind: 'node', dimension: 'class', anchor: 'membership', positions: [role], depth },
+          scope: { kind: 'node', dimension: 'campus', anchor: 'membership', positions: [role], depth },
         }),
       ],
     })
   }
 
-  it('校长看校区子树（campus 成员 + class 维度路径前缀）', () => {
-    const expr = evaluator.evaluate({
-      resourceKey: 'blueprint:education:Student',
-      action: 'read',
-      actor: { userId: 'principal', roleKeys: ['principal'], groupKeys: [] },
-      declared: true,
-      bindings: [binding],
-      memberships: [
-        {
-          subjectType: 'user',
-          subjectId: 'principal',
-          nodeId: 'campus',
-          positionKey: 'principal',
-          node: SCHOOL_NODES[0],
-        },
-      ],
-      nodes: SCHOOL_NODES,
-      policies: [
-        policy({
-          resourceKey: 'blueprint:education:Student',
-          subject: { kind: 'role', roleKey: 'principal' },
-          scope: { kind: 'node', dimension: 'class', anchor: 'membership', positions: ['principal'], depth: 'subtree' },
-        }),
-      ],
-    })
+  it('校长看校区子树（campus→grade→class）', () => {
+    const expr = evalFor('principal', SCHOOL_NODES[0], 'subtree')
     expect(expr).toMatchObject({
       op: 'in',
       field: { kind: 'jsonb', column: 'data', path: 'classId' },
       values: [
+        { kind: 'literal', value: 'campus' },
         { kind: 'literal', value: 'class-a' },
         { kind: 'literal', value: 'class-b' },
+        { kind: 'literal', value: 'grade' },
       ],
     })
   })
@@ -176,6 +155,59 @@ describe('学校样板：校区 → 年级 → 班级', () => {
       op: 'in',
       field: { kind: 'jsonb', column: 'data', path: 'classId' },
       values: [{ kind: 'literal', value: 'class-a' }],
+    })
+  })
+
+  it('跨维度路径前缀：历史导入数据（campus 成员 + class 维度策略）仍按路径收窄', () => {
+    const legacyNodes = nodes([
+      ['campus', 'campus', '/campus'],
+      ['grade', 'grade', '/campus/grade-2'],
+      ['class-a', 'class', '/campus/grade-2/class-a'],
+      ['class-b', 'class', '/campus/grade-2/class-b'],
+    ])
+    const expr = evaluator.evaluate({
+      resourceKey: 'blueprint:education:Student',
+      action: 'read',
+      actor: { userId: 'principal', roleKeys: ['principal'], groupKeys: [] },
+      declared: true,
+      bindings: [
+        {
+          resourceKey: 'blueprint:education:Student',
+          dimensionKey: 'class',
+          kind: 'field',
+          field: 'classId',
+        },
+      ],
+      memberships: [
+        {
+          subjectType: 'user',
+          subjectId: 'principal',
+          nodeId: 'campus',
+          positionKey: 'principal',
+          node: legacyNodes[0],
+        },
+      ],
+      nodes: legacyNodes,
+      policies: [
+        policy({
+          resourceKey: 'blueprint:education:Student',
+          subject: { kind: 'role', roleKey: 'principal' },
+          scope: {
+            kind: 'node',
+            dimension: 'class',
+            anchor: 'membership',
+            positions: ['principal'],
+            depth: 'subtree',
+          },
+        }),
+      ],
+    })
+    expect(expr).toMatchObject({
+      op: 'in',
+      values: [
+        { kind: 'literal', value: 'class-a' },
+        { kind: 'literal', value: 'class-b' },
+      ],
     })
   })
 })

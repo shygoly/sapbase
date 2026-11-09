@@ -1,4 +1,4 @@
-import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common'
+import { Injectable, Logger, Optional, type OnModuleDestroy } from '@nestjs/common'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import type { Plugin } from '../../domain/entities/plugin.entity'
@@ -6,7 +6,8 @@ import type { IPluginContext } from '../../domain/services/i-plugin-context'
 import { PluginContextProvider } from './plugin-context-provider.service'
 import { PluginHostProcess } from './plugin-host-process'
 import { AuditLogsService } from '../../../audit-logs/audit-logs.service'
-import { createAuthorizer } from '../security/plugin-capability-broker'
+import { createAuthorizer, dataScopeRequestFor } from '../security/plugin-capability-broker'
+import { DataScopeGuard } from '../../../data-scope/data-scope.guard'
 
 export interface PluginRuntime {
   plugin: Plugin
@@ -60,6 +61,7 @@ export class PluginRuntimeService implements OnModuleDestroy {
   constructor(
     private readonly contextProvider: PluginContextProvider,
     private readonly auditLogs: AuditLogsService,
+    @Optional() private readonly dataScopeGuard?: DataScopeGuard,
   ) {}
 
   /**
@@ -129,6 +131,23 @@ export class PluginRuntimeService implements OnModuleDestroy {
       // 判定权在平台：清单声明 → 权限点 → all-of
       authorize: createAuthorizer(plugin.name, plugin.manifest.permissions ?? {}),
       executeCapability: async (capability, args) => {
+        // 数据访问能力先过范围闸。未装配 guard 时也不放行 —— 忘了装配不能等于范围失效。
+        // bindings 为空表示该资源未声明 dataScope，保持旧行为（租户隔离）。
+        const scopeRequest = dataScopeRequestFor(capability, args)
+        if (scopeRequest) {
+          if (!this.dataScopeGuard) {
+            throw new Error(
+              `插件 ${plugin.name} 请求 ${capability}，但运行时未装配 DataScopeGuard，拒绝执行`,
+            )
+          }
+          await this.dataScopeGuard.assertAllowed({
+            organizationId: plugin.organizationId,
+            resourceKey: scopeRequest.resourceKey,
+            action: scopeRequest.action,
+            actor: { userId: `plugin:${plugin.name}`, roleKeys: [], groupKeys: [] },
+          })
+        }
+
         // v1 只实现"不改数据、不出网"的这一条；其余能力需要各自的执行器（另立变更）。
         // 这里明确抛错而不是返回 undefined —— "没实现"与"越权"必须能分开看。
         if (capability === 'log.write') {

@@ -67,6 +67,16 @@
       "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$|^[a-z][a-z0-9-]*\\*$" },
       "uniqueItems": true,
       "description": "允许调用它的智能体（`main` / `emp-*` 之类）。缺省表示不限制"
+    },
+    "dataScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resourceKey", "action"],
+      "properties": {
+        "resourceKey": { "type": "string", "minLength": 1 },
+        "action": { "type": "string", "minLength": 1 }
+      },
+      "description": "可选：调用前必须通过的数据范围；未配置守卫时 fail-closed"
     }
   }
 }

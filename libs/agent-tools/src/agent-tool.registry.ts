@@ -24,6 +24,7 @@ import {
   digestToolArgs,
 } from './confirmation-token.service'
 import { ReleasesService } from '@sap/platform-release/releases/releases.service'
+import type { DataScopeGuard } from '@sap/platform-core/data-scope/data-scope.guard'
 import { wrapUntrustedData } from '@sap/agent-kernel'
 
 const ALLOWED_ATOMIC_KINDS = new Set(['calculation', 'query'])
@@ -80,6 +81,11 @@ export class AgentToolRegistry {
     private readonly tokens: ConfirmationTokenService,
     private readonly feedback: AgentFeedbackPort,
     private readonly releases: ReleasesService,
+    /**
+     * 可选：声明了 `dataScope` 的工具必须经过它。
+     * 未注入时按 fail-closed 处理（见 invoke），避免"忘了装配 = 范围失效"。
+     */
+    private readonly dataScopeGuard?: DataScopeGuard,
   ) {}
 
   catalog(): ToolCatalog {
@@ -129,6 +135,9 @@ export class AgentToolRegistry {
         `缺少权限：${missing.join(', ')}（契约声明的权限点必须全部满足）`,
       )
     }
+
+    // 数据范围在确认令牌消费之前判定：越权调用不能烧掉一次确认。
+    await this.assertDataScope(tool, input, organizationId)
 
     if (tool.confirmation === 'required') {
       if (!input.confirmationToken) {
@@ -182,6 +191,38 @@ export class AgentToolRegistry {
       })
       throw error
     }
+  }
+
+  /**
+   * 工具契约声明了 dataScope 就必须过范围闸：
+   *   - 未声明：不额外过滤（旧行为）
+   *   - 声明了但运行时没装配 guard：拒绝（fail-closed，不能静默放开）
+   *   - guard 判定 none：拒绝
+   */
+  private async assertDataScope(
+    tool: AgentToolContract,
+    input: AgentToolInvokeInput,
+    organizationId: string,
+  ): Promise<void> {
+    const declared = tool.dataScope
+    if (!declared) return
+    if (!this.dataScopeGuard) {
+      throw new ForbiddenException(
+        `工具 ${tool.name} 声明了数据范围，但运行时未装配 DataScopeGuard，拒绝执行`,
+      )
+    }
+    await this.dataScopeGuard.assertAllowed({
+      organizationId,
+      resourceKey: declared.resourceKey,
+      action: declared.action,
+      declared: true,
+      actor: {
+        userId: input.actor,
+        roleKeys: [],
+        groupKeys: [],
+        permissions: [...input.grantedPermissions],
+      },
+    })
   }
 
   private requireOrganizationId(organizationId: string | undefined): string {

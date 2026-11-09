@@ -27,6 +27,7 @@ import { PluginSecurityValidatorService } from './infrastructure/security/plugin
 import { PluginsController } from './plugins.controller'
 import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 import { AIModuleContextModule } from '../ai-module-context/ai-module-context.module'
+import { DataScopeModule } from '../data-scope/data-scope.module'
 
 @Module({
   imports: [
@@ -35,6 +36,8 @@ import { AIModuleContextModule } from '../ai-module-context/ai-module-context.mo
     AIModuleContextModule,
     // 能力拒绝/放行要落 audit_logs（与原子同一条出口）
     AuditLogsModule,
+    // 插件数据访问能力必须过行级范围闸
+    DataScopeModule,
   ],
   providers: [
     {

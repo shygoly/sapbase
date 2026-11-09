@@ -9,6 +9,7 @@ import { ScopeNode } from './entities/scope-node.entity'
 import { ScopeVersion } from './entities/scope-version.entity'
 import { ScopeEvaluator } from './scope-evaluator'
 import { DataScopeService } from './data-scope.service'
+import { DataScopeGuard } from './data-scope.guard'
 import { DataScopeController } from './data-scope.controller'
 
 /**
@@ -29,8 +30,8 @@ import { DataScopeController } from './data-scope.controller'
       ScopeVersion,
     ]),
   ],
-  providers: [ScopeEvaluator, DataScopeService],
+  providers: [ScopeEvaluator, DataScopeService, DataScopeGuard],
   controllers: [DataScopeController],
-  exports: [ScopeEvaluator, DataScopeService, TypeOrmModule],
+  exports: [ScopeEvaluator, DataScopeService, DataScopeGuard, TypeOrmModule],
 })
 export class DataScopeModule {}
