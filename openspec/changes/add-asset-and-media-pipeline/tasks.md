@@ -8,8 +8,8 @@
 
 ## 2. 存储抽象
 
-- [ ] 2.1 `ObjectStorage` 接口与配置（local / S3-compatible / OSS / MinIO）
-- [ ] 2.2 `LocalObjectStorage`：开发/测试；按组织路径隔离
+- [x] 2.1 `ObjectStorage` 接口（local / S3-compatible / OSS / MinIO）
+- [x] 2.2 `LocalObjectStorage`：开发/测试；按组织路径隔离 + 路径穿越拒绝
 - [ ] 2.3 `S3ObjectStorage`：presigned upload/download、multipart、head、delete
 - [ ] 2.4 provider 兼容测试：分片、Range、签名 URL 过期、删除
 - [ ] 2.5 存储密钥/凭证走 secretRef，不落明文
