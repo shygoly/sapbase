@@ -46,7 +46,7 @@
 - [x] 5.3 OIDC adapter（state/nonce/PKCE、token exchange、id_token 验签）
 - [ ] 5.3b OAuth2-only（无 id_token）adapter
 - [ ] 5.4 SAML adapter（签名/时间窗/断言解析）
-- [ ] 5.5 `identity_links` 映射 + JIT 建号 + 默认角色校验
+- [x] 5.5 `identity_links` 映射 + JIT 建号 + 默认角色校验
 - [ ] 5.6 SSO 登录/回调/失败/降级 e2e；state/nonce/签名负例
 - [ ] 5.7 登录页 SSO 入口（复用 `redesign-auth-login-surfaces` 的布局，不重复 UI）
 

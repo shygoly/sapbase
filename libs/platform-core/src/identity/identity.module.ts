@@ -10,16 +10,24 @@ import { AuthLoginEventsService } from './auth-login-events.service'
 import { IdentityController } from './identity.controller'
 import { ServiceClientsService } from './service-clients.service'
 import { ServiceClientAuthGuard } from './service-client-auth.guard'
+import { IdentitySsoService } from './identity-sso.service'
+import { IdentityLink } from './identity-link.entity'
+import { UsersModule } from '../users/users.module'
+import { RolesModule } from '../roles/roles.module'
 import { ServiceClient } from './service-client.entity'
 import { OrganizationMemberRolesService } from './organization-member-roles.service'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([
+  imports: [
+    UsersModule,
+    RolesModule,
+    TypeOrmModule.forFeature([
       OrganizationMemberRole,
       AuthSession,
       IdentityProvider,
       AuthLoginEvent,
       ServiceClient,
+      IdentityLink,
     ])],
   controllers: [IdentityController],
   providers: [
@@ -29,6 +37,7 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
     AuthLoginEventsService,
     ServiceClientsService,
     ServiceClientAuthGuard,
+    IdentitySsoService,
   ],
   exports: [
     OrganizationMemberRolesService,
@@ -37,6 +46,7 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
     AuthLoginEventsService,
     ServiceClientsService,
     ServiceClientAuthGuard,
+    IdentitySsoService,
     TypeOrmModule,
   ],
 })
