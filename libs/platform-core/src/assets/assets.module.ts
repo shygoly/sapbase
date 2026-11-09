@@ -8,6 +8,8 @@ import { AssetUploadsController } from './asset-uploads.controller'
 import { AssetUploadService } from './asset-upload.service'
 import { AssetsController } from './assets.controller'
 import { AssetsService } from './assets.service'
+import { AssetProcessorRegistry } from './asset-processor'
+import { AssetProcessingService } from './asset-processing.service'
 import { LocalObjectStorage } from './local-object-storage'
 import { OBJECT_STORAGE } from './object-storage'
 
@@ -17,6 +19,8 @@ import { OBJECT_STORAGE } from './object-storage'
   providers: [
     AssetsService,
     AssetUploadService,
+    AssetProcessorRegistry,
+    AssetProcessingService,
     {
       provide: OBJECT_STORAGE,
       useFactory: () =>
@@ -25,6 +29,13 @@ import { OBJECT_STORAGE } from './object-storage'
         }),
     },
   ],
-  exports: [AssetsService, AssetUploadService, TypeOrmModule, OBJECT_STORAGE],
+  exports: [
+    AssetsService,
+    AssetUploadService,
+    AssetProcessorRegistry,
+    AssetProcessingService,
+    TypeOrmModule,
+    OBJECT_STORAGE,
+  ],
 })
 export class AssetsModule {}

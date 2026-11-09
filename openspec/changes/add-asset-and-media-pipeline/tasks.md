@@ -37,7 +37,7 @@
 
 ## 5. 处理管道
 
-- [ ] 5.1 `AssetProcessor` 接口与 registry
+- [x] 5.1 `AssetProcessor` 接口与 registry
 - [ ] 5.2 MIME 嗅探 + 扩展名 allowlist + 大小/时长限制
 - [ ] 5.3 病毒扫描 provider；infected 隔离、不可下载
 - [ ] 5.4 图片：EXIF 剥离、缩略图、裁剪/封面变体
@@ -46,7 +46,8 @@
 - [ ] 5.7 视频：probe、MP4/HLS、缩略图、字幕
 - [ ] 5.8 水印/内容标识钩子（供 AI 内容治理）
 - [ ] 5.9 处理任务走 `add-async-job-and-callback-facade`；失败 fail-closed
-- [ ] 5.10 单测：pass/fail/timeout/provider 异常
+- [x] 5.10a 单测：pass/fail/quarantine/unknown processor
+- [ ] 5.10b timeout/provider 异常与重试
 
 ## 6. 访问控制
 
