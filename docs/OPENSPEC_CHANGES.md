@@ -11,7 +11,7 @@
 | 已完成未归档 | 24 |
 | 无任务/骨架 | 2 |
 | 已归档 | 14 |
-| 活跃任务 | 1106/2264 |
+| 活跃任务 | 1108/2264 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -21,7 +21,7 @@
 | --- | --- | --- | --- | --- | --- |
 | [add-ai-content-governance](../openspec/changes/add-ai-content-governance/) | AI 内容治理 | 0/46 | 9 req / 1 文件 | [P](../openspec/changes/add-ai-content-governance/proposal.md) [D](../openspec/changes/add-ai-content-governance/design.md) [T](../openspec/changes/add-ai-content-governance/tasks.md) [S](../openspec/changes/add-ai-content-governance/specs) | 2026-11-09 |
 | [add-asset-and-media-pipeline](../openspec/changes/add-asset-and-media-pipeline/) | 资产与媒体管道 | 0/62 | 8 req / 2 文件 | [P](../openspec/changes/add-asset-and-media-pipeline/proposal.md) [D](../openspec/changes/add-asset-and-media-pipeline/design.md) [T](../openspec/changes/add-asset-and-media-pipeline/tasks.md) [S](../openspec/changes/add-asset-and-media-pipeline/specs) | 2026-11-09 |
-| [add-async-job-and-callback-facade](../openspec/changes/add-async-job-and-callback-facade/) | 异步任务与回调门面 | 0/65 | 9 req / 1 文件 | [P](../openspec/changes/add-async-job-and-callback-facade/proposal.md) [D](../openspec/changes/add-async-job-and-callback-facade/design.md) [T](../openspec/changes/add-async-job-and-callback-facade/tasks.md) [S](../openspec/changes/add-async-job-and-callback-facade/specs) | 2026-11-09 |
+| [add-async-job-and-callback-facade](../openspec/changes/add-async-job-and-callback-facade/) | 异步任务与回调门面 | 2/65 | 9 req / 1 文件 | [P](../openspec/changes/add-async-job-and-callback-facade/proposal.md) [D](../openspec/changes/add-async-job-and-callback-facade/design.md) [T](../openspec/changes/add-async-job-and-callback-facade/tasks.md) [S](../openspec/changes/add-async-job-and-callback-facade/specs) | 2026-11-09 |
 | [add-audit-compliance-and-tamper-evidence](../openspec/changes/add-audit-compliance-and-tamper-evidence/) | 审计合规与防篡改 | 0/50 | 9 req / 1 文件 | [P](../openspec/changes/add-audit-compliance-and-tamper-evidence/proposal.md) [D](../openspec/changes/add-audit-compliance-and-tamper-evidence/design.md) [T](../openspec/changes/add-audit-compliance-and-tamper-evidence/tasks.md) [S](../openspec/changes/add-audit-compliance-and-tamper-evidence/specs) | 2026-11-09 |
 | [add-bulk-import-export-framework](../openspec/changes/add-bulk-import-export-framework/) | 批量导入/导出框架 | 0/55 | 10 req / 1 文件 | [P](../openspec/changes/add-bulk-import-export-framework/proposal.md) [D](../openspec/changes/add-bulk-import-export-framework/design.md) [T](../openspec/changes/add-bulk-import-export-framework/tasks.md) [S](../openspec/changes/add-bulk-import-export-framework/specs) | 2026-11-09 |
 | [add-document-intelligence](../openspec/changes/add-document-intelligence/) | 文档智能（解析 → 结构化 → 确认） | 0/52 | 8 req / 1 文件 | [P](../openspec/changes/add-document-intelligence/proposal.md) [D](../openspec/changes/add-document-intelligence/design.md) [T](../openspec/changes/add-document-intelligence/tasks.md) [S](../openspec/changes/add-document-intelligence/specs) | 2026-11-09 |

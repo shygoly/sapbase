@@ -1,3 +1,6 @@
+> 当前进度（2026-11-09）：纯状态机/退避/租约判定已落地（`libs/platform-core/src/jobs/job-state.ts` + 6 项单测）；
+> 持久化、worker、API、回调尚未开始。
+
 ## 1. 契约与元语
 
 - [ ] 1.1 定义 `job` / `job-attempt` / `job-event` / `job-type` 的持久化形状与 JSON Schema
@@ -32,9 +35,9 @@
 
 ## 5. 生命周期与重试
 
-- [ ] 5.1 状态机：queued/running/succeeded/failed/cancelled/waiting/dead
+- [x] 5.1 状态机：queued/running/succeeded/failed/cancelled/waiting/dead
 - [ ] 5.2 进度/阶段/日志事件
-- [ ] 5.3 超时/重试/指数退避
+- [x] 5.3 超时/重试/指数退避（纯逻辑）
 - [ ] 5.4 DLQ：dead 任务、手动重放
 - [ ] 5.5 取消：queued/running/waiting
 - [ ] 5.6 单测：超时、重试、DLQ、取消
