@@ -488,6 +488,13 @@ export class SemanticRuntimeService {
 
     for (const row of normalized.rows) {
       try {
+        await this.assertCreateInDataScope(
+          loaded.manifest.blueprint,
+          declared,
+          row.data,
+          organizationId,
+          actor,
+        )
         await this.dataSource.transaction(async (manager) => {
           await writeDocumentOrRecord(
             {

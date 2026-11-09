@@ -22,6 +22,15 @@ function schemaOf(instance: unknown): { valid: boolean; errors: string[] } {
   }
 }
 
+
+function permissionsSchemaOf(instance: unknown): { valid: boolean; errors: string[] } {
+  const result = validator.validate(instance, loadSchema('blueprint-permissions.schema.json'))
+  return {
+    valid: result.valid,
+    errors: result.errors.map((error) => `${error.property}: ${error.message}`),
+  }
+}
+
 const P1_SEMANTIC = {
   entities: [
     {
@@ -294,5 +303,128 @@ describe('数据范围 dataScope（P1）', () => {
   it('未声明 dataScope 的旧实体不受影响', () => {
     expect(detect({ entities: [BASE] })).toEqual([])
     expect(schemaOf({ entities: [BASE] }).valid).toBe(true)
+  })
+})
+
+describe('权限层 scope/dataScope（P1）', () => {
+  const SEMANTIC = {
+    entities: [
+      {
+        name: 'Student',
+        fields: [
+          { name: 'name', type: 'text' },
+          { name: 'classId', type: 'text' },
+        ],
+        states: ACTIVE_STATES,
+        transitions: ACTIVE_TRANSITIONS,
+        dataScope: {
+          ownerField: 'name',
+          bindings: [{ dimension: 'class', kind: 'field', field: 'classId' }],
+        },
+      },
+    ],
+  }
+  const PERMISSIONS = {
+    permissions: 'blueprint-permissions/v1',
+    rules: [
+      {
+        role: 'head_teacher',
+        scope: 'policy',
+        resources: ['Student'],
+        actions: ['read'],
+        dataScope: {
+          dimension: 'class',
+          depth: 'exact',
+          positions: ['head_teacher'],
+        },
+      },
+    ],
+  }
+
+  it('Schema 接受 policy + dataScope', () => {
+    expect(
+      permissionsSchemaOf({
+        permissions: 'blueprint-permissions/v1',
+        rules: PERMISSIONS.rules,
+      }).valid,
+    ).toBe(true)
+  })
+
+  it('Schema 拒绝 policy 缺少 dataScope', () => {
+    expect(
+      permissionsSchemaOf({
+        permissions: 'blueprint-permissions/v1',
+        rules: [{ ...PERMISSIONS.rules[0], dataScope: undefined }],
+      }).valid,
+    ).toBe(false)
+  })
+
+  it('编译期接受合法 policy 模板', () => {
+    expect(
+      detectConflicts(SEMANTIC as never, { flows: [] }, [], {
+        permissions: PERMISSIONS as never,
+      }),
+    ).toEqual([])
+  })
+
+  it('编译期拒绝 policy 缺少 dataScope', () => {
+    expect(
+      detectConflicts(SEMANTIC as never, { flows: [] }, [], {
+        permissions: {
+          ...PERMISSIONS,
+          rules: [{ ...PERMISSIONS.rules[0], dataScope: undefined }],
+        } as never,
+      }).join('\n'),
+    ).toMatch(/scope=policy 必须声明 dataScope/)
+  })
+
+  it('编译期拒绝 own 没有 ownerField/ownership', () => {
+    expect(
+      detectConflicts(
+        {
+          entities: [
+            {
+              name: 'Bare',
+              fields: [{ name: 'name', type: 'text' }],
+              states: ACTIVE_STATES,
+              transitions: ACTIVE_TRANSITIONS,
+            },
+          ],
+        } as never,
+        { flows: [] },
+        [],
+        {
+          permissions: {
+            permissions: 'blueprint-permissions/v1',
+            rules: [{ role: 'x', scope: 'own', resources: ['Bare'], actions: ['read'] }],
+          } as never,
+        },
+      ).join('\n'),
+    ).toMatch(/scope=own 要求 Bare 声明 ownerField\/ownership/)
+  })
+
+  it('编译期拒绝 team 没有 dataScope.bindings', () => {
+    expect(
+      detectConflicts(
+        {
+          entities: [
+            {
+              name: 'Bare',
+              fields: [{ name: 'name', type: 'text' }],
+              states: ACTIVE_STATES,
+              transitions: ACTIVE_TRANSITIONS,
+            },
+          ],
+        } as never,
+        { flows: [] },
+        [],
+        {
+          permissions: {
+            permissions: 'blueprint-permissions/v1',
+            rules: [{ role: 'x', scope: 'team', resources: ['Bare'], actions: ['read'] }],
+          } as never,
+        },
+      ).join('\n'),
+    ).toMatch(/scope=team 要求 Bare 声明 dataScope\.bindings/)
   })
 })

@@ -213,9 +213,15 @@ export interface UiFile {
 
 export interface PermissionRule {
   role: string
-  scope: 'own' | 'team' | 'all'
+  scope: 'own' | 'team' | 'all' | 'policy'
   resources: string[]
   actions?: Array<'create' | 'read' | 'update' | 'delete' | 'list'>
+  dataScope?: {
+    dimension: string
+    depth: 'exact' | 'subtree' | 'ancestors'
+    positions?: string[]
+    relation?: { entity?: string; table?: string; fromField: string; actorField: string }
+  }
 }
 
 export interface PermissionsFile {
@@ -564,6 +570,61 @@ export function detectConflicts(
       for (const action of rule.actions ?? []) {
         if (!allowedActions.has(action)) {
           conflicts.push(`权限角色 ${rule.role} 声明了未知动作 ${action}`)
+        }
+      }
+      if (!['own', 'team', 'all', 'policy'].includes(rule.scope)) {
+        conflicts.push(`权限角色 ${rule.role} 声明了未知 scope ${rule.scope}`)
+      }
+      if (rule.scope === 'policy' && !rule.dataScope) {
+        conflicts.push(`权限角色 ${rule.role} 的 scope=policy 必须声明 dataScope`)
+      }
+      if (rule.dataScope && rule.scope !== 'policy') {
+        conflicts.push(`权限角色 ${rule.role} 只有 scope=policy 才能声明 dataScope`)
+      }
+      if (rule.scope === 'own') {
+        for (const resource of rule.resources) {
+          if (resource === '*') continue
+          const entity = semantic.entities.find((candidate) => candidate.name === resource)
+          const ownerField = entity?.dataScope?.ownerField ?? entity?.ownership?.field
+          if (!ownerField) {
+            conflicts.push(`权限角色 ${rule.role} 的 scope=own 要求 ${resource} 声明 ownerField/ownership`)
+          }
+        }
+      }
+      if (rule.scope === 'team') {
+        for (const resource of rule.resources) {
+          if (resource === '*') continue
+          const entity = semantic.entities.find((candidate) => candidate.name === resource)
+          if (!entity?.dataScope || entity.dataScope.bindings.length === 0) {
+            conflicts.push(`权限角色 ${rule.role} 的 scope=team 要求 ${resource} 声明 dataScope.bindings`)
+          }
+        }
+      }
+      if (rule.dataScope) {
+        const path = `permissions.${rule.role}.dataScope`
+        if (!/^[a-z][a-z0-9_]*$/.test(rule.dataScope.dimension)) {
+          conflicts.push(`数据范围非法：${path}.dimension「${rule.dataScope.dimension}」必须是 snake_case key`)
+        }
+        if (!['exact', 'subtree', 'ancestors'].includes(rule.dataScope.depth)) {
+          conflicts.push(`数据范围非法：${path}.depth=${rule.dataScope.depth} 只接受 exact|subtree|ancestors`)
+        }
+        const relation = rule.dataScope.relation
+        if (relation) {
+          if (!relation.entity && !relation.table) {
+            conflicts.push(`数据范围非法：${path}.relation 必须声明 entity 或 table`)
+          }
+          if (relation.entity) {
+            const target = semantic.entities.find((candidate) => candidate.name === relation.entity)
+            if (!target) {
+              conflicts.push(`数据范围非法：${path}.relation.entity「${relation.entity}」未声明`)
+            } else {
+              for (const name of [relation.fromField, relation.actorField]) {
+                if (!target.fields.some((field) => field.name === name)) {
+                  conflicts.push(`数据范围非法：${path}.relation.${name} 不是 ${relation.entity} 字段`)
+                }
+              }
+            }
+          }
         }
       }
     }

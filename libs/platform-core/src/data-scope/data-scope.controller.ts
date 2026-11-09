@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Auth } from '../common/decorators/auth.decorator'
 import { CurrentUser } from '../auth/current-user.decorator'
@@ -67,6 +67,16 @@ export class DataScopeController {
   async deleteNode(@OrganizationId() organizationId: string, @Param('id') id: string) {
     await this.dataScope.deleteNode(organizationId, id)
     return { ok: true }
+  }
+
+  @Put('nodes/:id/move')
+  @Auth('data-scope:manage')
+  moveNode(
+    @OrganizationId() organizationId: string,
+    @Param('id') id: string,
+    @Body() body: { parentId: string | null },
+  ) {
+    return this.dataScope.moveNode(organizationId, id, body.parentId ?? null)
   }
 
   @Get('memberships')

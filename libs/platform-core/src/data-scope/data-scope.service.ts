@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import type { Cache } from 'cache-manager'
 import { InjectRepository } from '@nestjs/typeorm'
 import { In, Repository } from 'typeorm'
 import { randomUUID } from 'node:crypto'
 import { ALL, NONE } from './scope-expr'
 import { ScopeEvaluator } from './scope-evaluator'
+import { assertCanMoveNode, buildScopeNodePath } from './scope-tree'
 import {
   ScopeResolutionError,
   type DataPolicyView,
@@ -105,6 +108,7 @@ export class DataScopeService {
     @InjectRepository(ScopeVersion)
     private readonly versions: Repository<ScopeVersion>,
     private readonly evaluator: ScopeEvaluator,
+    @Optional() @Inject(CACHE_MANAGER) private readonly cacheManager?: Cache,
   ) {}
 
   async resolve(input: ResolveScopeInput): Promise<ResolvedScope> {
@@ -115,6 +119,11 @@ export class DataScopeService {
       const hit = this.cache.get(cacheKey)
       if (hit && hit.expiresAt > Date.now()) {
         return { expr: hit.expr, version, declared: input.declared ?? hit.expr.op !== 'all' }
+      }
+      const remote = await this.cacheManager?.get<ScopeExpr>(cacheKey)
+      if (remote) {
+        this.cache.set(cacheKey, { expr: remote, expiresAt: Date.now() + this.cacheTtlMs })
+        return { expr: remote, version, declared: input.declared ?? remote.op !== 'all' }
       }
     }
 
@@ -147,6 +156,7 @@ export class DataScopeService {
 
     if (cacheable) {
       this.cache.set(cacheKey, { expr, expiresAt: Date.now() + this.cacheTtlMs })
+      await this.cacheManager?.set(cacheKey, expr, this.cacheTtlMs)
     }
     return { expr, version, declared }
   }
@@ -219,7 +229,7 @@ export class DataScopeService {
     }
 
     const id = randomUUID()
-    const path = parent ? `${parent.path}/${id}` : `/${id}`
+    const path = buildScopeNodePath(parent?.path ?? null, id)
     const depth = parent ? parent.depth + 1 : 0
     const row = this.nodes.create({
       id,
@@ -241,6 +251,52 @@ export class DataScopeService {
     const result = await this.nodes.delete({ id, organizationId })
     if (!result.affected) throw new NotFoundException('Scope node not found')
     await this.bumpVersion(organizationId)
+  }
+
+  async moveNode(
+    organizationId: string,
+    id: string,
+    newParentId: string | null,
+  ): Promise<ScopeNode> {
+    const node = await this.nodes.findOne({ where: { id, organizationId } })
+    if (!node) throw new NotFoundException('Scope node not found')
+
+    let parent: ScopeNode | null = null
+    if (newParentId) {
+      parent = await this.nodes.findOne({
+        where: { id: newParentId, organizationId },
+      })
+      if (!parent) throw new NotFoundException('Parent scope node not found')
+      if (parent.dimensionId !== node.dimensionId) {
+        throw new BadRequestException('不能跨维度移动节点')
+      }
+      assertCanMoveNode(node.path, parent.path)
+    }
+
+    const newPath = buildScopeNodePath(parent?.path ?? null, node.id)
+    const newDepth = parent ? parent.depth + 1 : 0
+    const depthDelta = newDepth - node.depth
+
+    await this.nodes.manager.transaction(async (manager) => {
+      await manager.query(
+        `UPDATE public.scope_nodes
+            SET "parentId" = $1, path = $2, depth = $3, "updatedAt" = now()
+          WHERE id = $4 AND "organizationId" = $5`,
+        [parent?.id ?? null, newPath, newDepth, node.id, organizationId],
+      )
+      await manager.query(
+        `UPDATE public.scope_nodes
+            SET path = $1 || substring(path from $2),
+                depth = depth + $3,
+                "updatedAt" = now()
+          WHERE "organizationId" = $4
+            AND "dimensionId" = $5
+            AND path LIKE $6`,
+        [newPath, node.path.length + 1, depthDelta, organizationId, node.dimensionId, `${node.path}/%`],
+      )
+    })
+    await this.bumpVersion(organizationId)
+    return this.nodes.findOneByOrFail({ id: node.id })
   }
 
   async listMemberships(organizationId: string, nodeId?: string): Promise<ScopeMembership[]> {
@@ -346,7 +402,7 @@ export class DataScopeService {
   }
 
   private cacheKey(input: ResolveScopeInput, version: number): string {
-    return JSON.stringify({
+    return `data-scope:${JSON.stringify({
       organizationId: input.organizationId,
       version,
       userId: input.actor.userId,
@@ -354,7 +410,7 @@ export class DataScopeService {
       groups: [...(input.actor.groupKeys ?? [])].sort(),
       resourceKey: input.resourceKey,
       action: input.action,
-    })
+    })}`
   }
 
   private async loadBindings(

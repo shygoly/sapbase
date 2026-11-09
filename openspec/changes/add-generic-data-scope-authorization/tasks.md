@@ -1,6 +1,6 @@
 > 当前进度（2026-11-09）：2.1/2.2/2.3/2.4a/2.5、3.1/3.2a/3.3/3.4/3.5/3.6a/3.7、
-> 4.1a/4.1b/4.2a/4.3/4.4、5.1a/5.1b/5.2a/5.2b、6.1/6.2a 已完成；解析器 + SQL 编译器 + DataScopeService + 管理 API + 列表/单条读/创建/更新/删除/迁移执行点 + 蓝图 dataScope 元数据已落地，
-> 尚未接导入/视图/导出/Agent、Redis 缓存、预览 UI、permissions scope/cap、e2e。
+> 2.1-2.5、3.1/3.2/3.3/3.4/3.5/3.6/3.7、4.1/4.2a/4.3/4.4/4.5、5.1/5.2/6.1/6.2/6.3/6.5 已完成；解析器 + SQL 编译器 + DataScopeService + 管理 API + 列表/单条读/创建/更新/删除/迁移/导入执行点 + Redis 缓存 + 蓝图 dataScope/permissions policy 元数据已落地，
+> 尚未接视图/导出/Agent、预览 UI、运行时 cap、e2e、文档。
 
 ## 1. 元语与契约
 
@@ -23,12 +23,12 @@
 
 - [x] 3.1 定义 `ScopeSpec` / `ScopeExpr` / `FieldRef` / `RelationSpec` / `ScopePredicate` 类型
 - [x] 3.2a 实现树展开：`exact` / `subtree` / `ancestors`
-- [ ] 3.2b 路径维护与环检测
+- [x] 3.2b 路径维护与环检测
 - [x] 3.3 实现成员解析：用户/角色/组、岗位过滤、有效期过滤
 - [x] 3.4 实现策略组合：allow 并集、deny 覆盖、多角色并集、模板 cap 交集
 - [x] 3.5 实现关系解析：蓝图关联实体单跳 + 平台关联表单跳
 - [x] 3.6a 实现 `scopeVersion` + 内存缓存，变更即 bump
-- [ ] 3.6b Redis 缓存（多实例）
+- [x] 3.6b Redis 缓存（多实例，CACHE_MANAGER 可选）
 - [x] 3.7 单元测试：五种 scope、空绑定 fail-closed、无策略 fail-closed、跨维度非法、过期成员、deny 优先、cap 收窄
 - [ ] 3.8 失败路径测试：解析异常、非法节点、循环树、伪造主体
 
@@ -40,7 +40,7 @@
 - [ ] 4.2b TypeORM `applyScope(qb, expr, alias)`
 - [x] 4.3 语义运行时列表/详情/单条读接入范围谓词（与字段权限、ownership 组合）
 - [x] 4.4 语义运行时写/更新/删除/状态迁移接入：目标行越界拒绝，创建校验写入节点在可写范围
-- [ ] 4.5 导入接入：逐行校验，批量不部分落库；错误可定位到行与字段
+- [x] 4.5 导入接入：逐行校验，批量不部分落库；错误可定位到行与字段
 - [ ] 4.6 导出/统计/视图/追溯接入同一谓词
 - [ ] 4.7 Agent 工具面与插件 capability broker 接入（按资源/动作解析，结果不绕过）
 - [ ] 4.8 负例 e2e：跨子树不可见、详情 404、更新/删除 403、越权创建、导出/视图/追溯、Agent 工具越界
@@ -61,10 +61,10 @@
 
 - [x] 6.1 `blueprint-semantic` 实体支持 `dataScope`（`ownerField` + `bindings`）
 - [x] 6.2a 编译器校验 dataScope：字段/实体/关联字段存在、dimension key 合法
-- [ ] 6.2b `permissions.json` 的 own/team/policy 与 cap 校验
-- [ ] 6.3 `permissions.json` 支持 `scope: "policy"` + `dataScope`，保持旧值语义不变
+- [x] 6.2b `permissions.json` 的 own/team/policy 与 cap 校验
+- [x] 6.3 `permissions.json` 支持 `scope: "policy"` + `dataScope`，保持旧值语义不变
 - [ ] 6.4 装载/升级时解析蓝图模板 cap；租户策略只能收窄
-- [ ] 6.5 旧包兼容：无 `dataScope` 的包行为不变；`scope` 仅作为声明/粗粒度映射
+- [x] 6.5 旧包兼容：无 `dataScope` 的包行为不变；`scope` 仅作为声明/粗粒度映射
 - [ ] 6.6 `ownership` 与 `dataScope` 组合（AND），不改变既有 ownership 空值语义
 - [ ] 6.7 编译/装载负例：未知 scope、缺 dataScope、悬空字段、租户放大 cap
 

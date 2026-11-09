@@ -5,7 +5,7 @@
  * 平台 RBAC 仍是权限点；这里只把 AI 角色映射到权限点或 JWT role。
  */
 
-export type BlueprintPermissionScope = 'own' | 'team' | 'all'
+export type BlueprintPermissionScope = 'own' | 'team' | 'all' | 'policy'
 export type BlueprintPermissionAction = 'create' | 'read' | 'update' | 'delete' | 'list'
 
 export interface BlueprintPermissionRule {
@@ -13,6 +13,12 @@ export interface BlueprintPermissionRule {
   scope: BlueprintPermissionScope
   resources: string[]
   actions?: BlueprintPermissionAction[]
+  dataScope?: {
+    dimension: string
+    depth: 'exact' | 'subtree' | 'ancestors'
+    positions?: string[]
+    relation?: { entity?: string; table?: string; fromField: string; actorField: string }
+  }
 }
 
 export interface BlueprintPermissionsLayer {
