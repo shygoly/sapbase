@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/async-job.schema.json",
+  "title": "Async Job v1",
+  "description": "异步任务门面的持久化形状：job / job-attempt / job-event / job-type / callback。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "job": { "$ref": "#/$defs/job" },
+    "attempt": { "$ref": "#/$defs/jobAttempt" },
+    "event": { "$ref": "#/$defs/jobEvent" },
+    "type": { "$ref": "#/$defs/jobType" },
+    "callback": { "$ref": "#/$defs/callback" }
+  },
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "jobStatus": {
+      "enum": ["queued", "running", "waiting", "succeeded", "failed", "cancelled", "dead"]
+    },
+    "backoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "baseMs"],
+      "properties": {
+        "kind": { "enum": ["fixed", "exponential"] },
+        "baseMs": { "type": "integer", "minimum": 1 },
+        "maxMs": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "jobType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "payloadSchema", "handler"],
+      "properties": {
+        "type": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" },
+        "typeVersion": { "type": "integer", "minimum": 1 },
+        "payloadSchema": { "type": "object", "required": ["type"] },
+        "handler": { "description": "运行时函数，不持久化；此处仅表示形状" },
+        "timeoutMs": { "type": "integer", "minimum": 1 },
+        "maxAttempts": { "type": "integer", "minimum": 1 },
+        "backoff": { "$ref": "#/$defs/backoff" },
+        "concurrency": { "type": "integer", "minimum": 1 },
+        "priority": { "type": "integer" },
+        "idempotencyScope": { "enum": ["organization", "app", "global"] }
+      }
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "organizationId",
+        "type",
+        "typeVersion",
+        "status",
+        "payload",
+        "progress",
+        "attempts",
+        "maxAttempts"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "organizationId": { "$ref": "#/$defs/uuid" },
+        "appInstallationId": { "type": ["string", "null"], "format": "uuid" },
+        "type": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" },
+        "typeVersion": { "type": "integer", "minimum": 1 },
+        "status": { "$ref": "#/$defs/jobStatus" },
+        "priority": { "type": "integer" },
+        "payload": { "type": "object" },
+        "result": { "type": ["object", "null"] },
+        "error": { "type": ["object", "null"] },
+        "progress": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "idempotencyKey": { "type": ["string", "null"], "maxLength": 255 },
+        "attempts": { "type": "integer", "minimum": 0 },
+        "maxAttempts": { "type": "integer", "minimum": 1 },
+        "runAt": { "type": "string", "format": "date-time" },
+        "startedAt": { "type": ["string", "null"], "format": "date-time" },
+        "finishedAt": { "type": ["string", "null"], "format": "date-time" },
+        "leaseUntil": { "type": ["string", "null"], "format": "date-time" },
+        "workerId": { "type": ["string", "null"] },
+        "cancelRequested": { "type": "boolean" },
+        "createdBy": { "type": ["string", "null"], "format": "uuid" }
+      }
+    },
+    "jobAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jobId", "attempt", "status", "startedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "jobId": { "$ref": "#/$defs/uuid" },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "status": { "enum": ["running", "succeeded", "failed", "cancelled", "timeout"] },
+        "error": { "type": ["object", "null"] },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "finishedAt": { "type": ["string", "null"], "format": "date-time" },
+        "durationMs": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "jobEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jobId", "seq", "type", "payload"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "jobId": { "$ref": "#/$defs/uuid" },
+        "seq": { "type": "integer", "minimum": 1 },
+        "type": { "enum": ["progress", "stage", "log", "callback", "error"] },
+        "payload": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "callback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["callbackUrl"],
+      "properties": {
+        "callbackUrl": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "callbackSecretRef": { "type": ["string", "null"] },
+        "callbackStatus": {
+          "type": ["string", "null"],
+          "enum": [null, "delivered", "failed", "blocked"]
+        },
+        "callbackAttempts": { "type": "integer", "minimum": 0 },
+        "signature": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["header", "timestampHeader", "algorithm"],
+          "properties": {
+            "header": { "const": "X-Job-Signature" },
+            "timestampHeader": { "const": "X-Job-Timestamp" },
+            "algorithm": { "const": "hmac-sha256" }
+          }
+        }
+      }
+    }
+  }
+}

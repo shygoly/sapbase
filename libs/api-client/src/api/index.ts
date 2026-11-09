@@ -8,6 +8,14 @@ export { menuApi } from './menu.api'
 export { usersApi } from './users.api'
 export { rolesApi } from './roles.api'
 export { departmentsApi } from './departments.api'
+export {
+  jobsApi,
+  type Job,
+  type JobEvent,
+  type JobStatus,
+  type CreateJobInput,
+  type JobListResult,
+} from './jobs.api'
 export { permissionsApi } from './permissions.api'
 export { auditLogsApi } from './audit-logs.api'
 export { settingsApi } from './settings.api'

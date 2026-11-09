@@ -213,6 +213,49 @@ enforcement:
 db: none
 spec: apps/api/src/jobs/jobs.ddl.spec.ts
 ```
+```yaml invariant
+id: INV-JOB-02
+tables: [jobs]
+desc: 同一组织/类型/幂等键只创建一条任务；重复入队返回已存在任务，不重复执行。
+trigger: 任务入队
+enforcement:
+  - test:apps/api/test/jobs-queue.e2e-spec.ts#JobQueue
+db: unique:UQ_jobs_idempotency
+spec: apps/api/test/jobs-queue.e2e-spec.ts
+```
+
+```yaml invariant
+id: INV-JOB-03
+tables: [jobs, job_events]
+desc: 未知任务类型或非法 payload 拒绝入队；payload 只按白名单 handler 解释，不执行任意代码。
+trigger: 任务类型注册/入队
+enforcement:
+  - test:apps/api/src/jobs/job-types.spec.ts#JobTypeRegistry
+db: none
+spec: apps/api/src/jobs/job-types.spec.ts
+```
+
+```yaml invariant
+id: INV-JOB-04
+tables: [jobs]
+desc: 任务组织/应用上下文来自可信身份，不接受 body 覆盖；RLS 作为租户隔离最后边界。
+trigger: 创建/查询/取消任务
+enforcement:
+  - test:apps/api/src/jobs/jobs.service.spec.ts#JobsService
+db: rls:jobs
+spec: apps/api/src/jobs/jobs.service.spec.ts
+```
+
+```yaml invariant
+id: INV-JOB-05
+tables: [jobs]
+desc: 回调默认 https、禁私网/重定向、HMAC 签名；回调失败不改变任务业务结果。
+trigger: 任务完成回调
+enforcement:
+  - test:apps/api/src/jobs/job-callback.spec.ts#JobCallbackService
+db: none
+spec: apps/api/src/jobs/job-callback.spec.ts
+```
 
 ---
 

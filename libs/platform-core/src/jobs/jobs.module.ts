@@ -1,12 +1,33 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 import { Job } from './job.entity'
 import { JobAttempt } from './job-attempt.entity'
 import { JobEvent } from './job-event.entity'
+import { JobCallbackService } from './job-callback'
+import { JobQueue } from './job-queue'
+import { JobTypeRegistry } from './job-types'
+import { JobWorkerService } from './job-worker'
+import { JobsController } from './jobs.controller'
+import { JobsService } from './jobs.service'
 
-/** v1 先提供实体/表；worker、任务类型注册与外部 API 在后续任务接入。 */
 @Module({
-  imports: [TypeOrmModule.forFeature([Job, JobAttempt, JobEvent])],
-  exports: [TypeOrmModule],
+  imports: [TypeOrmModule.forFeature([Job, JobAttempt, JobEvent]), AuditLogsModule],
+  controllers: [JobsController],
+  providers: [
+    JobQueue,
+    JobTypeRegistry,
+    JobCallbackService,
+    JobWorkerService,
+    JobsService,
+  ],
+  exports: [
+    TypeOrmModule,
+    JobQueue,
+    JobTypeRegistry,
+    JobCallbackService,
+    JobWorkerService,
+    JobsService,
+  ],
 })
 export class JobsModule {}

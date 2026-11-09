@@ -132,6 +132,66 @@ code_markers:
   - libs/platform-core/src/data-scope/data-scope.service.ts
 ```
 
+### D-7：异步任务以 PostgreSQL 为真源，Redis 只做唤醒
+
+```yaml decision
+id: D-7
+title: 异步任务以 PostgreSQL 为真源，Redis 只做唤醒
+status: accepted
+date: 2026-11
+context: |
+  引入 BullMQ/pg-boss 会带来事务一致性与 RLS 桥接成本；教育项目量级不需要
+  独立队列的吞吐，但需要“业务写入与入队同事务、回滚不留任务”。
+decision: |
+  jobs 表为真源；worker 用 FOR UPDATE SKIP LOCKED 领取；Redis pub/sub 仅唤醒，
+  interval poll 兜底。JobQueue 保留接口，后续可替换实现而不改业务 API。
+references:
+  - INV-JOB-01
+code_markers:
+  - libs/platform-core/src/jobs/job-queue.ts
+  - libs/platform-core/src/jobs/job-worker.ts
+```
+
+### D-8：任务至少一次执行 + 幂等，不承诺 exactly-once
+
+```yaml decision
+id: D-8
+title: 任务至少一次执行 + 幂等键，不承诺 exactly-once
+status: accepted
+date: 2026-11
+context: |
+  worker 崩溃、lease 过期、网络分区都会导致重投；追求 exactly-once 会把
+  复杂度转嫁给业务 handler，且无法在外部副作用上真正保证。
+decision: |
+  唯一键 (organizationId, type, idempotencyKey) 保证重复入队不重复创建；
+  执行语义为至少一次，handler 必须幂等；超时/失败按类型策略重试，超上限进 dead(DLQ)。
+references:
+  - INV-JOB-02
+  - INV-JOB-03
+code_markers:
+  - libs/platform-core/src/jobs/job-state.ts
+  - libs/platform-core/src/jobs/job-queue.ts
+```
+
+### D-9：Agent 长任务只携带 agentRunId，不复制 run 状态
+
+```yaml decision
+id: D-9
+title: Agent 长任务通过 agentRunId 关联，不复制 Agent Runtime 状态
+status: accepted
+date: 2026-11
+context: |
+  Agent Runtime 已有 session/run/step/wait/cancel/budget；job 再存一套 run 状态
+  会形成两套真源，取消与预算必然漂移。
+decision: |
+  job payload 可携带 agentRunId；job 事件桥接 agent run 事件；job 不写回
+  agent run 的业务状态。两者通过 ID 关联，取消/预算以 Agent Runtime 为准。
+references:
+  - INV-JOB-04
+code_markers:
+  - libs/platform-core/src/jobs/job-types.ts
+```
+
 ---
 
 ## 附录：命名空间约定

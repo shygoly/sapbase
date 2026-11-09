@@ -1,5 +1,6 @@
 import { Client } from 'pg'
 import { DATA_SCOPE_DDL } from '../src/data-scope/data-scope.ddl'
+import { ASYNC_JOB_DDL } from '../src/jobs/jobs.ddl'
 import { TENANT_RLS_DDL } from '../src/common/rls/tenant-rls.ddl'
 
 const RUN = process.env.RUN_DATA_SCOPE_RLS === '1'
@@ -34,6 +35,7 @@ describeDb('data scope RLS (real Postgres)', () => {
     await admin.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
     await admin.query('CREATE TABLE public.organizations (id uuid PRIMARY KEY)')
     for (const statement of DATA_SCOPE_DDL) await admin.query(statement)
+    for (const statement of ASYNC_JOB_DDL) await admin.query(statement)
     for (const statement of TENANT_RLS_DDL) await admin.query(statement)
 
     await admin.query(`CREATE ROLE "${roleName}" NOLOGIN`)
@@ -69,6 +71,33 @@ describeDb('data scope RLS (real Postgres)', () => {
       await admin.query(`SELECT set_config('app.organization_id', $1, true)`, [orgA])
       const rows = (await admin.query('SELECT name FROM public.scope_dimensions')).rows
       expect(rows).toEqual([{ name: 'Region A' }])
+    } finally {
+      await admin.query(`ROLLBACK`)
+    }
+  })
+
+
+  it('jobs 也按 app.organization_id 隔离，越权 INSERT 被拒', async () => {
+    await admin.query(
+      `INSERT INTO public.jobs ("organizationId", type, payload, status)
+       VALUES ($1, 'test.rls', '{}'::jsonb, 'queued'),
+              ($2, 'test.rls', '{}'::jsonb, 'queued')`,
+      [orgA, orgB],
+    )
+
+    await admin.query(`BEGIN`)
+    try {
+      await admin.query(`SET LOCAL ROLE "${roleName}"`)
+      await admin.query(`SELECT set_config('app.organization_id', $1, true)`, [orgA])
+      const rows = (await admin.query('SELECT "organizationId" FROM public.jobs')).rows
+      expect(rows).toEqual([{ organizationId: orgA }])
+      await expect(
+        admin.query(
+          `INSERT INTO public.jobs ("organizationId", type, payload, status)
+           VALUES ($1, 'test.rls', '{}'::jsonb, 'queued')`,
+          [orgB],
+        ),
+      ).rejects.toThrow(/row-level security|违反了行级安全策略|new row violates/i)
     } finally {
       await admin.query(`ROLLBACK`)
     }

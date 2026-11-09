@@ -249,6 +249,31 @@ Organization（客户）
 `DataScopeService`），语义运行时列表/详情/写/删/迁移/导入已接入；内置视图/追溯与
 Agent 工具面按消费方逐步接入。
 
+### 3.12 Async Job & Callback（异步任务与回调）
+
+异步任务是**可查询、可取消、可重试的命令**，不是事件（outbox）也不是 cron：
+
+- **Job Type**：启动时注册的白名单（payload schema + handler + timeout/retry/concurrency）。
+- **Job**：`jobs` 行，状态 `queued/running/waiting/succeeded/failed/cancelled/dead`。
+- **Job Attempt**：每次领取一条，记录 started/finished/error/duration。
+- **Job Event**：`progress/stage/log/callback/error`，`seq` 单调递增，可 `afterSeq` 回放。
+- **Job Queue / Worker**：PG 真源 + `FOR UPDATE SKIP LOCKED` 领取；Redis 只做唤醒，poll 兜底。
+- **Callback**：外部 URL + HMAC-SHA256 签名；2xx 成功，408/429/5xx 重试，其他 4xx 永久失败。
+
+执行语义：
+
+```text
+入队与业务写入同事务；回滚不留任务
+唯一键 (organizationId, type, idempotencyKey) → 重复入队返回同一任务
+至少一次执行 + handler 幂等；exactly-once 不在 v1 承诺内
+未知类型/非法 payload 拒绝入队；payload 不执行任意代码
+回调 URL 默认 https + 禁私网/重定向；失败不改任务业务结果
+Agent run 状态归 Agent Runtime；job 只携带 agentRunId 并桥接事件
+```
+
+实现落点：`libs/platform-core/src/jobs/`；契约：`schemas/async-job.schema.json`；
+领域表：`DOMAIN.md`「异步任务」；决策：`DECISIONS.md` D-7/D-8/D-9。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -275,6 +300,11 @@ Agent 工具面按消费方逐步接入。
 17. **租户边界先于范围**：RLS 只做组织隔离，行级范围在应用层执行并可审计（INV-DS-04）。
 18. **定义/实例分离**：蓝图模板 cap ∩ 租户策略，租户不得放大（INV-DS-05）。
 19. **范围缓存按版本失效**：任何成员/策略/节点变更 bump `scopeVersion`（INV-DS-06）。
+20. **任务真源在 PostgreSQL**：Redis 只做唤醒；worker 用 `FOR UPDATE SKIP LOCKED` 领取（INV-JOB-01）。
+21. **至少一次 + 幂等**：唯一键 `(organizationId, type, idempotencyKey)`；handler 必须可重入（INV-JOB-02）。
+22. **未知类型/非法 payload 不入队**：类型是启动时注册的白名单，payload 不执行任意代码（INV-JOB-03）。
+23. **任务上下文来自可信身份**：组织/应用上下文不接受 body 覆盖；RLS 兜底（INV-JOB-04）。
+24. **回调安全**：默认 https、禁私网/重定向、HMAC 签名；回调失败不改任务结果（INV-JOB-05）。
 
 ---
 
@@ -385,6 +415,10 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 范围节点 | Scope Node | `ScopeNode`；`scope_nodes` | 🟡 |
 | 范围成员 | Scope Membership | `ScopeMembership`；`scope_memberships` | 🟡 |
 | 数据策略 | Data Policy | `DataPolicy`；`data_policies` | 🟡 |
+| 异步任务 | Async Job | `Job`；`jobs`；`libs/platform-core/src/jobs/` | 🟡 |
+| 任务尝试 | Job Attempt | `JobAttempt`；`job_attempts` | 🟡 |
+| 任务事件 | Job Event | `JobEvent`；`job_events` | 🟡 |
+| 任务回调 | Job Callback | `JobCallbackService`；HMAC-SHA256 | 🟡 |
 
 ---
 
