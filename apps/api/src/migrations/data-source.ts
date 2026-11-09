@@ -36,6 +36,7 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1793600000000-AddServiceClientAppBinding.ts'),
     path.join(__dirname, '1793700000000-CreateAssets.ts'),
     path.join(__dirname, '1793800000000-ExtendNotificationCenter.ts'),
+    path.join(__dirname, '1793900000000-AddAuditHashChain.ts'),
   ],
   synchronize: false,
   logging: true,

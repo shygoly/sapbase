@@ -39,4 +39,46 @@ export class AuditLog extends TenantAwareEntity {
 
   @CreateDateColumn()
   timestamp: Date
+
+  @Column({ type: 'bigint', nullable: true })
+  seq?: string | null
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  prevHash?: string | null
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  hash?: string | null
+
+  @Column({ type: 'varchar', length: 32, default: 'sha256' })
+  hashAlgo?: string
+
+  @Column({ type: 'jsonb', nullable: true })
+  payload?: Record<string, unknown> | null
+
+  @Column({ type: 'varchar', length: 32, default: 'user' })
+  actorType?: string
+
+  @Column({ type: 'uuid', nullable: true })
+  appInstallationId?: string | null
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  ip?: string | null
+
+  @Column({ type: 'varchar', length: 512, nullable: true })
+  userAgent?: string | null
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  correlationId?: string | null
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  source?: string | null
+
+  @Column({ type: 'timestamptz', nullable: true })
+  retentionUntil?: Date | null
+
+  @Column({ type: 'boolean', default: false })
+  legalHold?: boolean
+
+  @Column({ type: 'timestamptz', nullable: true })
+  archivedAt?: Date | null
 }

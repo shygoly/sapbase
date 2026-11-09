@@ -41,7 +41,9 @@
 | brand_configs | 平台与租户 |
 | menu_items | 平台与租户 |
 | notifications | 平台与租户 |
-| audit_logs | 平台与租户 |
+| audit_logs | 审计与证据 |
+| audit_checkpoints | 审计与证据 |
+| audit_archives | 审计与证据 |
 | scope_dimensions | 数据范围 |
 | scope_nodes | 数据范围 |
 | scope_memberships | 数据范围 |
@@ -102,9 +104,45 @@
 
 ---
 
+## 审计与证据
+
+覆盖表：audit_logs, audit_checkpoints, audit_archives
+
+审计日志是 append-only 哈希链：每组织 `seq` 单调，`hash = SHA256(prevHash + canonical payload)`；
+旧行标记 `hash='legacy'`、`seq=null` 不回写。`audit_checkpoints` 存链检查点与签名；
+`audit_archives` 存归档对象/清单/状态。数据库触发器拒绝 UPDATE/DELETE（break-glass 例外）。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| audit_logs.organizationId | organizations.id | 审计归属组织 | none | RLS 兜底 |
+| audit_checkpoints.organizationId | organizations.id | 检查点归属组织 | none | 唯一 (org, seq) |
+| audit_archives.organizationId | organizations.id | 归档归属组织 | none | 归档清单 |
+
+### 状态词
+
+审计状态使用 `success` / `failure` / `pending`；`hashAlgo` 当前固定 `sha256`；
+归档状态使用 `pending` / `archived` / `failed`。`actorType` 使用 `user` / `service` / `system`。
+
+### 不变量
+
+```yaml invariant
+id: INV-AU-01
+tables: [audit_logs, audit_checkpoints, audit_archives]
+desc: 每组织审计链 seq 单调且 hash = SHA256(prevHash + canonical payload)；旧行标 legacy；链更新/删除被拒（break-glass 留痕）。
+trigger: 审计写入/验证/归档/清理
+enforcement:
+  - test:apps/api/src/audit-logs/audit-chain.spec.ts#AuditChainService
+db: rls:audit_logs
+spec: apps/api/src/audit-logs/audit-chain.spec.ts
+```
+
+---
+
 ## 平台与租户
 
-覆盖表：organizations, users, departments, roles, permissions, invitations, organization_members, organization_activities, settings, brand_configs, menu_items, notifications, audit_logs
+覆盖表：organizations, users, departments, roles, permissions, invitations, organization_members, organization_activities, settings, brand_configs, menu_items, notifications
 
 平台与租户聚合。`organizations` 是租户根；其余表通过 `organizationId` 归属租户。
 `users` 是平台用户；同一用户可属于多个组织，成员关系在 `organization_members`。

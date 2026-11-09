@@ -2,30 +2,33 @@
 
 - [ ] 1.1 定义审计事件目录、链字段、checkpoint/archive 的持久化形状与 Schema
 - [ ] 1.2 在 `docs/META_LANGUAGE.md` 登记审计链/检查点/保留期术语与不变量（INV-AU-01..06）
-- [ ] 1.3 在 `DOMAIN.md` 新增审计小节，运行 `node scripts/meta/check-domain-doc.mjs`
+- [x] 1.3 在 `DOMAIN.md` 新增审计小节，运行 `node scripts/meta/check-domain-doc.mjs`
 - [ ] 1.4 在 `DECISIONS.md` 登记哈希链、append-only、legacy 段、break-glass
 - [ ] 1.5 更新 `FLOWS.md`（验证/归档/清理 job）
 
 ## 2. 存储与迁移
 
-- [ ] 2.1 扩展 `audit_logs`：`seq/prevHash/hash/hashAlgo/payload/actorType/appInstallationId/ip/userAgent/correlationId/source/retentionUntil/legalHold/archivedAt`
-- [ ] 2.2 旧行标记 `seq=null/hash='legacy'`，不回写
-- [ ] 2.3 唯一索引 `(organizationId, seq)`（seq 非空）
-- [ ] 2.4 新增 `audit_checkpoints` / `audit_archives`
-- [ ] 2.5 RLS/索引；跨租户负例
+- [x] 2.1 扩展 `audit_logs`：`seq/prevHash/hash/hashAlgo/payload/actorType/appInstallationId/ip/userAgent/correlationId/source/retentionUntil/legalHold/archivedAt`
+- [x] 2.2 旧行标记 `seq=null/hash='legacy'`，不回写
+- [x] 2.3 唯一索引 `(organizationId, seq)`（seq 非空）
+- [x] 2.4 新增 `audit_checkpoints` / `audit_archives`
+- [x] 2.5a RLS/索引登记
+- [ ] 2.5b 跨租户负例 e2e
 
 ## 3. 链写入
 
-- [ ] 3.1 `AuditChainService`：canonical payload、hash、prevHash、seq 分配
-- [ ] 3.2 单一 `AuditService.record()`；禁止模块直写表
-- [ ] 3.3 业务事务内写入；失败审计单独事务策略
-- [ ] 3.4 每组织串行化/行锁/重试
-- [ ] 3.5 固定向量测试：hash/prevHash/seq 稳定
+- [x] 3.1 `AuditChainService`：canonical payload、hash、prevHash、seq 分配
+- [x] 3.2a `AuditLogsService.create()` 统一走链写入
+- [ ] 3.2b 禁止模块直写表的 lint/评审清单
+- [x] 3.3a `record(input, manager?)` 支持业务事务内写入
+- [ ] 3.3b 失败审计单独事务策略
+- [x] 3.4 每组织 advisory lock 串行化
+- [x] 3.5 固定向量测试：hash/prevHash/seq 稳定
 - [ ] 3.6 并发写入测试：seq 不重复、链不断
 
 ## 4. 追加式与权限
 
-- [ ] 4.1 数据库触发器/权限拒绝 UPDATE/DELETE（break-glass 例外）
+- [x] 4.1 数据库触发器拒绝 UPDATE/DELETE（break-glass 例外）
 - [ ] 4.2 break-glass 审计 + 告警
 - [ ] 4.3 代码检查/评审清单：禁止直接写 `audit_logs`
 - [ ] 4.4 负例：更新/删除被拒；break-glass 留痕
@@ -72,5 +75,5 @@
 - [ ] 9.2 归档/恢复/保留策略配置
 - [ ] 9.3 旧查询/CSV/JSON 导出兼容
 - [ ] 9.4 API 文档与 `api-client`
-- [ ] 9.5 `openspec validate add-audit-compliance-and-tamper-evidence --strict`
-- [ ] 9.6 运行 `check-domain-doc.mjs` / `check-meta-docs.mjs`
+- [x] 9.5 `openspec validate add-audit-compliance-and-tamper-evidence --strict`
+- [x] 9.6 运行 `check-domain-doc.mjs` / `check-meta-docs.mjs`

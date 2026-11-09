@@ -1,18 +1,43 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, Optional } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository, SelectQueryBuilder } from 'typeorm'
 import { AuditLog } from './audit-log.entity'
 import { AuditLogFilterDto } from './dto/audit-log-filter.dto'
 import { PaginatedResult } from '../common'
+import { AuditChainService } from './audit-chain.service'
+import type { AuditChainInput } from './audit-chain'
 
 @Injectable()
 export class AuditLogsService {
   constructor(
     @InjectRepository(AuditLog)
     private auditLogsRepository: Repository<AuditLog>,
+    @Optional() private readonly chain?: AuditChainService,
   ) {}
 
   async create(auditLog: Partial<AuditLog>): Promise<AuditLog> {
+    if (this.chain && auditLog.organizationId) {
+      const row = await this.chain.record({
+        organizationId: auditLog.organizationId,
+        action: auditLog.action ?? 'unknown',
+        resource: auditLog.resource ?? 'unknown',
+        actor: auditLog.actor ?? 'system',
+        actorType: auditLog.actorType,
+        status: auditLog.status ?? 'success',
+        resourceId: auditLog.resourceId ?? null,
+        changes: auditLog.changes ?? null,
+        metadata: auditLog.metadata ?? null,
+        appInstallationId: auditLog.appInstallationId ?? null,
+        ip: auditLog.ip ?? null,
+        userAgent: auditLog.userAgent ?? null,
+        correlationId: auditLog.correlationId ?? null,
+        source: auditLog.source ?? null,
+        timestamp: auditLog.timestamp ?? new Date(),
+        retentionUntil: auditLog.retentionUntil ?? null,
+        legalHold: auditLog.legalHold ?? false,
+      } satisfies AuditChainInput)
+      return this.auditLogsRepository.create(row as unknown as Partial<AuditLog>)
+    }
     const log = this.auditLogsRepository.create(auditLog)
     return this.auditLogsRepository.save(log)
   }

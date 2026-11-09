@@ -307,7 +307,21 @@
         "resourceId",
         "changes",
         "metadata",
-        "timestamp"
+        "timestamp",
+        "seq",
+        "prevHash",
+        "hash",
+        "hashAlgo",
+        "payload",
+        "actorType",
+        "appInstallationId",
+        "ip",
+        "userAgent",
+        "correlationId",
+        "source",
+        "retentionUntil",
+        "legalHold",
+        "archivedAt"
       ]
     },
     "app_installation_revisions": {
@@ -1301,6 +1315,32 @@
         "deliveredAt",
         "readAt",
         "error"
+      ]
+    },
+    "audit_checkpoints": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "seq",
+        "hash",
+        "signature",
+        "signer",
+        "metadata"
+      ]
+    },
+    "audit_archives": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "fromSeq",
+        "toSeq",
+        "objectKey",
+        "manifest",
+        "status"
       ]
     }
   }

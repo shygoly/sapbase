@@ -2,6 +2,8 @@ const DIRECT_TABLES = [
   'departments',
   'roles',
   'audit_logs',
+  'audit_checkpoints',
+  'audit_archives',
   'settings',
   'permissions',
   'menu_items',
