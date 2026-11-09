@@ -73,6 +73,24 @@ describe('AuthSessionsService', () => {
   })
 
 
+
+  it('并发会话上限：超过上限时吊销最老会话', async () => {
+    const repo = repoWith([
+      { id: 's1', sid: 'sid-1', status: 'active', organizationId: 'org-1', userId: 'u1', createdAt: '2026-01-01' },
+      { id: 's2', sid: 'sid-2', status: 'active', organizationId: 'org-1', userId: 'u1', createdAt: '2026-01-02' },
+    ])
+    const service = new AuthSessionsService(repo as never)
+    await service.create({
+      organizationId: 'org-1',
+      userId: 'u1',
+      maxSessionsPerUser: 2,
+    })
+    expect(repo.update).toHaveBeenCalledWith(
+      { id: 's1' },
+      expect.objectContaining({ status: 'revoked', revokedReason: 'session-limit' }),
+    )
+  })
+
   it('revokeScoped：只吊销本组织 sid', async () => {
     const repo = repoWith([
       { id: 's1', sid: 'sid-1', status: 'active', organizationId: 'org-1', userId: 'u1' },

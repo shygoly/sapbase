@@ -67,15 +67,25 @@ export class LoginService {
     // Validate credential format
     CredentialValidator.validate(command.email, command.password)
 
+    const email = command.email.toLowerCase().trim()
+    if (command.organizationId) {
+      const locked = await this.loginEvents?.isLocked(command.organizationId, email)
+      if (locked) {
+        throw new AuthenticationError('账号暂时锁定，请稍后再试')
+      }
+    }
+
     // Find user
-    const user = await this.userRepository.findByEmail(command.email.toLowerCase().trim())
+    const user = await this.userRepository.findByEmail(email)
     if (!user || !user.passwordHash) {
+      await this.recordFailure(command, email, 'invalid-credentials')
       throw new AuthenticationError('Invalid credentials')
     }
 
     // Validate password
     const isPasswordValid = await this.passwordService.compare(command.password, user.passwordHash)
     if (!isPasswordValid) {
+      await this.recordFailure(command, email, 'invalid-credentials')
       throw new AuthenticationError('Invalid credentials')
     }
 
@@ -164,6 +174,23 @@ export class LoginService {
       sessionId: sid,
       refreshToken,
     }
+  }
+
+  private async recordFailure(
+    command: LoginCommand,
+    email: string,
+    reason: string,
+  ): Promise<void> {
+    if (!command.organizationId) return
+    await this.loginEvents?.record({
+      organizationId: command.organizationId,
+      email,
+      provider: 'password',
+      status: 'failure',
+      ip: command.ip ?? null,
+      userAgent: command.userAgent ?? null,
+      reason,
+    })
   }
 
   private async resolvePermissions(

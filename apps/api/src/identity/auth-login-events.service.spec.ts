@@ -18,6 +18,46 @@ describe('AuthLoginEventsService', () => {
     })
   })
 
+
+  it('连续失败达到阈值 → 锁定', async () => {
+    const now = Date.now()
+    const find = jest.fn(async () => [
+      { status: 'failure', createdAt: new Date(now - 60_000) },
+      { status: 'failure', createdAt: new Date(now - 120_000) },
+      { status: 'failure', createdAt: new Date(now - 180_000) },
+      { status: 'failure', createdAt: new Date(now - 240_000) },
+      { status: 'failure', createdAt: new Date(now - 300_000) },
+    ])
+    const service = new AuthLoginEventsService({ find } as never)
+    await expect(service.isLocked('org-1', 'a@example.com')).resolves.toBe(true)
+  })
+
+  it('最近一次成功之后的失败才计数', async () => {
+    const now = Date.now()
+    const find = jest.fn(async () => [
+      { status: 'failure', createdAt: new Date(now - 30_000) },
+      { status: 'success', createdAt: new Date(now - 60_000) },
+      { status: 'failure', createdAt: new Date(now - 120_000) },
+      { status: 'failure', createdAt: new Date(now - 180_000) },
+      { status: 'failure', createdAt: new Date(now - 240_000) },
+      { status: 'failure', createdAt: new Date(now - 300_000) },
+    ])
+    const service = new AuthLoginEventsService({ find } as never)
+    await expect(service.isLocked('org-1', 'a@example.com', { maxFailures: 3 })).resolves.toBe(false)
+  })
+
+  it('窗口外失败不计数', async () => {
+    const now = Date.now()
+    const find = jest.fn(async () => [
+      { status: 'failure', createdAt: new Date(now - 30 * 60_000) },
+      { status: 'failure', createdAt: new Date(now - 31 * 60_000) },
+    ])
+    const service = new AuthLoginEventsService({ find } as never)
+    await expect(
+      service.isLocked('org-1', 'a@example.com', { maxFailures: 1, windowMinutes: 15 }),
+    ).resolves.toBe(false)
+  })
+
   it('列表按用户过滤并限制条数', async () => {
     const find = jest.fn(async () => [])
     const service = new AuthLoginEventsService({ find } as never)

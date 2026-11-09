@@ -12,6 +12,8 @@ export interface CreateSessionInput {
   userAgent?: string | null
   ttlMs?: number
   refreshTokenHash?: string | null
+  /** 同组织同用户活跃会话上限；0/缺省表示不限制。 */
+  maxSessionsPerUser?: number
 }
 
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -32,6 +34,22 @@ export class AuthSessionsService {
   ) {}
 
   async create(input: CreateSessionInput): Promise<AuthSession> {
+    const maxSessions =
+      input.maxSessionsPerUser ??
+      Number(process.env.AUTH_MAX_SESSIONS_PER_USER ?? 0)
+    if (Number.isFinite(maxSessions) && maxSessions > 0) {
+      const active = await this.repository.find({
+        where: { organizationId: input.organizationId, userId: input.userId, status: 'active' },
+        order: { createdAt: 'ASC' },
+      })
+      const overflow = active.length - maxSessions + 1
+      for (const session of active.slice(0, Math.max(0, overflow))) {
+        await this.repository.update(
+          { id: session.id },
+          { status: 'revoked', revokedAt: new Date(), revokedReason: 'session-limit' },
+        )
+      }
+    }
     const row = this.repository.create({
       organizationId: input.organizationId,
       userId: input.userId,
