@@ -35,10 +35,12 @@
 
 ## 5. 人工动作与轮次
 
-- [ ] 5.1 `approve` / `reject` / `request-changes` / `resubmit`
-- [ ] 5.2 只有当前步骤合法审批人可操作；越权 403
+- [x] 5.1a `approve` / `reject` / `request-changes`
+- [ ] 5.1b `resubmit` 新 round
+- [x] 5.2 只有当前步骤合法审批人可操作；越权 403（role/assignee/selector）
 - [ ] 5.3 `resubmit` 创建新 round，旧 round 只读
-- [ ] 5.4 评论/附件（走 `asset-pipeline`）
+- [x] 5.4a 评论写入 review_comments
+- [ ] 5.4b 附件走 asset-pipeline
 - [ ] 5.5 委托：`review_delegations` + 代决定审计
 - [ ] 5.6 发布/状态迁移在整体 approved 前拒绝
 - [ ] 5.7 e2e：提交→机器检测→人工驳回→修改→重提→通过
