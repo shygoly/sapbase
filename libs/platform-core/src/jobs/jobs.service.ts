@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -41,6 +42,8 @@ const MAX_QUEUED_PER_ORG = 1_000
  */
 @Injectable()
 export class JobsService {
+  private readonly rateWindow = new Map<string, number[]>()
+
   constructor(
     private readonly queue: JobQueue,
     private readonly registry: JobTypeRegistry,
@@ -56,6 +59,7 @@ export class JobsService {
     if (!organizationId) {
       throw new BadRequestException('缺少组织上下文')
     }
+    this.assertRateLimit(organizationId)
     this.assertCreatePermission(actor, input.type)
     const typeVersion = input.typeVersion ?? 1
     this.registry.get(input.type, typeVersion)
@@ -149,6 +153,10 @@ export class JobsService {
     return job
   }
 
+  async stats(organizationId: string) {
+    return this.queue.stats(organizationId)
+  }
+
   async events(organizationId: string, id: string, afterSeq = 0) {
     await this.get(organizationId, id)
     return this.queue.events(organizationId, id, afterSeq)
@@ -172,6 +180,24 @@ export class JobsService {
       attempts: result.attempts,
     })
     return result
+  }
+
+  private assertRateLimit(organizationId: string): void {
+    const limit = Number(process.env.JOBS_RATE_LIMIT_PER_MINUTE ?? 120)
+    if (!Number.isFinite(limit) || limit <= 0) return
+    const now = Date.now()
+    const windowStart = now - 60_000
+    const recent = (this.rateWindow.get(organizationId) ?? []).filter(
+      (timestamp) => timestamp > windowStart,
+    )
+    if (recent.length >= limit) {
+      throw new HttpException(
+        { statusCode: 429, message: `任务创建速率超限（${limit}/分钟）` },
+        429,
+      )
+    }
+    recent.push(now)
+    this.rateWindow.set(organizationId, recent)
   }
 
   private assertCreatePermission(actor: JobActor, type: string): void {

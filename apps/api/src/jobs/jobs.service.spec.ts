@@ -141,6 +141,26 @@ describe('JobsService', () => {
     )
   })
 
+
+  it('速率限制 → 429', async () => {
+    process.env.JOBS_RATE_LIMIT_PER_MINUTE = '1'
+    try {
+      const { service: jobs } = service()
+      await jobs.create('org-1', ACTOR, {
+        type: 'media.scan',
+        payload: { assetId: 'a1' },
+      })
+      await expect(
+        jobs.create('org-1', ACTOR, {
+          type: 'media.scan',
+          payload: { assetId: 'a2' },
+        }),
+      ).rejects.toMatchObject({ status: 429 })
+    } finally {
+      delete process.env.JOBS_RATE_LIMIT_PER_MINUTE
+    }
+  })
+
   it('查询：不存在 → 404', async () => {
     const q = queue({ get: jest.fn(async () => null) })
     const { service: jobs } = service({ queue: q })

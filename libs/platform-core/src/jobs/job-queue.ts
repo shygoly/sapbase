@@ -156,6 +156,38 @@ export class JobQueue {
     return { items, total: countRows[0]?.total ?? 0 }
   }
 
+  async stats(organizationId: string): Promise<Record<string, number>> {
+    const rows = (await this.dataSource.query(
+      `SELECT status, COUNT(*)::int AS count
+         FROM public.jobs
+        WHERE "organizationId" = $1
+        GROUP BY status`,
+      [organizationId],
+    )) as Array<{ status: string; count: number }>
+    const callbackRows = (await this.dataSource.query(
+      `SELECT COUNT(*)::int AS count
+         FROM public.jobs
+        WHERE "organizationId" = $1 AND "callbackStatus" = 'failed'`,
+      [organizationId],
+    )) as Array<{ count: number }>
+    const stats: Record<string, number> = {
+      queued: 0,
+      running: 0,
+      waiting: 0,
+      succeeded: 0,
+      failed: 0,
+      cancelled: 0,
+      dead: 0,
+      total: 0,
+      callbackFailed: callbackRows[0]?.count ?? 0,
+    }
+    for (const row of rows) {
+      stats[row.status] = row.count
+      stats.total += row.count
+    }
+    return stats
+  }
+
   async events(
     organizationId: string,
     jobId: string,
@@ -423,6 +455,23 @@ export class JobQueue {
         durationMs,
       ],
     )
+  }
+
+  /** 事件保留期清理：dead 任务保留完整事件，便于 DLQ 排查。 */
+  async pruneEvents(before: Date): Promise<number> {
+    const rows = returningRows<{ count: string }>(await this.dataSource.query(
+      `WITH deleted AS (
+         DELETE FROM public.job_events e
+          USING public.jobs j
+          WHERE e."jobId" = j.id
+            AND e."createdAt" < $1
+            AND j.status <> 'dead'
+         RETURNING 1
+       )
+       SELECT COUNT(*)::text AS count FROM deleted`,
+      [before],
+    ))
+    return Number(rows[0]?.count ?? 0)
   }
 
   async updateCallback(

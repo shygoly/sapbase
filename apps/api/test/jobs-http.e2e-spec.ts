@@ -208,6 +208,20 @@ describeDb('Jobs HTTP API (real Postgres)', () => {
     expect(missing.status).toBe(404)
   })
 
+
+  it('统计：积压/状态/回调失败', async () => {
+    const response = await request(server()).get('/jobs/stats')
+    expect(response.status).toBe(200)
+    expect(response.body).toMatchObject({
+      queued: expect.any(Number),
+      running: expect.any(Number),
+      dead: expect.any(Number),
+      total: expect.any(Number),
+      callbackFailed: expect.any(Number),
+    })
+    expect(response.body.total).toBeGreaterThanOrEqual(1)
+  })
+
   it('取消 queued 任务 → cancelled', async () => {
     const response = await request(server()).post(`/jobs/${jobId}/cancel`).send({})
     expect(response.status).toBe(201)

@@ -9,6 +9,8 @@ import {
   Query,
 } from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
+import { Sse } from '@nestjs/common'
+import { Observable, from, interval, map, mergeMap, tap } from 'rxjs'
 import { Auth } from '../common/decorators/auth.decorator'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
@@ -81,6 +83,13 @@ export class JobsController {
     })
   }
 
+  @Get('stats')
+  @Auth('jobs:read')
+  @ApiOperation({ summary: '任务积压/成功率/回调失败统计' })
+  stats(@OrganizationId() organizationId: string) {
+    return this.jobs.stats(organizationId)
+  }
+
   @Get(':id')
   @Auth('jobs:read')
   @ApiOperation({ summary: '任务状态/进度/结果/错误' })
@@ -100,6 +109,25 @@ export class JobsController {
       organizationId,
       id,
       afterSeq ? Math.max(0, Number(afterSeq) || 0) : 0,
+    )
+  }
+
+  @Sse(':id/stream')
+  @Auth('jobs:read')
+  @ApiOperation({ summary: 'SSE 任务事件流（afterSeq 起；断线可重连）' })
+  stream(
+    @OrganizationId() organizationId: string,
+    @Param('id') id: string,
+    @Query('afterSeq') afterSeq?: string,
+  ): Observable<{ data: unknown }> {
+    let cursor = afterSeq ? Math.max(0, Number(afterSeq) || 0) : 0
+    return interval(1_000).pipe(
+      mergeMap(() => from(this.jobs.events(organizationId, id, cursor))),
+      tap((event) => {
+        const seq = Number((event as { seq?: number }).seq ?? 0)
+        if (Number.isFinite(seq)) cursor = Math.max(cursor, seq)
+      }),
+      map((event) => ({ data: event })),
     )
   }
 

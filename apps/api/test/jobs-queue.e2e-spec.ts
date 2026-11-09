@@ -68,6 +68,23 @@ describeDb('JobQueue (real Postgres)', () => {
   }, 30000)
 
 
+
+  it('事件保留期清理：非 dead 任务删除旧事件', async () => {
+    const { job } = await queue.enqueue({
+      organizationId: orgId,
+      type: 'test.prune',
+      payload: {},
+      priority: 3000,
+    })
+    await queue.appendEvent(job.id, 'log', { message: 'old' })
+    await dataSource.query(
+      `UPDATE public.job_events SET "createdAt" = now() - interval '40 days' WHERE "jobId" = $1`,
+      [job.id],
+    )
+    await expect(queue.pruneEvents(new Date())).resolves.toBeGreaterThanOrEqual(1)
+    await expect(queue.events(orgId, job.id, 0)).resolves.toHaveLength(0)
+  })
+
   it('事务回滚不留任务', async () => {
     await expect(
       dataSource.transaction(async (manager) => {
@@ -90,6 +107,7 @@ describeDb('JobQueue (real Postgres)', () => {
   })
 
   it('并发领取同一任务只有一个成功（SKIP LOCKED）', async () => {
+    await dataSource.query(`UPDATE public.jobs SET status = 'cancelled' WHERE status = 'queued'`)
     await queue.enqueue({
       organizationId: orgId,
       type: 'test.concurrent',
