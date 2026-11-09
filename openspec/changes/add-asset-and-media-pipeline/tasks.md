@@ -28,8 +28,9 @@
 - [x] 4.1 `assets` 表与状态机（uploading/scanning/processing/ready/failed/quarantined/deleted）
 - [x] 4.2 `asset_variants` 表与查询
 - [x] 4.3 元数据列：宽高、时长、页数、metadata（EXIF 剥离标记由处理器写入）
-- [ ] 4.4 去重：同组织 checksum/size 复用对象；业务引用独立
-- [ ] 4.5 软删除/恢复/保留期
+- [x] 4.4 去重：同组织 checksum/size 复用对象；业务引用独立
+- [x] 4.5a 软删除（status=deleted + deletedAt）
+- [ ] 4.5b 恢复/保留期清理
 - [ ] 4.6 RLS 与跨租户负例
 
 ## 5. 处理管道
@@ -48,11 +49,12 @@
 ## 6. 访问控制
 
 - [ ] 6.1 私有/公开资产策略
-- [ ] 6.2 短时签名 URL：组织/用户/应用绑定、TTL
+- [x] 6.2 短时签名 URL（ObjectStorage.signedUrl + TTL；组织/用户绑定由调用入口补）
 - [ ] 6.3 Range 串流与 HLS/MP4 播放
 - [ ] 6.4 下载/导出重新鉴权
 - [ ] 6.5 业务记录权限 + 数据范围 + 资产状态组合
-- [ ] 6.6 负例：跨租户、过期 URL、未 ready、infected、越权下载
+- [x] 6.6a 负例：跨租户 assetId 404、未 ready 403
+- [ ] 6.6b 过期 URL / infected / 越权下载 e2e
 
 ## 7. 语义层资产字段
 
