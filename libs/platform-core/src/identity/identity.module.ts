@@ -8,6 +8,8 @@ import { AuthSessionsService } from './auth-sessions.service'
 import { IdentityProvidersService } from './identity-providers.service'
 import { AuthLoginEventsService } from './auth-login-events.service'
 import { IdentityController } from './identity.controller'
+import { ServiceClientsService } from './service-clients.service'
+import { ServiceClient } from './service-client.entity'
 import { OrganizationMemberRolesService } from './organization-member-roles.service'
 
 @Module({
@@ -16,6 +18,7 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
       AuthSession,
       IdentityProvider,
       AuthLoginEvent,
+      ServiceClient,
     ])],
   controllers: [IdentityController],
   providers: [
@@ -23,12 +26,14 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
     AuthSessionsService,
     IdentityProvidersService,
     AuthLoginEventsService,
+    ServiceClientsService,
   ],
   exports: [
     OrganizationMemberRolesService,
     AuthSessionsService,
     IdentityProvidersService,
     AuthLoginEventsService,
+    ServiceClientsService,
     TypeOrmModule,
   ],
 })

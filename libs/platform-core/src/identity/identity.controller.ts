@@ -15,6 +15,11 @@ import { OrganizationId } from '../organizations/decorators/organization-id.deco
 import { AuthLoginEventsService } from './auth-login-events.service'
 import { AuthSessionsService } from './auth-sessions.service'
 import {
+  ServiceClientsService,
+  type CreateServiceClientInput,
+  type UpdateServiceClientInput,
+} from './service-clients.service'
+import {
   IdentityProvidersService,
   type CreateIdentityProviderInput,
   type UpdateIdentityProviderInput,
@@ -27,6 +32,7 @@ export class IdentityController {
     private readonly providers: IdentityProvidersService,
     private readonly sessions: AuthSessionsService,
     private readonly loginEvents: AuthLoginEventsService,
+    private readonly serviceClients: ServiceClientsService,
   ) {}
 
   @Get('providers')
@@ -93,6 +99,41 @@ export class IdentityController {
       return { revoked: await this.sessions.revokeAll(organizationId, body.userId, reason) }
     }
     throw new BadRequestException('sid 或 userId 必填')
+  }
+
+  @Get('service-clients')
+  @Auth('identity:read')
+  @ApiOperation({ summary: '服务客户端列表（不返回 secret）' })
+  listServiceClients(@OrganizationId() organizationId: string) {
+    return this.serviceClients.list(organizationId)
+  }
+
+  @Post('service-clients')
+  @Auth('identity:manage')
+  @ApiOperation({ summary: '创建服务客户端（secret 只返回一次）' })
+  createServiceClient(
+    @OrganizationId() organizationId: string,
+    @Body() body: CreateServiceClientInput,
+  ) {
+    return this.serviceClients.create(organizationId, body)
+  }
+
+  @Patch('service-clients/:id')
+  @Auth('identity:manage')
+  @ApiOperation({ summary: '更新服务客户端 scope/状态/白名单' })
+  updateServiceClient(
+    @OrganizationId() organizationId: string,
+    @Param('id') id: string,
+    @Body() body: UpdateServiceClientInput,
+  ) {
+    return this.serviceClients.update(organizationId, id, body)
+  }
+
+  @Post('service-clients/:id/rotate')
+  @Auth('identity:manage')
+  @ApiOperation({ summary: '轮换服务客户端 secret（旧 secret 立即失效）' })
+  rotateServiceClient(@OrganizationId() organizationId: string, @Param('id') id: string) {
+    return this.serviceClients.rotate(organizationId, id)
   }
 
   @Get('login-events')
