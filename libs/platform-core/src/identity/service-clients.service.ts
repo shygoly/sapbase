@@ -10,6 +10,7 @@ export interface CreateServiceClientInput {
   scopes?: string[]
   expiresAt?: Date | null
   ipAllowlist?: string[] | null
+  appInstallationId?: string | null
 }
 
 export interface UpdateServiceClientInput {
@@ -18,6 +19,7 @@ export interface UpdateServiceClientInput {
   status?: 'active' | 'inactive'
   expiresAt?: Date | null
   ipAllowlist?: string[] | null
+  appInstallationId?: string | null
 }
 
 const KEY_PATTERN = /^[a-z][a-z0-9_-]*$/
@@ -66,6 +68,7 @@ export class ServiceClientsService {
       organizationId,
       key: input.key,
       name: input.name,
+      appInstallationId: input.appInstallationId ?? null,
       secretHash: hashClientSecret(secret),
       scopes: input.scopes ?? null,
       status: 'active',
@@ -87,6 +90,7 @@ export class ServiceClientsService {
     if (input.status !== undefined) row.status = input.status
     if (input.expiresAt !== undefined) row.expiresAt = input.expiresAt
     if (input.ipAllowlist !== undefined) row.ipAllowlist = input.ipAllowlist
+    if (input.appInstallationId !== undefined) row.appInstallationId = input.appInstallationId
     return this.repository.save(row)
   }
 

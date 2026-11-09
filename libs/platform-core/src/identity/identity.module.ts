@@ -9,6 +9,7 @@ import { IdentityProvidersService } from './identity-providers.service'
 import { AuthLoginEventsService } from './auth-login-events.service'
 import { IdentityController } from './identity.controller'
 import { ServiceClientsService } from './service-clients.service'
+import { ServiceClientAuthGuard } from './service-client-auth.guard'
 import { ServiceClient } from './service-client.entity'
 import { OrganizationMemberRolesService } from './organization-member-roles.service'
 
@@ -27,6 +28,7 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
     IdentityProvidersService,
     AuthLoginEventsService,
     ServiceClientsService,
+    ServiceClientAuthGuard,
   ],
   exports: [
     OrganizationMemberRolesService,
@@ -34,6 +36,7 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
     IdentityProvidersService,
     AuthLoginEventsService,
     ServiceClientsService,
+    ServiceClientAuthGuard,
     TypeOrmModule,
   ],
 })

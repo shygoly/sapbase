@@ -188,6 +188,17 @@ export class JobQueue {
     return stats
   }
 
+  async oldestQueuedAt(organizationId: string): Promise<Date | null> {
+    const rows = (await this.dataSource.query(
+      `SELECT MIN("createdAt") AS oldest
+         FROM public.jobs
+        WHERE "organizationId" = $1 AND status = 'queued'`,
+      [organizationId],
+    )) as Array<{ oldest: Date | string | null }>
+    const value = rows[0]?.oldest
+    return value ? new Date(value) : null
+  }
+
   async events(
     organizationId: string,
     jobId: string,

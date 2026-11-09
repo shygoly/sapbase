@@ -210,6 +210,17 @@ describeDb('Jobs HTTP API (real Postgres)', () => {
   })
 
 
+
+  it('告警：返回空告警与统计', async () => {
+    const response = await request(server()).get('/jobs/alerts?backlog=9999&failureRate=0.9')
+    expect(response.status).toBe(200)
+    expect(response.body).toMatchObject({
+      organizationId: orgId,
+      alerts: [],
+      stats: expect.objectContaining({ total: expect.any(Number) }),
+    })
+  })
+
   it('统计：积压/状态/回调失败', async () => {
     const response = await request(server()).get('/jobs/stats')
     expect(response.status).toBe(200)

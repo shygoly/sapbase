@@ -33,6 +33,7 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1793300000000-CreateIdentity.ts'),
     path.join(__dirname, '1793400000000-CreateAuthSessions.ts'),
     path.join(__dirname, '1793500000000-CreateIdentityFederation.ts'),
+    path.join(__dirname, '1793600000000-AddServiceClientAppBinding.ts'),
   ],
   synchronize: false,
   logging: true,

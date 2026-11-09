@@ -9,6 +9,7 @@ import { JobQueue } from './job-queue'
 import { JobTypeRegistry } from './job-types'
 import { JobWorkerService } from './job-worker'
 import { JobWakeupService } from './job-wakeup'
+import { JobAlertsService } from './job-alerts.service'
 import { JobsController } from './jobs.controller'
 import { JobsService } from './jobs.service'
 
@@ -20,6 +21,7 @@ import { JobsService } from './jobs.service'
     JobTypeRegistry,
     JobCallbackService,
     JobWakeupService,
+    JobAlertsService,
     JobWorkerService,
     JobsService,
   ],
@@ -29,6 +31,7 @@ import { JobsService } from './jobs.service'
     JobTypeRegistry,
     JobCallbackService,
     JobWakeupService,
+    JobAlertsService,
     JobWorkerService,
     JobsService,
   ],

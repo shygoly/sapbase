@@ -4,6 +4,9 @@ import { TenantAwareEntity } from '../common/entities/tenant-aware.entity'
 @Entity('service_clients')
 @Index('UQ_service_client_org_key', ['organizationId', 'key'], { unique: true })
 export class ServiceClient extends TenantAwareEntity {
+  @Column({ type: 'uuid', nullable: true })
+  appInstallationId: string | null
+
   @Column({ type: 'varchar', length: 128 })
   key: string
 

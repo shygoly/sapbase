@@ -16,6 +16,7 @@ import { CurrentUser } from '../auth/current-user.decorator'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import type { JobStatus } from './job-state'
 import { JobsService, type JobActor } from './jobs.service'
+import { JobAlertsService } from './job-alerts.service'
 
 interface RuntimeUser {
   id?: string
@@ -33,7 +34,10 @@ function actorOf(user: RuntimeUser | undefined): JobActor {
 @ApiTags('Jobs')
 @Controller('jobs')
 export class JobsController {
-  constructor(private readonly jobs: JobsService) {}
+  constructor(
+    private readonly jobs: JobsService,
+    private readonly alerts: JobAlertsService,
+  ) {}
 
   @Post()
   @Auth()
@@ -80,6 +84,24 @@ export class JobsController {
       type,
       page: page ? Number(page) : undefined,
       pageSize: pageSize ? Number(pageSize) : undefined,
+    })
+  }
+
+  @Get('alerts')
+  @Auth('jobs:read')
+  @ApiOperation({ summary: '任务告警：积压/失败率/回调失败/最老 queued' })
+  alertsReport(
+    @OrganizationId() organizationId: string,
+    @Query('backlog') backlog?: string,
+    @Query('failureRate') failureRate?: string,
+    @Query('callbackFailed') callbackFailed?: string,
+    @Query('oldestQueuedMinutes') oldestQueuedMinutes?: string,
+  ) {
+    return this.alerts.evaluate(organizationId, {
+      backlog: backlog ? Number(backlog) : undefined,
+      failureRate: failureRate ? Number(failureRate) : undefined,
+      callbackFailed: callbackFailed ? Number(callbackFailed) : undefined,
+      oldestQueuedMinutes: oldestQueuedMinutes ? Number(oldestQueuedMinutes) : undefined,
     })
   }
 

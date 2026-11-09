@@ -94,7 +94,7 @@
 - [x] 11.2a 重试/取消/DLQ 重放 API
 - [x] 11.2b 管理 UI 操作入口（取消/重试/DLQ/回调重放）
 - [x] 11.3 指标：状态/积压/回调失败统计（`GET /jobs/stats`；P50/P95 耗时由指标 change 接入）
-- [ ] 11.4 告警：积压/失败率/超时
+- [x] 11.4 告警：积压/失败率/回调失败/最老 queued（`GET /jobs/alerts`）
 - [x] 11.5 权限点：`jobs:read` / `jobs:manage`
 
 ## 12. 验收
