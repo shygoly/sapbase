@@ -20,12 +20,17 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  async login(@Body() loginDto: { email: string; password: string; organizationId?: string }) {
+  async login(
+    @Body() loginDto: { email: string; password: string; organizationId?: string },
+    @Request() req: any,
+  ) {
     try {
       return await this.loginService.execute({
         email: loginDto.email,
         password: loginDto.password,
         organizationId: loginDto.organizationId,
+        ip: req?.ip,
+        userAgent: req?.headers?.['user-agent'],
       })
     } catch (err) {
       if (err instanceof AuthenticationError) {

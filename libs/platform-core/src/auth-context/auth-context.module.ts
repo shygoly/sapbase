@@ -21,6 +21,7 @@ import { JWT_SERVICE, PASSWORD_SERVICE, EFFECTIVE_PERMISSIONS_RESOLVER } from '.
 import { JwtService } from './infrastructure/external/jwt.service'
 import { PasswordService } from './infrastructure/external/password.service'
 import { EffectivePermissionsResolver } from './infrastructure/external/effective-permissions.resolver'
+import { IdentityModule } from '../identity/identity.module'
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { EffectivePermissionsResolver } from './infrastructure/external/effectiv
     OrganizationsModule,
     OrganizationContextModule,
     RolesModule,
+    IdentityModule,
   ],
   providers: [
     {

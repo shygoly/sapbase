@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Optional } from '@nestjs/common'
 import { AuthenticationError } from '../../domain/errors'
 import type { IUserRepository } from '../../domain/repositories'
 import type { IOrganizationRepository } from '../../domain/repositories'
@@ -13,6 +13,7 @@ import {
 import { JWT_SERVICE, EFFECTIVE_PERMISSIONS_RESOLVER } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { OrganizationSwitchedEvent } from '../../domain/events'
+import { OrganizationMemberRolesService } from '../../../identity/organization-member-roles.service'
 
 export interface SwitchOrganizationCommand {
   userId: string
@@ -33,6 +34,7 @@ export class SwitchOrganizationService {
     private readonly eventPublisher: IEventPublisher,
     @Inject(EFFECTIVE_PERMISSIONS_RESOLVER)
     private readonly effectivePermissionsResolver: IEffectivePermissionsResolver,
+    @Optional() private readonly memberRoles?: OrganizationMemberRolesService,
   ) {}
 
   async execute(command: SwitchOrganizationCommand): Promise<{ access_token: string }> {
@@ -51,10 +53,13 @@ export class SwitchOrganizationService {
       throw new AuthenticationError('User does not have access to the specified organization')
     }
 
+    const additionalRoles =
+      (await this.memberRoles?.activeRoleNames(command.organizationId, user.id)) ?? []
     const permissions = await this.resolvePermissions(
       user.role,
       user.permissions || [],
       command.organizationId,
+      additionalRoles,
     )
 
     // Build JWT payload
@@ -86,10 +91,12 @@ export class SwitchOrganizationService {
     role: string,
     directPermissions: readonly string[],
     organizationId?: string,
+    additionalRoles?: readonly string[],
   ): Promise<string[]> {
     try {
       const resolved = await this.effectivePermissionsResolver.resolve({
         role,
+        ...(additionalRoles && additionalRoles.length > 0 ? { additionalRoles } : {}),
         directPermissions,
         organizationId,
       })

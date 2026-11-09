@@ -311,6 +311,17 @@ db: rls:organization_member_roles
 spec: apps/api/src/identity/organization-member-roles.service.spec.ts
 ```
 
+```yaml invariant
+id: INV-ID-02
+tables: [auth_sessions]
+desc: JWT 携带 sid 时守卫必须校验会话 active 且未过期；吊销/过期后立即拒绝；旧无 sid token 仅按 JWT 过期时间兼容。
+trigger: 登录/刷新/登出/强制下线/每次受保护请求
+enforcement:
+  - test:apps/api/src/identity/auth-sessions.service.spec.ts#AuthSessionsService
+db: rls:auth_sessions
+spec: apps/api/src/identity/auth-sessions.service.spec.ts
+```
+
 ---
 
 ## 应用安装

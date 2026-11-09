@@ -38,7 +38,8 @@
 
 ## 5. SSO 与身份映射
 
-- [ ] 5.1 `IdentityProvider` 管理 API + secretRef 解析
+- [x] 5.1a `IdentityProvider` 管理 service（CRUD + key 校验 + secretRef）
+- [ ] 5.1b 管理 API + secretRef 解析
 - [ ] 5.2 CAS adapter（redirect + ticket 校验 + 属性映射）
 - [ ] 5.3 OAuth2/OIDC adapter（state/nonce/PKCE、userinfo/id_token）
 - [ ] 5.4 SAML adapter（签名/时间窗/断言解析）
@@ -57,7 +58,8 @@
 
 ## 7. 异常登录与审计
 
-- [ ] 7.1 `auth_login_events` 写入（成功/失败/ip/ua/device/provider）
+- [x] 7.1a `auth_login_events` service + 登录成功写入（ip/ua/provider）
+- [ ] 7.1b 登录失败/异常规则写入与查询 API
 - [ ] 7.2 规则：连续失败锁定、新设备/新 IP 通知、管理员查询
 - [ ] 7.3 告警接 `notification-center-and-announcements`
 - [ ] 7.4 登录/登出/强制下线/角色变更/令牌创建与吊销写 `audit_logs`

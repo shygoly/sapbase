@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Optional } from '@nestjs/common'
 import { AuthenticationError } from '../../domain/errors'
 import { CredentialValidator, OrganizationSelector } from '../../domain/domain-services'
 import type { IUserRepository } from '../../domain/repositories'
@@ -15,11 +15,15 @@ import {
 import { JWT_SERVICE, PASSWORD_SERVICE, EFFECTIVE_PERMISSIONS_RESOLVER } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { UserLoggedInEvent } from '../../domain/events'
+import { OrganizationMemberRolesService } from '../../../identity/organization-member-roles.service'
+import { AuthLoginEventsService } from '../../../identity/auth-login-events.service'
 
 export interface LoginCommand {
   email: string
   password: string
   organizationId?: string
+  ip?: string
+  userAgent?: string
 }
 
 export interface LoginResult {
@@ -50,6 +54,8 @@ export class LoginService {
     private readonly eventPublisher: IEventPublisher,
     @Inject(EFFECTIVE_PERMISSIONS_RESOLVER)
     private readonly effectivePermissionsResolver: IEffectivePermissionsResolver,
+    @Optional() private readonly memberRoles?: OrganizationMemberRolesService,
+    @Optional() private readonly loginEvents?: AuthLoginEventsService,
   ) {}
 
   async execute(command: LoginCommand): Promise<LoginResult> {
@@ -82,10 +88,14 @@ export class LoginService {
       throw new AuthenticationError('User does not have access to the specified organization')
     }
 
+    const additionalRoles = selectedOrgId
+      ? (await this.memberRoles?.activeRoleNames(selectedOrgId, user.id)) ?? []
+      : []
     const permissions = await this.resolvePermissions(
       user.role,
       user.permissions || [],
       selectedOrgId,
+      additionalRoles,
     )
 
     // Build JWT payload
@@ -99,6 +109,18 @@ export class LoginService {
 
     // Sign token
     const access_token = await this.jwtService.sign(payload)
+
+    if (selectedOrgId) {
+      await this.loginEvents?.record({
+        organizationId: selectedOrgId,
+        userId: user.id,
+        email: user.email,
+        provider: 'password',
+        status: 'success',
+        ip: command.ip ?? null,
+        userAgent: command.userAgent ?? null,
+      })
+    }
 
     // Publish event
     await this.eventPublisher.publish(
@@ -127,10 +149,12 @@ export class LoginService {
     role: string,
     directPermissions: readonly string[],
     organizationId?: string,
+    additionalRoles?: readonly string[],
   ): Promise<string[]> {
     try {
       const resolved = await this.effectivePermissionsResolver.resolve({
         role,
+        ...(additionalRoles && additionalRoles.length > 0 ? { additionalRoles } : {}),
         directPermissions,
         organizationId,
       })
