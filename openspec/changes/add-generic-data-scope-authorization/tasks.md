@@ -31,7 +31,7 @@
 - [x] 3.6a 实现 `scopeVersion` + 内存缓存，变更即 bump
 - [x] 3.6b Redis 缓存（多实例，CACHE_MANAGER 可选）
 - [x] 3.7 单元测试：五种 scope、空绑定 fail-closed、无策略 fail-closed、跨维度非法、过期成员、deny 优先、cap 收窄
-- [ ] 3.8 失败路径测试：解析异常、非法节点、循环树、伪造主体
+- [x] 3.8 失败路径测试：解析异常、非法节点、循环树、伪造主体
 
 ## 4. 统一执行点
 

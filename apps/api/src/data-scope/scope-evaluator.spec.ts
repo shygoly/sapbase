@@ -364,3 +364,41 @@ describe('ScopeEvaluator', () => {
     expect(evaluator.evaluate(input({ action: 'delete' }))).toEqual({ op: 'none' })
   })
 })
+
+describe('ScopeEvaluator failure paths', () => {
+  const evaluator = new ScopeEvaluator()
+
+  it('未知 scope kind → 抛错（调用方 fail-closed）', () => {
+    expect(() =>
+      evaluator.evaluate({
+        resourceKey: 'platform:crm_customers',
+        action: 'read',
+        actor: { userId: 'u1', roleKeys: ['province_manager'], groupKeys: [] },
+        declared: true,
+        bindings: [REGION_FIELD],
+        memberships: [membership()],
+        nodes: NODES,
+        policies: [
+          policy({
+            scope: { kind: 'bogus' } as never,
+          }),
+        ],
+      }),
+    ).toThrow(/未知范围类型/)
+  })
+
+  it('伪造/无成员主体 → none', () => {
+    expect(
+      evaluator.evaluate({
+        resourceKey: 'platform:crm_customers',
+        action: 'read',
+        actor: { userId: 'forged', roleKeys: ['province_manager'], groupKeys: [] },
+        declared: true,
+        bindings: [REGION_FIELD],
+        memberships: [membership()],
+        nodes: NODES,
+        policies: [policy()],
+      }),
+    ).toEqual({ op: 'none' })
+  })
+})
