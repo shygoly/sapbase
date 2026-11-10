@@ -15,7 +15,7 @@
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
-import { dirname, join, relative, resolve } from 'node:path'
+import { basename, dirname, join, relative, resolve } from 'node:path'
 
 const DEFAULT_OUT = 'docs/OPENSPEC_CHANGES.md'
 
@@ -221,7 +221,7 @@ function collect(root, outDir) {
 
   const active = listDirectories(changesDir)
     .filter((dir) => dir !== archiveDir)
-    .map((dir) => changeInfo(root, dir, outDir, false, dir.split('/').at(-1)))
+    .map((dir) => changeInfo(root, dir, outDir, false, basename(dir)))
     .sort((a, b) => {
       const rank = { 'in-progress': 0, complete: 1, 'no-tasks': 2, scaffold: 3 }
       const byStatus = (rank[a.status] ?? 9) - (rank[b.status] ?? 9)
@@ -231,7 +231,7 @@ function collect(root, outDir) {
 
   const archived = listDirectories(archiveDir)
     .map((dir) => {
-      const name = dir.split('/').at(-1)
+      const name = basename(dir)
       return changeInfo(root, dir, outDir, true, name)
     })
     .sort((a, b) => {
