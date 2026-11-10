@@ -3,10 +3,17 @@ import { LOCALE_COOKIE } from '@sap/app-shared/i18n/config'
 import { resolveLocaleRouting } from '@sap/ui-layout/i18n/locale-routing'
 
 const ONE_YEAR = 60 * 60 * 24 * 365
+const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3050'
 const canonicalRedirects: Record<string, string> = {
   '/': '/admin/releases',
   '/admin': '/admin/releases',
   '/admin/': '/admin/releases',
+}
+
+function redirectToPortal(request: NextRequest) {
+  const target = new URL(request.nextUrl.pathname, PORTAL_URL)
+  target.search = request.nextUrl.search
+  return NextResponse.redirect(target)
 }
 
 function setLocaleCookie(response: NextResponse, locale: string) {
@@ -32,6 +39,16 @@ export function middleware(request: NextRequest) {
   })
 
   if (decision.action === 'next') {
+    // Console 没有 /dashboard/* 与 /docs/*；这些是 Portal 的路由。
+    const pathname = request.nextUrl.pathname
+    if (
+      pathname === '/dashboard' ||
+      pathname.startsWith('/dashboard/') ||
+      pathname === '/docs' ||
+      pathname.startsWith('/docs/')
+    ) {
+      return redirectToPortal(request)
+    }
     return NextResponse.next()
   }
 

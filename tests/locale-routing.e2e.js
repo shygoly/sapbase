@@ -203,6 +203,26 @@ async function mockSso(page, returnUrl) {
       await page.close()
     })
 
+
+    await test('console /dashboard/* redirects to the portal', async () => {
+      const response = await consoleCtx.request.get(`${CONSOLE}/dashboard/overview`, {
+        maxRedirects: 0,
+      })
+      assert.strictEqual(response.status(), 307)
+      assert.strictEqual(
+        response.headers()['location'],
+        `${PORTAL}/dashboard/overview`,
+      )
+    })
+
+    await test('console /docs/* redirects to the portal', async () => {
+      const response = await consoleCtx.request.get(`${CONSOLE}/docs/plugin`, {
+        maxRedirects: 0,
+      })
+      assert.strictEqual(response.status(), 307)
+      assert.strictEqual(response.headers()['location'], `${PORTAL}/docs/plugin`)
+    })
+
     await test('console /profile renders inside the app shell', async () => {
       const page = await consoleCtx.newPage()
       const response = await page.goto(`${CONSOLE}/profile`, { waitUntil: 'networkidle' })

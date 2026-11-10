@@ -51,7 +51,8 @@ locale 是**请求级偏好**，不进入应用 URL。
 2. `?lang=xx` → 合法则写 cookie，307 去掉参数；非法则原样忽略。
 3. `/` → Portal `/dashboard/overview`，Console `/admin/releases`。
 4. 不处理 `/_next`、`/api`、`/plugins`、`/images`、`favicon.ico`、`robots.txt`、`sitemap.xml`。
-5. Portal 的 `/admin/*` 307 到 `NEXT_PUBLIC_CONSOLE_URL`（默认 `http://localhost:3060`）。
+5. Portal 的 `/admin/*` 307 到 `NEXT_PUBLIC_CONSOLE_URL`（默认 `http://localhost:3060`）；
+   Console 的 `/dashboard/*`、`/docs/*` 307 到 `NEXT_PUBLIC_PORTAL_URL`（默认 `http://localhost:3050`）。
 
 ## 客户端用法
 
