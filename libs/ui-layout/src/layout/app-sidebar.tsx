@@ -28,7 +28,6 @@ import {
   SidebarRail
 } from '@sap/ui-kit/sidebar';
 import { navItems } from '../config/nav-config'
-import { useLocalePrefix } from '../hooks/use-locale'
 import { useMediaQuery } from '../hooks/use-media-query'
 import { useFilteredNavItems } from '../hooks/use-nav';
 import {
@@ -48,7 +47,6 @@ import { AppSwitcher } from '../components/app-switcher';
 
 export default function AppSidebar() {
   const pathname = usePathname()
-  const prefix = useLocalePrefix()
   const { isOpen } = useMediaQuery()
   const router = useRouter()
   const filteredItems = useFilteredNavItems(navItems)
@@ -80,7 +78,7 @@ export default function AppSidebar() {
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
                         tooltip={item.title}
-                        isActive={pathname === prefix(item.url)}
+                        isActive={pathname === item.url}
                       >
                         {item.icon && <Icon />}
                         <span>{item.title}</span>
@@ -93,9 +91,9 @@ export default function AppSidebar() {
                           <SidebarMenuSubItem key={subItem.title}>
                             <SidebarMenuSubButton
                               asChild
-                              isActive={pathname === prefix(subItem.url)}
+                              isActive={pathname === subItem.url}
                             >
-                              <Link href={prefix(subItem.url)}>
+                              <Link href={subItem.url}>
                                 <span>{subItem.title}</span>
                               </Link>
                             </SidebarMenuSubButton>
@@ -110,9 +108,9 @@ export default function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     tooltip={item.title}
-                    isActive={pathname === prefix(item.url)}
+                    isActive={pathname === item.url}
                   >
-                    <Link href={prefix(item.url)}>
+                    <Link href={item.url}>
                       <Icon />
                       <span>{item.title}</span>
                     </Link>
@@ -143,13 +141,13 @@ export default function AppSidebar() {
               >
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => router.push(prefix('/dashboard/profile'))}
+                    onClick={() => router.push('/profile')}
                   >
                     <IconUserCircle className='mr-2 h-4 w-4' />
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => router.push(prefix('/dashboard/billing'))}
+                    onClick={() => router.push('/dashboard/billing')}
                   >
                     <IconCreditCard className='mr-2 h-4 w-4' />
                     Billing

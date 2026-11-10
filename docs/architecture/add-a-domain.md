@@ -75,7 +75,7 @@ libs/ui-shipping/
 2. 页面组件放 `libs/ui-<name>/src/pages/`；Next 路由目录只留一行兼容壳：
 
    ```tsx
-   // apps/web-portal/src/app/[locale]/dashboard/<name>/page.tsx
+   // apps/web-portal/src/app/dashboard/<name>/page.tsx
    export { default } from '@sap/ui-shipping/pages/shipping/ships'
    ```
 

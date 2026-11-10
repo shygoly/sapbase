@@ -1,78 +1,22 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
-import { defaultLocale, type Locale, isValidLocale } from '../config'
+import { useI18n } from '../../components/i18n/i18n-provider'
+import type { Locale } from '../config'
 
 /**
- * Hook to get and set the current locale.
- * 
- * Usage:
- * ```tsx
- * const { locale, setLocale } = useLocale()
- * ```
+ * 当前 locale 来自 I18nProvider（服务端按请求解析后传入）。
  */
 export function useLocale(): Locale {
-  const [locale, setLocaleState] = useState<Locale>(defaultLocale)
-  const pathname = usePathname()
-
-  useEffect(() => {
-    // Get locale from URL path (e.g., /zh/dashboard)
-    const pathSegments = (pathname ?? '').split('/').filter(Boolean)
-    const pathLocale = pathSegments[0]
-
-    if (isValidLocale(pathLocale)) {
-      setLocaleState(pathLocale)
-      // Also save to localStorage
-      localStorage.setItem('locale', pathLocale)
-    } else {
-      // Try to get from localStorage
-      const savedLocale = localStorage.getItem('locale')
-      if (savedLocale && isValidLocale(savedLocale)) {
-        setLocaleState(savedLocale)
-      } else {
-        // Detect from browser
-        const browserLocale = navigator.language.split('-')[0]
-        if (isValidLocale(browserLocale)) {
-          setLocaleState(browserLocale)
-        }
-      }
-    }
-  }, [pathname])
-
-  return locale
+  return useI18n().locale
 }
 
 /**
- * Hook to change locale.
+ * 切换语言。
+ *
+ * 行为由 Provider 统一处理：
+ *  - 路径仍带 `/{locale}` 时替换 URL 段（Console 迁移窗口期）；
+ *  - 路径已去前缀时写 `NEXT_LOCALE` cookie 并刷新（Portal）。
  */
-export function useSetLocale() {
-  const router = useRouter()
-  const pathname = usePathname()
-  useLocale()
-
-  const setLocale = useCallback(
-    (newLocale: Locale) => {
-      localStorage.setItem('locale', newLocale)
-
-      // Update URL path
-      const pathSegments = (pathname ?? '').split('/').filter(Boolean)
-      const firstSegment = pathSegments[0]
-
-      if (isValidLocale(firstSegment)) {
-        // Replace locale in path
-        pathSegments[0] = newLocale
-        router.push(`/${pathSegments.join('/')}`)
-      } else {
-        // Add locale to path
-        router.push(`/${newLocale}${pathname}`)
-      }
-
-      // Reload to apply new locale
-      router.refresh()
-    },
-    [pathname, router],
-  )
-
-  return setLocale
+export function useSetLocale(): (locale: Locale) => void {
+  return useI18n().setLocale
 }

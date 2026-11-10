@@ -4,6 +4,7 @@ import { SwaggerModule } from '@nestjs/swagger'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { join } from 'path'
 import { AppModule } from './app.module'
+import { corsOrigins } from './common/cors'
 import { AllExceptionsFilter } from './common/filters/http-exception.filter'
 import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { createSwaggerConfig, swaggerDocumentOptions } from './common/swagger/swagger.config'
@@ -37,7 +38,7 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3050',
+    origin: corsOrigins,
     credentials: true,
   })
 

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { EventBusModule } from '../common/events/event-bus.module'
 import { OrganizationMember } from '../organizations/organization-member.entity'
+import { OrganizationMemberRole } from '../identity/organization-member-role.entity'
 import { BlueprintApproval } from '../semantic-runtime/blueprint-approval.entity'
 import { User } from '../users/user.entity'
 import { NotificationService } from '../websocket/services/notification.service'
@@ -29,6 +30,7 @@ import { AnnouncementsController } from './announcements.controller'
       AnnouncementDelivery,
       User,
       OrganizationMember,
+      OrganizationMemberRole,
       BlueprintApproval,
     ]),
   ],

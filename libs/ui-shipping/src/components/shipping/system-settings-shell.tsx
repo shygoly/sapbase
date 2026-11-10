@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 
 import { Badge } from '@sap/ui-kit/badge'
 import { Button } from '@sap/ui-kit/button'
@@ -21,21 +20,12 @@ interface SystemSettingsShellProps {
   highlights: string[]
 }
 
-function getLocalePrefix(pathname: string): string {
-  const parts = pathname.split('/').filter(Boolean)
-  const locale = parts[0]
-  if (!locale || locale.length > 5) return ''
-  return `/${locale}`
-}
-
 export function SystemSettingsShell({
   title,
   description,
   sourceTable,
   highlights,
 }: SystemSettingsShellProps) {
-  const pathname = usePathname()
-  const localePrefix = getLocalePrefix(pathname ?? '')
 
   return (
     <div className='space-y-6 p-1'>
@@ -48,7 +38,7 @@ export function SystemSettingsShell({
           </div>
         </div>
         <Button asChild variant='outline'>
-          <Link href={`${localePrefix}/dashboard/shipping/reports/home-overview`}>Back to Overview</Link>
+          <Link href={`/dashboard/shipping/reports/home-overview`}>Back to Overview</Link>
         </Button>
       </div>
 

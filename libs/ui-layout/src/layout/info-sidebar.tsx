@@ -3,7 +3,6 @@
 import * as React from 'react'
 import { IconChevronRight } from '@tabler/icons-react'
 import Link from 'next/link'
-import { useLocalePrefix } from '../hooks/use-locale'
 import {
   Infobar,
   InfobarContent,
@@ -37,7 +36,6 @@ export function InfoSidebar({
 }: React.ComponentProps<typeof Infobar>) {
   const { content } = useInfobar()
   const data = content || defaultData
-  const prefix = useLocalePrefix()
 
   return (
     <Infobar {...props}>
@@ -77,7 +75,7 @@ export function InfoSidebar({
                           {section.links.map((link, linkIndex) => (
                             <li key={linkIndex}>
                               <Link
-                                href={link.url.startsWith('http') || link.url.startsWith('#') ? link.url : prefix(link.url)}
+                                href={link.url}
                                 className='text-primary flex items-center gap-1.5 text-sm underline'
                                 target={link.url.startsWith('http') ? '_blank' : undefined}
                               >

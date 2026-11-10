@@ -8,10 +8,10 @@
 | 指标 | 数量 |
 | --- | --- |
 | 进行中 | 33 |
-| 已完成未归档 | 25 |
+| 已完成未归档 | 26 |
 | 无任务/骨架 | 2 |
 | 已归档 | 14 |
-| 活跃任务 | 1343/2415 |
+| 活跃任务 | 1392/2455 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -37,7 +37,7 @@
 | [add-search-and-retrieval](../openspec/changes/add-search-and-retrieval/) | 搜索与检索 | 0/36 | 8 req / 1 文件 | [P](../openspec/changes/add-search-and-retrieval/proposal.md) [D](../openspec/changes/add-search-and-retrieval/design.md) [T](../openspec/changes/add-search-and-retrieval/tasks.md) [S](../openspec/changes/add-search-and-retrieval/specs) | 2026-11-09 |
 | [enhance-piagent-help-and-action-shell](../openspec/changes/enhance-piagent-help-and-action-shell/) | PiAgent 悬浮入口 — 用法答疑 + 代操确认 | 0/14 | 3 req / 1 文件 | [P](../openspec/changes/enhance-piagent-help-and-action-shell/proposal.md) [D](../openspec/changes/enhance-piagent-help-and-action-shell/design.md) [T](../openspec/changes/enhance-piagent-help-and-action-shell/tasks.md) [S](../openspec/changes/enhance-piagent-help-and-action-shell/specs) | 2026-11-09 |
 | [enhance-ui-runtime-scenario-capabilities](../openspec/changes/enhance-ui-runtime-scenario-capabilities/) | 增强 UI Runtime 场景能力（吸收前端规范精华） | 12/33 | 19 req / 1 文件 | [P](../openspec/changes/enhance-ui-runtime-scenario-capabilities/proposal.md) [D](../openspec/changes/enhance-ui-runtime-scenario-capabilities/design.md) [T](../openspec/changes/enhance-ui-runtime-scenario-capabilities/tasks.md) [S](../openspec/changes/enhance-ui-runtime-scenario-capabilities/specs) | 2026-11-09 |
-| [redesign-auth-login-surfaces](../openspec/changes/redesign-auth-login-surfaces/) | 重做 Portal / Console 登录页观感 | 0/10 | 3 req / 1 文件 | [P](../openspec/changes/redesign-auth-login-surfaces/proposal.md) [D](../openspec/changes/redesign-auth-login-surfaces/design.md) [T](../openspec/changes/redesign-auth-login-surfaces/tasks.md) [S](../openspec/changes/redesign-auth-login-surfaces/specs) | 2026-11-09 |
+| [redesign-auth-login-surfaces](../openspec/changes/redesign-auth-login-surfaces/) | 重做 Portal / Console 登录页观感 | 9/10 | 3 req / 1 文件 | [P](../openspec/changes/redesign-auth-login-surfaces/proposal.md) [D](../openspec/changes/redesign-auth-login-surfaces/design.md) [T](../openspec/changes/redesign-auth-login-surfaces/tasks.md) [S](../openspec/changes/redesign-auth-login-surfaces/specs) | 2026-11-09 |
 | [add-agent-host-and-instance-evolution](../openspec/changes/add-agent-host-and-instance-evolution/) | 增加 Agent Host 层与实例级自迭代闭环 | 5/23 | 12 req / 2 文件 | [P](../openspec/changes/add-agent-host-and-instance-evolution/proposal.md) [D](../openspec/changes/add-agent-host-and-instance-evolution/design.md) [T](../openspec/changes/add-agent-host-and-instance-evolution/tasks.md) [S](../openspec/changes/add-agent-host-and-instance-evolution/specs) | 2026-11-03 |
 | [refactor-ai-native-business-app-platform](../openspec/changes/refactor-ai-native-business-app-platform/) | Refactor sapbase into an AI-native business app platform | 14/61 | 17 req / 3 文件 | [P](../openspec/changes/refactor-ai-native-business-app-platform/proposal.md) [D](../openspec/changes/refactor-ai-native-business-app-platform/design.md) [T](../openspec/changes/refactor-ai-native-business-app-platform/tasks.md) [S](../openspec/changes/refactor-ai-native-business-app-platform/specs) | 2026-11-03 |
 | [restore-green-backend-tests](../openspec/changes/restore-green-backend-tests/) | Restore Green Backend Tests | 2/3 | 3 req / 1 文件 | [P](../openspec/changes/restore-green-backend-tests/proposal.md) [T](../openspec/changes/restore-green-backend-tests/tasks.md) [S](../openspec/changes/restore-green-backend-tests/specs) | 2026-09-25 |
@@ -57,6 +57,7 @@
 
 | Change | 标题 | 任务 | 规格 | 入口 | 最近更新 |
 | --- | --- | --- | --- | --- | --- |
+| [remove-locale-prefix-from-app-routes](../openspec/changes/remove-locale-prefix-from-app-routes/) | 移除应用路由的 locale 前缀 | 40/40 | 5 req / 1 文件 | [P](../openspec/changes/remove-locale-prefix-from-app-routes/proposal.md) [D](../openspec/changes/remove-locale-prefix-from-app-routes/design.md) [T](../openspec/changes/remove-locale-prefix-from-app-routes/tasks.md) [S](../openspec/changes/remove-locale-prefix-from-app-routes/specs) | 2026-11-10 |
 | [add-generic-data-scope-authorization](../openspec/changes/add-generic-data-scope-authorization/) | 通用数据范围授权（组织树 + 关系） | 63/63 | 17 req / 4 文件 | [P](../openspec/changes/add-generic-data-scope-authorization/proposal.md) [D](../openspec/changes/add-generic-data-scope-authorization/design.md) [T](../openspec/changes/add-generic-data-scope-authorization/tasks.md) [S](../openspec/changes/add-generic-data-scope-authorization/specs) | 2026-11-09 |
 | [add-ai-blueprint-signing-and-load](../openspec/changes/add-ai-blueprint-signing-and-load/) | AI Blueprint 签名、授权与装载验证 | 13/13 | 2 req / 1 文件 | [P](../openspec/changes/add-ai-blueprint-signing-and-load/proposal.md) [D](../openspec/changes/add-ai-blueprint-signing-and-load/design.md) [T](../openspec/changes/add-ai-blueprint-signing-and-load/tasks.md) [S](../openspec/changes/add-ai-blueprint-signing-and-load/specs) | 2026-11-05 |
 | [add-blueprint-ui-and-permissions-layers](../openspec/changes/add-blueprint-ui-and-permissions-layers/) | Blueprint 增加 UI 与权限发布层 | 18/18 | 5 req / 3 文件 | [P](../openspec/changes/add-blueprint-ui-and-permissions-layers/proposal.md) [D](../openspec/changes/add-blueprint-ui-and-permissions-layers/design.md) [T](../openspec/changes/add-blueprint-ui-and-permissions-layers/tasks.md) [S](../openspec/changes/add-blueprint-ui-and-permissions-layers/specs) | 2026-11-05 |

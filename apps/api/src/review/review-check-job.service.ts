@@ -5,7 +5,7 @@ import type { JobContext } from '@sap/platform-core/jobs/job-types'
 import { JobTypeRegistry } from '@sap/platform-core/jobs/job-types'
 import { BlueprintApproval } from '../semantic-runtime/blueprint-approval.entity'
 import { ReviewEvent } from './review-event.entity'
-import type { ReviewCheckResult, ReviewCheckService } from './review-check'
+import { ReviewCheckService, type ReviewCheckResult } from './review-check'
 import {
   createReviewCheckJobDefinition,
   type ReviewCheckJobPayload,

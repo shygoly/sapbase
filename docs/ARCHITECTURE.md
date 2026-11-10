@@ -339,6 +339,9 @@ sap:prod:org_123:sse:turn:<turnId>
 - 发布激活后：`revalidateTag('release:<appKey>')`，避免用户长时间看到旧菜单/旧表单。
 - 错误边界：区分“网络错误”“权限错误”“版本已切换”“字段已变更”，后者提示刷新。
 - 不在客户端存权限真相；按钮可见性只是体验，服务端仍判权限。
+- i18n：locale 不进 URL。请求时按 `?lang` → `NEXT_LOCALE` cookie → `Accept-Language` →
+  `defaultLocale` 解析，根 layout 写入 `<html lang>`；语言切换只写 cookie + `router.refresh()`，不导航。
+  旧 `/{locale}/...` 由 middleware 307 到无前缀路径，保留一个发布周期。
 
 ---
 

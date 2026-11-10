@@ -34,6 +34,7 @@
     "./hooks/use-nav": "./src/hooks/use-nav.ts",
     "./hooks/use-unified-menu": "./src/hooks/use-unified-menu.ts",
     "./i18n/config": "./src/i18n/config.ts",
+    "./i18n/locale-routing": "./src/i18n/locale-routing.ts",
     "./layout/app-layout-wrapper": "./src/layout/app-layout-wrapper.tsx",
     "./layout/app-sidebar": "./src/layout/app-sidebar.tsx",
     "./layout/cta-github": "./src/layout/cta-github.tsx",

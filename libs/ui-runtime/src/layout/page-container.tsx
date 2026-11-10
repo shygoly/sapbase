@@ -54,7 +54,7 @@ export default function PageContainer({
   const content = isloading ? <PageSkeleton /> : children;
 
   return (
-    <div className='flex flex-1 flex-col overflow-auto p-4 md:px-6'>
+    <div className='flex flex-1 flex-col overflow-auto p-6 md:px-8'>
       <div className='mb-4 flex items-start justify-between'>
         <Heading
           title={pageTitle ?? ''}

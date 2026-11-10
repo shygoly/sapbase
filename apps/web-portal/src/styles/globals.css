@@ -4,6 +4,7 @@
 @source "../../../../libs/ui-kit/src";
 @source "../../../../libs/ui-theme/src";
 
+@source "../../../../libs/app-shared/src";
 @source "../../../../libs/ui-runtime/src";
 @source "../../../../libs/ui-layout/src";
 @import 'tw-animate-css';

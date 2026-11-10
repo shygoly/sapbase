@@ -4,6 +4,9 @@ import { OidcSsoAdapter } from './oidc-sso.adapter'
 import { SamlSsoAdapter } from './saml-sso.adapter'
 import { SsoError, type SsoAdapter } from './sso-adapter'
 
+/** DI token：允许测试或宿主替换 SSO adapter 工厂。 */
+export const SSO_ADAPTER_FACTORY = Symbol('SSO_ADAPTER_FACTORY')
+
 export function createSsoAdapter(provider: IdentityProvider): SsoAdapter {
   const config = (provider.config ?? {}) as Record<string, unknown>
   switch (provider.type) {

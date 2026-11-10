@@ -14,7 +14,6 @@ import { useRequireAuth } from '../core/auth/auth-hooks';
 import { usePermissionStore } from '../core/store';
 import { AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation'
-import { useLocalePrefix } from '../hooks/use-locale'
 
 interface LayoutRuntimeAdapterProps {
   children: React.ReactNode;
@@ -57,7 +56,6 @@ export function LayoutRuntimeAdapter({
   const { isAuthenticated, isLoading } = useRequireAuth()
   const { hasAllPermissions, hasAnyPermission } = usePermissionStore()
   const router = useRouter()
-  const prefix = useLocalePrefix()
 
   // Check permissions if required
   const hasAccess = React.useMemo(() => {
@@ -106,7 +104,7 @@ export function LayoutRuntimeAdapter({
             You do not have permission to access this area.
           </p>
           <button
-            onClick={() => router.push(prefix('/dashboard/overview'))}
+            onClick={() => router.push('/')}
             className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Go to Dashboard

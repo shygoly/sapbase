@@ -17,9 +17,27 @@ import {
   SidebarTrigger,
 } from '@sap/ui-kit/sidebar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@sap/ui-kit/collapsible'
-import { ChevronRight, LogOut, User } from 'lucide-react'
+import {
+  BarChart3,
+  Building2,
+  ChevronRight,
+  Circle,
+  ClipboardList,
+  DollarSign,
+  History,
+  LayoutDashboard,
+  LineChart,
+  Lock,
+  LogOut,
+  Settings,
+  Shield,
+  ShoppingCart,
+  User,
+  UserRound,
+  Users,
+  Workflow,
+} from 'lucide-react'
 import { UnifiedMenuItem } from '../types/navigation'
-import { useLocalePrefix } from '../hooks/use-locale'
 import { useUnifiedMenu } from '../hooks/use-unified-menu'
 import { useAuth } from '../core/auth/auth-hooks'
 import { useLogout } from '../core/auth/auth-hooks'
@@ -35,39 +53,41 @@ function MenuItemIcon({ icon }: { icon?: string }) {
   if (!icon) return null
 
   const iconMap: Record<string, React.ReactNode> = {
-    dashboard: '📊',
-    users: '👥',
-    menu: '📋',
-    building: '🏢',
-    shield: '🛡️',
-    history: '📜',
-    settings: '⚙️',
-    chart: '📈',
-    analytics: '📉',
-    user: '👤',
-    lock: '🔒',
-    shopping: '🛒',
-    dollar: '💰',
-    workflow: '🔄',
+    dashboard: <LayoutDashboard className='h-4 w-4' />,
+    users: <Users className='h-4 w-4' />,
+    menu: <ClipboardList className='h-4 w-4' />,
+    building: <Building2 className='h-4 w-4' />,
+    shield: <Shield className='h-4 w-4' />,
+    history: <History className='h-4 w-4' />,
+    settings: <Settings className='h-4 w-4' />,
+    chart: <BarChart3 className='h-4 w-4' />,
+    analytics: <LineChart className='h-4 w-4' />,
+    user: <UserRound className='h-4 w-4' />,
+    lock: <Lock className='h-4 w-4' />,
+    shopping: <ShoppingCart className='h-4 w-4' />,
+    dollar: <DollarSign className='h-4 w-4' />,
+    workflow: <Workflow className='h-4 w-4' />,
   }
 
-  return <span className="mr-2">{iconMap[icon] || '•'}</span>
+  return (
+    <span className='mr-2 flex h-4 w-4 shrink-0 items-center justify-center'>
+      {iconMap[icon] || <Circle className='h-3 w-3' />}
+    </span>
+  )
 }
 
 function MenuItemComponent({
   item,
   pathname,
-  prefix,
   level = 0,
 }: {
   item: UnifiedMenuItem
   pathname: string
-  prefix: (path: string) => string
   level?: number
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const hasChildren = item.children && item.children.length > 0
-  const href = item.path ? prefix(item.path) : ''
+  const href = item.path ?? ''
   const isActive = !!href && pathname === href
 
   // For nested items (level > 0), use SidebarMenuSubItem instead of SidebarMenuItem
@@ -95,7 +115,6 @@ function MenuItemComponent({
                   key={child.id}
                   item={child}
                   pathname={pathname ?? ''}
-                  prefix={prefix}
                   level={level + 1}
                 />
               ))}
@@ -132,7 +151,6 @@ export function UnifiedSidebar({
   onLogout,
 }: UnifiedSidebarProps) {
   const pathname = usePathname()
-  const prefix = useLocalePrefix()
   const state = useUnifiedMenu({ source, staticItems })
   const { user } = useAuth()
   const { logout } = useLogout()
@@ -153,8 +171,11 @@ export function UnifiedSidebar({
   return (
     <Sidebar>
       <SidebarHeader className="border-b">
-        <div className="flex items-center justify-between px-2 py-4">
-          <h1 className="text-lg font-bold">Speckit</h1>
+        <div className="flex items-center justify-between px-2 py-3">
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="h-4 w-4 rounded-[2px] bg-[var(--seal)]" />
+            <span className="font-serif text-[17px] leading-none tracking-[-0.02em]">sapbase</span>
+          </div>
           <SidebarTrigger />
         </div>
       </SidebarHeader>
@@ -175,7 +196,6 @@ export function UnifiedSidebar({
                 key={item.id}
                 item={item}
                 pathname={pathname ?? ''}
-                prefix={prefix}
               />
             ))}
           </SidebarMenu>
@@ -197,7 +217,7 @@ export function UnifiedSidebar({
               className="w-full justify-start"
               asChild
             >
-              <Link href={prefix('/dashboard/profile')}>
+              <Link href={'/profile'}>
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </Link>

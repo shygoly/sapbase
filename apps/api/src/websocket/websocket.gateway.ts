@@ -13,6 +13,7 @@ import { Logger, UseGuards } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { NotificationService } from './services/notification.service'
 import { CollaborationService } from './services/collaboration.service'
+import { corsOrigins } from '../common/cors'
 
 interface AuthenticatedSocket extends Socket {
   userId?: string
@@ -26,7 +27,7 @@ interface AuthenticatedSocket extends Socket {
  */
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3050',
+    origin: corsOrigins,
     credentials: true,
   },
   namespace: '/',

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { randomBytes } from 'node:crypto'
@@ -6,7 +6,7 @@ import { UsersService } from '../users/users.service'
 import { RolesService } from '../roles/roles.service'
 import { IdentityLink } from './identity-link.entity'
 import { IdentityProvider } from './identity-provider.entity'
-import { createSsoAdapter } from './sso/adapter-factory'
+import { createSsoAdapter, SSO_ADAPTER_FACTORY } from './sso/adapter-factory'
 import { SsoError, type SsoAdapter, type SsoCallbackInput } from './sso/sso-adapter'
 
 export interface SsoLoginResult {
@@ -32,6 +32,7 @@ export class IdentitySsoService {
     private readonly links: Repository<IdentityLink>,
     private readonly users: UsersService,
     private readonly roles: RolesService,
+    @Inject(SSO_ADAPTER_FACTORY)
     private readonly adapterFactory: (provider: IdentityProvider) => SsoAdapter = createSsoAdapter,
   ) {}
 

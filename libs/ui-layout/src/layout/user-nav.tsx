@@ -10,12 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@sap/ui-kit/dropdown-menu'
-import { useLocalePrefix } from '../hooks/use-locale'
 import { useRouter } from 'next/navigation'
 
 export function UserNav() {
   const router = useRouter()
-  const prefix = useLocalePrefix()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -38,7 +36,7 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => router.push(prefix('/dashboard/profile'))}>
+          <DropdownMenuItem onClick={() => router.push('/profile')}>
             Profile
           </DropdownMenuItem>
           <DropdownMenuItem>Billing</DropdownMenuItem>

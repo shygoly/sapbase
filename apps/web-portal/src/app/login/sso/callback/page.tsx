@@ -82,11 +82,13 @@ function SsoCallback() {
   }, [router, searchParams, setCurrentOrganization, setOrganizations, setPermissions, setUser])
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4'>
-      <div className='w-full max-w-md rounded-lg bg-white p-8 text-center shadow-xl'>
-        <Loader2 className='mx-auto mb-4 h-8 w-8 animate-spin text-blue-600' />
-        <p className='text-sm text-gray-700'>{message}</p>
-        <a className='mt-6 inline-block text-sm text-blue-600 hover:underline' href='/login'>
+    <div
+      className='flex min-h-svh items-center justify-center bg-background px-6 text-foreground'
+    >
+      <div className='w-full max-w-[360px] text-center'>
+        <Loader2 className='mx-auto mb-4 h-5 w-5 animate-spin text-muted-foreground' />
+        <p className='text-[13px] text-muted-foreground'>{message}</p>
+        <a className='mt-6 inline-block text-[13px] text-[var(--seal)] hover:underline' href='/login'>
           返回登录页
         </a>
       </div>

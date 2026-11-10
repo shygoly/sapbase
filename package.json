@@ -32,6 +32,8 @@
     "lint:boundaries": "nx graph --file=.nx/boundary-graph.json >/dev/null && eslint \"apps/api/src/**/*.ts\" \"libs/**/*.ts\" \"apps/*/src/**/*.ts\" \"apps/*/src/**/*.tsx\" --no-error-on-unmatched-pattern",
     "check:boundaries": "node scripts/meta/check-boundaries.mjs",
     "test:meta": "node --test scripts/meta/lib/*.test.mjs",
+    "test:locale-routing": "node tests/locale-routing.test.js",
+    "test:locale-routing:e2e": "node tests/locale-routing.e2e.js",
     "check:links": "node scripts/meta/check-doc-links.mjs",
     "meta:openspec-ledger": "node scripts/meta/openspec-ledger.mjs",
     "check:openspec-ledger": "node scripts/meta/openspec-ledger.mjs --check",

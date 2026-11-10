@@ -216,6 +216,7 @@
     "./core/ui/ui-hooks": "./src/core/ui/ui-hooks.ts",
     "./features/auth/components/github-auth-button": "./src/features/auth/components/github-auth-button.tsx",
     "./features/auth/components/interactive-grid": "./src/features/auth/components/interactive-grid.tsx",
+    "./features/auth/components/login-surface": "./src/features/auth/components/login-surface.tsx",
     "./features/auth/components/sign-in-view": "./src/features/auth/components/sign-in-view.tsx",
     "./features/auth/components/sign-up-view": "./src/features/auth/components/sign-up-view.tsx",
     "./features/auth/components/user-auth-form": "./src/features/auth/components/user-auth-form.tsx",

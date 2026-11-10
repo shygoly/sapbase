@@ -16,6 +16,7 @@ import { IdentitySourceAdapterRegistry } from './identity-source'
 import { IdentitySyncService } from './identity-sync.service'
 import { IdentitySyncController } from './identity-sync.controller'
 import { DelegatedIdentityService } from './delegated-identity.service'
+import { createSsoAdapter, SSO_ADAPTER_FACTORY } from './sso/adapter-factory'
 import { OrganizationsModule } from '../organizations/organizations.module'
 import { EffectivePermissionsService } from '../roles/effective-permissions.service'
 import { IdentityLink } from './identity-link.entity'
@@ -52,6 +53,7 @@ import { OrganizationMemberRolesService } from './organization-member-roles.serv
     IdentitySyncService,
     DelegatedIdentityService,
     EffectivePermissionsService,
+    { provide: SSO_ADAPTER_FACTORY, useValue: createSsoAdapter },
   ],
   exports: [
     OrganizationMemberRolesService,

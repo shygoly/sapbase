@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar';
+import { Avatar, AvatarFallback } from '../../../components/ui/avatar';
 import {
   Card,
   CardHeader,
@@ -53,12 +53,13 @@ export function RecentSales() {
         <CardDescription>You made 265 sales this month.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className='space-y-8'>
+        <div className='space-y-5'>
           {salesData.map((sale, index) => (
             <div key={index} className='flex items-center'>
-              <Avatar className='h-9 w-9'>
-                <AvatarImage src={sale.avatar} alt='Avatar' />
-                <AvatarFallback>{sale.fallback}</AvatarFallback>
+              <Avatar className='h-8 w-8'>
+                <AvatarFallback className='bg-secondary text-[11px] font-medium'>
+                  {sale.fallback}
+                </AvatarFallback>
               </Avatar>
               <div className='ml-4 space-y-1'>
                 <p className='text-sm leading-none font-medium'>{sale.name}</p>

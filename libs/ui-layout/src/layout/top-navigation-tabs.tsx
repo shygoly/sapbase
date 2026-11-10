@@ -6,14 +6,12 @@ import { useEffect } from 'react'
 
 import { Button } from '@sap/ui-kit/button'
 import { ScrollArea, ScrollBar } from '@sap/ui-kit/scroll-area'
-import { useLocalePrefix } from '../hooks/use-locale'
 import { useNavigationTabsStore } from '@sap/shared-state/core/store/navigation-tabs.store'
 import { getRouteLabel, stripLocaleFromPath } from '../lib/navigation/route-display'
 
 export function TopNavigationTabs() {
   const pathname = usePathname() ?? ''
   const router = useRouter()
-  const prefix = useLocalePrefix()
   const {
     tabs,
     activePath,
@@ -61,7 +59,7 @@ export function TopNavigationTabs() {
                   className='max-w-[180px] truncate'
                   onClick={() => {
                     activateTab(tab.path)
-                    router.push(prefix(tab.path))
+                    router.push(tab.path)
                   }}
                   type='button'
                 >
@@ -74,7 +72,7 @@ export function TopNavigationTabs() {
                     className='rounded-full p-0.5 opacity-60 transition hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10'
                     onClick={() => {
                       const nextPath = closeTab(tab.path)
-                      if (nextPath) router.push(prefix(nextPath))
+                      if (nextPath) router.push(nextPath)
                     }}
                   >
                     <X className='h-3.5 w-3.5' />
