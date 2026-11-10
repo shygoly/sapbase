@@ -72,11 +72,11 @@
 
 ## 8. 管理端与 API
 
-- [ ] 8.1 Portal 消息中心：分类/未读/批量/偏好/角标
-- [ ] 8.2 Portal 公告管理：草稿/定时/发布/撤回/统计
+- [x] 8.1 Portal 消息中心：分类/未读/批量/偏好/角标
+- [x] 8.2 Portal 公告管理：草稿/发布/撤回/统计（定时发布仍待后端 cron）
 - [ ] 8.3 Console 通知模板/强制策略（可选）
-- [ ] 8.4 API 文档与 `api-client`
-- [ ] 8.5 权限点：`notifications:read` / `announcements:manage` / `announcements:publish`
+- [x] 8.4 API 文档与 `api-client`
+- [x] 8.5 权限点：`notifications:read` / `announcements:manage` / `announcements:publish`
 
 ## 9. 兼容与验收
 

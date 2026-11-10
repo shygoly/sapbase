@@ -58,6 +58,12 @@ export class TenantContextMiddleware implements NestMiddleware {
                         req.originalUrl.startsWith('/api/auth') ||
                         req.originalUrl.startsWith('/api/invitations')
 
+    // 公开路径（登录/SSO 回调等）不做成员校验，但若显式携带 organizationId，
+    // 仍要建立租户上下文，否则 RLS 会拒绝 provider/link 查询。
+    if (organizationId) {
+      ;(req as any).organizationId = organizationId
+    }
+
     // Skip organization context requirement for public paths
     if (isPublicPath || req.path === '/health' || req.originalUrl === '/api/health') {
       next()

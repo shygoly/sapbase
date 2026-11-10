@@ -28,7 +28,22 @@ export { systemApi } from './system.api'
 export { chatApi } from './chat.api'
 export { agentToolsApi } from './agent-tools.api'
 export { businessAppsApi } from './business-apps.api'
-export { notificationsApi, type NotificationItem } from './notifications.api'
+export {
+  notificationsApi,
+  type NotificationItem,
+  type NotificationPreference,
+  type NotificationCategory,
+  type NotificationPriority,
+} from './notifications.api'
+export {
+  announcementsApi,
+  type Announcement,
+  type AnnouncementStatus,
+  type AnnouncementAudienceInput,
+  type CreateAnnouncementInput,
+  type UpdateAnnouncementInput,
+  type AnnouncementStats,
+} from './announcements.api'
 export { dashboardApi, type DashboardSummary } from './dashboard.api'
 export { constantsApi } from './shipping/constants.api'
 export { apiClient, httpClient } from './client'

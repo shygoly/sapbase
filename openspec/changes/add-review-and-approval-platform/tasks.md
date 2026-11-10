@@ -29,9 +29,9 @@
 
 - [x] 4.1 `CheckProvider` 接口 + registry
 - [x] 4.2a `review.check` JobTypeDefinition（走 async-job 队列/重试/事件）
-- [ ] 4.2b 注册到 app JobsModule + 结果回写审批步骤
+- [x] 4.2b 注册到 app JobsModule + 结果回写审批步骤
 - [x] 4.3 pass/fail/warn 状态；warn 保留人工确认；provider 异常/超时 fail-closed
-- [ ] 4.4 检测证据（provider/version/input/output）写入步骤与审计
+- [x] 4.4 检测证据（provider/version/input/output）写入步骤与审计
 - [x] 4.5 单测：pass、fail、warn、超时、provider 异常
 
 ## 5. 人工动作与轮次

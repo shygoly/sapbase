@@ -24,4 +24,37 @@ describe('review.check job definition', () => {
     expect(ctx.stage).toHaveBeenCalledWith('checking', { provider: 'ok' })
     expect(ctx.progress).toHaveBeenCalledWith(100)
   })
+
+  it('有 writeback 时把结果回传', async () => {
+    const registry = new ReviewCheckRegistry()
+    registry.register({
+      name: 'ok',
+      check: async () => ({ status: 'warn' as const, evidence: { reason: 'manual' } }),
+    })
+    const writeback = { record: jest.fn(async () => undefined) }
+    const definition = createReviewCheckJobDefinition(
+      new ReviewCheckService(registry),
+      writeback,
+    )
+    const ctx = {
+      jobId: 'job-1',
+      organizationId: 'org-1',
+      stage: jest.fn(async () => undefined),
+      progress: jest.fn(async () => undefined),
+    } as unknown as JobContext
+
+    await definition.handler(ctx, {
+      provider: 'ok',
+      input: { a: 1 },
+      approvalId: 'approval-1',
+      round: 1,
+      stepIndex: 0,
+    })
+
+    expect(writeback.record).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({ approvalId: 'approval-1' }),
+      { status: 'warn', evidence: { reason: 'manual' } },
+    )
+  })
 })

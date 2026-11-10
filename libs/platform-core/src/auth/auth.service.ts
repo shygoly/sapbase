@@ -9,6 +9,7 @@ import { randomBytes, randomUUID } from 'node:crypto'
 import { EffectivePermissionsService } from '../roles/effective-permissions.service'
 import { OrganizationMemberRolesService } from '../identity/organization-member-roles.service'
 import { AuthSessionsService, hashRefreshToken } from '../identity/auth-sessions.service'
+import { AuthLoginEventsService } from '../identity/auth-login-events.service'
 
 export interface JwtPayload {
   sub: string
@@ -28,6 +29,7 @@ export class AuthService {
     private effectivePermissions: EffectivePermissionsService,
     @Optional() private memberRoles?: OrganizationMemberRolesService,
     @Optional() private sessions?: AuthSessionsService,
+    @Optional() private loginEvents?: AuthLoginEventsService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -99,6 +101,84 @@ export class AuthService {
       },
       organizations,
       currentOrganizationId: selectedOrgId,
+    }
+  }
+
+  /**
+   * SSO 回调完成登录：身份解析已由 IdentitySsoService 完成，这里只做
+   * 组织成员校验、有效权限解析、会话/JWT 签发和登录成功审计。
+   */
+  async loginWithIdentity(input: {
+    userId: string
+    organizationId: string
+    provider: string
+    ip?: string
+    userAgent?: string
+  }) {
+    const user = await this.usersService.findOne(input.userId)
+    if (!user) throw new UnauthorizedException('用户不存在')
+
+    // 服务端重新校验组织成员关系，不信任 SSO 回调传入的身份范围。
+    await this.organizationsService.findOne(input.organizationId, user.id)
+
+    const roleName = user.roleName || user.role || 'user'
+    const additionalRoles = await this.memberRoles?.activeRoleNames(
+      input.organizationId,
+      user.id,
+    )
+    const permissions = await this.effectivePermissions.resolve({
+      role: roleName,
+      additionalRoles,
+      directPermissions: user.permissions || [],
+      organizationId: input.organizationId,
+    })
+
+    const sid = randomUUID()
+    const refreshToken = randomBytes(32).toString('hex')
+    await this.sessions?.create({
+      organizationId: input.organizationId,
+      userId: user.id,
+      sid,
+      refreshTokenHash: hashRefreshToken(refreshToken),
+      ip: input.ip ?? null,
+      userAgent: input.userAgent ?? null,
+    })
+
+    await this.loginEvents?.record({
+      organizationId: input.organizationId,
+      userId: user.id,
+      email: user.email,
+      provider: input.provider,
+      status: 'success',
+      ip: input.ip ?? null,
+      userAgent: input.userAgent ?? null,
+    })
+
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: roleName,
+      permissions,
+      organizationId: input.organizationId,
+      sid,
+    }
+
+    const organizations = await this.organizationsService.findAll(user.id)
+    return {
+      access_token: this.jwtService.sign(payload),
+      sessionId: sid,
+      refreshToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: roleName,
+        roleName,
+        roleId: user.roleId,
+        permissions,
+      },
+      organizations,
+      currentOrganizationId: input.organizationId,
     }
   }
 

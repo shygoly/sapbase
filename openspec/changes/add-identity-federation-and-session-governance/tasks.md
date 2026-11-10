@@ -50,7 +50,7 @@
 - [x] 5.5 `identity_links` 映射 + JIT 建号 + 默认角色校验
 - [x] 5.6a SSO 授权/回调 HTTP e2e + adapter 失败/nonce 负例
 - [ ] 5.6b 真实 CAS/OIDC provider 端到端联调
-- [ ] 5.7 登录页 SSO 入口（复用 `redesign-auth-login-surfaces` 的布局，不重复 UI）
+- [x] 5.7 登录页 SSO 入口（CAS/OIDC，回调完成 JWT/会话签发；SAML 浏览器 POST 待联调；组织用 `?organizationId=` 或 `NEXT_PUBLIC_DEFAULT_ORGANIZATION_ID`）
 
 ## 6. 生命周期同步
 
@@ -68,7 +68,7 @@
 
 - [x] 7.1a `auth_login_events` service + 登录成功写入（ip/ua/provider）
 - [x] 7.1b 登录事件查询 API（`/identity/login-events`）
-- [ ] 7.1c 登录失败写入 + 连续失败锁定/新设备规则
+- [x] 7.1c 登录失败写入 + 连续失败锁定/新设备规则（新设备告警仍待 7.2b）
 - [x] 7.2a 连续失败锁定（窗口内失败计数，成功重置）
 - [ ] 7.2b 新设备/新 IP 通知与管理员告警
 - [ ] 7.3 告警接 `notification-center-and-announcements`

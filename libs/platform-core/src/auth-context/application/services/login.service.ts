@@ -64,13 +64,19 @@ export class LoginService {
   ) {}
 
   async execute(command: LoginCommand): Promise<LoginResult> {
-    // Validate credential format
-    CredentialValidator.validate(command.email, command.password)
+    const email = command.email?.toLowerCase().trim() ?? ''
+    try {
+      // Validate credential format
+      CredentialValidator.validate(command.email, command.password)
+    } catch (error) {
+      await this.recordFailure(command, email, 'invalid-format')
+      throw error
+    }
 
-    const email = command.email.toLowerCase().trim()
     if (command.organizationId) {
       const locked = await this.loginEvents?.isLocked(command.organizationId, email)
       if (locked) {
+        await this.recordFailure(command, email, 'locked')
         throw new AuthenticationError('账号暂时锁定，请稍后再试')
       }
     }
@@ -100,6 +106,7 @@ export class LoginService {
 
     // Verify user has access to selected organization if provided
     if (command.organizationId && selectedOrgId !== command.organizationId) {
+      await this.recordFailure(command, email, 'organization-access-denied')
       throw new AuthenticationError('User does not have access to the specified organization')
     }
 

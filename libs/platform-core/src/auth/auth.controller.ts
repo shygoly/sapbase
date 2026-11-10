@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, HttpException, HttpStatus, BadRequestException, Logger } from '@nestjs/common'
+import { Controller, Post, Body, UseGuards, Request, HttpException, HttpStatus, BadRequestException, Logger, Param } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { JwtAuthGuard } from './jwt-auth.guard'
 import { OrganizationsService } from '../organizations/organizations.service'
@@ -6,6 +6,8 @@ import { LoginService } from '../auth-context/application/services/login.service
 import { SwitchOrganizationService } from '../auth-context/application/services/switch-organization.service'
 import { GetProfileService } from '../auth-context/application/services/get-profile.service'
 import { AuthenticationError } from '../auth-context/domain/errors'
+import { IdentitySsoService } from '../identity/identity-sso.service'
+import { SsoError } from '../identity/sso/sso-adapter'
 
 @Controller('auth')
 export class AuthController {
@@ -17,6 +19,7 @@ export class AuthController {
     private readonly loginService: LoginService,
     private readonly switchOrganizationService: SwitchOrganizationService,
     private readonly getProfileService: GetProfileService,
+    private readonly identitySsoService: IdentitySsoService,
   ) {}
 
   @Post('login')
@@ -37,6 +40,53 @@ export class AuthController {
         throw new HttpException(err.message, HttpStatus.UNAUTHORIZED)
       }
       this.logger.error('Login failed', err instanceof Error ? err.stack : String(err))
+      throw err
+    }
+  }
+
+  @Post('sso/:providerKey/callback')
+  async ssoCallback(
+    @Param('providerKey') providerKey: string,
+    @Body()
+    body: {
+      organizationId: string
+      ticket?: string
+      samlResponse?: string
+      code?: string
+      codeVerifier?: string
+      state?: string
+      nonce?: string
+    },
+    @Request() req: any,
+  ) {
+    if (!body?.organizationId) {
+      throw new BadRequestException('organizationId 必填')
+    }
+    try {
+      const identity = await this.identitySsoService.authenticate(
+        body.organizationId,
+        providerKey,
+        {
+          ticket: body.ticket,
+          samlResponse: body.samlResponse,
+          code: body.code,
+          codeVerifier: body.codeVerifier,
+          state: body.state,
+          nonce: body.nonce,
+        },
+      )
+      return await this.authService.loginWithIdentity({
+        userId: identity.user.id,
+        organizationId: body.organizationId,
+        provider: `sso:${providerKey}`,
+        ip: req?.ip,
+        userAgent: req?.headers?.['user-agent'],
+      })
+    } catch (err) {
+      if (err instanceof SsoError) {
+        throw new HttpException(err.message, HttpStatus.UNAUTHORIZED)
+      }
+      this.logger.error('SSO login failed', err instanceof Error ? err.stack : String(err))
       throw err
     }
   }

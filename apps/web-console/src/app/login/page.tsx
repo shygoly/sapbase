@@ -13,8 +13,12 @@ import { Button } from '@sap/app-shared/components/ui/button'
 import { Input } from '@sap/app-shared/components/ui/input'
 import { Label } from '@sap/app-shared/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@sap/app-shared/components/ui/select'
-import { Loader2, LogIn, Building2 } from 'lucide-react'
-import { authApi, type LoginResponseWithOrgs } from '@sap/app-shared/lib/api/auth.api'
+import { Loader2, LogIn, Building2, ShieldCheck } from 'lucide-react'
+import {
+  authApi,
+  type LoginResponseWithOrgs,
+  type SsoProvider,
+} from '@sap/app-shared/lib/api/auth.api'
 import { Organization } from '@sap/app-shared/lib/api/organizations.api'
 import { usePermissionStore } from '@sap/app-shared/core/store/permission.store'
 
@@ -31,6 +35,22 @@ const TEST_USERS: TestUser[] = [
   { email: 'manager@example.com', password: '123456', name: 'Manager User', role: 'Manager' },
   { email: 'accountant@example.com', password: '123456', name: 'Accountant User', role: 'Accountant' },
 ]
+
+const SSO_PENDING_KEY = 'sso:pending'
+
+function randomToken(bytes = 32): string {
+  const buffer = new Uint8Array(bytes)
+  crypto.getRandomValues(buffer)
+  return Array.from(buffer, (value) => value.toString(16).padStart(2, '0')).join('')
+}
+
+async function pkceChallenge(verifier: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+}
 
 /**
  * Suspense 边界：Next 15 要求任何在预渲染期调用 `useSearchParams()` 的组件
@@ -60,6 +80,8 @@ function LoginForm() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [selectedOrgId, setSelectedOrgId] = useState<string>('')
   const [showOrgSelector, setShowOrgSelector] = useState(false)
+  const [ssoProviders, setSsoProviders] = useState<SsoProvider[]>([])
+  const [ssoLoading, setSsoLoading] = useState(false)
   const { setUser } = useAuthStore()
   const setPermissions = usePermissionStore((state) => state.setPermissions)
   const { setCurrentOrganization, setOrganizations: setOrgStore } = useOrganizationStore()
@@ -75,6 +97,58 @@ function LoginForm() {
       setPassword(user.password)
     }
   }, [selectedUser])
+
+  const ssoOrganizationId =
+    searchParams?.get('organizationId') ||
+    process.env.NEXT_PUBLIC_DEFAULT_ORGANIZATION_ID ||
+    (typeof window !== 'undefined' ? localStorage.getItem('currentOrganizationId') : null) ||
+    ''
+
+  useEffect(() => {
+    let cancelled = false
+    if (!ssoOrganizationId) return
+    authApi
+      .ssoProviders(ssoOrganizationId)
+      .then((providers) => {
+        if (!cancelled) setSsoProviders(providers)
+      })
+      .catch(() => {
+        if (!cancelled) setSsoProviders([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [ssoOrganizationId])
+
+  const handleSsoLogin = async (provider: SsoProvider) => {
+    setSsoLoading(true)
+    try {
+      const state = randomToken(16)
+      const nonce = randomToken(16)
+      const codeVerifier = provider.type === 'oidc' ? randomToken(48) : ''
+      const codeChallenge = codeVerifier ? await pkceChallenge(codeVerifier) : undefined
+      sessionStorage.setItem(
+        SSO_PENDING_KEY,
+        JSON.stringify({
+          providerKey: provider.key,
+          organizationId: ssoOrganizationId,
+          state,
+          nonce,
+          codeVerifier,
+          returnUrl: searchParams?.get('returnUrl') || '/admin/users',
+        }),
+      )
+      const { url } = await authApi.ssoAuthorize(ssoOrganizationId, provider.key, {
+        state,
+        nonce,
+        codeChallenge,
+      })
+      window.location.assign(url)
+    } catch (error: any) {
+      notification.error(error?.message || 'SSO 登录启动失败')
+      setSsoLoading(false)
+    }
+  }
 
   const applyLoginResponse = (response: LoginResponseWithOrgs) => {
     if (response.user) {
@@ -313,6 +387,30 @@ function LoginForm() {
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
+
+            {ssoProviders.filter((provider) => provider.type === 'cas' || provider.type === 'oidc').length > 0 ? (
+              <div className="mt-6 space-y-3 border-t pt-6">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>或使用组织统一身份登录</span>
+                </div>
+                {ssoProviders
+                  .filter((provider) => provider.type === 'cas' || provider.type === 'oidc')
+                  .map((provider) => (
+                    <Button
+                      key={provider.key}
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled={isLoading || ssoLoading}
+                      onClick={() => void handleSsoLogin(provider)}
+                    >
+                      {ssoLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      使用 {provider.name} 登录
+                    </Button>
+                  ))}
+              </div>
+            ) : null}
           </>
         )}
 

@@ -12,6 +12,28 @@ export interface LoginResponseWithOrgs extends LoginResponse {
   currentOrganizationId?: string
 }
 
+export interface SsoProvider {
+  key: string
+  name: string
+  type: 'cas' | 'oauth2' | 'oidc' | 'saml'
+}
+
+export interface SsoCallbackInput {
+  organizationId: string
+  ticket?: string
+  samlResponse?: string
+  code?: string
+  codeVerifier?: string
+  state?: string
+  nonce?: string
+}
+
+function unwrapResponse<T>(response: { data: unknown }): T {
+  const body = response.data as Record<string, unknown> | T
+  if (body && typeof body === 'object' && 'data' in body) return (body as { data: T }).data
+  return body as T
+}
+
 export const authApi = {
   /**
    * Login with email and password
@@ -36,6 +58,55 @@ export const authApi = {
       }
     }
 
+    return loginData
+  },
+
+  async ssoProviders(organizationId: string): Promise<SsoProvider[]> {
+    const result = unwrapResponse<{ providers?: SsoProvider[] }>(
+      await httpClient.get(
+        `/api/identity/sso/providers?organizationId=${encodeURIComponent(organizationId)}`,
+      ),
+    )
+    return result.providers ?? []
+  },
+
+  async ssoAuthorize(
+    organizationId: string,
+    providerKey: string,
+    input: { state?: string; nonce?: string; codeChallenge?: string } = {},
+  ): Promise<{ url: string }> {
+    const params = new URLSearchParams({ organizationId })
+    if (input.state) params.set('state', input.state)
+    if (input.nonce) params.set('nonce', input.nonce)
+    if (input.codeChallenge) params.set('codeChallenge', input.codeChallenge)
+    return unwrapResponse<{ url: string }>(
+      await httpClient.get(
+        `/api/identity/sso/${encodeURIComponent(providerKey)}/authorize?${params.toString()}`,
+      ),
+    )
+  },
+
+  async ssoCallback(
+    providerKey: string,
+    input: SsoCallbackInput,
+  ): Promise<LoginResponseWithOrgs> {
+    const response = await httpClient.post<any>(
+      `/api/auth/sso/${encodeURIComponent(providerKey)}/callback?organizationId=${encodeURIComponent(input.organizationId)}`,
+      input,
+    )
+    const loginData = unwrapResponse<LoginResponseWithOrgs>(response)
+    if (loginData.access_token) {
+      apiClient.setAuthToken(loginData.access_token)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(loginData.user))
+        if (loginData.currentOrganizationId) {
+          localStorage.setItem('currentOrganizationId', loginData.currentOrganizationId)
+        }
+        if (loginData.organizations) {
+          localStorage.setItem('organizations', JSON.stringify(loginData.organizations))
+        }
+      }
+    }
     return loginData
   },
 

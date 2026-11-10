@@ -43,6 +43,7 @@ import { AgentEvalModule } from './agent-eval/agent-eval.module'
 import { AgentFeedbackModule } from './agent-feedback/agent-feedback.module'
 import { ReleaseAutomationModule } from './release-automation/release-automation.module'
 import { SemanticRuntimeModule } from './semantic-runtime/semantic-runtime.module'
+import { ReviewModule } from './review/review.module'
 import { LoggerMiddleware } from './common/middleware/logger.middleware'
 import { EventBusModule } from './common/events/event-bus.module'
 import { TenantTransactionModule } from './common/transaction/tenant-transaction.module'
@@ -122,6 +123,7 @@ try {
     AtomicRuntimeModule,
     BlueprintModule,
     SemanticRuntimeModule,
+    ReviewModule,
     OutboxModule,
     NotificationsModule,
     AgentToolsModule,

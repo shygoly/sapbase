@@ -15,6 +15,7 @@ import type {
 import type { IJwtService, IPasswordService, IEffectivePermissionsResolver } from '../../domain/services'
 import type { IEventPublisher } from '../../domain/events'
 import { AuthenticationError } from '../../domain/errors'
+import { AuthLoginEventsService } from '../../../identity/auth-login-events.service'
 import { createMockEventPublisher, createMockRepository } from '../../../../test/utils/test-helpers'
 
 function domainUser(overrides: Partial<User> = {}): User {
@@ -37,6 +38,7 @@ describe('LoginService', () => {
   let passwordService: jest.Mocked<IPasswordService>
   let eventPublisher: jest.Mocked<IEventPublisher>
   let effectivePermissionsResolver: jest.Mocked<IEffectivePermissionsResolver>
+  let loginEvents: { record: jest.Mock; isLocked: jest.Mock }
 
   beforeEach(async () => {
     const mockUserRepository = createMockRepository<IUserRepository>()
@@ -52,6 +54,10 @@ describe('LoginService', () => {
     const mockEventPublisher = createMockEventPublisher()
     const mockEffectivePermissionsResolver = {
       resolve: jest.fn(),
+    }
+    loginEvents = {
+      record: jest.fn(),
+      isLocked: jest.fn().mockResolvedValue(false),
     }
 
     const module: TestingModule = await Test.createTestingModule({
@@ -80,6 +86,10 @@ describe('LoginService', () => {
         {
           provide: EFFECTIVE_PERMISSIONS_RESOLVER,
           useValue: mockEffectivePermissionsResolver,
+        },
+        {
+          provide: AuthLoginEventsService,
+          useValue: loginEvents,
         },
       ],
     }).compile()
@@ -158,6 +168,56 @@ describe('LoginService', () => {
       )
     })
 
+    it('records a failure event when organization is known', async () => {
+      const user = domainUser()
+
+      userRepository.findByEmail.mockResolvedValue(user)
+      passwordService.compare.mockResolvedValue(false)
+
+      await expect(
+        service.execute({
+          email: 'USER@example.com',
+          password: 'wrong-password',
+          organizationId: 'org-1',
+          ip: '10.0.0.1',
+          userAgent: 'jest',
+        }),
+      ).rejects.toThrow(AuthenticationError)
+
+      expect(loginEvents.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: 'org-1',
+          email: 'user@example.com',
+          status: 'failure',
+          reason: 'invalid-credentials',
+          ip: '10.0.0.1',
+          userAgent: 'jest',
+        }),
+      )
+    })
+
+    it('rejects a locked account before checking credentials and records the lockout hit', async () => {
+      loginEvents.isLocked.mockResolvedValue(true)
+
+      await expect(
+        service.execute({
+          email: 'user@example.com',
+          password: 'password123',
+          organizationId: 'org-1',
+        }),
+      ).rejects.toThrow(/锁定/)
+
+      expect(userRepository.findByEmail).not.toHaveBeenCalled()
+      expect(loginEvents.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: 'org-1',
+          email: 'user@example.com',
+          status: 'failure',
+          reason: 'locked',
+        }),
+      )
+    })
+
     it('should throw error if organization not found', async () => {
       const user = domainUser()
 
@@ -175,6 +235,14 @@ describe('LoginService', () => {
       ])
 
       await expect(service.execute(command)).rejects.toThrow()
+      expect(loginEvents.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: 'org-999',
+          email: 'user@example.com',
+          status: 'failure',
+          reason: 'organization-access-denied',
+        }),
+      )
     })
 
     it('签发的 payload 与响应 user.permissions 都是有效权限（角色 ∪ 直授）', async () => {

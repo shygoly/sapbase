@@ -35,6 +35,17 @@ export class IdentitySsoService {
     private readonly adapterFactory: (provider: IdentityProvider) => SsoAdapter = createSsoAdapter,
   ) {}
 
+  /** 登录页公开可见的 provider 列表：只返回 key/name/type，不返回 config/secretRef。 */
+  async listActiveProviders(
+    organizationId: string,
+  ): Promise<Array<{ key: string; name: string; type: IdentityProvider['type'] }>> {
+    const rows = await this.providers.find({
+      where: { organizationId, status: 'active' },
+      order: { createdAt: 'ASC' },
+    })
+    return rows.map((row) => ({ key: row.key, name: row.name, type: row.type }))
+  }
+
   async authorizationUrl(
     organizationId: string,
     providerKey: string,
