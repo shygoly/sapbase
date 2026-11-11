@@ -398,6 +398,31 @@ SLA 到期提醒/升级幂等；无审批人必须告警，不静默通过
 实现落点：`libs/platform-core/src/audit-logs/` + `apps/api/src/audit-jobs/`；
 契约：`schemas/audit.schema.json`；领域表：`DOMAIN.md`「审计」；决策：`DECISIONS.md` D-16。
 
+### 3.18 Record Lifecycle（记录生命周期）
+
+记录生命周期是**显式操作**，不是状态迁移：
+
+- **Tree**：实体可选 `tree: { parentField, orderField }`；编译器校验字段存在/数值/自引用，运行时校验同组织/同蓝图/防环。
+- **Clone**：深拷贝子树，生成新 ID，重映射内部引用；唯一字段策略 `fail/suffix/placeholder`；事务失败全回滚，`idempotencyKey` 幂等。
+- **Move/Reorder**：跨父/同级排序；事务 + 乐观锁；记录前后父/序号。
+- **Archive/Restore**：`archivedAt` 软归档，活跃列表隐藏；恢复校验父节点与唯一键；不物理删除。
+- **Snapshot**：`record_snapshots` 保存 data/state/version/label；恢复创建新版本，不覆盖历史。
+- **Operation**：`record_operations` 存 before/after/idempotency/操作者，并写审计。
+
+执行语义：
+
+```text
+未声明 tree 的实体保持原 CRUD/状态迁移行为
+成环/跨树移动拒绝，树结构不变
+克隆唯一冲突 fail 时不产生部分克隆
+归档不是状态迁移；活跃列表过滤 archivedAt
+恢复旧快照创建新版本，旧版本保留
+所有操作写 record_operations + audit_logs
+```
+
+实现落点：`apps/api/src/record-lifecycle/`；契约：`schemas/record-lifecycle.schema.json`；
+领域表：`DOMAIN.md`「记录生命周期」；决策：`DECISIONS.md` D-17。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -454,6 +479,11 @@ SLA 到期提醒/升级幂等；无审批人必须告警，不静默通过
 47. **检查点可信**：验证从 checkpoint 锚点开始；签名/链/hash 任一不符即失败（INV-AU-04）。
 48. **保留期可执行**：legalHold 阻止清理；未归档/未过期不得删除（INV-AU-05）。
 49. **查询/导出可审计**：访问审计本身写 `audit.query`/`audit.export`，敏感字段脱敏（INV-AU-06）。
+50. **树完整性**：tree 父节点必须同组织/同蓝图；不得成环或跨树（INV-RL-01）。
+51. **克隆原子性**：克隆在事务内完成，失败全回滚；唯一冲突不得产生部分节点（INV-RL-02）。
+52. **移动并发安全**：移动/排序使用事务与乐观锁，并发至多一个成功（INV-RL-03）。
+53. **归档不删除**：归档只设 archivedAt，活跃列表隐藏；恢复校验父节点/唯一键（INV-RL-04）。
+54. **快照只追加**：恢复旧版本创建新版本，不得覆盖/删除历史快照（INV-RL-05）。
 
 ---
 

@@ -344,6 +344,27 @@ code_markers:
   - libs/platform-core/src/audit-logs/audit-verification.service.ts
 ```
 
+### D-17：记录生命周期用显式操作 + 快照，不把归档塞进状态机
+
+```yaml decision
+id: D-17
+title: 记录生命周期用显式操作 + 快照，不把归档塞进状态机
+status: accepted
+date: 2026-11
+context: |
+  树形业务（课程/章节/知识点）需要 clone/move/archive/版本恢复；把这些做成状态迁移会污染
+  每个模板的状态机，也无法表达子树克隆与历史版本。
+decision: |
+  tree 作为可选元数据进入编译/运行时校验；clone/move/reorder/archive/snapshot 走独立服务，
+  record_operations 存 before/after 与幂等键，record_snapshots 只追加。归档只设 archivedAt，
+  不删除记录；恢复旧快照创建新版本。
+references:
+  - INV-RL-01
+  - INV-RL-05
+code_markers:
+  - apps/api/src/record-lifecycle/record-lifecycle.service.ts
+```
+
 ---
 
 ## 附录：命名空间约定

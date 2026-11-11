@@ -65,6 +65,7 @@ export interface SemanticEntity {
   rollups?: Array<{ field: string; over: string; of: string; fn: 'sum' | 'count' | 'max' | 'min' }>
   ownership?: { field: string; readAllPermission: string }
   dataScope?: SemanticDataScope
+  tree?: { parentField: string; orderField: string }
 }
 
 export interface ValidationRule {

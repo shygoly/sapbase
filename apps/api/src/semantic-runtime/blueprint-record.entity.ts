@@ -33,4 +33,13 @@ export class BlueprintRecord extends TenantAwareEntity {
   /** 迁移上的乐观锁。 */
   @Column({ type: 'int', default: 1 })
   version: number
+
+  @Column({ type: 'timestamptz', nullable: true })
+  archivedAt: Date | null
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  archivedBy: string | null
+
+  @Column({ type: 'text', nullable: true })
+  archiveReason: string | null
 }

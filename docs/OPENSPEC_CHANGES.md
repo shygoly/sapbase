@@ -7,11 +7,11 @@
 
 | 指标 | 数量 |
 | --- | --- |
-| 进行中 | 24 |
+| 进行中 | 23 |
 | 已完成未归档 | 0 |
 | 无任务/骨架 | 2 |
-| 已归档 | 61 |
-| 活跃任务 | 139/924 |
+| 已归档 | 62 |
+| 活跃任务 | 139/878 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -41,7 +41,6 @@
 | [add-external-integration-connector](../openspec/changes/add-external-integration-connector/) | 外部集成连接器 | 0/58 | 10 req / 1 文件 | [P](../openspec/changes/add-external-integration-connector/proposal.md) [D](../openspec/changes/add-external-integration-connector/design.md) [T](../openspec/changes/add-external-integration-connector/tasks.md) [S](../openspec/changes/add-external-integration-connector/specs) | 2026-11-09 |
 | [add-metrics-and-dashboard-platform](../openspec/changes/add-metrics-and-dashboard-platform/) | 指标、看板与预警平台 | 0/53 | 10 req / 1 文件 | [P](../openspec/changes/add-metrics-and-dashboard-platform/proposal.md) [D](../openspec/changes/add-metrics-and-dashboard-platform/design.md) [T](../openspec/changes/add-metrics-and-dashboard-platform/tasks.md) [S](../openspec/changes/add-metrics-and-dashboard-platform/specs) | 2026-11-09 |
 | [add-offline-content-package](../openspec/changes/add-offline-content-package/) | 离线内容包 | 0/42 | 8 req / 1 文件 | [P](../openspec/changes/add-offline-content-package/proposal.md) [D](../openspec/changes/add-offline-content-package/design.md) [T](../openspec/changes/add-offline-content-package/tasks.md) [S](../openspec/changes/add-offline-content-package/specs) | 2026-11-09 |
-| [add-record-lifecycle-and-tree-operations](../openspec/changes/add-record-lifecycle-and-tree-operations/) | 记录生命周期与树操作 | 0/46 | 9 req / 2 文件 | [P](../openspec/changes/add-record-lifecycle-and-tree-operations/proposal.md) [D](../openspec/changes/add-record-lifecycle-and-tree-operations/design.md) [T](../openspec/changes/add-record-lifecycle-and-tree-operations/tasks.md) [S](../openspec/changes/add-record-lifecycle-and-tree-operations/specs) | 2026-11-09 |
 | [migrate-to-saas-architecture](../openspec/changes/migrate-to-saas-architecture/) | Migrate to SaaS Architecture | 45/75 | 21 req / 4 文件 | [P](../openspec/changes/migrate-to-saas-architecture/proposal.md) [D](../openspec/changes/migrate-to-saas-architecture/design.md) [T](../openspec/changes/migrate-to-saas-architecture/tasks.md) [S](../openspec/changes/migrate-to-saas-architecture/specs) | 2026-02-18 |
 
 ## 已完成未归档
@@ -82,6 +81,7 @@ _暂无_
 | [add-patch-dsl-system](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/) | Add Patch DSL System for Declarative Schema Modifications | 118/118 | 11 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/design.md) [T](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/specs) | 2026-11-11 |
 | [add-piagent-runtime-context-and-session](../openspec/changes/archive/2026-11-11-add-piagent-runtime-context-and-session/) | PiAgent Runtime 上下文、多轮会话与 SSE（P3a） | 42/42 | 7 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-piagent-runtime-context-and-session/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-piagent-runtime-context-and-session/design.md) [T](../openspec/changes/archive/2026-11-11-add-piagent-runtime-context-and-session/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-piagent-runtime-context-and-session/specs) | 2026-11-11 |
 | [add-plugin-sandbox](../openspec/changes/archive/2026-11-11-add-plugin-sandbox/) | Add Plugin Sandbox | 19/19 | 4 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-plugin-sandbox/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-plugin-sandbox/design.md) [T](../openspec/changes/archive/2026-11-11-add-plugin-sandbox/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-plugin-sandbox/specs) | 2026-11-11 |
+| [add-record-lifecycle-and-tree-operations](../openspec/changes/archive/2026-11-11-add-record-lifecycle-and-tree-operations/) | 记录生命周期与树操作 | 46/46 | 9 req / 2 文件 | [P](../openspec/changes/archive/2026-11-11-add-record-lifecycle-and-tree-operations/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-record-lifecycle-and-tree-operations/design.md) [T](../openspec/changes/archive/2026-11-11-add-record-lifecycle-and-tree-operations/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-record-lifecycle-and-tree-operations/specs) | 2026-11-11 |
 | [add-release-lifecycle-and-activation](../openspec/changes/archive/2026-11-11-add-release-lifecycle-and-activation/) | 业务系统不可变 Release、激活与回退（P2） | 52/52 | 7 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-release-lifecycle-and-activation/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-release-lifecycle-and-activation/design.md) [T](../openspec/changes/archive/2026-11-11-add-release-lifecycle-and-activation/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-release-lifecycle-and-activation/specs) | 2026-11-11 |
 | [add-review-and-approval-platform](../openspec/changes/archive/2026-11-11-add-review-and-approval-platform/) | 复核/审批与工作项平台 | 55/55 | 9 req / 2 文件 | [P](../openspec/changes/archive/2026-11-11-add-review-and-approval-platform/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-review-and-approval-platform/design.md) [T](../openspec/changes/archive/2026-11-11-add-review-and-approval-platform/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-review-and-approval-platform/specs) | 2026-11-11 |
 | [add-role-permission-resolution](../openspec/changes/archive/2026-11-11-add-role-permission-resolution/) | 让角色携带的权限点真正生效（角色 → JWT 有效权限） | 24/24 | 1 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-role-permission-resolution/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-role-permission-resolution/design.md) [T](../openspec/changes/archive/2026-11-11-add-role-permission-resolution/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-role-permission-resolution/specs) | 2026-11-11 |

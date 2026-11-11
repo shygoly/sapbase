@@ -886,7 +886,10 @@
         "entity",
         "data",
         "state",
-        "version"
+        "version",
+        "archivedAt",
+        "archivedBy",
+        "archiveReason"
       ]
     },
     "blueprint_suggestion_logs": {
@@ -1474,6 +1477,42 @@
         "priority",
         "dueAt",
         "metadata"
+      ]
+    },
+    "record_snapshots": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "blueprintId",
+        "entity",
+        "recordId",
+        "version",
+        "label",
+        "data",
+        "state",
+        "createdBy",
+        "reason",
+        "published"
+      ]
+    },
+    "record_operations": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "blueprintId",
+        "entity",
+        "recordId",
+        "type",
+        "idempotencyKey",
+        "status",
+        "before",
+        "after",
+        "createdBy",
+        "error"
       ]
     }
   }

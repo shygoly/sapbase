@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { randomUUID } from 'node:crypto'
-import { DataSource, EntityManager, In, Repository } from 'typeorm'
+import { DataSource, EntityManager, In, IsNull, Repository } from 'typeorm'
 import { join } from 'node:path'
 import { AuditLog } from '../audit-logs/audit-log.entity'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
@@ -139,6 +139,7 @@ export interface SemanticEntityDecl {
   children?: string[]
   states: SemanticStateDecl[]
   transitions: SemanticTransitionDecl[]
+  tree?: { parentField: string; orderField: string }
 }
 
 export interface SemanticDeclaration {
@@ -152,6 +153,7 @@ export function projectSemanticDeclaration(
     children?: string[]
     states?: Array<{ name: string; initial?: boolean; final?: boolean }>
     transitions?: Array<{ from: string; to: string }>
+    tree?: { parentField: string; orderField: string }
   }>,
 ): SemanticDeclaration {
   return {
@@ -164,6 +166,7 @@ export function projectSemanticDeclaration(
         final: state.final === true,
       })),
       transitions: (entity.transitions ?? []).map((item) => ({ from: item.from, to: item.to })),
+      ...(entity.tree ? { tree: { ...entity.tree } } : {}),
     })),
   }
 }
@@ -670,6 +673,7 @@ export class SemanticRuntimeService {
           blueprintId: loaded.manifest.blueprint,
           entity,
           organizationId,
+          archivedAt: IsNull(),
         },
         order: { createdAt: 'ASC' },
       })
@@ -679,6 +683,37 @@ export class SemanticRuntimeService {
     }
 
     return this.listEnvelope(loaded.manifest.blueprint, declared, organizationId, query ?? {}, actor)
+  }
+
+  /**
+   * 记录生命周期所需的最小子集：tree 元数据 + 唯一字段。
+   * 与 semantic() 相同授权门；只返回操作所需字段名，不暴露完整模板。
+   */
+  async lifecycleSchema(
+    packageId: string,
+    organizationId: string,
+    entity: string,
+  ): Promise<{
+    tree: { parentField: string; orderField: string } | null
+    uniqueFields: string[]
+    selfReferenceFields: string[]
+  }> {
+    if (!organizationId) {
+      throw new RecordWriteError('缺少 organizationId，拒绝读取', 'missing-tenant')
+    }
+    await this.loadOrThrow(packageId, organizationId)
+    const template = this.readTemplate(packageId)
+    const declared = template.entities.find((item) => item.name === entity)
+    if (!declared) {
+      throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
+    }
+    return {
+      tree: declared.tree ? { ...declared.tree } : null,
+      uniqueFields: declared.fields.filter((field) => field.unique).map((field) => field.name),
+      selfReferenceFields: declared.fields
+        .filter((field) => field.type === 'reference' && field.reference === entity)
+        .map((field) => field.name),
+    }
   }
 
   /**
@@ -1761,7 +1796,7 @@ export class SemanticRuntimeService {
     actor?: RuntimeActor,
   ): Promise<BlueprintRecord[]> {
     const params: unknown[] = [blueprintId, organizationId, entity.name]
-    const clauses = ['"blueprintId" = $1', '"organizationId" = $2', 'entity = $3']
+    const clauses = ['"blueprintId" = $1', '"organizationId" = $2', 'entity = $3', '"archivedAt" IS NULL']
     const scope = await this.resolveBlueprintDataScope(
       blueprintId,
       entity,
@@ -1973,7 +2008,7 @@ export class SemanticRuntimeService {
   ): Promise<QueryEnvelope<BlueprintRecord>> {
     const parsed = parseRecordQuery(entity, query)
     const params: unknown[] = [blueprintId, organizationId, entity.name]
-    const clauses = ['"blueprintId" = $1', '"organizationId" = $2', 'entity = $3']
+    const clauses = ['"blueprintId" = $1', '"organizationId" = $2', 'entity = $3', '"archivedAt" IS NULL']
     let next = 4
     if (entity.ownership && !canReadAllOwned(entity, actorPermissions(actor))) {
       const field = entity.ownership.field

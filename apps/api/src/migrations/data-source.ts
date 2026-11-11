@@ -43,6 +43,8 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1794300000000-CreateSearchDocuments.ts'),
     path.join(__dirname, '1794400000000-AddEvolutionBindingToProposals.ts'),
     path.join(__dirname, '1794500000000-AddMenuSurfaceMetadata.ts'),
+    path.join(__dirname, '1794600000000-AddRecordLifecycle.ts'),
+    path.join(__dirname, '1794700000000-AddRecordArchiveColumns.ts'),
   ],
   synchronize: false,
   logging: true,

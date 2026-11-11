@@ -112,6 +112,7 @@ export interface SemanticEntity {
   numbering?: SemanticNumbering
   rollups?: Array<{ field: string; over: string; of: string; fn: string }>
   ownership?: { field: string; readAllPermission: string }
+  tree?: { parentField: string; orderField: string }
   dataScope?: {
     ownerField?: string
     bindings: Array<{
@@ -216,6 +217,7 @@ export interface PermissionRule {
   scope: 'own' | 'team' | 'all' | 'policy'
   resources: string[]
   actions?: Array<'create' | 'read' | 'update' | 'delete' | 'list'>
+  tree?: { parentField: string; orderField: string }
   dataScope?: {
     dimension: string
     depth: 'exact' | 'subtree' | 'ancestors'
@@ -694,6 +696,33 @@ function detectSemanticP0Conflicts(semantic: { entities: SemanticEntity[] }): st
       ) {
         conflicts.push(
           `主从不一致：${entity.name}.${entity.parent.field} 必须是 type=reference 且 reference=${entity.parent.entity}（实际 type=${parentField.type} reference=${parentField.reference ?? '-'}）`,
+        )
+      }
+    }
+
+    if (entity.tree) {
+      const parentField = fieldByName.get(entity.tree.parentField)
+      if (!parentField) {
+        conflicts.push(
+          `树元数据非法：${entity.name}.tree.parentField「${entity.tree.parentField}」不是已声明字段`,
+        )
+      } else if (
+        parentField.type !== 'text' &&
+        parentField.type !== 'string' &&
+        !(parentField.type === 'reference' && parentField.reference === entity.name)
+      ) {
+        conflicts.push(
+          `树元数据非法：${entity.name}.${entity.tree.parentField} 必须是 text 或自引用 reference（实际 type=${parentField.type}${parentField.reference ? ` reference=${parentField.reference}` : ''}）`,
+        )
+      }
+      const orderField = fieldByName.get(entity.tree.orderField)
+      if (!orderField) {
+        conflicts.push(
+          `树元数据非法：${entity.name}.tree.orderField「${entity.tree.orderField}」不是已声明字段`,
+        )
+      } else if (!['number', 'integer', 'int', 'i32', 'i64', 'u32', 'u64', 'decimal', 'float'].includes(orderField.type)) {
+        conflicts.push(
+          `树元数据非法：${entity.name}.${entity.tree.orderField} 必须是数值字段（实际 type=${orderField.type}）`,
         )
       }
     }

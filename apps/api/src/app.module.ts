@@ -35,6 +35,7 @@ import { BlueprintModule } from './blueprint/blueprint.module'
 import { OutboxModule } from './outbox/outbox.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { SearchModule } from './search/search.module'
+import { RecordLifecycleModule } from './record-lifecycle/record-lifecycle.module'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { AgentHostModule } from './agent-host/agent-host.module'
 import { AsyncConsumersModule } from './async-consumers/async-consumers.module'
@@ -134,6 +135,7 @@ try {
     OutboxModule,
     NotificationsModule,
     SearchModule,
+    RecordLifecycleModule,
     AgentToolsModule,
     AgentHostModule,
     AsyncConsumersModule,

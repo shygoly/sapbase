@@ -50,6 +50,8 @@ const DIRECT_TABLES = [
   'service_clients',
   'assets',
   'search_documents',
+  'record_snapshots',
+  'record_operations',
   'asset_variants',
   'asset_upload_sessions',
 ] as const

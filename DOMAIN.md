@@ -39,6 +39,8 @@
 | announcement_deliveries | 通知与公告 |
 | notification_cleanup_runs | 通知与公告 |
 | search_documents | 搜索 |
+| record_snapshots | 记录生命周期 |
+| record_operations | 记录生命周期 |
 | assets | 资产 |
 | asset_variants | 资产 |
 | asset_upload_sessions | 资产 |
@@ -438,6 +440,44 @@ enforcement:
   - test:tests/notification-center.test.js#XSS
 db: none
 spec: tests/notification-center.test.js
+```
+
+---
+
+## 记录生命周期
+
+覆盖表：record_snapshots, record_operations
+
+`blueprint_records` 增加 `archivedAt/archivedBy/archiveReason` 软归档列；`record_snapshots` 只追加
+保存 data/state/version/label；`record_operations` 保存 clone/move/reorder/archive/restore/snapshot
+的 before/after、幂等键与操作者。树元数据 `tree: { parentField, orderField }` 由编译期校验，
+运行时校验同组织/同蓝图/防环。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| record_snapshots.recordId | blueprint_records.id | 快照归属记录 | none | 记录删除不级联 |
+| record_operations.recordId | blueprint_records.id | 操作归属记录 | none | 可为空（批量操作） |
+| record_snapshots.organizationId | organizations.id | 快照归属组织 | none | RLS 兜底 |
+| record_operations.organizationId | organizations.id | 操作归属组织 | none | RLS 兜底 |
+
+### 状态词
+
+操作类型使用 `clone` / `move` / `reorder` / `archive` / `restore` / `snapshot` / `snapshot-restore`；
+操作状态使用 `succeeded` / `failed`。归档不是状态迁移，记录状态词不变。
+
+### 不变量
+
+```yaml invariant
+id: INV-RL-01
+tables: [record_snapshots, record_operations]
+desc: 树父节点同组织/同蓝图且不成环；克隆原子；移动乐观锁；归档不删除；快照只追加。
+trigger: clone/move/reorder/archive/restore/snapshot
+enforcement:
+  - test:apps/api/src/record-lifecycle/record-lifecycle.service.spec.ts#RecordLifecycleService
+db: rls:record_snapshots
+spec: apps/api/src/record-lifecycle/record-lifecycle.service.spec.ts
 ```
 
 ---

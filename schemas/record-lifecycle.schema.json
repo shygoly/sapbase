@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/record-lifecycle.schema.json",
+  "title": "Record Lifecycle",
+  "description": "树元数据、clone/move/archive/restore、版本快照与操作记录。",
+  "$defs": {
+    "tree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parentField", "orderField"],
+      "properties": {
+        "parentField": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+        "orderField": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" }
+      }
+    },
+    "cloneRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "idempotencyKey": { "type": "string", "maxLength": 128 },
+        "uniqueStrategy": { "enum": ["fail", "suffix", "placeholder"] },
+        "dataOverride": { "type": "object" }
+      }
+    },
+    "moveRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parentId"],
+      "properties": {
+        "parentId": { "type": ["string", "null"], "format": "uuid" },
+        "order": { "type": "number" }
+      }
+    },
+    "archiveRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reason": { "type": "string", "maxLength": 500 },
+        "cascade": { "type": "boolean" }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "recordId", "version", "data"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "blueprintId": { "type": "string" },
+        "entity": { "type": "string" },
+        "recordId": { "type": "string", "format": "uuid" },
+        "version": { "type": "integer", "minimum": 1 },
+        "label": { "type": ["string", "null"] },
+        "data": { "type": "object" },
+        "state": { "type": ["string", "null"] },
+        "createdBy": { "type": ["string", "null"] },
+        "reason": { "type": ["string", "null"] },
+        "published": { "type": "boolean" }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "entity", "type", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "blueprintId": { "type": "string" },
+        "entity": { "type": "string" },
+        "recordId": { "type": ["string", "null"], "format": "uuid" },
+        "type": {
+          "enum": ["clone", "move", "reorder", "archive", "restore", "snapshot", "snapshot-restore"]
+        },
+        "idempotencyKey": { "type": ["string", "null"] },
+        "status": { "enum": ["succeeded", "failed"] },
+        "before": { "type": ["object", "null"] },
+        "after": { "type": ["object", "null"] },
+        "createdBy": { "type": ["string", "null"] },
+        "error": { "type": ["string", "null"] }
+      }
+    },
+    "diff": {
+      "type": "object",
+      "required": ["recordId", "fromVersion", "toVersion", "changes"],
+      "properties": {
+        "recordId": { "type": "string", "format": "uuid" },
+        "fromVersion": { "type": "integer", "minimum": 1 },
+        "toVersion": { "type": "integer", "minimum": 1 },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["field", "from", "to"],
+            "properties": {
+              "field": { "type": "string" },
+              "from": {},
+              "to": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/tree" },
+    { "$ref": "#/$defs/cloneRequest" },
+    { "$ref": "#/$defs/moveRequest" },
+    { "$ref": "#/$defs/archiveRequest" },
+    { "$ref": "#/$defs/snapshot" },
+    { "$ref": "#/$defs/operation" },
+    { "$ref": "#/$defs/diff" }
+  ]
+}

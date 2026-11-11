@@ -58,6 +58,14 @@ export const AUDIT_EVENT_CATALOG: AuditEventDefinition[] = [
   def('audit.archive', 'audit_log', ['actor'], 'long', true),
   def('audit.restore', 'audit_log', ['actor'], 'legal', true),
   def('audit.legal_hold', 'audit_log', ['actor', 'resourceId'], 'legal', true),
+  def('record.clone', 'record', ['actor'], 'standard'),
+  def('record.move', 'record', ['actor'], 'standard'),
+  def('record.reorder', 'record', ['actor'], 'standard'),
+  def('record.archive', 'record', ['actor'], 'long'),
+  def('record.restore', 'record', ['actor'], 'long'),
+  def('record.snapshot', 'record', ['actor'], 'standard'),
+  def('record.snapshot.publish', 'record', ['actor'], 'long'),
+  def('record.snapshot.restore', 'record', ['actor'], 'long'),
 ]
 
 const BY_ACTION = new Map(AUDIT_EVENT_CATALOG.map((item) => [item.action, item]))

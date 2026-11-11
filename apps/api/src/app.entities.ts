@@ -41,6 +41,8 @@ import { AnnouncementAudience } from './notifications/announcement-audience.enti
 import { AnnouncementDelivery } from './notifications/announcement-delivery.entity'
 import { NotificationCleanupRun } from './notifications/notification-cleanup-run.entity'
 import { SearchDocument } from './search/search-document.entity'
+import { RecordSnapshot } from './record-lifecycle/record-snapshot.entity'
+import { RecordOperation } from './record-lifecycle/record-operation.entity'
 import { OutboxDelivery } from './outbox/outbox-delivery.entity'
 import { OutboxEvent } from './outbox/outbox-event.entity'
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
@@ -104,6 +106,8 @@ export const APP_ENTITIES = [
   AnnouncementDelivery,
   NotificationCleanupRun,
   SearchDocument,
+  RecordSnapshot,
+  RecordOperation,
   AgentConfirmationToken,
   BusinessAppInstallation,
   BusinessAppInstallationRevision,
