@@ -1,3 +1,6 @@
+> **SUPERSEDED（2026-11）**：默认提供方已切换为 DeepSeek（见归档 `2026-11-11-kimi-api-configuration`）。
+> 本 change 保留为历史集成记录；其“AI 模型接入 Patch Gateway”能力已由 provider 抽象覆盖。
+
 # Kimi API Integration - Implementation Summary
 
 ## Status: ✅ Completed
