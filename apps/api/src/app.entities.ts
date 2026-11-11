@@ -20,6 +20,7 @@ import { AIModel } from './ai-models/ai-model.entity'
 import { AIModule } from './ai-modules/ai-module.entity'
 import { AIModuleDefinition } from './ai-modules/ai-module-definition.entity'
 import { AIModuleReview } from './ai-modules/ai-module-review.entity'
+import { AIModuleVersion } from './ai-modules/ai-module-version.entity'
 import { AIModuleTest } from './ai-modules/ai-module-test.entity'
 import { BusinessAppInstallation } from './business-apps/business-app-installation.entity'
 import { BusinessAppInstallationRevision } from './business-apps/business-app-installation-revision.entity'
@@ -72,6 +73,7 @@ export const APP_ENTITIES = [
   AIModule,
   AIModuleTest,
   AIModuleReview,
+  AIModuleVersion,
   AIModuleDefinition,
   ModuleRegistry,
   ModuleRelationship,

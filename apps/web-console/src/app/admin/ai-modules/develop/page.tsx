@@ -370,6 +370,9 @@ export default function AIModuleDevelopPage() {
             <Button variant="ghost" asChild>
               <Link href="/admin/ai-modules/dsl">DSL browser</Link>
             </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/admin/ai-modules/versions">版本历史</Link>
+            </Button>
           </div>
 
           {mode === 'create' && !module && !showDefinitionWizard && (

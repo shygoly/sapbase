@@ -36,7 +36,8 @@ function completeMerged(overrides: Record<string, unknown> = {}): Record<string,
       ],
     },
     pages: { pages: [] },
-    permissions: { rules: [{ role: 'agent', scope: 'own', resources: ['Ticket'] }] },
+    // scope=own 现在要求实体声明 ownerField/ownership；本用例只验证权限层映射，用 all。
+    permissions: { rules: [{ role: 'agent', scope: 'all', resources: ['Ticket'] }] },
     reports: { reports: [] },
     ...overrides,
   }
@@ -157,7 +158,7 @@ describe('definitionToBlueprint（纯函数）', () => {
           menus: [{ identifier: 'tickets', label: 'Tickets', path: '/tickets' }],
         },
         permissions: {
-          rules: [{ role: 'sales', scope: 'own', resources: ['Ticket'], actions: ['read'] }],
+          rules: [{ role: 'sales', scope: 'all', resources: ['Ticket'], actions: ['read'] }],
         },
       }),
     )

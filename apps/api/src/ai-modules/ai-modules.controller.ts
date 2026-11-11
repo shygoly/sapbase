@@ -88,6 +88,58 @@ export class AIModulesController {
     return this.aiModulesService.getDslBundle(id, organizationId)
   }
 
+  @Get(':id/versions')
+  @Auth()
+  async listVersions(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    return this.aiModulesService.listVersions(id, organizationId, {
+      page: page ? Number(page) : undefined,
+      pageSize: pageSize ? Number(pageSize) : undefined,
+    })
+  }
+
+  @Get(':id/versions/diff')
+  @Auth()
+  async diffVersions(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ) {
+    if (!from || !to) throw new BadRequestException('from/to version ids are required')
+    return this.aiModulesService.diffVersions(id, organizationId, from, to)
+  }
+
+  @Get(':id/versions/:versionId')
+  @Auth()
+  async getVersion(
+    @Param('id') id: string,
+    @Param('versionId') versionId: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.aiModulesService.getVersion(id, versionId, organizationId)
+  }
+
+  @Post(':id/versions/:versionId/rollback')
+  @Auth('system:manage')
+  async rollbackVersion(
+    @Param('id') id: string,
+    @Param('versionId') versionId: string,
+    @CurrentUser() user: User,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.aiModulesService.rollbackToVersion(
+      id,
+      versionId,
+      organizationId,
+      user?.id ?? 'system',
+    )
+  }
+
   @Get(':id')
   @Auth()
   async findOne(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<AIModule> {
@@ -118,7 +170,12 @@ export class AIModulesController {
         createdById: user.id,
       })
       // Return TypeORM entity for API compatibility
-      return this.aiModulesService.findOne(module.id, organizationId)
+      return this.aiModulesService.recordOperation(
+        module.id,
+        organizationId,
+        user?.id ?? 'system',
+        'create',
+      )
     } catch (err) {
       if (err instanceof BusinessRuleViolation) {
         throw new BadRequestException(err.message)
@@ -132,15 +189,20 @@ export class AIModulesController {
   async update(
     @Param('id') id: string,
     @Body() updateDto: Partial<AIModule>,
+    @CurrentUser() user: User,
     @OrganizationId() organizationId: string,
   ): Promise<AIModule> {
-    return this.aiModulesService.update(id, updateDto, organizationId)
+    return this.aiModulesService.update(id, updateDto, organizationId, user?.id ?? 'system')
   }
 
   @Delete(':id')
   @Auth('system:manage')
-  async remove(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<void> {
-    return this.aiModulesService.delete(id, organizationId)
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @OrganizationId() organizationId: string,
+  ): Promise<void> {
+    return this.aiModulesService.delete(id, organizationId, user?.id ?? 'system')
   }
 
   @Post(':id/generate')
@@ -348,6 +410,7 @@ export class AIModulesController {
   @Auth('system:manage')
   async publish(
     @Param('id') id: string,
+    @CurrentUser() user: User,
     @OrganizationId() organizationId: string,
   ): Promise<AIModule> {
     try {
@@ -356,7 +419,12 @@ export class AIModulesController {
         organizationId,
       })
       // Return TypeORM entity for API compatibility
-      return this.aiModulesService.findOne(id, organizationId)
+      return this.aiModulesService.recordOperation(
+        id,
+        organizationId,
+        user?.id ?? 'system',
+        'publish',
+      )
     } catch (err) {
       if (err instanceof BusinessRuleViolation) {
         throw new BadRequestException(err.message)

@@ -68,6 +68,33 @@ export interface AIModuleDslSearchResult {
   limit: number
 }
 
+export interface AIModuleVersion {
+  id: string
+  moduleId: string
+  version: string
+  patchContent: Record<string, any>
+  metadata: Record<string, any> | null
+  definition: Record<string, any> | null
+  status: AIModuleStatus
+  actor: string
+  reason: string | null
+  createdAt: string
+}
+
+export interface AIModuleVersionPage {
+  items: AIModuleVersion[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export interface AIModuleVersionDiff {
+  moduleId: string
+  from: { id: string; version: string; createdAt: string }
+  to: { id: string; version: string; createdAt: string }
+  changes: Array<{ path: string; from: unknown; to: unknown }>
+}
+
 export interface AIModuleTest {
   id: string
   moduleId: string
@@ -257,6 +284,33 @@ export const aiModulesApi = {
 
   async getDsl(id: string): Promise<AIModuleDslBundle> {
     const response = await httpClient.get<any>(`/api/ai-modules/${id}/dsl`)
+    return response.data.data || response.data
+  },
+
+  async listVersions(
+    id: string,
+    params: { page?: number; pageSize?: number } = {},
+  ): Promise<AIModuleVersionPage> {
+    const response = await httpClient.get<any>(`/api/ai-modules/${id}/versions`, { params })
+    return response.data.data || response.data
+  },
+
+  async getVersion(id: string, versionId: string): Promise<AIModuleVersion> {
+    const response = await httpClient.get<any>(`/api/ai-modules/${id}/versions/${versionId}`)
+    return response.data.data || response.data
+  },
+
+  async diffVersions(id: string, from: string, to: string): Promise<AIModuleVersionDiff> {
+    const response = await httpClient.get<any>(`/api/ai-modules/${id}/versions/diff`, {
+      params: { from, to },
+    })
+    return response.data.data || response.data
+  },
+
+  async rollbackVersion(id: string, versionId: string): Promise<AIModule> {
+    const response = await httpClient.post<any>(
+      `/api/ai-modules/${id}/versions/${versionId}/rollback`,
+    )
     return response.data.data || response.data
   },
 

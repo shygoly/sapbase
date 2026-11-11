@@ -16,7 +16,7 @@
 - [x] 2.3 Integrate Patch Gateway with AI model for patch generation
 - [x] 2.4 Add natural language input interface
 - [x] 2.5 Add patch preview and editing capabilities
-- [ ] 2.6 Add version control for module drafts
+- [x] 2.6 `ai_module_versions` 快照（生成/修改/评审/发布/回滚）
 
 ## 3. AI Module Testing
 
@@ -25,7 +25,7 @@
 - [x] 3.3 Create CRM module test suite (Customer, Order, OrderTracking, FinancialTransaction)
 - [x] 3.4 Add automated test execution
 - [x] 3.5 Add test result reporting and visualization
-- [ ] 3.6 Add test coverage metrics
+- [x] 3.6 `testResults.coverage`（场景/实体/百分比）
 
 ## 4. AI Module Review and Approval
 
@@ -34,7 +34,7 @@
 - [x] 4.3 Add review workflow (pending → reviewing → approved/rejected)
 - [x] 4.4 Add reviewer assignment and comments
 - [x] 4.5 Add approval/rejection actions with reasons
-- [ ] 4.6 Add notification system for review status changes
+- [x] 4.6 评审结果通知创建人（approval 分类，sourceEventId=review.id）
 
 ## 5. AI Module Publishing
 
@@ -43,7 +43,7 @@
 - [x] 5.3 Add publish (上架) functionality for approved modules
 - [x] 5.4 Add unpublish (下架) functionality
 - [x] 5.5 Add version management for published modules
-- [ ] 5.6 Add rollback capability
+- [x] 5.6 `POST :id/versions/:versionId/rollback` + Console 版本页
 
 ## 6. System Management Integration
 
@@ -56,24 +56,24 @@
 
 ## 7. CRM Module Testing Integration
 
-- [ ] 7.1 Create CRM test scenarios for Customer entity
-- [ ] 7.2 Create CRM test scenarios for Order entity
-- [ ] 7.3 Create CRM test scenarios for OrderTracking entity
-- [ ] 7.4 Create CRM test scenarios for FinancialTransaction entity
-- [ ] 7.5 Integrate CRM test suite with AI Module Testing framework
-- [ ] 7.6 Add test result validation against CRM schemas
+- [x] 7.1 Customer 场景（id/name/email + relations）
+- [x] 7.2 Order 场景（orderNo/total/status）
+- [x] 7.3 OrderTracking 场景（order/status/timestamp）
+- [x] 7.4 FinancialTransaction 场景（transactionNumber/amount/type/status）
+- [x] 7.5 `runTests` 直接调用 `runAllCrmScenarios`
+- [x] 7.6 缺实体/字段返回 failed + 具体错误，不再假通过
 
 ## 8. Audit and Versioning
 
-- [ ] 8.1 Add audit logging for all AI operations
-- [ ] 8.2 Add version tracking for AI modules
-- [ ] 8.3 Add change history and diff viewing
-- [ ] 8.4 Add rollback functionality
+- [x] 8.1 `audit_logs` action `ai_module.*`（含回滚/删除）
+- [x] 8.2 版本快照 + 审计双写
+- [x] 8.3 `GET :id/versions` / `diff` + Console `/admin/ai-modules/versions`
+- [x] 8.4 回滚恢复内容并打回 draft，重新评审
 
 ## 9. Documentation
 
-- [ ] 9.1 Document AI Model Configuration usage
-- [ ] 9.2 Document AI Module Development workflow
-- [ ] 9.3 Document AI Module Testing procedures
-- [ ] 9.4 Document Review and Approval process
-- [ ] 9.5 Document Publishing workflow
+- [x] 9.1 `docs/ai-module-management.md` §1
+- [x] 9.2 `docs/ai-module-management.md` §2
+- [x] 9.3 `docs/ai-module-management.md` §3
+- [x] 9.4 `docs/ai-module-management.md` §4
+- [x] 9.5 `docs/ai-module-management.md` §5

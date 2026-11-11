@@ -8,6 +8,7 @@ import { AIModuleDefinition } from './ai-module-definition.entity'
 import { AIModule } from './ai-module.entity'
 import { AIModuleTest } from './ai-module-test.entity'
 import { AIModuleReview } from './ai-module-review.entity'
+import { AIModuleVersion } from './ai-module-version.entity'
 import { AIModelsService } from '../ai-models/ai-models.service'
 import { ModuleRegistryService } from '../module-registry/module-registry.service'
 import { AIModuleBlueprintService } from './ai-module-blueprint.service'
@@ -25,6 +26,14 @@ describe('AIModulesService', () => {
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+  }
+  const mockVersionRepo = {
+    find: jest.fn(async () => []),
+    findOne: jest.fn(),
+    findAndCount: jest.fn(async () => [[], 0]),
+    create: jest.fn((row: unknown) => row),
+    save: jest.fn(async (row: unknown) => row),
+    delete: jest.fn(async () => ({ affected: 0 })),
   }
   const mockDefinitionRepo = {
     findOne: jest.fn(),
@@ -55,6 +64,7 @@ describe('AIModulesService', () => {
         { provide: getRepositoryToken(AIModule), useValue: mockRepo },
         { provide: getRepositoryToken(AIModuleTest), useValue: mockRepo },
         { provide: getRepositoryToken(AIModuleReview), useValue: mockRepo },
+        { provide: getRepositoryToken(AIModuleVersion), useValue: mockVersionRepo },
         {
           provide: AIModelsService,
           useValue: {

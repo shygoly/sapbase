@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { In, Repository } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
@@ -6,6 +6,7 @@ import { AIModule, AIModuleStatus } from './ai-module.entity'
 import { AIModuleTest, TestStatus } from './ai-module-test.entity'
 import { AIModuleReview, ReviewDecision } from './ai-module-review.entity'
 import { AIModuleDefinition } from './ai-module-definition.entity'
+import { AIModuleVersion } from './ai-module-version.entity'
 import { AIModelsService } from '../ai-models/ai-models.service'
 import { AIModuleBlueprintService } from './ai-module-blueprint.service'
 import { DeliverError } from '../blueprint/blueprint.service'
@@ -29,6 +30,12 @@ import {
   normalizeDefinitionShape,
 } from './definition-to-blueprint'
 import { normalizeStep3ForSave } from './step3-normalizer'
+import {
+  coverageFor,
+  runAllCrmScenarios,
+} from './crm-test-scenarios'
+import { AuditLogsService } from '@sap/platform-core/audit-logs/audit-logs.service'
+import { NotificationService } from '../websocket/services/notification.service'
 import axios from 'axios'
 
 @Injectable()
@@ -42,9 +49,13 @@ export class AIModulesService {
     private aiModuleReviewRepository: Repository<AIModuleReview>,
     @InjectRepository(AIModuleDefinition)
     private aiModuleDefinitionRepository: Repository<AIModuleDefinition>,
+    @InjectRepository(AIModuleVersion)
+    private aiModuleVersionRepository: Repository<AIModuleVersion>,
     private aiModelsService: AIModelsService,
     private moduleRegistryService: ModuleRegistryService,
     private aiModuleBlueprints: AIModuleBlueprintService,
+    @Optional() private readonly auditLogs?: AuditLogsService,
+    @Optional() private readonly notifications?: NotificationService,
   ) {}
 
   async findAll(organizationId: string, status?: AIModuleStatus): Promise<AIModule[]> {
@@ -170,23 +181,174 @@ export class AIModulesService {
     }
   }
 
-  async create(createDto: Partial<AIModule>, organizationId: string): Promise<AIModule> {
-    const module = this.aiModuleRepository.create({
-      ...createDto,
-      organizationId,
-    })
-    return this.aiModuleRepository.save(module)
+  async create(
+    createDto: Partial<AIModule>,
+    organizationId: string,
+    actor = 'system',
+  ): Promise<AIModule> {
+    const module = await this.aiModuleRepository.save(
+      this.aiModuleRepository.create({
+        ...createDto,
+        organizationId,
+      }),
+    )
+    await this.recordChange(module, actor, 'create')
+    return module
   }
 
-  async update(id: string, updateDto: Partial<AIModule>, organizationId: string): Promise<AIModule> {
+  async update(
+    id: string,
+    updateDto: Partial<AIModule>,
+    organizationId: string,
+    actor = 'system',
+  ): Promise<AIModule> {
     const module = await this.findOne(id, organizationId)
     Object.assign(module, updateDto)
-    return this.aiModuleRepository.save(module)
+    const saved = await this.aiModuleRepository.save(module)
+    await this.recordChange(saved, actor, 'update')
+    return saved
   }
 
-  async delete(id: string, organizationId: string): Promise<void> {
+  async delete(id: string, organizationId: string, actor = 'system'): Promise<void> {
     const module = await this.findOne(id, organizationId)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'ai_module.delete',
+      resource: 'ai_modules',
+      resourceId: module.id,
+      actor,
+      actorType: 'user',
+      status: 'success',
+      changes: { name: module.name, version: module.version },
+    })
+    await this.aiModuleVersionRepository.delete({ organizationId, moduleId: module.id })
     await this.aiModuleRepository.remove(module)
+  }
+
+  /** 版本快照 + 审计：AI 模块每次生成/修改/评审/发布/回滚都留痕。 */
+  private async recordChange(
+    module: AIModule,
+    actor: string,
+    reason: string,
+    definition?: Record<string, any> | null,
+  ): Promise<void> {
+    await this.aiModuleVersionRepository.save(
+      this.aiModuleVersionRepository.create({
+        organizationId: module.organizationId,
+        moduleId: module.id,
+        version: module.version,
+        patchContent: module.patchContent ?? {},
+        metadata: module.metadata ?? null,
+        definition: definition ?? null,
+        status: module.status,
+        actor,
+        reason,
+      }),
+    )
+    await this.auditLogs?.create({
+      organizationId: module.organizationId,
+      action: `ai_module.${reason}`,
+      resource: 'ai_modules',
+      resourceId: module.id,
+      actor,
+      actorType: actor === 'ai' ? 'system' : 'user',
+      status: 'success',
+      changes: {
+        version: module.version,
+        status: module.status,
+        entities:
+          module.patchContent && typeof module.patchContent === 'object'
+            ? Object.keys((module.patchContent as any).objects ?? {})
+            : [],
+      },
+    })
+  }
+
+  /** 域服务（create/publish）绕过本服务保存时，控制器用它补一次快照 + 审计。 */
+  async recordOperation(
+    moduleId: string,
+    organizationId: string,
+    actor: string,
+    reason: string,
+  ): Promise<AIModule> {
+    const module = await this.findOne(moduleId, organizationId)
+    await this.recordChange(module, actor, reason)
+    return module
+  }
+
+  async listVersions(
+    moduleId: string,
+    organizationId: string,
+    input: { page?: number; pageSize?: number } = {},
+  ) {
+    await this.findOne(moduleId, organizationId)
+    const page = Math.max(1, Number(input.page) || 1)
+    const pageSize = Math.min(100, Math.max(1, Number(input.pageSize) || 20))
+    const [items, total] = await this.aiModuleVersionRepository.findAndCount({
+      where: { organizationId, moduleId },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    })
+    return { items, total, page, pageSize }
+  }
+
+  async getVersion(moduleId: string, versionId: string, organizationId: string) {
+    const version = await this.aiModuleVersionRepository.findOne({
+      where: { id: versionId, moduleId, organizationId },
+    })
+    if (!version) throw new NotFoundException('AI module version not found')
+    return version
+  }
+
+  async diffVersions(
+    moduleId: string,
+    organizationId: string,
+    fromId: string,
+    toId: string,
+  ) {
+    const [from, to] = await Promise.all([
+      this.getVersion(moduleId, fromId, organizationId),
+      this.getVersion(moduleId, toId, organizationId),
+    ])
+    return {
+      moduleId,
+      from: { id: from.id, version: from.version, createdAt: from.createdAt },
+      to: { id: to.id, version: to.version, createdAt: to.createdAt },
+      changes: [
+        ...diffJson(from.patchContent ?? {}, to.patchContent ?? {}),
+        ...diffJson(from.metadata ?? {}, to.metadata ?? {}).map((change) => ({
+          ...change,
+          path: `metadata.${change.path}`,
+        })),
+      ],
+    }
+  }
+
+  /**
+   * 回滚到指定快照：恢复 patchContent/metadata/version，把状态打回 draft 重新评审。
+   * 回滚本身也生成新快照，不删除历史。
+   */
+  async rollbackToVersion(
+    moduleId: string,
+    versionId: string,
+    organizationId: string,
+    actor = 'system',
+  ): Promise<AIModule> {
+    const module = await this.findOne(moduleId, organizationId)
+    const snapshot = await this.getVersion(moduleId, versionId, organizationId)
+    module.version = snapshot.version
+    module.patchContent = snapshot.patchContent
+    module.metadata = snapshot.metadata ?? {}
+    module.status = AIModuleStatus.DRAFT
+    module.reviewedById = null as never
+    module.reviewedAt = null as never
+    module.reviewComments = null as never
+    module.publishedAt = null as never
+    module.unpublishedAt = null as never
+    const saved = await this.aiModuleRepository.save(module)
+    await this.recordChange(saved, actor, `rollback:${versionId}`)
+    return saved
   }
 
   async generatePatch(
@@ -247,7 +409,9 @@ export class AIModulesService {
       module.aiModel = defaultModel as any
       module.aiModelId = defaultModel.id
 
-      return this.aiModuleRepository.save(module)
+      const saved = await this.aiModuleRepository.save(module)
+      await this.recordChange(saved, 'ai', 'generate')
+      return saved
     } catch (error) {
       throw new BadRequestException(
         `Failed to generate patch: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -409,7 +573,9 @@ export class AIModulesService {
 
     // 先保存定义再写模块 patch：定义失败时不会留下“patch 已更新、定义没更新”的半状态。
     await this.saveDefinition(module.id, definition)
-    return this.aiModuleRepository.save(module)
+    const saved = await this.aiModuleRepository.save(module)
+    await this.recordChange(saved, 'ai', 'generate-from-definition', definition)
+    return saved
   }
 
   async modifyExistingModule(
@@ -495,7 +661,9 @@ export class AIModulesService {
       module.aiModel = defaultModel as any
       module.aiModelId = defaultModel.id
 
-      return this.aiModuleRepository.save(module)
+      const saved = await this.aiModuleRepository.save(module)
+      await this.recordChange(saved, 'ai', 'modify')
+      return saved
     } catch (error) {
       throw new BadRequestException(
         `Failed to generate patch: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -698,66 +866,61 @@ export class AIModulesService {
     return extractAiJsonObject(response)
   }
 
+  /**
+   * 运行 CRM 回归场景：直接校验 patchContent.objects / semantic.entities 的字段与关系。
+   * 结果写 ai_module_tests，并把覆盖率汇总到 module.testResults.coverage。
+   */
   async runTests(moduleId: string, organizationId: string): Promise<AIModuleTest[]> {
     const module = await this.findOne(moduleId, organizationId)
-
-    // Create test cases for CRM entities
-    const testCases = [
-      { name: 'Customer CRUD', entityType: 'Customer' },
-      { name: 'Order CRUD', entityType: 'Order' },
-      { name: 'OrderTracking CRUD', entityType: 'OrderTracking' },
-      { name: 'FinancialTransaction CRUD', entityType: 'FinancialTransaction' },
-      { name: 'Cross-Entity Relations', entityType: 'Relations' },
-    ]
-
+    const scenarioResults = runAllCrmScenarios(module.patchContent)
     const tests: AIModuleTest[] = []
 
-    for (const testCase of testCases) {
+    for (const scenario of scenarioResults) {
+      const started = Date.now()
       const test = this.aiModuleTestRepository.create({
         moduleId: module.id,
-        testName: testCase.name,
-        entityType: testCase.entityType,
-        status: TestStatus.RUNNING,
+        testName: scenario.scenario,
+        entityType: scenario.entityType,
+        status:
+          scenario.status === 'passed'
+            ? TestStatus.PASSED
+            : scenario.status === 'skipped'
+              ? TestStatus.SKIPPED
+              : TestStatus.FAILED,
+        errorMessage: scenario.errors.join('; '),
+        executedAt: new Date(),
+        duration: Date.now() - started,
+        testData: { scenario: scenario.scenario },
+        result: {
+          status: scenario.status,
+          errors: scenario.errors,
+          warnings: scenario.warnings,
+          coverage: scenario.coverage,
+        },
       })
       await this.aiModuleTestRepository.save(test)
-
-      try {
-        // Simulate test execution (in real implementation, this would validate the patch)
-        const startTime = Date.now()
-        await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate test
-        const duration = Date.now() - startTime
-
-        // For now, all tests pass (in real implementation, validate patch against schemas)
-        test.status = TestStatus.PASSED
-        test.executedAt = new Date()
-        test.duration = duration
-        test.result = { passed: true, message: 'Test passed' }
-
-        await this.aiModuleTestRepository.save(test)
-        tests.push(test)
-      } catch (error) {
-        test.status = TestStatus.FAILED
-        test.errorMessage = error instanceof Error ? error.message : 'Test failed'
-        test.executedAt = new Date()
-        await this.aiModuleTestRepository.save(test)
-        tests.push(test)
-      }
+      tests.push(test)
     }
 
-    // Update module test results
-    const passedTests = tests.filter((t) => t.status === TestStatus.PASSED).length
+    const passedTests = tests.filter((test) => test.status === TestStatus.PASSED).length
+    const failedTests = tests.filter((test) => test.status === TestStatus.FAILED).length
+    const skippedTests = tests.filter((test) => test.status === TestStatus.SKIPPED).length
     module.testResults = {
       total: tests.length,
       passed: passedTests,
-      failed: tests.length - passedTests,
-      tests: tests.map((t) => ({
-        id: t.id,
-        name: t.testName,
-        status: t.status,
+      failed: failedTests,
+      skipped: skippedTests,
+      coverage: coverageFor(scenarioResults),
+      tests: tests.map((test) => ({
+        id: test.id,
+        name: test.testName,
+        entityType: test.entityType,
+        status: test.status,
+        errors: test.result?.errors ?? [],
       })),
     }
-    await this.aiModuleRepository.save(module)
-
+    const saved = await this.aiModuleRepository.save(module)
+    await this.recordChange(saved, 'system', 'test')
     return tests
   }
 
@@ -770,7 +933,9 @@ export class AIModulesService {
     }
 
     module.status = AIModuleStatus.PENDING_REVIEW
-    return this.aiModuleRepository.save(module)
+    const saved = await this.aiModuleRepository.save(module)
+    await this.recordChange(saved, 'system', 'submit-review')
+    return saved
   }
 
   async review(
@@ -811,7 +976,30 @@ export class AIModulesService {
       }
     }
 
-    await this.aiModuleRepository.save(module)
+    const saved = await this.aiModuleRepository.save(module)
+    await this.recordChange(saved, reviewerId, `review-${decision}`)
+    if (module.createdById) {
+      await this.notifications?.sendToUser(
+        module.createdById,
+        {
+          organizationId,
+          type: decision === ReviewDecision.APPROVED ? 'success' : 'warning',
+          title:
+            decision === ReviewDecision.APPROVED
+              ? `AI 模块 ${module.name} 已通过评审`
+              : `AI 模块 ${module.name} 被驳回`,
+          message:
+            decision === ReviewDecision.APPROVED
+              ? comments || '评审通过，可进入发布流程'
+              : rejectionReason || comments || '请修改后重新提交评审',
+          category: 'approval',
+          priority: 'high',
+          actionUrl: '/admin/ai-modules/review',
+          data: { moduleId: module.id, decision },
+        },
+        review.id,
+      )
+    }
 
     return review
   }
@@ -833,7 +1021,9 @@ export class AIModulesService {
     // when patch is applied via PatchManager.applyPatch(); patchContent is normalized
     // with patchId, timestamp, actor for protocol compatibility.
 
-    return this.aiModuleRepository.save(module)
+    const saved = await this.aiModuleRepository.save(module)
+    await this.recordChange(saved, 'system', 'publish')
+    return saved
   }
 
   private async registerModule(module: AIModule): Promise<import('../module-registry/module-registry.entity').ModuleRegistry> {
@@ -1097,9 +1287,36 @@ export class AIModulesService {
     module.status = AIModuleStatus.UNPUBLISHED
     module.unpublishedAt = new Date()
 
-    // TODO: Rollback patch if possible
-    // await patchManager.rollbackPatch(module.patchContent)
-
-    return this.aiModuleRepository.save(module)
+    // 下架只改状态；回滚内容走版本历史，避免下架时隐式改写 DSL。
+    const saved = await this.aiModuleRepository.save(module)
+    await this.recordChange(saved, 'system', 'unpublish')
+    return saved
   }
+}
+
+/** 递归比较两个 JSON 值，输出 path/from/to；数组按整体比较。 */
+export function diffJson(
+  from: unknown,
+  to: unknown,
+  path = '',
+): Array<{ path: string; from: unknown; to: unknown }> {
+  if (JSON.stringify(from) === JSON.stringify(to)) return []
+  const isObject = (value: unknown): value is Record<string, unknown> =>
+    Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+  if (!isObject(from) || !isObject(to)) {
+    return [{ path: path || '$', from, to }]
+  }
+  const keys = new Set([...Object.keys(from), ...Object.keys(to)])
+  const changes: Array<{ path: string; from: unknown; to: unknown }> = []
+  for (const key of [...keys].sort()) {
+    const nextPath = path ? `${path}.${key}` : key
+    if (!(key in from)) {
+      changes.push({ path: nextPath, from: undefined, to: to[key] })
+    } else if (!(key in to)) {
+      changes.push({ path: nextPath, from: from[key], to: undefined })
+    } else {
+      changes.push(...diffJson(from[key], to[key], nextPath))
+    }
+  }
+  return changes
 }

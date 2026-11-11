@@ -20,7 +20,14 @@ export { permissionsApi } from './permissions.api'
 export { auditLogsApi } from './audit-logs.api'
 export { settingsApi } from './settings.api'
 export { aiModelsApi } from './ai-models.api'
-export { aiModulesApi } from './ai-modules.api'
+export {
+  aiModulesApi,
+  type AIModule,
+  type AIModuleStatus,
+  type AIModuleVersion,
+  type AIModuleVersionPage,
+  type AIModuleVersionDiff,
+} from './ai-modules.api'
 export { moduleRegistryApi } from './module-registry.api'
 export { pluginsApi } from './plugins.api'
 export { atomicApi } from './atomic.api'

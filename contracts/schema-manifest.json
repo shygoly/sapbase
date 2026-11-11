@@ -189,6 +189,22 @@
         "mergedDefinition"
       ]
     },
+    "ai_module_versions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "moduleId",
+        "version",
+        "patchContent",
+        "metadata",
+        "definition",
+        "status",
+        "actor",
+        "reason"
+      ]
+    },
     "ai_module_reviews": {
       "columns": [
         "id",

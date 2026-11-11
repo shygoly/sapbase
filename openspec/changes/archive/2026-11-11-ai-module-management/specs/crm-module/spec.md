@@ -1,6 +1,5 @@
 # CRM Module Testing Specification
 
-## MODIFIED Requirements
 
 ### Requirement: CRM Module Testing Integration
 The CRM module SHALL serve as a test suite for validating AI-generated patches.
