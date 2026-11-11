@@ -10,6 +10,9 @@ interface BackendMenuItem {
   disabled?: boolean
   order: number
   children?: BackendMenuItem[]
+  surface?: 'portal' | 'console' | 'both'
+  componentKey?: string
+  interaction?: Record<string, unknown>
 }
 
 /** Normalize permissions from backend (may be string[] or comma-separated string). */
@@ -51,6 +54,9 @@ export function adaptBackendMenuToUnified(
         disabled: item.disabled,
         order: item.order,
         children: filteredChildren && filteredChildren.length > 0 ? filteredChildren : undefined,
+        surface: item.surface ?? 'both',
+        componentKey: item.componentKey,
+        interaction: item.interaction,
       }
     })
     // Keep parent items even if they have no children (they might be expandable or have a path)

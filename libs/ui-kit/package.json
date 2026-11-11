@@ -76,6 +76,7 @@
     "./command": "./src/command.tsx",
     "./config/data-table": "./src/config/data-table.ts",
     "./confirm-dialog": "./src/confirm-dialog.tsx",
+    "./usage-meter": "./src/usage-meter.tsx",
     "./context-menu": "./src/context-menu.tsx",
     "./dialog": "./src/dialog.tsx",
     "./drawer": "./src/drawer.tsx",

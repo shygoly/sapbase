@@ -10,6 +10,7 @@ import { useAuthStore } from '@sap/shared-state'
 import { Button } from '@sap/ui-kit/button'
 import { Card, CardContent } from '@sap/ui-kit/card'
 import { SchemaForm } from '../components/schema-form'
+import { resolveUiComponent } from '../runtime/component-registry'
 import { SchemaList } from '../components/schema-list'
 import PageContainer from '../layout/page-container'
 import type { FieldDefinition, ObjectSchema } from '../schema/types'
@@ -22,6 +23,10 @@ export interface BlueprintUiPage {
   entity: string
   route?: string
   fields?: string[]
+  /** 可选组件键；未知值按 type 回退默认组件。 */
+  componentKey?: string
+  /** 交互标识（pagination/confirm/draft/virtualization）。 */
+  interaction?: Record<string, unknown>
 }
 
 export interface BlueprintUiMenu {
@@ -201,6 +206,7 @@ export function BlueprintAppRuntime({ packageId, pageId }: BlueprintAppRuntimePr
   }
 
   const schema = entity ? objectSchemaOf(entity) : null
+  const component = resolveUiComponent(activePage.componentKey, activePage.type)
 
   return (
     <PageContainer
@@ -240,13 +246,13 @@ export function BlueprintAppRuntime({ packageId, pageId }: BlueprintAppRuntimePr
           <CardContent className='pt-6'>
             {!schema ? (
               <div className='text-muted-foreground'>实体 {activePage.entity} 未在包内声明。</div>
-            ) : activePage.type === 'list' ? (
+            ) : component === 'schema-list' || component === 'workbench' ? (
               <SchemaList
                 schema={schema}
                 data={records}
                 onRowClick={(row) => setSelected(row)}
               />
-            ) : activePage.type === 'form' ? (
+            ) : component === 'schema-form' ? (
               <SchemaForm
                 schema={schema}
                 onSubmit={async (data) => {

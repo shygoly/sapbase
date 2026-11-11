@@ -15,6 +15,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <LayoutRuntimeAdapter
       requiredPermissions={['users:read', 'roles:read']}
       requireAll={false}
+      surface='console'
     >
       {children}
     </LayoutRuntimeAdapter>

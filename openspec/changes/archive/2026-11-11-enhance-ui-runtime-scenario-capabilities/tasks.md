@@ -37,27 +37,22 @@
 
 ## 4. 元数据驱动装配（P0 · 高优先）
 
-- [ ] 4.1 菜单或 Blueprint UI 响应携带可选交互标识（向后兼容）
-- [ ] 4.2 Runtime / 布局按 `componentKey` 白名单解析组件；禁止远端脚本执行
-- [ ] 4.3 无标识时保持现有硬编码路由行为不变
+- [x] 4.1 `menu_items.surface/componentKey/interaction` + `BlueprintUiPage.componentKey/interaction`（均可选）
+- [x] 4.2 `resolveUiComponent` 本地白名单；未知键按 type 回退，无动态 import/远端脚本
+- [x] 4.3 无标识时回退 schema-list/schema-form/detail，现有路由与渲染不变
 
 ## 5. 中优先增强（P1）
 
-- [ ] 5.1 `ui-kit` data-table：超过阈值启用虚拟滚动；小表路径回归
+- [x] 5.1 `DataTable` 增加 virtualizeThreshold（默认 100）；小表仍走原 ScrollArea 路径
 - [x] 5.2 `@sap/ui-runtime/format` + SchemaList 默认使用；3 tests 通过
-- [ ] 5.3 品牌主题与租户扩展字段可见性：在现有 Brand/Org 上下文上加深，不新建 tenant-core 包
+- [x] 5.3 `BrandConfigProvider` 写入 `--brand-*`/`--seal` CSS 变量；仍复用现有 Brand/Org 上下文
 - [x] 5.4 切组织后样板页 refetch（Voyage Workbench + `useOrganizationStore`）；
       Runtime 级通用失效仍后续
-- [ ] 5.5 可选配额/用量提示原语（壳或 Collection 工具区）；禁止业务页私自第二套计量 UI
-- [ ] 5.6 租户自助入口收敛到 **Portal** 壳/组织设置区（用户/角色/部门/菜单/品牌等）；
-      从 Console 迁回或双挂过渡期后下线 Console 唯一入口
-- [ ] 5.7 菜单 `surface`（portal | console）：Portal/Console 导航按台面过滤；
-      Console 默认仅平台治理项；Portal 含业务壳 + 组织管理，排除平台专属项
-- [ ] 5.8 航运样板从正式产品导航降级：`dashboard/shipping/**` 与 console
-      `system-settings/{fuel,vessel,years}` 不作为默认台面入口（保留作试验/能力样板可选）
-- [ ] 5.9 PiAgent 壳层当前页面板（侧栏/抽屉）+ 固定触发器；悬浮球可选且非唯一；
-      独立菜单页仅作历史/Builder/联调；业务页禁止私挂聊天窗；打开时注入页/选中上下文
-      （样板页已遵守「不私挂」；壳面板实现后续）
+- [x] 5.5 `@sap/ui-kit/usage-meter` 统一配额/用量原语
+- [x] 5.6 Portal `/dashboard/settings` 组织设置区 + 品牌维护；成员/角色/部门/菜单过渡期双挂 Console
+- [x] 5.7 `surface` 字段 + `UnifiedSidebar` 递归过滤；Portal/Console layout 分别传台面
+- [x] 5.8 迁移/种子将航运与 system-settings 样板路径 `visible=false`（保留可手动开启）
+- [x] 5.9 `PiAgentShell` 固定触发器 + 可选悬浮球 + route/entity/org 上下文芯片；业务页无私挂
 - [x] 5.10 `RuntimeErrorBoundary` + 复用 `ConfirmDialog`（脏切换确认）
 - [x] 5.11 Lucide 映射覆盖 seed key/历史别名；未知 key 用 Circle 中性占位
 

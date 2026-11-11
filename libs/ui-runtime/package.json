@@ -23,6 +23,7 @@
     "./runtime/FormRuntime": "./src/runtime/FormRuntime.tsx",
     "./runtime/PageRuntime": "./src/runtime/PageRuntime.tsx",
     "./runtime": "./src/runtime/index.ts",
+    "./runtime/component-registry": "./src/runtime/component-registry.ts",
     "./schema/adapters": "./src/schema/adapters.ts",
     "./schema": "./src/schema/index.ts",
     "./schema/registry": "./src/schema/registry.ts",

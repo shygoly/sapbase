@@ -20,3 +20,4 @@ export {
 } from './runtime-access';
 export { useLeaveGuard } from './FormRuntime';
 export { RuntimeErrorBoundary } from './RuntimeErrorBoundary';
+export { resolveUiComponent, type ResolvedUiComponentKey } from './component-registry';

@@ -36,6 +36,8 @@ interface LayoutRuntimeAdapterProps {
    * Whether to show loading state during auth check
    */
   showLoading?: boolean;
+  /** 台面：portal / console；用于菜单 surface 过滤。 */
+  surface?: 'portal' | 'console';
 }
 
 /**
@@ -53,6 +55,7 @@ export function LayoutRuntimeAdapter({
   requireAll = false,
   accessDeniedFallback,
   showLoading = true,
+  surface,
 }: LayoutRuntimeAdapterProps) {
   const { isAuthenticated, isLoading } = useRequireAuth()
   const { hasAllPermissions, hasAnyPermission } = usePermissionStore()
@@ -119,7 +122,7 @@ export function LayoutRuntimeAdapter({
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-background">
-        <UnifiedSidebar source="api" />
+        <UnifiedSidebar source="api" surface={surface} />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header assistant={<PiAgentShell />} />
           <main className="flex-1 overflow-auto">

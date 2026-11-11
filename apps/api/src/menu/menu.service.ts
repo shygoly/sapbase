@@ -101,7 +101,7 @@ export class MenuService {
       updateData.parent = parent ?? undefined
     }
 
-    await this.menuRepository.update({ id, organizationId }, updateData)
+    await this.menuRepository.update({ id, organizationId }, updateData as never)
     return this.menuRepository.findOne({
       where: { id, organizationId },
       relations: ['children', 'parent'],
@@ -112,7 +112,7 @@ export class MenuService {
     // Soft delete: set parent to null for children
     await this.menuRepository.update(
       { parent: { id }, organizationId },
-      { parent: null } as unknown as Partial<MenuItem>,
+      { parent: null } as never,
     )
     await this.menuRepository.delete({ id, organizationId })
   }

@@ -10,6 +10,12 @@ export interface UnifiedMenuItem {
   children?: UnifiedMenuItem[]
   isActive?: boolean
   shortcut?: [string, string]
+  /** 台面：portal / console / both；缺省 both。 */
+  surface?: 'portal' | 'console' | 'both'
+  /** Runtime 组件键白名单；未知值回退默认组件。 */
+  componentKey?: string
+  /** 交互标识（pagination/confirm/draft/virtualization）。 */
+  interaction?: Record<string, unknown>
 }
 
 export interface MenuSource {

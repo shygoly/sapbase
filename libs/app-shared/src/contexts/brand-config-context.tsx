@@ -47,6 +47,25 @@ export function BrandConfigProvider({ children }: { children: React.ReactNode })
     fetchConfig()
   }, [fetchConfig])
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const root = document.documentElement
+    const theme = config?.theme
+    if (!theme) {
+      for (const key of ['--brand-primary', '--brand-secondary', '--brand-accent', '--brand-bg', '--brand-fg', '--seal']) {
+        root.style.removeProperty(key)
+      }
+      return
+    }
+    root.style.setProperty('--brand-primary', theme.primary)
+    root.style.setProperty('--brand-secondary', theme.secondary)
+    root.style.setProperty('--brand-accent', theme.accent)
+    root.style.setProperty('--brand-bg', theme.background)
+    root.style.setProperty('--brand-fg', theme.foreground)
+    // 侧栏印章色跟随品牌主色；业务页不另造主题变量。
+    root.style.setProperty('--seal', theme.primary)
+  }, [config?.theme])
+
   const updateConfig = useCallback(
     async (data: UpdateBrandConfigDto) => {
       if (!currentOrganization?.id) {

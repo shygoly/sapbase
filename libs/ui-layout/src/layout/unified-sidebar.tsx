@@ -63,6 +63,21 @@ interface UnifiedSidebarProps {
   source: 'static' | 'api'
   staticItems?: UnifiedMenuItem[]
   onLogout?: () => void
+  /** 台面过滤：portal / console；缺省 both 显示全部。 */
+  surface?: 'portal' | 'console'
+}
+
+function filterBySurface(
+  items: UnifiedMenuItem[],
+  surface: 'portal' | 'console',
+): UnifiedMenuItem[] {
+  return items
+    .filter((item) => !item.surface || item.surface === 'both' || item.surface === surface)
+    .map((item) => ({
+      ...item,
+      children: item.children ? filterBySurface(item.children, surface) : undefined,
+    }))
+    .filter((item) => (item.children && item.children.length > 0) || item.path)
 }
 
 function MenuItemIcon({ icon }: { icon?: string }) {
@@ -185,9 +200,11 @@ export function UnifiedSidebar({
   source,
   staticItems,
   onLogout,
+  surface,
 }: UnifiedSidebarProps) {
   const pathname = usePathname()
   const state = useUnifiedMenu({ source, staticItems })
+  const items = surface ? filterBySurface(state.items, surface) : state.items
   const { user } = useAuth()
   const { logout } = useLogout()
 
@@ -227,7 +244,7 @@ export function UnifiedSidebar({
           </div>
         ) : (
           <SidebarMenu>
-            {state.items.map((item) => (
+            {items.map((item) => (
               <MenuItemComponent
                 key={item.id}
                 item={item}

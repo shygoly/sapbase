@@ -29,7 +29,7 @@ export default function DashboardLayout({
     <KBar>
       <SidebarProvider defaultOpen={defaultOpen}>
         <InfobarProvider defaultOpen={false}>
-          <UnifiedSidebar source="api" />
+          <UnifiedSidebar source="api" surface="portal" />
           <SidebarInset>
             <Header assistant={<PiAgentShell />} />
             {/* page main content */}

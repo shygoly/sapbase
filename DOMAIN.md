@@ -153,6 +153,8 @@ spec: apps/api/src/audit-logs/audit-chain.spec.ts
 
 平台与租户聚合。`organizations` 是租户根；其余表通过 `organizationId` 归属租户。
 `users` 是平台用户；同一用户可属于多个组织，成员关系在 `organization_members`。
+`menu_items.surface` 区分 portal / console / both；`componentKey` 只允许 Runtime 白名单，
+`interaction` 存分页/确认/草稿/虚拟化等可选交互（未知键回退默认行为）。
 
 ### 关系
 

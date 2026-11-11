@@ -42,6 +42,7 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1794200000000-AddAIModuleVersions.ts'),
     path.join(__dirname, '1794300000000-CreateSearchDocuments.ts'),
     path.join(__dirname, '1794400000000-AddEvolutionBindingToProposals.ts'),
+    path.join(__dirname, '1794500000000-AddMenuSurfaceMetadata.ts'),
   ],
   synchronize: false,
   logging: true,
