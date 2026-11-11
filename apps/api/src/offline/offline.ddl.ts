@@ -1,0 +1,48 @@
+export const OFFLINE_DDL: string[] = [
+  `CREATE TABLE IF NOT EXISTS public.offline_packages (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    "createdAt" timestamp without time zone DEFAULT now() NOT NULL,
+    "updatedAt" timestamp without time zone DEFAULT now() NOT NULL,
+    "organizationId" uuid NOT NULL,
+    key character varying(128) NOT NULL,
+    version integer DEFAULT 1 NOT NULL,
+    title character varying(255) NOT NULL,
+    status character varying(16) DEFAULT 'draft' NOT NULL,
+    manifest jsonb DEFAULT '{}'::jsonb NOT NULL,
+    signature text,
+    "expiresAt" timestamp with time zone,
+    "createdBy" uuid,
+    CONSTRAINT "PK_offline_packages" PRIMARY KEY (id),
+    CONSTRAINT "UQ_offline_package_org_key_version" UNIQUE ("organizationId", key, version)
+  )`,
+  `CREATE TABLE IF NOT EXISTS public.offline_entitlements (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    "createdAt" timestamp without time zone DEFAULT now() NOT NULL,
+    "updatedAt" timestamp without time zone DEFAULT now() NOT NULL,
+    "organizationId" uuid NOT NULL,
+    "packageId" uuid NOT NULL,
+    "userId" uuid NOT NULL,
+    "deviceId" character varying(128) NOT NULL,
+    status character varying(16) DEFAULT 'active' NOT NULL,
+    "expiresAt" timestamp with time zone NOT NULL,
+    "grantedBy" uuid,
+    "revokedAt" timestamp with time zone,
+    CONSTRAINT "PK_offline_entitlements" PRIMARY KEY (id),
+    CONSTRAINT "UQ_offline_entitlement_user_device_package" UNIQUE ("organizationId", "userId", "deviceId", "packageId")
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_offline_entitlement_org_user ON public.offline_entitlements ("organizationId", "userId", status)`,
+  `CREATE TABLE IF NOT EXISTS public.offline_devices (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    "createdAt" timestamp without time zone DEFAULT now() NOT NULL,
+    "updatedAt" timestamp without time zone DEFAULT now() NOT NULL,
+    "organizationId" uuid NOT NULL,
+    "userId" uuid NOT NULL,
+    "deviceId" character varying(128) NOT NULL,
+    name character varying(128),
+    status character varying(16) DEFAULT 'active' NOT NULL,
+    "lastSeenAt" timestamp with time zone,
+    CONSTRAINT "PK_offline_devices" PRIMARY KEY (id),
+    CONSTRAINT "UQ_offline_device_org_user_device" UNIQUE ("organizationId", "userId", "deviceId")
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_offline_device_org_user ON public.offline_devices ("organizationId", "userId", status)`,
+]

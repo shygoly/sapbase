@@ -408,6 +408,27 @@ code_markers:
   - apps/api/src/metrics/metrics.service.ts
 ```
 
+### D-20：离线包用签名 manifest + 设备绑定授权，不做永久对象 URL
+
+```yaml decision
+id: D-20
+title: 离线包用签名 manifest + 设备绑定授权，不做永久对象 URL
+status: accepted
+date: 2026-11
+context: |
+  离线播放需要可靠的内容完整性与授权边界；直接给对象地址会绕过撤销/过期，
+  只靠客户端缓存标记又无法阻止跨用户读取。
+decision: |
+  manifest 含校验和与 Ed25519 签名；授权绑定 org+user+device+package 并有过期；
+  下载使用 5 分钟 HMAC 令牌 + Range。客户端按用户/设备/包命名空间缓存，校验和/过期/撤销后清理。
+references:
+  - INV-OF-01
+  - INV-OF-03
+code_markers:
+  - apps/api/src/offline/offline.service.ts
+  - libs/api-client/src/offline/client.ts
+```
+
 ---
 
 ## 附录：命名空间约定

@@ -74,6 +74,13 @@ export const AUDIT_EVENT_CATALOG: AuditEventDefinition[] = [
   def('record.snapshot', 'record', ['actor'], 'standard'),
   def('record.snapshot.publish', 'record', ['actor'], 'long'),
   def('record.snapshot.restore', 'record', ['actor'], 'long'),
+  def('offline.package.create', 'offline_package', ['actor'], 'long'),
+  def('offline.package.publish', 'offline_package', ['actor'], 'long'),
+  def('offline.package.revoke', 'offline_package', ['actor'], 'long', true),
+  def('offline.device.revoke', 'offline_device', ['actor'], 'long', true),
+  def('offline.entitlement.grant', 'offline_entitlement', ['actor'], 'long'),
+  def('offline.entitlement.revoke', 'offline_entitlement', ['actor'], 'long', true),
+  def('offline.cleanup', 'offline_entitlement', ['actor'], 'long'),
 ]
 
 const BY_ACTION = new Map(AUDIT_EVENT_CATALOG.map((item) => [item.action, item]))

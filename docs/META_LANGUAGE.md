@@ -467,6 +467,27 @@ AI 参考分不能作为正式成绩/归档
 实现落点：`apps/api/src/metrics/`；契约：`schemas/metrics.schema.json`；
 领域表：`DOMAIN.md`「指标与看板」；决策：`DECISIONS.md` D-19。
 
+### 3.21 Offline Content（离线内容）
+
+离线是**可选能力**，在线播放/资产/旧客户端行为不变：
+
+- **Package**：`offline_packages` 存 manifest + Ed25519 签名 + 过期；manifest 含 asset 变体/大小/校验和/标识。
+- **Entitlement**：`offline_entitlements` 绑定 org+user+device+package，支持设备上限、换设备与撤销。
+- **Device**：`offline_devices` 按用户/设备唯一；超限拒绝并要求先撤销。
+- **Download**：短期 HMAC 令牌 + Range；客户端分片/续传/校验和；不为对象暴露永久 URL。
+- **Playback**：校验签名/过期/设备/标识；偏好按用户隔离；过期/撤销清理。
+- **Label**：AI 内容 manifest 必须带显式/隐式标识，缺失拒绝打包/播放。
+
+```text
+未启用离线时不得产生包/授权
+跨租户/跨用户缓存拒绝
+manifest/资产篡改拒绝
+授权过期/撤销后不可播放/续期
+```
+
+实现落点：`apps/api/src/offline/` + `libs/api-client/src/offline/`；契约：`schemas/offline.schema.json`；
+领域表：`DOMAIN.md`「离线内容」；决策：`DECISIONS.md` D-20。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -540,6 +561,11 @@ AI 参考分不能作为正式成绩/归档
 64. **预警去重**：冷却期内不重复通知；恢复发 resolved（INV-MT-04）。
 65. **跨租户隔离**：指标/快照/看板/预警绑定组织，跨租户不聚合（INV-MT-05）。
 66. **旧报表不变**：module_statistics/航运报表/旧页面不改（INV-MT-06）。
+67. **manifest 可验证**：离线 manifest 含校验和与 Ed25519 签名；篡改拒绝（INV-OF-01）。
+68. **授权绑定设备**：org+user+device+package 绑定；超设备上限拒绝（INV-OF-02）。
+69. **短期下载令牌**：不得暴露永久对象 URL；令牌过期/伪造拒绝（INV-OF-03）。
+70. **过期/撤销即停**：授权过期/撤销后不可播放或续期（INV-OF-04）。
+71. **离线标识保留**：AI 内容 manifest 必须带显式/隐式标识，缺失拒绝（INV-OF-05）。
 
 ---
 

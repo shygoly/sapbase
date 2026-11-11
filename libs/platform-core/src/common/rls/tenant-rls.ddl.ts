@@ -61,6 +61,9 @@ const DIRECT_TABLES = [
   'dashboard_widgets',
   'metric_alerts',
   'metric_alert_events',
+  'offline_packages',
+  'offline_entitlements',
+  'offline_devices',
   'asset_variants',
   'asset_upload_sessions',
 ] as const

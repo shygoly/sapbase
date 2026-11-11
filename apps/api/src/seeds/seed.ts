@@ -69,6 +69,8 @@ const PERMISSION_CATALOG: Array<{ name: string; description: string; category: s
   { name: 'app:release:approve:security', description: '高危变更安全审批', category: 'app-release' },
   { name: 'jobs:read', description: '查看异步任务', category: 'jobs' },
   { name: 'jobs:manage', description: '管理异步任务', category: 'jobs' },
+  { name: 'offline:read', description: '查看/下载离线内容', category: 'offline' },
+  { name: 'offline:manage', description: '管理离线包/设备/授权', category: 'offline' },
   { name: 'metrics:read', description: '查看指标/看板', category: 'metrics' },
   { name: 'metrics:manage', description: '管理指标/快照/回填', category: 'metrics' },
   { name: 'dashboards:manage', description: '管理看板', category: 'metrics' },

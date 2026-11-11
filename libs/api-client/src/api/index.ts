@@ -112,3 +112,10 @@ export {
   type MetricAggregation,
   type MetricSourceType,
 } from './metrics.api'
+
+export {
+  offlineApi,
+  type OfflinePackageRecord,
+  type OfflineDeviceRecord,
+  type OfflineEntitlementRecord,
+} from './offline.api'

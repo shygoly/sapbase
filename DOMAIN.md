@@ -48,6 +48,9 @@
 | dashboard_widgets | 指标与看板 |
 | metric_alerts | 指标与看板 |
 | metric_alert_events | 指标与看板 |
+| offline_packages | 离线内容 |
+| offline_entitlements | 离线内容 |
+| offline_devices | 离线内容 |
 | ai_content_labels | AI 内容治理 |
 | ai_score_records | AI 内容治理 |
 | assets | 资产 |
@@ -449,6 +452,42 @@ enforcement:
   - test:tests/notification-center.test.js#XSS
 db: none
 spec: tests/notification-center.test.js
+```
+
+---
+
+## 离线内容
+
+覆盖表：offline_packages, offline_entitlements, offline_devices
+
+`offline_packages` 存签名 manifest（校验和/标识/过期）；`offline_entitlements` 绑定
+org+user+device+package；`offline_devices` 按用户/设备唯一。下载只发短期令牌，
+不暴露永久对象地址。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| offline_packages.organizationId | organizations.id | 包归属组织 | none | 跨租户拒绝 |
+| offline_entitlements.packageId | offline_packages.id | 授权归属包 | none | 撤销/过期 |
+| offline_entitlements.organizationId | organizations.id | 授权归属组织 | none | 设备绑定 |
+| offline_devices.organizationId | organizations.id | 设备归属组织 | none | 用户+设备唯一 |
+
+### 状态词
+
+包状态 `draft/published/revoked`；授权 `active/revoked/expired`；设备 `active/revoked`。
+
+### 不变量
+
+```yaml invariant
+id: INV-OF-01
+tables: [offline_packages, offline_entitlements, offline_devices]
+desc: manifest 签名可验证；授权绑定设备；下载短期令牌；过期/撤销即停；AI 标识缺失拒绝。
+trigger: 离线包创建/下载/播放/撤销/清理
+enforcement:
+  - test:apps/api/src/offline/offline.service.spec.ts#OfflineService
+db: rls:offline_packages
+spec: apps/api/src/offline/offline.service.spec.ts
 ```
 
 ---

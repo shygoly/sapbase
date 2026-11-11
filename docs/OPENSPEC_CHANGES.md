@@ -7,11 +7,11 @@
 
 | 指标 | 数量 |
 | --- | --- |
-| 进行中 | 21 |
+| 进行中 | 20 |
 | 已完成未归档 | 0 |
 | 无任务/骨架 | 2 |
-| 已归档 | 64 |
-| 活跃任务 | 139/779 |
+| 已归档 | 65 |
+| 活跃任务 | 139/737 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -38,7 +38,6 @@
 | [add-document-intelligence](../openspec/changes/add-document-intelligence/) | 文档智能（解析 → 结构化 → 确认） | 0/52 | 8 req / 1 文件 | [P](../openspec/changes/add-document-intelligence/proposal.md) [D](../openspec/changes/add-document-intelligence/design.md) [T](../openspec/changes/add-document-intelligence/tasks.md) [S](../openspec/changes/add-document-intelligence/specs) | 2026-11-09 |
 | [add-education-reference-blueprint](../openspec/changes/add-education-reference-blueprint/) | 教育参考蓝图（Education Reference Blueprint） | 0/74 | 12 req / 1 文件 | [P](../openspec/changes/add-education-reference-blueprint/proposal.md) [D](../openspec/changes/add-education-reference-blueprint/design.md) [T](../openspec/changes/add-education-reference-blueprint/tasks.md) [S](../openspec/changes/add-education-reference-blueprint/specs) | 2026-11-09 |
 | [add-external-integration-connector](../openspec/changes/add-external-integration-connector/) | 外部集成连接器 | 0/58 | 10 req / 1 文件 | [P](../openspec/changes/add-external-integration-connector/proposal.md) [D](../openspec/changes/add-external-integration-connector/design.md) [T](../openspec/changes/add-external-integration-connector/tasks.md) [S](../openspec/changes/add-external-integration-connector/specs) | 2026-11-09 |
-| [add-offline-content-package](../openspec/changes/add-offline-content-package/) | 离线内容包 | 0/42 | 8 req / 1 文件 | [P](../openspec/changes/add-offline-content-package/proposal.md) [D](../openspec/changes/add-offline-content-package/design.md) [T](../openspec/changes/add-offline-content-package/tasks.md) [S](../openspec/changes/add-offline-content-package/specs) | 2026-11-09 |
 | [migrate-to-saas-architecture](../openspec/changes/migrate-to-saas-architecture/) | Migrate to SaaS Architecture | 45/75 | 21 req / 4 文件 | [P](../openspec/changes/migrate-to-saas-architecture/proposal.md) [D](../openspec/changes/migrate-to-saas-architecture/design.md) [T](../openspec/changes/migrate-to-saas-architecture/tasks.md) [S](../openspec/changes/migrate-to-saas-architecture/specs) | 2026-02-18 |
 
 ## 已完成未归档
@@ -77,6 +76,7 @@ _暂无_
 | [add-meta-contracts-and-checkers](../openspec/changes/archive/2026-11-11-add-meta-contracts-and-checkers/) | 建立四份机器可校验契约与 Checker（P0） | 30/30 | 5 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-meta-contracts-and-checkers/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-meta-contracts-and-checkers/design.md) [T](../openspec/changes/archive/2026-11-11-add-meta-contracts-and-checkers/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-meta-contracts-and-checkers/specs) | 2026-11-11 |
 | [add-metrics-and-dashboard-platform](../openspec/changes/archive/2026-11-11-add-metrics-and-dashboard-platform/) | 指标、看板与预警平台 | 53/53 | 10 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-metrics-and-dashboard-platform/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-metrics-and-dashboard-platform/design.md) [T](../openspec/changes/archive/2026-11-11-add-metrics-and-dashboard-platform/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-metrics-and-dashboard-platform/specs) | 2026-11-11 |
 | [add-notification-center-and-announcements](../openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/) | 通知中心与公告 | 62/62 | 10 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/design.md) [T](../openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/specs) | 2026-11-11 |
+| [add-offline-content-package](../openspec/changes/archive/2026-11-11-add-offline-content-package/) | 离线内容包 | 42/42 | 8 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-offline-content-package/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-offline-content-package/design.md) [T](../openspec/changes/archive/2026-11-11-add-offline-content-package/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-offline-content-package/specs) | 2026-11-11 |
 | [add-output-gate-and-shadow-release](../openspec/changes/archive/2026-11-11-add-output-gate-and-shadow-release/) | Add Output Gate and Shadow Release | 38/38 | 4 req / 2 文件 | [P](../openspec/changes/archive/2026-11-11-add-output-gate-and-shadow-release/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-output-gate-and-shadow-release/design.md) [T](../openspec/changes/archive/2026-11-11-add-output-gate-and-shadow-release/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-output-gate-and-shadow-release/specs) | 2026-11-11 |
 | [add-patch-dsl-system](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/) | Add Patch DSL System for Declarative Schema Modifications | 118/118 | 11 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/design.md) [T](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/specs) | 2026-11-11 |
 | [add-piagent-runtime-context-and-session](../openspec/changes/archive/2026-11-11-add-piagent-runtime-context-and-session/) | PiAgent Runtime 上下文、多轮会话与 SSE（P3a） | 42/42 | 7 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-piagent-runtime-context-and-session/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-piagent-runtime-context-and-session/design.md) [T](../openspec/changes/archive/2026-11-11-add-piagent-runtime-context-and-session/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-piagent-runtime-context-and-session/specs) | 2026-11-11 |

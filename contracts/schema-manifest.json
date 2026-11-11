@@ -1670,6 +1670,50 @@
         "notifiedAt",
         "metadata"
       ]
+    },
+    "offline_packages": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "key",
+        "version",
+        "title",
+        "status",
+        "manifest",
+        "signature",
+        "expiresAt",
+        "createdBy"
+      ]
+    },
+    "offline_entitlements": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "packageId",
+        "userId",
+        "deviceId",
+        "status",
+        "expiresAt",
+        "grantedBy",
+        "revokedAt"
+      ]
+    },
+    "offline_devices": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "userId",
+        "deviceId",
+        "name",
+        "status",
+        "lastSeenAt"
+      ]
     }
   }
 }

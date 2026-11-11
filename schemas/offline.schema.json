@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/offline.schema.json",
+  "title": "Offline Content",
+  "$defs": {
+    "offlineItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetId", "objectKey", "mimeType", "size", "label"],
+      "properties": {
+        "assetId": { "type": "string", "format": "uuid" },
+        "objectKey": { "type": "string" },
+        "variant": { "type": ["string", "null"] },
+        "mimeType": { "type": "string" },
+        "size": { "type": "string" },
+        "checksum": { "type": ["string", "null"] },
+        "label": {
+          "type": "object",
+          "required": ["explicit", "implicit", "required"],
+          "properties": {
+            "explicit": { "type": ["string", "null"] },
+            "implicit": { "type": ["string", "null"] },
+            "required": { "type": "boolean" }
+          }
+        },
+        "downloadToken": { "type": "string" },
+        "downloadUrl": { "type": "string" }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["offlinePackage", "organizationId", "key", "version", "items", "contentHash"],
+      "properties": {
+        "offlinePackage": { "const": "v1" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "key": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 },
+        "title": { "type": "string" },
+        "expiresAt": { "type": ["string", "null"], "format": "date-time" },
+        "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/offlineItem" } },
+        "contentHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "publicKey": { "type": "string" },
+        "signature": { "type": ["string", "null"] }
+      }
+    },
+    "entitlement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageId", "userId", "deviceId", "status", "expiresAt"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "packageId": { "type": "string", "format": "uuid" },
+        "userId": { "type": "string", "format": "uuid" },
+        "deviceId": { "type": "string" },
+        "status": { "enum": ["active", "revoked", "expired"] },
+        "expiresAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "device": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deviceId", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "userId": { "type": "string", "format": "uuid" },
+        "deviceId": { "type": "string" },
+        "name": { "type": ["string", "null"] },
+        "status": { "enum": ["active", "revoked"] },
+        "lastSeenAt": { "type": ["string", "null"], "format": "date-time" }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/manifest" },
+    { "$ref": "#/$defs/entitlement" },
+    { "$ref": "#/$defs/device" }
+  ]
+}
