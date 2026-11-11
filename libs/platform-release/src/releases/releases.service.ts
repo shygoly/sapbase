@@ -521,13 +521,16 @@ export class ReleasesService {
     if (release.compatibility?.rollbackSafe === false) {
       throw new ConflictException('目标 Release 数据不兼容，禁止回退')
     }
-    const current = await this.activations.findOne({
+    // 回退必须清掉该安装的全部 active 记录（含 canary cohort），
+    // 否则 activate() 的“同一安装已存在 active”会误拦。
+    const actives = await this.activations.find({
       where: { appInstallationId: input.appInstallationId, status: 'active' },
     })
-    if (current) {
-      current.status = 'rolled_back'
-      await this.activations.save(current)
+    for (const active of actives) {
+      active.status = 'rolled_back'
+      await this.activations.save(active)
     }
+    const current = actives[0]
     return this.activate({
       organizationId: input.organizationId,
       appInstallationId: input.appInstallationId,

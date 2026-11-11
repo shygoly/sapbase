@@ -23,13 +23,13 @@
 - [x] 2.3 `docs/agent-host.md` 沙箱基线 + 部署检查清单
 - [x] 2.4 `AGENT_SKILL_ALLOWLIST` + `sha256:<64hex>` digest；注册只建 draft
 - [x] 2.5 `agent_turns.tainted/taintSource` + `markTurnTainted`；untrusted 来源拒绝写入知识
-- [ ] 2.6 单客户试点：OpenClaw 只开只读工具 + 一个写工具（确认令牌），记录操作审计
+- [ ] 2.6 单客户试点：OpenClaw 只开只读工具 + 一个写工具（确认令牌），记录操作审计（**blocked**：外部 OpenClaw 宿主环境未提供；本地 MCP allowlist/审计契约已就绪）
 
 ## 3. 实例演进闭环（P2）
 
 - [x] 3.1 提议绑定 `platformVersion` 与 `evolutionScope`（entity/DDL/迁移 179440；approve 时 `assertEvolutionBinding` fail-closed）
 - [x] 3.2 作者 ≠ 批准人：approve 统一走 `assertApproverDistinct`；作者/智能体自批拒绝（schema + 单测）
-- [ ] 3.3 e2e：起草 → 校验 → 预览 → 人批 → 灰度 → 观察 → 回退
+- [x] 3.3 e2e：起草 → 校验(G0/G4/G6) → 人批 → 发布 v1/v2 → 激活/灰度 → impact → 回退（`tests/release-evolution.e2e.js`）
 - [x] 3.4 拒绝用例：越界 diff/schema 守卫 + 自批 e2e；缺版本绑定由 `assertEvolutionBinding` 单测覆盖
 
 ## 4. 回流与分叉护栏（P3）

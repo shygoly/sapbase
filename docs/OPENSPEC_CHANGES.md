@@ -11,7 +11,7 @@
 | 已完成未归档 | 0 |
 | 无任务/骨架 | 2 |
 | 已归档 | 57 |
-| 活跃任务 | 261/1138 |
+| 活跃任务 | 262/1138 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -19,7 +19,7 @@
 
 | Change | 标题 | 任务 | 规格 | 入口 | 最近更新 |
 | --- | --- | --- | --- | --- | --- |
-| [add-agent-host-and-instance-evolution](../openspec/changes/add-agent-host-and-instance-evolution/) | 增加 Agent Host 层与实例级自迭代闭环 | 21/23 | 12 req / 2 文件 | [P](../openspec/changes/add-agent-host-and-instance-evolution/proposal.md) [D](../openspec/changes/add-agent-host-and-instance-evolution/design.md) [T](../openspec/changes/add-agent-host-and-instance-evolution/tasks.md) [S](../openspec/changes/add-agent-host-and-instance-evolution/specs) | 2026-11-11 |
+| [add-agent-host-and-instance-evolution](../openspec/changes/add-agent-host-and-instance-evolution/) | 增加 Agent Host 层与实例级自迭代闭环 | 22/23 | 12 req / 2 文件 | [P](../openspec/changes/add-agent-host-and-instance-evolution/proposal.md) [D](../openspec/changes/add-agent-host-and-instance-evolution/design.md) [T](../openspec/changes/add-agent-host-and-instance-evolution/tasks.md) [S](../openspec/changes/add-agent-host-and-instance-evolution/specs) | 2026-11-11 |
 | [add-evidence-governed-builder-and-limited-a2](../openspec/changes/add-evidence-governed-builder-and-limited-a2/) | 当前实例的可信 A1、有限 A2 与源码交付准入 | 0/18 | 7 req / 3 文件 | [P](../openspec/changes/add-evidence-governed-builder-and-limited-a2/proposal.md) [D](../openspec/changes/add-evidence-governed-builder-and-limited-a2/design.md) [T](../openspec/changes/add-evidence-governed-builder-and-limited-a2/tasks.md) [S](../openspec/changes/add-evidence-governed-builder-and-limited-a2/specs) | 2026-11-11 |
 | [connect-runtime-ai-context-and-tool-lifecycle](../openspec/changes/connect-runtime-ai-context-and-tool-lifecycle/) | 接通既有 Agent Host 的权威上下文与可恢复工具生命周期 | 0/18 | 8 req / 2 文件 | [P](../openspec/changes/connect-runtime-ai-context-and-tool-lifecycle/proposal.md) [D](../openspec/changes/connect-runtime-ai-context-and-tool-lifecycle/design.md) [T](../openspec/changes/connect-runtime-ai-context-and-tool-lifecycle/tasks.md) [S](../openspec/changes/connect-runtime-ai-context-and-tool-lifecycle/specs) | 2026-11-11 |
 | [enforce-deterministic-business-command-invariants](../openspec/changes/enforce-deterministic-business-command-invariants/) | 共享确定性业务命令与交易不变量收口 | 0/18 | 8 req / 4 文件 | [P](../openspec/changes/enforce-deterministic-business-command-invariants/proposal.md) [D](../openspec/changes/enforce-deterministic-business-command-invariants/design.md) [T](../openspec/changes/enforce-deterministic-business-command-invariants/tasks.md) [S](../openspec/changes/enforce-deterministic-business-command-invariants/specs) | 2026-11-11 |
