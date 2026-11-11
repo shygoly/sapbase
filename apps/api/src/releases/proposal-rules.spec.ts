@@ -1,4 +1,4 @@
-import { assertApproverDistinct, assertProposalHardRequirements, needsSecondApprover } from './proposal-rules'
+import { assertApproverDistinct, assertEvolutionBinding, assertProposalHardRequirements, needsSecondApprover } from './proposal-rules'
 
 describe('proposal rules', () => {
   const base = { diff: {}, evidence: [{}], risk: { breaking: false, permissionChange: false, migration: false, agentBehaviorChange: false }, testPlan: { unit: ['x'] }, rollbackPlan: { strategy: 'deactivate' } }
@@ -19,5 +19,12 @@ describe('proposal rules', () => {
   it('requires second approver for high risk', () => {
     expect(needsSecondApprover({ migration: true })).toBe(true)
     expect(needsSecondApprover({ breaking: true })).toBe(false)
+  })
+
+  it('requires evolution binding before approval', () => {
+    expect(() => assertEvolutionBinding({})).toThrow('platformVersion')
+    expect(() => assertEvolutionBinding({ platformVersion: '1.0.0' })).toThrow('evolutionScope')
+    expect(() => assertEvolutionBinding({ platformVersion: '1.0.0', evolutionScope: ['unknown'] })).toThrow('未知范围')
+    expect(() => assertEvolutionBinding({ platformVersion: '1.0.0', evolutionScope: ['field'] })).not.toThrow()
   })
 })

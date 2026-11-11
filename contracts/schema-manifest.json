@@ -695,7 +695,9 @@
         "createdBy",
         "approvedBy",
         "approvedAt",
-        "publishedReleaseId"
+        "publishedReleaseId",
+        "platformVersion",
+        "evolutionScope"
       ]
     },
     "app_drafts": {

@@ -27,8 +27,8 @@
 
 ## 3. 实例演进闭环（P2）
 
-- [ ] 3.1 提议绑定 `platformVersion` 与 `evolutionScope`，缺绑定不得批准
-- [ ] 3.2 作者 ≠ 批准人校验（含同一身份多角色的边界）
+- [x] 3.1 提议绑定 `platformVersion` 与 `evolutionScope`（entity/DDL/迁移 179440；approve 时 `assertEvolutionBinding` fail-closed）
+- [x] 3.2 作者 ≠ 批准人：approve 统一走 `assertApproverDistinct`；作者/智能体自批拒绝（schema + 单测）
 - [ ] 3.3 e2e：起草 → 校验 → 预览 → 人批 → 灰度 → 观察 → 回退
 - [ ] 3.4 拒绝用例：越界变更（改表/改工具契约）、缺版本绑定、自批
 

@@ -67,4 +67,12 @@ export class AppChangeProposal extends ReleaseBaseEntity {
 
   @Column({ type: 'uuid', nullable: true })
   publishedReleaseId: string | null
+
+  /** 实例演进绑定的平台版本；缺失时不得批准。 */
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  platformVersion: string | null
+
+  /** 实例演进范围（blueprint 层 area 列表）；缺失时不得批准。 */
+  @Column({ type: 'text', array: true, nullable: true })
+  evolutionScope: string[] | null
 }

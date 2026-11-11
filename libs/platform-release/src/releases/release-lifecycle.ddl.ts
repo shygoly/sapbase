@@ -37,6 +37,8 @@ export const RELEASE_LIFECYCLE_DDL: string[] = [
     "approvedBy" uuid,
     "approvedAt" timestamp with time zone,
     "publishedReleaseId" uuid,
+    "platformVersion" character varying(64),
+    "evolutionScope" text[],
     CONSTRAINT "PK_app_change_proposals" PRIMARY KEY (id),
     CONSTRAINT "CK_app_proposals_type" CHECK (type IN ('copy','form','data','flow','rule','permission','agent','knowledge')),
     CONSTRAINT "CK_app_proposals_status" CHECK (status IN ('draft','submitted','validating','validated','approved','published','rejected','withdrawn'))

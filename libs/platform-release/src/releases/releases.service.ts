@@ -16,7 +16,12 @@ import {
   type ReleaseNotificationStore,
   type ReleaseOutboxPort,
 } from './release-ports'
-import { assertApproverDistinct, assertProposalHardRequirements, needsSecondApprover } from './proposal-rules'
+import {
+  assertApproverDistinct,
+  assertEvolutionBinding,
+  assertProposalHardRequirements,
+  needsSecondApprover,
+} from './proposal-rules'
 import {
   AppChangeProposal,
   AppDraft,
@@ -105,6 +110,8 @@ export class ReleasesService {
     risk?: Record<string, unknown>
     testPlan?: Record<string, unknown>
     rollbackPlan?: Record<string, unknown>
+    platformVersion?: string | null
+    evolutionScope?: string[] | null
     createdByAgent?: string | null
     createdBy?: string | null
   }): Promise<AppChangeProposal> {
@@ -130,6 +137,8 @@ export class ReleasesService {
         risk: input.risk ?? {},
         testPlan: input.testPlan ?? {},
         rollbackPlan: input.rollbackPlan ?? {},
+        platformVersion: input.platformVersion ?? null,
+        evolutionScope: input.evolutionScope ?? null,
         createdByAgent: input.createdByAgent ?? null,
         createdBy: input.createdBy ?? null,
         status: 'draft',
@@ -202,11 +211,18 @@ export class ReleasesService {
   }): Promise<AppChangeProposal> {
     const proposal = await this.proposals.findOne({ where: { id: input.id, organizationId: input.organizationId } })
     if (!proposal) throw new NotFoundException('提议不存在')
-    if (proposal.createdBy && proposal.createdBy === input.approverId) {
-      throw new ConflictException('作者不能批准自己的提议')
-    }
-    if (proposal.createdByAgent && proposal.createdByAgent === input.approverId) {
-      throw new ConflictException('智能体不能批准自己的提议')
+    try {
+      assertApproverDistinct({
+        createdBy: proposal.createdBy,
+        createdByAgent: proposal.createdByAgent,
+        approverId: input.approverId,
+      })
+      assertEvolutionBinding({
+        platformVersion: proposal.platformVersion,
+        evolutionScope: proposal.evolutionScope,
+      })
+    } catch (error) {
+      throw new ConflictException((error as Error).message)
     }
     if (!canTransitionProposal(proposal.status, 'approved')) {
       throw new ConflictException(`提议状态 ${proposal.status} 不能批准`)
@@ -263,6 +279,13 @@ export class ReleasesService {
       risk: { breaking: false, permissionChange: false, migration: false, agentBehaviorChange: false },
       testPlan: { unit: ['ai-module-lifecycle.spec.ts'] },
       rollbackPlan: { strategy: 'deactivate-release', dataSafe: true },
+      platformVersion:
+        typeof draft.content?.platformVersion === 'string'
+          ? draft.content.platformVersion
+          : null,
+      evolutionScope: Array.isArray(draft.content?.evolutionScope)
+        ? (draft.content.evolutionScope as string[])
+        : null,
       createdByAgent: null,
       createdBy: input.createdBy ?? null,
     })

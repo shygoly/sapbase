@@ -59,6 +59,8 @@ export class ReleasesBuilderController {
       risk: Record<string, unknown>
       testPlan: Record<string, unknown>
       rollbackPlan: Record<string, unknown>
+      platformVersion?: string
+      evolutionScope?: string[]
       createdByAgent?: string
     },
     @OrganizationId() organizationId: string,

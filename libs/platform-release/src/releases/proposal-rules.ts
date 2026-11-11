@@ -17,6 +17,32 @@ export function assertProposalHardRequirements(input: ProposalShape): void {
   if (!input.rollbackPlan || !input.rollbackPlan.strategy) throw new Error('提议必须包含回退计划（strategy）')
 }
 
+const EVOLUTION_SCOPES = new Set([
+  'object',
+  'field',
+  'form',
+  'flow',
+  'rule',
+  'permission',
+  'knowledge',
+])
+
+export function assertEvolutionBinding(input: {
+  platformVersion?: string | null
+  evolutionScope?: readonly string[] | null
+}): void {
+  if (!input.platformVersion || !input.platformVersion.trim()) {
+    throw new Error('实例演进提议必须绑定 platformVersion')
+  }
+  if (!input.evolutionScope || input.evolutionScope.length === 0) {
+    throw new Error('实例演进提议必须绑定 evolutionScope')
+  }
+  const unknown = input.evolutionScope.filter((scope) => !EVOLUTION_SCOPES.has(scope))
+  if (unknown.length > 0) {
+    throw new Error(`evolutionScope 含未知范围：${unknown.join(', ')}`)
+  }
+}
+
 export function assertApproverDistinct(input: { createdBy?: string | null; createdByAgent?: string | null; approverId: string }): void {
   if (input.createdBy && input.createdBy === input.approverId) throw new Error('作者不能批准自己起草的提议')
   if (input.createdByAgent && input.createdByAgent === input.approverId) throw new Error('智能体不能批准自己起草的提议')
