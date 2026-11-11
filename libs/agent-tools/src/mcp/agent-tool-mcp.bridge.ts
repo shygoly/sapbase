@@ -26,6 +26,30 @@ export const AGENT_HOST_PROFILE_ENV = 'AGENT_HOST_PROFILE'
 export const MCP_CONTEXT_META_KEY = 'sapbase/contextId'
 export const MCP_MANIFEST_FILE = 'mcp-tools.json'
 
+/** 宿主 allowlist ⊆ 网关授权集；不满足直接拒绝启动。 */
+export function assertMcpToolsSubset(
+  tools: Array<{ name: string }>,
+  catalog: { tools: Array<{ name: string; allowedAgents?: string[] }> },
+  profile: string,
+): void {
+  const byName = new Map(catalog.tools.map((tool) => [tool.name, tool]))
+  for (const tool of tools) {
+    const contract = byName.get(tool.name)
+    if (!contract) {
+      throw new Error(`MCP 清单包含网关未注册工具：${tool.name}`)
+    }
+    const allowed = contract.allowedAgents
+    if (
+      allowed &&
+      allowed.length > 0 &&
+      !allowed.includes('*') &&
+      !allowed.includes(profile)
+    ) {
+      throw new Error(`宿主 allowlist 超出网关授权：${tool.name} 不允许 ${profile}`)
+    }
+  }
+}
+
 interface McpToolDefinition {
   name: string
   description: string
@@ -61,6 +85,7 @@ export class AgentToolMcpBridge implements OnModuleInit {
   async start(): Promise<void> {
     if (this.client) return
     this.tools = this.loadTools()
+    this.assertProfileAllowlistSubset()
 
     const server = new Server(
       { name: 'sapbase-agent-tools', version: '1.0.0' },
@@ -171,6 +196,17 @@ export class AgentToolMcpBridge implements OnModuleInit {
       throw new Error(`MCP 清单没有 tools（${path}）`)
     }
     return (tools as McpToolDefinition[]).filter((tool) => this.visibleToProfile(tool))
+  }
+
+  /**
+   * 宿主 allowlist 必须是网关授权集的子集：
+   * - 清单里的工具必须存在于网关 catalog；
+   * - 当前 profile 必须在网关契约的 allowedAgents 内；
+   * - 不满足直接拒绝启动，不静默隐藏或降级。
+   */
+  private assertProfileAllowlistSubset(): void {
+    const profile = process.env[AGENT_HOST_PROFILE_ENV] ?? 'piagent-runtime'
+    assertMcpToolsSubset(this.tools, this.registry.catalog(), profile)
   }
 
   /**

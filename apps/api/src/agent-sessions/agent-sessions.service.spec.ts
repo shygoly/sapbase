@@ -30,3 +30,26 @@ describe('agent-sessions contract', () => {
     expect(() => guard.recordToolCall()).toThrow('BUDGET_EXCEEDED')
   })
 })
+
+import { AgentSessionsService } from './agent-sessions.service'
+
+describe('AgentSessionsService taint', () => {
+  it('marks a turn tainted with source and org scoping', async () => {
+    const update = jest.fn(async () => ({ affected: 1 }))
+    const service = new AgentSessionsService(
+      {} as never,
+      { update } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+    await expect(service.markTurnTainted('turn-1', 'org-1', 'feedback')).resolves.toBe(true)
+    expect(update).toHaveBeenCalledWith(
+      { id: 'turn-1', organizationId: 'org-1' },
+      { tainted: true, taintSource: 'feedback' },
+    )
+  })
+})

@@ -474,6 +474,19 @@ error        { code, message }
 - 协助操作复用 `PlanRenderer` + `agentToolsApi.confirmThenInvoke`：取消不写，确认才消费令牌。
 - 业务页 MUST NOT 再挂第二套 Chat 浮层。
 
+### 14.2 Agent Host 边界与降级
+
+- 宿主（OpenClaw / 内嵌进程）只提供通道、会话、沙箱、记忆与执行隔离；
+  工具白名单、确认令牌、审计裁决权仍归平台。
+- 工具面只经 MCP：`contracts/tools.json` → `contracts/mcp-tools.json`，宿主是 MCP 客户端。
+- 宿主侧 allowlist MUST 是网关授权集的子集：清单工具必须已在网关注册，
+  当前 profile 必须在契约 `allowedAgents` 内；不满足拒绝启动，不静默隐藏/降级。
+- 宿主不可用时降级 **Web SSE / 内嵌 direct 通道**：`GET /api/agent-host/health`
+  返回 `healthy=false + fallback=web-sse`，会话不阻塞。
+- untrusted 外部内容必须打标记；`agent_turns.tainted/taintSource` 写入会话存储，
+  知识写入前校验来源，不得把外部文本当可信知识。
+- skill 只允许白名单 + `sha256:<64hex>` digest；注册只创建 draft，禁止运行时自动安装/激活。
+
 ---
 
 ## 15. 反模式

@@ -36,3 +36,62 @@ describe('AgentKnowledgeService publish', () => {
     expect(entries.save).toHaveBeenCalled()
   })
 })
+
+describe('AgentKnowledgeService skill allowlist', () => {
+  function serviceWithSkills() {
+    const skills = {
+      findOne: jest.fn(async () => null),
+      create: jest.fn((row: unknown) => row),
+      save: jest.fn(async (row: unknown) => row),
+    }
+    return { service: new AgentKnowledgeService({} as never, skills as never), skills }
+  }
+
+  const digest = `sha256:${'a'.repeat(64)}`
+
+  afterEach(() => {
+    delete process.env.AGENT_SKILL_ALLOWLIST
+  })
+
+  it('白名单未配置时拒绝任意 skill（fail-closed）', async () => {
+    const { service } = serviceWithSkills()
+    await expect(
+      service.registerSkill({ organizationId: 'o1', skillKey: 'anything', digest }),
+    ).rejects.toThrow(/白名单/)
+  })
+
+  it('白名单外/非法 digest 拒绝，白名单内通过且只创建 draft', async () => {
+    process.env.AGENT_SKILL_ALLOWLIST = 'demo-skill'
+    const { service, skills } = serviceWithSkills()
+    await expect(
+      service.registerSkill({ organizationId: 'o1', skillKey: 'other', digest }),
+    ).rejects.toThrow(/白名单/)
+    await expect(
+      service.registerSkill({ organizationId: 'o1', skillKey: 'demo-skill', digest: 'sha256:bad' }),
+    ).rejects.toThrow(/digest/)
+    const saved = await service.registerSkill({
+      organizationId: 'o1',
+      skillKey: 'demo-skill',
+      digest,
+    })
+    expect(saved).toMatchObject({ skillKey: 'demo-skill', status: 'draft' })
+    expect(skills.save).toHaveBeenCalled()
+  })
+})
+
+describe('AgentKnowledgeService untrusted source', () => {
+  it('拒绝把 untrusted 内容直接写成知识草稿', async () => {
+    const service = new AgentKnowledgeService({} as never, {} as never)
+    await expect(
+      service.createDraft({
+        organizationId: 'o1',
+        scope: 'organization',
+        scopeId: 'o1',
+        knowledgeKey: 'k1',
+        title: 't',
+        body: '外部网页内容',
+        source: 'untrusted',
+      }),
+    ).rejects.toThrow(/untrusted/)
+  })
+})

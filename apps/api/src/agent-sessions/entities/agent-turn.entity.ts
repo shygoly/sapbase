@@ -35,4 +35,11 @@ export class AgentTurn extends AgentSessionBaseEntity {
 
   @Column({ type: 'varchar', length: 32, default: 'running' })
   status: 'running' | 'completed' | 'cancelled' | 'failed'
+
+  /** 本轮是否接触过不可信外部内容；写入知识前必须校验来源。 */
+  @Column({ type: 'boolean', default: false })
+  tainted: boolean
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  taintSource: string | null
 }

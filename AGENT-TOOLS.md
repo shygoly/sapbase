@@ -99,3 +99,13 @@ v1 只落地 `piagent-runtime` 的工具面；`piagent-builder` 在后续变更�
 3. `写=是` 必须对应 `confirmation=required`；`写=否` 默认 `none`。
 4. `允许的智能体` 为 `-` 表示 v1 未启用 profile；不得用 `*` 绕过。
 5. `处理器` 为 `-` 表示由 `AgentToolRegistry` 直接分派；非 `-` 时必须是 `path#symbol` 且文件/符号存在。
+
+## MCP 投影与宿主边界
+
+- `contracts/tools.json` 是唯一工具契约；`scripts/meta/project-mcp-tools.mjs` 生成
+  `contracts/mcp-tools.json`，不手写第二份。
+- 宿主只经 MCP 调用工具，上下文按 `_meta.contextId` 引用传递；策略仍由
+  `AgentToolRegistry` 判定（权限 all-of、确认令牌、数据范围、审计）。
+- 宿主 allowlist MUST 是网关授权集的子集；`allowedAgents` 按 profile 收窄，
+  不满足拒绝启动。
+- 宿主不可用时降级 Web SSE；详见 `docs/agent-host.md`。

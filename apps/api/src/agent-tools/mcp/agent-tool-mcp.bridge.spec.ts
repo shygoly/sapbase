@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common'
 import type { AgentToolRegistry, AgentToolInvokeInput } from '../agent-tool.registry'
-import { AgentToolMcpBridge, AGENT_TOOL_TRANSPORT_ENV } from './agent-tool-mcp.bridge'
+import { AgentToolMcpBridge, AGENT_TOOL_TRANSPORT_ENV, assertMcpToolsSubset } from './agent-tool-mcp.bridge'
+import { loadToolCatalog } from '@sap/agent-tools/contracts-loader'
 
 function stubRegistry() {
   const invoke = jest.fn(async (input: AgentToolInvokeInput) => ({
@@ -8,7 +9,8 @@ function stubRegistry() {
     tool: input.name,
     result: { echo: input.args },
   }))
-  return { registry: { invoke } as unknown as AgentToolRegistry, invoke }
+  const catalog = loadToolCatalog()
+  return { registry: { invoke, catalog: () => catalog } as unknown as AgentToolRegistry, invoke }
 }
 
 describe('AgentToolMcpBridge', () => {
@@ -67,6 +69,7 @@ describe('AgentToolMcpBridge', () => {
       invoke: jest.fn(async () => {
         throw new BadRequestException('缺少工具权限：tool:blueprint:read')
       }),
+      catalog: () => loadToolCatalog(),
     } as unknown as AgentToolRegistry
     const bridge = new AgentToolMcpBridge(registry)
 
@@ -93,5 +96,25 @@ describe('AgentToolMcpBridge', () => {
     expect(names).toContain('erp_blueprint_list')
     expect(names.some((name) => name.startsWith('builder_'))).toBe(false)
     delete process.env.AGENT_HOST_PROFILE
+  })
+
+  it('宿主 allowlist 必须不超过网关授权集', () => {
+    expect(() =>
+      assertMcpToolsSubset([{ name: 'ghost_tool' }], { tools: [] }, 'piagent-runtime'),
+    ).toThrow(/网关未注册工具/)
+    expect(() =>
+      assertMcpToolsSubset(
+        [{ name: 'builder_proposal_create' }],
+        { tools: [{ name: 'builder_proposal_create', allowedAgents: ['piagent-builder'] }] },
+        'piagent-runtime',
+      ),
+    ).toThrow(/超出网关授权/)
+    expect(() =>
+      assertMcpToolsSubset(
+        [{ name: 'erp_blueprint_list' }],
+        { tools: [{ name: 'erp_blueprint_list', allowedAgents: ['piagent-runtime'] }] },
+        'piagent-runtime',
+      ),
+    ).not.toThrow()
   })
 })

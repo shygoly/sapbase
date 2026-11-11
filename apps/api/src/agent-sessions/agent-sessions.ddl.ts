@@ -28,10 +28,14 @@ export const AGENT_SESSIONS_DDL: string[] = [
     "tokensOut" integer DEFAULT 0 NOT NULL,
     "latencyMs" integer DEFAULT 0 NOT NULL,
     status character varying(32) DEFAULT 'running' NOT NULL,
+    tainted boolean DEFAULT false NOT NULL,
+    "taintSource" character varying(128),
     CONSTRAINT "PK_agent_turns" PRIMARY KEY (id),
     CONSTRAINT "CK_agent_turns_status" CHECK (status IN ('running','completed','cancelled','failed'))
   )`,
   `ALTER TABLE public.agent_turns ADD COLUMN IF NOT EXISTS "knowledgeVersion" character varying(128)`,
+  `ALTER TABLE public.agent_turns ADD COLUMN IF NOT EXISTS tainted boolean DEFAULT false NOT NULL`,
+  `ALTER TABLE public.agent_turns ADD COLUMN IF NOT EXISTS "taintSource" character varying(128)`,
   `CREATE INDEX IF NOT EXISTS "IDX_agent_turns_conversation"
     ON public.agent_turns ("conversationId", "createdAt" DESC)`,
   `CREATE TABLE IF NOT EXISTS public.agent_tool_calls (

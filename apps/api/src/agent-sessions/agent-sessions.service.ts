@@ -213,4 +213,17 @@ export class AgentSessionsService {
   wrapUntrusted(content: string, source: string): string {
     return wrapUntrustedData({ content, source, nonce: randomUUID() })
   }
+
+  /** 外部/通道内容进入本轮时标记 taint，知识写入前必须检查来源。 */
+  async markTurnTainted(
+    turnId: string,
+    organizationId: string,
+    source: string,
+  ): Promise<boolean> {
+    const result = await this.turns.update(
+      { id: turnId, organizationId },
+      { tainted: true, taintSource: source.slice(0, 128) },
+    )
+    return (result.affected ?? 0) > 0
+  }
 }

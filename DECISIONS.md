@@ -279,6 +279,27 @@ code_markers:
   - apps/api/src/search/search-index-job.service.ts
 ```
 
+### D-14：Agent Host 只做通道/沙箱，策略裁决归平台
+
+```yaml decision
+id: D-14
+title: Agent Host 只做通道/沙箱，策略裁决归平台
+status: accepted
+date: 2026-11
+context: |
+  外置 Agent 宿主（如 OpenClaw）可以更灵活地跑会话与工具，但如果宿主自己决定工具白名单、
+  确认令牌或审计，就会形成第二条策略路径，绕过平台权限与数据范围。
+decision: |
+  宿主只提供通道、会话、沙箱、记忆与执行隔离；工具面只经 MCP 投影，
+  allowlist 必须是网关授权集的子集；写操作仍消费平台确认令牌；宿主不可用时降级 Web SSE。
+  untrusted 内容写入 turn taint，知识写入前校验来源；skill 只允许白名单+draft。
+references:
+  - INV-JOB-04
+code_markers:
+  - apps/api/src/agent-host/agent-host.service.ts
+  - libs/agent-tools/src/mcp/agent-tool-mcp.bridge.ts
+```
+
 ---
 
 ## 附录：命名空间约定

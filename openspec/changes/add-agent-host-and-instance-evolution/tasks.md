@@ -18,11 +18,11 @@
 
 ## 2. 宿主接入（P1）
 
-- [ ] 2.1 宿主适配层：进程生命周期、健康检查、不可用时降级到 Web SSE
-- [ ] 2.2 双 profile 工具收窄：宿主侧 allowlist MUST 是网关授权集的子集
-- [ ] 2.3 沙箱基线：非 root、无通用 shell、网络仅回环 MCP 端口
-- [ ] 2.4 skills 白名单 + 签名校验 + 禁止运行时自动安装
-- [ ] 2.5 untrusted 标记与 turn taint 写入会话存储；知识写入前校验来源
+- [x] 2.1 `AgentHostService` + `GET /agent-host/health`；MCP 探测失败返回 healthy=false + fallback=web-sse
+- [x] 2.2 `assertMcpToolsSubset`：清单工具必须已注册且 profile 在 allowedAgents 内，否则拒绝启动
+- [x] 2.3 `docs/agent-host.md` 沙箱基线 + 部署检查清单
+- [x] 2.4 `AGENT_SKILL_ALLOWLIST` + `sha256:<64hex>` digest；注册只建 draft
+- [x] 2.5 `agent_turns.tainted/taintSource` + `markTurnTainted`；untrusted 来源拒绝写入知识
 - [ ] 2.6 单客户试点：OpenClaw 只开只读工具 + 一个写工具（确认令牌），记录操作审计
 
 ## 3. 实例演进闭环（P2）
@@ -41,7 +41,7 @@
 
 ## 5. 文档与元语校验（P4）
 
-- [ ] 5.1 `docs/protocols/piagent.md` 增补宿主层边界与降级语义
-- [ ] 5.2 `docs/protocols/agent-evolution.md` 增补实例演进范围与回流
-- [ ] 5.3 `DOMAIN.md` / `AGENT-TOOLS.md` / `DECISIONS.md` 同步（新增决策需登记 `D-x`）
+- [x] 5.1 piagent.md §14.2 宿主边界/降级
+- [x] 5.2 agent-evolution.md §15 实例演进范围/绑定/回流
+- [x] 5.3 DECISIONS D-14 + AGENT-TOOLS MCP 投影边界（DOMAIN 无新表）
 - [ ] 5.4 `node scripts/meta/check-all.mjs` 0 error；`openspec validate --strict` 通过
