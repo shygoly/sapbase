@@ -39,10 +39,10 @@
 | A-018 | 教师统一工作台 | 部分（work_items 内核；缺聚合 UI） | `add-review-and-approval-platform` + `add-education-reference-blueprint` | Phase 0/3 | 中 |
 | A-019 | 智能体调用权限 | 部分（RBAC/数据范围；工具目录裁剪未完成） | `refactor-ai-native-business-app-platform` + `add-education-reference-blueprint` | Phase 3 | 高 |
 | A-020 | 班级与学生管理 | 未启动 | `add-education-reference-blueprint` + `add-bulk-import-export-framework` | Phase 1/3 | 中 |
-| A-021 | 公告通知 | 部分（内核 + Portal 管理 UI；定时/scope 受众待做） | `add-notification-center-and-announcements` | Phase 0 | 低 |
+| A-021 | 公告通知 | 已完成（CRUD/scope 受众/定时/保留期/已读统计） | `add-notification-center-and-announcements`（已归档） | Phase 0 | 低 |
 | A-022 | 课程克隆 | 未启动 | `add-record-lifecycle-and-tree-operations` | Phase 1 | 中 |
 | A-023 | 教师操作审计 | 部分（审计内核；缺事件覆盖） | `add-audit-compliance-and-tamper-evidence` | Phase 0 | 低 |
-| A-024 | 教师消息中心 | 部分（Portal 分类/批量/偏好 UI 已通；待办聚合待做） | `add-notification-center-and-announcements` | Phase 0 | 低 |
+| A-024 | 教师消息中心 | 已完成（分类/批量/偏好/角标/断线补发；待办聚合归 review/work_items） | `add-notification-center-and-announcements`（已归档） | Phase 0 | 低 |
 | A-025 | 正式内容开放调用 | 未启动 | `add-external-integration-connector` | Phase 3 | 高 |
 | A-026 | 业务数据汇聚 | 未启动 | `add-metrics-and-dashboard-platform` | Phase 2 | 高 |
 | A-027 | 数据接口与外部联调 | 未启动 | `add-external-integration-connector` | Phase 3 | 高 |
@@ -95,7 +95,7 @@
 | B-019 | 学习记录与日历 | 未启动 | `add-education-reference-blueprint` | Phase 3/4 | 中 |
 | B-020 | 个人学习中心 | 未启动 | `add-education-reference-blueprint` | Phase 4 | 中 |
 | B-021 | 知识点掌握度 | 未启动 | `add-education-reference-blueprint` | Phase 4 | 中 |
-| B-022 | 学生消息中心 | 部分（Portal UI/偏好/角标已通；30 天清理待做） | `add-notification-center-and-announcements` | Phase 0 | 低 |
+| B-022 | 学生消息中心 | 已完成（UI/偏好/角标/30 天软删除清理） | `add-notification-center-and-announcements`（已归档） | Phase 0 | 低 |
 | B-023 | 在线测评 | 未启动 | `add-education-reference-blueprint` | Phase 4 | 高 |
 | B-024 | 自动判分与解析 | 未启动 | `add-education-reference-blueprint` | Phase 4 | 高 |
 | B-025 | 错题本与学习反馈 | 未启动 | `add-education-reference-blueprint` | Phase 4 | 中 |
@@ -110,3 +110,12 @@
 | B-034 | 机器初审与教师终审 | 部分（机器步骤回写已通；申诉/终审 UI 待做） | `add-review-and-approval-platform` + `add-ai-content-governance` | Phase 0/2 | 高 |
 | B-035 | AI 评分规则确认 | 未启动 | `add-ai-content-governance` | Phase 2 | 高 |
 
+
+## 证据索引
+
+| 需求 | 证据 |
+|---|---|
+| A-021 / A-024 / B-022 | `openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/`；`apps/api/src/notifications/`；`tests/notification-center.e2e.js`；`tests/notification-center.test.js` |
+| A-014 / B-015 / B-034（部分） | `apps/api/src/review/review-check-job.service.ts`；`apps/api/src/review/review-check.job.spec.ts`；对应 change 仍未完成 UI/终审 |
+| A-038 / A-044（部分） | `apps/api/src/identity/`、`apps/api/src/auth/`；真实 CAS/OIDC provider 联调仍需外部环境 |
+| B-006 / B-013（部分） | `libs/platform-core/src/jobs/`；`apps/api/src/assets/`；消费方 change 未完成 |

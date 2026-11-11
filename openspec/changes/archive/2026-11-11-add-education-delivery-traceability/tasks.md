@@ -7,8 +7,8 @@
 ## 0. 追踪机制
 
 - [x] 0.1 建立 `traceability.md`，覆盖 A-001—A-050、B-001—B-035
-- [ ] 0.2 每个需求项完成时同步更新状态、目标 change 与验收证据
-- [ ] 0.3 每个阶段结束做 phase gate：勾选、延期或登记阻塞原因
+- [x] 0.2 本轮已同步 A-021/A-024/B-022 与部分项证据（见 `traceability.md` 证据索引）
+- [x] 0.3 Phase 0–4 gate 已登记：已完成项 + 明确延期/阻塞原因
 - [x] 0.4 2026-11-10 第一批：CAS/OIDC 登录入口与回调（A-038 子项）
 - [x] 0.5 2026-11-10 第一批：登录失败记录/锁定（A-044 子项）
 - [x] 0.6 2026-11-10 第一批：`review.check` 注册与结果回写（A-014/B-015 子项）
@@ -63,18 +63,18 @@
 
 ## 6. 阶段 gate
 
-- [ ] 6.1 Phase 0 gate：A-013/A-014/A-018/A-021/A-023/A-024/A-037—A-047/B-006/B-013/B-015/B-022/B-034 有真实证据或明确延期
-- [ ] 6.2 Phase 1 gate：A-002/A-003/A-006—A-010/A-017/A-020/A-022/A-035/B-007 有真实证据或明确延期
-- [ ] 6.3 Phase 2 gate：A-016/A-026/A-028/A-029/A-031—A-034/A-036/B-002/B-008/B-009/B-014/B-033/B-035 有真实证据或明确延期
-- [ ] 6.4 Phase 3 gate：A-001/A-004/A-005/A-011/A-012/A-015/A-019/A-025/A-027/A-048—A-050/B-001/B-003—B-005/B-010/B-016/B-019/B-032 有真实证据或明确延期
-- [ ] 6.5 Phase 4 gate：B-017—B-031 有真实证据或明确延期
-- [ ] 6.6 每个需求完成时更新 `traceability.md` 的状态、目标 change 与证据
-- [ ] 6.7 每个阶段结束运行 `npm run meta:openspec-ledger`
+- [x] 6.1 Phase 0 gate：A-021/A-024/B-022 已完成；A-014/B-015/B-034 有 review.check 证据但 UI 延期；A-038/A-044 待真实 provider；B-006/B-013 待下游 change
+- [x] 6.2 Phase 1 gate：全部延期（依赖 bulk/record-lifecycle/asset/document change，当前未启动）
+- [x] 6.3 Phase 2 gate：全部延期（metrics/document/ai-content 未启动）
+- [x] 6.4 Phase 3 gate：全部延期（education blueprint/external connector 未启动；A-019 部分依赖 AI-native runtime）
+- [x] 6.5 Phase 4 gate：全部延期（education blueprint/offline/content package 未启动）
+- [x] 6.6 已更新 `traceability.md` 状态列与证据索引
+- [x] 6.7 已运行 `meta:openspec-ledger`（台账同步）
 
 ## 7. 矩阵抽查
 
-- [ ] 7.1 A-001 课程基础信息 → `add-education-reference-blueprint` 2.1
-- [ ] 7.2 A-020 班级与学生管理 → `add-education-reference-blueprint` 3.1/3.2
-- [ ] 7.3 B-003 智能出题 → `add-education-reference-blueprint` 8.3
-- [ ] 7.4 B-014 调用统计 → `add-metrics-and-dashboard-platform` 3.x
-- [ ] 7.5 B-033 生成内容标识 → `add-ai-content-governance` 4.x
+- [x] 7.1 A-001 → blueprint 2.1（未启动，已登记）
+- [x] 7.2 A-020 → blueprint 3.1/3.2（未启动，已登记）
+- [x] 7.3 B-003 → blueprint 8.3（未启动，已登记）
+- [x] 7.4 B-014 → metrics 3.x（未启动，已登记）
+- [x] 7.5 B-033 → ai-content 4.x（未启动，已登记）

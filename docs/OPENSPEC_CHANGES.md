@@ -7,11 +7,11 @@
 
 | 指标 | 数量 |
 | --- | --- |
-| 进行中 | 32 |
+| 进行中 | 31 |
 | 已完成未归档 | 27 |
 | 无任务/骨架 | 2 |
-| 已归档 | 26 |
-| 活跃任务 | 1079/2051 |
+| 已归档 | 27 |
+| 活跃任务 | 1074/2032 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -27,7 +27,6 @@
 | [run-candidate-bound-evaluations-and-release-gates](../openspec/changes/run-candidate-bound-evaluations-and-release-gates/) | 冻结候选真实评测、隔离预览与完整发布闸门 | 0/18 | 7 req / 2 文件 | [P](../openspec/changes/run-candidate-bound-evaluations-and-release-gates/proposal.md) [D](../openspec/changes/run-candidate-bound-evaluations-and-release-gates/design.md) [T](../openspec/changes/run-candidate-bound-evaluations-and-release-gates/tasks.md) [S](../openspec/changes/run-candidate-bound-evaluations-and-release-gates/specs) | 2026-11-11 |
 | [add-agent-host-and-instance-evolution](../openspec/changes/add-agent-host-and-instance-evolution/) | 增加 Agent Host 层与实例级自迭代闭环 | 5/23 | 12 req / 2 文件 | [P](../openspec/changes/add-agent-host-and-instance-evolution/proposal.md) [D](../openspec/changes/add-agent-host-and-instance-evolution/design.md) [T](../openspec/changes/add-agent-host-and-instance-evolution/tasks.md) [S](../openspec/changes/add-agent-host-and-instance-evolution/specs) | 2026-11-10 |
 | [add-ai-content-governance](../openspec/changes/add-ai-content-governance/) | AI 内容治理 | 0/46 | 9 req / 1 文件 | [P](../openspec/changes/add-ai-content-governance/proposal.md) [D](../openspec/changes/add-ai-content-governance/design.md) [T](../openspec/changes/add-ai-content-governance/tasks.md) [S](../openspec/changes/add-ai-content-governance/specs) | 2026-11-10 |
-| [add-education-delivery-traceability](../openspec/changes/add-education-delivery-traceability/) | 教育项目需求交付追踪矩阵 | 5/19 | 2 req / 1 文件 | [P](../openspec/changes/add-education-delivery-traceability/proposal.md) [T](../openspec/changes/add-education-delivery-traceability/tasks.md) [S](../openspec/changes/add-education-delivery-traceability/specs) | 2026-11-10 |
 | [add-identity-federation-and-session-governance](../openspec/changes/add-identity-federation-and-session-governance/) | 身份联邦与会话治理 | 41/73 | 13 req / 2 文件 | [P](../openspec/changes/add-identity-federation-and-session-governance/proposal.md) [D](../openspec/changes/add-identity-federation-and-session-governance/design.md) [T](../openspec/changes/add-identity-federation-and-session-governance/tasks.md) [S](../openspec/changes/add-identity-federation-and-session-governance/specs) | 2026-11-10 |
 | [add-review-and-approval-platform](../openspec/changes/add-review-and-approval-platform/) | 复核/审批与工作项平台 | 25/55 | 9 req / 2 文件 | [P](../openspec/changes/add-review-and-approval-platform/proposal.md) [D](../openspec/changes/add-review-and-approval-platform/design.md) [T](../openspec/changes/add-review-and-approval-platform/tasks.md) [S](../openspec/changes/add-review-and-approval-platform/specs) | 2026-11-10 |
 | [enhance-ui-runtime-scenario-capabilities](../openspec/changes/enhance-ui-runtime-scenario-capabilities/) | 增强 UI Runtime 场景能力（吸收前端规范精华） | 12/33 | 19 req / 1 文件 | [P](../openspec/changes/enhance-ui-runtime-scenario-capabilities/proposal.md) [D](../openspec/changes/enhance-ui-runtime-scenario-capabilities/design.md) [T](../openspec/changes/enhance-ui-runtime-scenario-capabilities/tasks.md) [S](../openspec/changes/enhance-ui-runtime-scenario-capabilities/specs) | 2026-11-10 |
@@ -96,6 +95,7 @@
 | Change | 标题 | 任务 | 规格 | 入口 | 最近更新 |
 | --- | --- | --- | --- | --- | --- |
 | [add-dsl-management-and-display](../openspec/changes/archive/2026-11-11-add-dsl-management-and-display/) | DSL Management and Display | 21/21 | 7 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-dsl-management-and-display/proposal.md) [T](../openspec/changes/archive/2026-11-11-add-dsl-management-and-display/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-dsl-management-and-display/specs) | 2026-11-11 |
+| [add-education-delivery-traceability](../openspec/changes/archive/2026-11-11-add-education-delivery-traceability/) | 教育项目需求交付追踪矩阵 | 19/19 | 2 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-education-delivery-traceability/proposal.md) [T](../openspec/changes/archive/2026-11-11-add-education-delivery-traceability/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-education-delivery-traceability/specs) | 2026-11-11 |
 | [add-full-system-generation-and-deploy](../openspec/changes/archive/2026-11-11-add-full-system-generation-and-deploy/) | Full System Generation and Deploy | 4/5 | 3 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-full-system-generation-and-deploy/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-full-system-generation-and-deploy/design.md) [T](../openspec/changes/archive/2026-11-11-add-full-system-generation-and-deploy/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-full-system-generation-and-deploy/specs) | 2026-11-11 |
 | [add-notification-center-and-announcements](../openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/) | 通知中心与公告 | 62/62 | 10 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/design.md) [T](../openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-notification-center-and-announcements/specs) | 2026-11-11 |
 | [add-patch-dsl-system](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/) | Add Patch DSL System for Declarative Schema Modifications | 118/118 | 11 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/design.md) [T](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/specs) | 2026-11-11 |
