@@ -35,6 +35,7 @@ import { NotificationsModule } from './notifications/notifications.module'
 import { SearchModule } from './search/search.module'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { AgentHostModule } from './agent-host/agent-host.module'
+import { AsyncConsumersModule } from './async-consumers/async-consumers.module'
 import { ChatModule } from './chat/chat.module'
 import { BusinessAppsModule } from './business-apps/business-apps.module'
 import { ReleasesModule } from './releases/releases.module'
@@ -131,6 +132,7 @@ try {
     SearchModule,
     AgentToolsModule,
     AgentHostModule,
+    AsyncConsumersModule,
     ChatModule,
     BusinessAppsModule,
     ReleasesModule,

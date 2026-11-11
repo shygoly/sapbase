@@ -82,11 +82,11 @@
 
 ## 10. 消费方接入
 
-- [ ] 10.1 导入/导出任务（配合 `add-bulk-import-export-framework`）
-- [ ] 10.2 媒体扫描/转码任务（配合 `add-asset-and-media-pipeline`）
-- [ ] 10.3 文档解析任务（配合 `add-document-intelligence`）
-- [ ] 10.4 Agent 长任务：携带 `agentRunId`，桥接事件，不复制 run 状态
-- [ ] 10.5 内容生成任务
+- [x] 10.1 `data.import`（复用 `importMaster`）/`data.export`（只读 org 记录，行数上限）；下游 bulk 复用同一 job type
+- [x] 10.2 `asset.process` 复用 `AssetProcessingService` 与 asset-pipeline 状态机
+- [x] 10.3 `document.parse`：已就绪文本类资产 → 抽取文本；未就绪/非文本/跨租户拒绝
+- [x] 10.4 `agent.long_task`：`agentRunId` + `AgentSessionsService.chat`；结果只回传 conversationId/turnId/events
+- [x] 10.5 `ai.content.generate`：默认/指定模型，返回文本产物
 
 ## 11. 管理面与观测
 
@@ -104,6 +104,6 @@
 - [x] 12.3 worker 崩溃后任务恢复（lease 过期回收）
 - [x] 12.4 失败重试/退避/DLQ/手动重放
 - [x] 12.5 外部轮询/回调闭环；签名/SSRF 负例
-- [ ] 12.6 Agent 长任务不产生第二套 run 状态
+- [x] 12.6 单测断言只桥接会话；e2e 断言不存在 `agent_run%` 第二套表
 - [x] 12.7 `openspec validate add-async-job-and-callback-facade --strict`
 - [x] 12.8 运行 `check-domain-doc.mjs` / `check-meta-docs.mjs`
