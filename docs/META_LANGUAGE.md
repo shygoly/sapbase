@@ -423,6 +423,28 @@ SLA 到期提醒/升级幂等；无审批人必须告警，不静默通过
 实现落点：`apps/api/src/record-lifecycle/`；契约：`schemas/record-lifecycle.schema.json`；
 领域表：`DOMAIN.md`「记录生命周期」；决策：`DECISIONS.md` D-17。
 
+### 3.19 AI Content Governance（AI 内容治理）
+
+AI 生成/辅助内容必须可追溯、可标识、可检测、可终审：
+
+- **Provenance**：`ai_content_provenance` 存 producer/agent/model/promptHash/taskId/contentHash/parent；prompt 只存 hash。
+- **Label**：`ai_content_labels` 显式/隐式标识，版本化；未应用/校验失败阻断发布/导出。
+- **Safety**：`content-safety` CheckProvider（输入/输出）返回 pass/warn/fail；异常/超时 fail-closed。
+- **Final Review**：机器检测 → 人工复核 → 终审；作者不能自我终审（`blueprint_approvals.finalStep/subjectAuthor`）。
+- **Score**：`ai_score_records` 状态 `ai_only → teacher_confirmed → appealed → final`；AI 分与人工分分开。
+- **Rule Confirm**：规则版本变更需用户确认后才展示为正式结果。
+
+```text
+非 AI 内容不强制标识（legacy/unlabeled 正常读取）
+发布/导出闸 = 标识 applied + 终审 approved
+AI 参考分不能作为正式成绩/归档
+申诉强制人工复核
+生成/标识/检测/终审/评分/申诉全写审计
+```
+
+实现落点：`apps/api/src/ai-governance/`；契约：`schemas/ai-governance.schema.json`；
+领域表：`DOMAIN.md`「AI 内容治理」；决策：`DECISIONS.md` D-18。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -484,6 +506,12 @@ SLA 到期提醒/升级幂等；无审批人必须告警，不静默通过
 52. **移动并发安全**：移动/排序使用事务与乐观锁，并发至多一个成功（INV-RL-03）。
 53. **归档不删除**：归档只设 archivedAt，活跃列表隐藏；恢复校验父节点/唯一键（INV-RL-04）。
 54. **快照只追加**：恢复旧版本创建新版本，不得覆盖/删除历史快照（INV-RL-05）。
+55. **AI 内容可追溯**：provenance 记录 agent/model/task/contentHash/parent；prompt 只存 hash（INV-AIG-01）。
+56. **标识缺失阻断**：未应用/校验失败标识的内容不得发布/导出（INV-AIG-02）。
+57. **检测 fail-closed**：内容安全异常/超时按 fail；warn 必须人工确认（INV-AIG-03）。
+58. **终审卡点**：机器→人工→终审；作者不得自我终审（INV-AIG-04）。
+59. **AI 分仅参考**：未终审 AI 分不得作为正式成绩/归档（INV-AIG-05）。
+60. **申诉强制人工**：申诉后必须人工复核才能 final（INV-AIG-06）。
 
 ---
 

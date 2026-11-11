@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/ai-governance.schema.json",
+  "title": "AI Content Governance",
+  "description": "AI 内容溯源、显式/隐式标识、内容安全、终审与 AI/人工评分。",
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contentId", "contentType", "producer", "contentHash"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "contentId": { "type": "string", "format": "uuid" },
+        "contentType": { "enum": ["text", "image", "audio", "video", "asset", "module"] },
+        "producer": { "type": "string" },
+        "agent": { "type": ["string", "null"] },
+        "model": { "type": ["string", "null"] },
+        "promptHash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "templateRef": { "type": ["string", "null"] },
+        "taskId": { "type": ["string", "null"] },
+        "contentHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "parentContentId": { "type": ["string", "null"], "format": "uuid" },
+        "version": { "type": "integer", "minimum": 1 },
+        "metadata": { "type": ["object", "null"] }
+      }
+    },
+    "label": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contentId", "labelType", "version", "text", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "contentId": { "type": "string", "format": "uuid" },
+        "labelType": { "enum": ["explicit", "implicit"] },
+        "version": { "type": "integer", "minimum": 1 },
+        "text": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["pending", "applied", "failed"] },
+        "metadata": { "type": ["object", "null"] }
+      }
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subjectType", "subjectId", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "contentId": { "type": ["string", "null"], "format": "uuid" },
+        "subjectType": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "aiScore": { "type": ["string", "number", "null"] },
+        "humanScore": { "type": ["string", "number", "null"] },
+        "status": { "enum": ["ai_only", "teacher_confirmed", "appealed", "final"] },
+        "ruleVersion": { "type": ["string", "null"] },
+        "confirmedBy": { "type": ["string", "null"] },
+        "appealReason": { "type": ["string", "null"] }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "required": ["allowed"],
+      "properties": {
+        "allowed": { "type": "boolean" },
+        "reason": { "type": "string" },
+        "round": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/provenance" },
+    { "$ref": "#/$defs/label" },
+    { "$ref": "#/$defs/score" },
+    { "$ref": "#/$defs/gate" }
+  ]
+}

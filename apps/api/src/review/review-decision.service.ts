@@ -68,6 +68,9 @@ export class ReviewDecisionService {
         throw new ConflictException('warn 必须填写明确确认理由')
       }
     }
+    if (approval.finalStep && approval.subjectAuthor === actor.userId) {
+      throw new ForbiddenException('作者不能自我终审')
+    }
     let delegatedFrom: string | null = null
     if (!this.isAllowed(approval, actor)) {
       const delegation = await this.delegations?.findActive(

@@ -88,3 +88,14 @@ export {
   type ReviewDelegation,
   type ReviewOverview,
 } from './review.api'
+
+export {
+  aiGovernanceApi,
+  type AiProvenance,
+  type AiLabel,
+  type AiScore,
+  type AiGateResult,
+  type AiScoreStatus,
+  type ContentLabelType,
+  type AiContentType,
+} from './ai-governance.api'

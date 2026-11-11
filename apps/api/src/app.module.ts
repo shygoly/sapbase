@@ -36,6 +36,7 @@ import { OutboxModule } from './outbox/outbox.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { SearchModule } from './search/search.module'
 import { RecordLifecycleModule } from './record-lifecycle/record-lifecycle.module'
+import { AiGovernanceModule } from './ai-governance/ai-governance.module'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { AgentHostModule } from './agent-host/agent-host.module'
 import { AsyncConsumersModule } from './async-consumers/async-consumers.module'
@@ -136,6 +137,7 @@ try {
     NotificationsModule,
     SearchModule,
     RecordLifecycleModule,
+    AiGovernanceModule,
     AgentToolsModule,
     AgentHostModule,
     AsyncConsumersModule,

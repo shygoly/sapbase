@@ -69,6 +69,8 @@ const PERMISSION_CATALOG: Array<{ name: string; description: string; category: s
   { name: 'app:release:approve:security', description: '高危变更安全审批', category: 'app-release' },
   { name: 'jobs:read', description: '查看异步任务', category: 'jobs' },
   { name: 'jobs:manage', description: '管理异步任务', category: 'jobs' },
+  { name: 'ai-governance:read', description: '查看 AI 内容溯源/标识/评分', category: 'ai' },
+  { name: 'ai-governance:manage', description: '管理 AI 内容标识/终审/评分', category: 'ai' },
   { name: 'record:clone', description: '克隆记录/子树', category: 'records' },
   { name: 'record:move', description: '移动/排序树节点', category: 'records' },
   { name: 'record:archive', description: '归档/恢复记录', category: 'records' },

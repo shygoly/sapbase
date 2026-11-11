@@ -52,6 +52,9 @@ const DIRECT_TABLES = [
   'search_documents',
   'record_snapshots',
   'record_operations',
+  'ai_content_provenance',
+  'ai_content_labels',
+  'ai_score_records',
   'asset_variants',
   'asset_upload_sessions',
 ] as const

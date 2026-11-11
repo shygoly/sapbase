@@ -1514,6 +1514,61 @@
         "createdBy",
         "error"
       ]
+    },
+    "ai_content_provenance": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "contentId",
+        "contentType",
+        "producer",
+        "agent",
+        "model",
+        "promptHash",
+        "templateRef",
+        "taskId",
+        "contentHash",
+        "parentContentId",
+        "version",
+        "metadata"
+      ]
+    },
+    "ai_content_labels": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "contentId",
+        "labelType",
+        "version",
+        "text",
+        "status",
+        "metadata",
+        "appliedAt",
+        "verifiedAt"
+      ]
+    },
+    "ai_score_records": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "contentId",
+        "subjectType",
+        "subjectId",
+        "aiScore",
+        "humanScore",
+        "status",
+        "ruleVersion",
+        "confirmedBy",
+        "confirmedAt",
+        "appealReason",
+        "metadata"
+      ]
     }
   }
 }

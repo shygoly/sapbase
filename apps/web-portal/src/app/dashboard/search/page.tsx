@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Loader2, Search as SearchIcon } from 'lucide-react'
 import PageContainer from '@sap/app-shared/components/layout/page-container'
+import { AiContentBadge } from '@sap/app-shared/components/ai-content-badge'
 import { Badge } from '@sap/app-shared/components/ui/badge'
 import { Button } from '@sap/app-shared/components/ui/button'
 import { Input } from '@sap/app-shared/components/ui/input'
@@ -148,6 +149,7 @@ export default function SearchPage() {
             <div key={hit.id} className='space-y-1 rounded-lg border bg-card p-3'>
               <div className='flex flex-wrap items-center gap-2'>
                 <Badge variant='outline'>{TYPE_LABELS[hit.resourceKey] ?? hit.resourceKey}</Badge>
+                {hit.resourceKey === 'ai_module' ? <AiContentBadge compact /> : null}
                 <span className='font-medium'>{hit.title}</span>
                 {hit.tags.slice(0, 3).map((tag) => (
                   <Badge key={tag} variant='secondary'>

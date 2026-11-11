@@ -41,6 +41,9 @@
 | search_documents | 搜索 |
 | record_snapshots | 记录生命周期 |
 | record_operations | 记录生命周期 |
+| ai_content_provenance | AI 内容治理 |
+| ai_content_labels | AI 内容治理 |
+| ai_score_records | AI 内容治理 |
 | assets | 资产 |
 | asset_variants | 资产 |
 | asset_upload_sessions | 资产 |
@@ -440,6 +443,45 @@ enforcement:
   - test:tests/notification-center.test.js#XSS
 db: none
 spec: tests/notification-center.test.js
+```
+
+---
+
+## AI 内容治理
+
+覆盖表：ai_content_provenance, ai_content_labels, ai_score_records
+
+`ai_content_provenance` 只追加保存 AI 内容来源链（prompt 只存 hash）；`ai_content_labels`
+版本化保存显式/隐式标识与应用/校验状态；`ai_score_records` 分开保存 AI 分/人工分与
+`ai_only → teacher_confirmed → appealed → final` 状态。终审复用 `blueprint_approvals`
+（`finalStep/subjectAuthor`）。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| ai_content_provenance.contentId | assets.id | 溯源归属内容 | none | 不复制内容正文 |
+| ai_content_provenance.parentContentId | ai_content_provenance.contentId | 父内容链 | none | 编辑/重生成 |
+| ai_content_labels.contentId | assets.id | 标识归属内容 | none | 版本唯一 |
+| ai_score_records.contentId | assets.id | 评分关联内容 | none | 可为空 |
+| ai_score_records.organizationId | organizations.id | 评分归属组织 | none | RLS 兜底 |
+
+### 状态词
+
+标识状态 `pending` / `applied` / `failed`；评分状态 `ai_only` / `teacher_confirmed` / `appealed` / `final`。
+AI 参考分不是正式成绩。
+
+### 不变量
+
+```yaml invariant
+id: INV-AIG-01
+tables: [ai_content_provenance, ai_content_labels, ai_score_records]
+desc: prompt 只存 hash；标识缺失阻断发布；检测 fail-closed；作者不能自我终审；AI 分仅参考；申诉强制人工。
+trigger: 生成/标识/检测/终审/评分/申诉
+enforcement:
+  - test:apps/api/src/ai-governance/ai-governance.service.spec.ts#AaGovernanceService
+db: rls:ai_content_provenance
+spec: apps/api/src/ai-governance/ai-governance.service.spec.ts
 ```
 
 ---

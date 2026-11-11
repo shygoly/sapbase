@@ -365,6 +365,27 @@ code_markers:
   - apps/api/src/record-lifecycle/record-lifecycle.service.ts
 ```
 
+### D-18：AI 内容治理复用复核平台与资产/审计，不新建第二套审核引擎
+
+```yaml decision
+id: D-18
+title: AI 内容治理复用复核平台与资产/审计，不新建第二套审核引擎
+status: accepted
+date: 2026-11
+context: |
+  AI 内容需要溯源、标识、内容安全、终审与评分状态；另建审核引擎会与 review/asset/audit 三套
+  状态竞争，也容易绕过已有人工复核与审计链。
+decision: |
+  provenance/label/score 独立表；内容安全实现 review CheckProvider；终审复用 blueprint_approvals
+  （finalStep/subjectAuthor 防自批）；标识/发布闸在治理服务中统一判定；所有动作写审计链。
+references:
+  - INV-AIG-01
+  - INV-AIG-04
+code_markers:
+  - apps/api/src/ai-governance/ai-governance.service.ts
+  - apps/api/src/ai-governance/content-safety.provider.ts
+```
+
 ---
 
 ## 附录：命名空间约定

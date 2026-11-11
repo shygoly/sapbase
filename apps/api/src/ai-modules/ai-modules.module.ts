@@ -12,6 +12,7 @@ import { ModuleRegistryModule } from '../module-registry/module-registry.module'
 import { SystemModule } from '../system/system.module'
 import { AIModuleContextModule } from '../ai-module-context/ai-module-context.module'
 import { BlueprintModule } from '../blueprint/blueprint.module'
+import { AiGovernanceModule } from '../ai-governance/ai-governance.module'
 import { AIModuleBlueprintService } from './ai-module-blueprint.service'
 import { AuditLogsModule } from '@sap/platform-core/audit-logs/audit-logs.module'
 import { NotificationsModule } from '../notifications/notifications.module'
@@ -32,6 +33,7 @@ import { NotificationsModule } from '../notifications/notifications.module'
     ModuleRegistryModule,
     SystemModule,
     BlueprintModule,
+    AiGovernanceModule,
   ],
   providers: [AIModulesService, AIModuleBlueprintService],
   controllers: [AIModulesController],

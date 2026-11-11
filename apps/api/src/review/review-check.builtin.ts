@@ -1,4 +1,5 @@
 import { ReviewCheckRegistry } from './review-check'
+import { contentSafetyProvider } from '../ai-governance/content-safety.provider'
 
 /**
  * 内置机器检测 provider。
@@ -26,5 +27,6 @@ export function createDefaultReviewCheckRegistry(): ReviewCheckRegistry {
       return { status: 'pass' as const, evidence: { provider: 'basic', findings: [] } }
     },
   })
+  registry.register(contentSafetyProvider)
   return registry
 }

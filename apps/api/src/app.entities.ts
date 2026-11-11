@@ -43,6 +43,7 @@ import { NotificationCleanupRun } from './notifications/notification-cleanup-run
 import { SearchDocument } from './search/search-document.entity'
 import { RecordSnapshot } from './record-lifecycle/record-snapshot.entity'
 import { RecordOperation } from './record-lifecycle/record-operation.entity'
+import { AiContentProvenance, AiContentLabel, AiScoreRecord } from './ai-governance/ai-governance.entities'
 import { OutboxDelivery } from './outbox/outbox-delivery.entity'
 import { OutboxEvent } from './outbox/outbox-event.entity'
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
@@ -108,6 +109,9 @@ export const APP_ENTITIES = [
   SearchDocument,
   RecordSnapshot,
   RecordOperation,
+  AiContentProvenance,
+  AiContentLabel,
+  AiScoreRecord,
   AgentConfirmationToken,
   BusinessAppInstallation,
   BusinessAppInstallationRevision,

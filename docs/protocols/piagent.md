@@ -487,6 +487,14 @@ error        { code, message }
   知识写入前校验来源，不得把外部文本当可信知识。
 - skill 只允许白名单 + `sha256:<64hex>` digest；注册只创建 draft，禁止运行时自动安装/激活。
 
+### 14.3 AI 内容治理边界
+
+- 生成内容写入 `ai_content_provenance`：agent/model/task/contentHash/parent；prompt 只存 hash。
+- 显式/隐式标识必须版本化；缺标识阻断发布/导出。
+- 内容安全走 review `content-safety` provider；异常/超时 fail-closed。
+- 终审复用 `blueprint_approvals`：机器 → 人工 → 终审，作者不能自我终审。
+- AI 评分只是参考分，教师确认/终审后才能作为正式成绩。
+
 ---
 
 ## 15. 反模式

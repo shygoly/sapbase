@@ -14,6 +14,7 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import { AIModulesService } from './ai-modules.service'
+import { AiGovernanceService } from '../ai-governance/ai-governance.service'
 import type { DefinitionPatch } from './definition-patch.service'
 import { AIModule, AIModuleStatus } from './ai-module.entity'
 import { AIModuleTest } from './ai-module-test.entity'
@@ -38,6 +39,7 @@ export class AIModulesController {
     private readonly generatePatchService: GeneratePatchService,
     private readonly submitReviewService: SubmitReviewService,
     private readonly getModuleService: GetModuleService,
+    private readonly governance?: AiGovernanceService,
   ) {}
 
   @Get()
@@ -417,6 +419,7 @@ export class AIModulesController {
     @OrganizationId() organizationId: string,
   ): Promise<AIModule> {
     try {
+      await this.governance?.assertPublishable(organizationId, id)
       await this.publishModuleService.execute({
         moduleId: id,
         organizationId,

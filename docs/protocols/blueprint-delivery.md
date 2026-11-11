@@ -634,6 +634,12 @@ P2 再扩展：非空约束，以及「冲突时返回可定位的错误」的�
 - SLA 到期提醒/升级幂等；无审批人必须告警，不得静默通过。
 - 待办中心 `work_items` 只是 `blueprint_approvals` 的投影；旧 `inbox` 行为保持兼容。
 
+### 10.3b AI 内容发布闸
+
+AI 生成/辅助内容在发布或导出前必须通过 `ai_content_labels` + `blueprint_approvals`
+终审链（`ai-content-final`）；未标识/未终审返回 403，不得以状态迁移绕过。
+非 AI/旧内容无 provenance 时不强制，保持原行为。
+
 ### 10.4 记账分录（运行时也判平衡）
 
 表 `blueprint_journal_entries`：金额用 **`amountUnits` bigint + `scale` integer**（与 `money.ts` 同构），不用 numeric/float。唯一约束 `(recordId, ruleId, account, side)` 防重复过账。

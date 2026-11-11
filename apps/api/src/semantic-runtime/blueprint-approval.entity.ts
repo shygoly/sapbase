@@ -67,4 +67,11 @@ export class BlueprintApproval extends TenantAwareEntity {
 
   @Column({ type: 'timestamptz', nullable: true })
   escalatedAt: Date | null
+
+  /** AI 内容终审：作者不能自我终审。 */
+  @Column({ type: 'uuid', nullable: true })
+  subjectAuthor: string | null
+
+  @Column({ type: 'boolean', default: false })
+  finalStep: boolean
 }

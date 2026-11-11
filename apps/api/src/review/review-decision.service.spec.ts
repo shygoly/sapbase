@@ -189,3 +189,40 @@ describe('ReviewDecisionService machine check guard', () => {
     ).resolves.toMatchObject({ status: 'approved' })
   })
 })
+
+describe('ReviewDecisionService final review', () => {
+  it('作者不能自我终审', async () => {
+    const approval = {
+      id: 'a1',
+      organizationId: 'org-1',
+      recordId: 'c1',
+      role: 'content-final-reviewer',
+      kind: 'human',
+      status: 'pending',
+      round: 1,
+      selector: null,
+      assignee: null,
+      subjectAuthor: 'u1',
+      finalStep: true,
+    }
+    const approvals = {
+      findOne: jest.fn(async () => approval),
+      save: jest.fn(async (row) => row),
+    }
+    const service = new ReviewDecisionService(
+      approvals as never,
+      { create: jest.fn((row) => row), save: jest.fn(async (row) => row) } as never,
+      { create: jest.fn((row) => row), save: jest.fn(async (row) => row) } as never,
+      { close: jest.fn() } as never,
+    )
+    await expect(
+      service.act(
+        'org-1',
+        'a1',
+        { userId: 'u1', roleKeys: ['content-final-reviewer'] },
+        'approve',
+        'ok',
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException)
+  })
+})
