@@ -44,4 +44,4 @@
 - [x] 5.1 piagent.md §14.2 宿主边界/降级
 - [x] 5.2 agent-evolution.md §15 实例演进范围/绑定/回流
 - [x] 5.3 DECISIONS D-14 + AGENT-TOOLS MCP 投影边界（DOMAIN 无新表）
-- [ ] 5.4 `node scripts/meta/check-all.mjs` 0 error；`openspec validate --strict` 通过
+- [x] 5.4 `npm run check:all` 0 error；`openspec validate add-agent-host-and-instance-evolution --strict` 通过
