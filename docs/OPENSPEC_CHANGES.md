@@ -7,11 +7,11 @@
 
 | 指标 | 数量 |
 | --- | --- |
-| 进行中 | 33 |
+| 进行中 | 32 |
 | 已完成未归档 | 27 |
 | 无任务/骨架 | 2 |
-| 已归档 | 25 |
-| 活跃任务 | 1079/2065 |
+| 已归档 | 26 |
+| 活跃任务 | 1079/2051 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -49,7 +49,6 @@
 | [add-offline-content-package](../openspec/changes/add-offline-content-package/) | 离线内容包 | 0/42 | 8 req / 1 文件 | [P](../openspec/changes/add-offline-content-package/proposal.md) [D](../openspec/changes/add-offline-content-package/design.md) [T](../openspec/changes/add-offline-content-package/tasks.md) [S](../openspec/changes/add-offline-content-package/specs) | 2026-11-09 |
 | [add-record-lifecycle-and-tree-operations](../openspec/changes/add-record-lifecycle-and-tree-operations/) | 记录生命周期与树操作 | 0/46 | 9 req / 2 文件 | [P](../openspec/changes/add-record-lifecycle-and-tree-operations/proposal.md) [D](../openspec/changes/add-record-lifecycle-and-tree-operations/design.md) [T](../openspec/changes/add-record-lifecycle-and-tree-operations/tasks.md) [S](../openspec/changes/add-record-lifecycle-and-tree-operations/specs) | 2026-11-09 |
 | [add-search-and-retrieval](../openspec/changes/add-search-and-retrieval/) | 搜索与检索 | 0/36 | 8 req / 1 文件 | [P](../openspec/changes/add-search-and-retrieval/proposal.md) [D](../openspec/changes/add-search-and-retrieval/design.md) [T](../openspec/changes/add-search-and-retrieval/tasks.md) [S](../openspec/changes/add-search-and-retrieval/specs) | 2026-11-09 |
-| [enhance-piagent-help-and-action-shell](../openspec/changes/enhance-piagent-help-and-action-shell/) | PiAgent 悬浮入口 — 用法答疑 + 代操确认 | 0/14 | 3 req / 1 文件 | [P](../openspec/changes/enhance-piagent-help-and-action-shell/proposal.md) [D](../openspec/changes/enhance-piagent-help-and-action-shell/design.md) [T](../openspec/changes/enhance-piagent-help-and-action-shell/tasks.md) [S](../openspec/changes/enhance-piagent-help-and-action-shell/specs) | 2026-11-09 |
 | [kimi-api-configuration](../openspec/changes/kimi-api-configuration/) | Configure Kimi API as Default AI Model | 5/8 | 1 req / 1 文件 | [P](../openspec/changes/kimi-api-configuration/proposal.md) [T](../openspec/changes/kimi-api-configuration/tasks.md) [S](../openspec/changes/kimi-api-configuration/specs) | 2026-02-18 |
 | [migrate-to-saas-architecture](../openspec/changes/migrate-to-saas-architecture/) | Migrate to SaaS Architecture | 45/75 | 21 req / 4 文件 | [P](../openspec/changes/migrate-to-saas-architecture/proposal.md) [D](../openspec/changes/migrate-to-saas-architecture/design.md) [T](../openspec/changes/migrate-to-saas-architecture/tasks.md) [S](../openspec/changes/migrate-to-saas-architecture/specs) | 2026-02-18 |
 
@@ -102,6 +101,7 @@
 | [add-patch-dsl-system](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/) | Add Patch DSL System for Declarative Schema Modifications | 118/118 | 11 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/design.md) [T](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-patch-dsl-system/specs) | 2026-11-11 |
 | [add-workflow-engine](../openspec/changes/archive/2026-11-11-add-workflow-engine/) | Add Workflow Engine | 29/74 | 9 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-workflow-engine/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-workflow-engine/design.md) [T](../openspec/changes/archive/2026-11-11-add-workflow-engine/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-workflow-engine/specs) | 2026-11-11 |
 | [ai-module-management](../openspec/changes/archive/2026-11-11-ai-module-management/) | AI Module Management System with CRM Testing | 51/51 | 9 req / 2 文件 | [P](../openspec/changes/archive/2026-11-11-ai-module-management/proposal.md) [T](../openspec/changes/archive/2026-11-11-ai-module-management/tasks.md) [S](../openspec/changes/archive/2026-11-11-ai-module-management/specs) | 2026-11-11 |
+| [enhance-piagent-help-and-action-shell](../openspec/changes/archive/2026-11-11-enhance-piagent-help-and-action-shell/) | PiAgent 悬浮入口 — 用法答疑 + 代操确认 | 14/14 | 3 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-enhance-piagent-help-and-action-shell/proposal.md) [D](../openspec/changes/archive/2026-11-11-enhance-piagent-help-and-action-shell/design.md) [T](../openspec/changes/archive/2026-11-11-enhance-piagent-help-and-action-shell/tasks.md) [S](../openspec/changes/archive/2026-11-11-enhance-piagent-help-and-action-shell/specs) | 2026-11-11 |
 | [migrate-schema-system-from-legacy](../openspec/changes/archive/2026-11-11-migrate-schema-system-from-legacy/) | Migrate Schema-Driven System from Legacy Version | 54/54 | 7 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-migrate-schema-system-from-legacy/proposal.md) [D](../openspec/changes/archive/2026-11-11-migrate-schema-system-from-legacy/design.md) [T](../openspec/changes/archive/2026-11-11-migrate-schema-system-from-legacy/tasks.md) [S](../openspec/changes/archive/2026-11-11-migrate-schema-system-from-legacy/specs) | 2026-11-11 |
 | [redesign-auth-login-surfaces](../openspec/changes/archive/2026-11-11-redesign-auth-login-surfaces/) | 重做 Portal / Console 登录页观感 | 10/10 | 3 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-redesign-auth-login-surfaces/proposal.md) [D](../openspec/changes/archive/2026-11-11-redesign-auth-login-surfaces/design.md) [T](../openspec/changes/archive/2026-11-11-redesign-auth-login-surfaces/tasks.md) [S](../openspec/changes/archive/2026-11-11-redesign-auth-login-surfaces/specs) | 2026-11-11 |
 | [refactor-workflow-to-ddd](../openspec/changes/archive/2026-11-11-refactor-workflow-to-ddd/) | Refactor Workflow Module to DDD Architecture | 107/132 | 9 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-refactor-workflow-to-ddd/proposal.md) [D](../openspec/changes/archive/2026-11-11-refactor-workflow-to-ddd/design.md) [T](../openspec/changes/archive/2026-11-11-refactor-workflow-to-ddd/tasks.md) [S](../openspec/changes/archive/2026-11-11-refactor-workflow-to-ddd/specs) | 2026-11-11 |

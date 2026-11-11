@@ -462,6 +462,17 @@ error        { code, message }
 | 评测 | 无 | `agent_eval_runs` + G5 | P2 |
 | 发布绑定 | 无 | 每轮记录 `releaseId/skillVersion` | P1 |
 | 可观测 | 基础审计 | turn/tool/eval 指标 | P2 |
+| 壳层当前页助手 | ✅ `PiAgentShell`：固定入口 + 可选悬浮球 + 上下文芯片 | 复用；补流式/引用 | ✅ |
+
+### 14.1 壳层当前页助手（已实现）
+
+- 组件：`libs/app-shared/src/components/piagent/assistant-shell.tsx`，挂进共享 Header，
+  Portal 与 Console 同一套面板。
+- 固定入口 MUST 存在；悬浮球只是可选第二入口，可关且 localStorage 记忆。
+- 面板含 org/app/release?/route/entity 上下文芯片，可逐个移除。
+- 帮助意图走 `chatApi`；refusal 明确降级，不伪造步骤。
+- 协助操作复用 `PlanRenderer` + `agentToolsApi.confirmThenInvoke`：取消不写，确认才消费令牌。
+- 业务页 MUST NOT 再挂第二套 Chat 浮层。
 
 ---
 

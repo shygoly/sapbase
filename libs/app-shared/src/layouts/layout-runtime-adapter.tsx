@@ -10,6 +10,7 @@ import React from 'react';
 import { SidebarProvider } from '../components/ui/sidebar';
 import { UnifiedSidebar } from '../components/layout/unified-sidebar';
 import Header from '../components/layout/header';
+import { PiAgentShell } from '../components/piagent/assistant-shell';
 import { useRequireAuth } from '../core/auth/auth-hooks';
 import { usePermissionStore } from '../core/store';
 import { AlertCircle } from 'lucide-react';
@@ -120,7 +121,7 @@ export function LayoutRuntimeAdapter({
       <div className="flex h-screen w-full bg-background">
         <UnifiedSidebar source="api" />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <Header />
+          <Header assistant={<PiAgentShell />} />
           <main className="flex-1 overflow-auto">
             <div className="container mx-auto px-4 py-8">{children}</div>
           </main>

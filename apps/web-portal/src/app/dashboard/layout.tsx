@@ -2,6 +2,7 @@
 
 import KBar from '@sap/app-shared/components/kbar';
 import Header from '@sap/app-shared/components/layout/header';
+import { PiAgentShell } from '@sap/app-shared/components/piagent/assistant-shell';
 import { InfoSidebar } from '@sap/app-shared/components/layout/info-sidebar';
 import { InfobarProvider } from '@sap/app-shared/components/ui/infobar';
 import { SidebarInset, SidebarProvider } from '@sap/app-shared/components/ui/sidebar';
@@ -30,7 +31,7 @@ export default function DashboardLayout({
         <InfobarProvider defaultOpen={false}>
           <UnifiedSidebar source="api" />
           <SidebarInset>
-            <Header />
+            <Header assistant={<PiAgentShell />} />
             {/* page main content */}
             {children}
             {/* page main content ends */}
