@@ -27,6 +27,7 @@ import { BLUEPRINT_JOURNAL_ENTRIES_DDL } from '../src/semantic-runtime/blueprint
 import { BLUEPRINT_RECORDS_DDL } from '../src/semantic-runtime/blueprint-record.ddl'
 import { RecordWriteError, SemanticRuntimeService } from '../src/semantic-runtime/semantic-runtime.service'
 import { SemanticRuntimeModule } from '../src/semantic-runtime/semantic-runtime.module'
+import { addTransactionalDataSource, initializeTransactionalContext, StorageDriver } from 'typeorm-transactional'
 
 const ORGANIZATION_ID = '99999999-9999-9999-9999-999999999999'
 const PACKAGE_ID = 'auto-parts-1.1.0'
@@ -71,6 +72,7 @@ describe('Outbox（N0 e2e）', () => {
     process.env.BLUEPRINT_LICENSE_PUBLIC_KEYS = JSON.stringify([keys.publicPem])
     process.env.BLUEPRINT_LICENSE_PRIVATE_KEY = keys.privatePem
 
+    initializeTransactionalContext({ storageDriver: StorageDriver.ASYNC_LOCAL_STORAGE })
     const moduleRef = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRoot({
@@ -109,6 +111,7 @@ describe('Outbox（N0 e2e）', () => {
     app = moduleRef.createNestApplication()
     await app.init()
     dataSource = moduleRef.get(DataSource)
+    addTransactionalDataSource(dataSource)
 
     try {
       await dataSource.query('SELECT 1 FROM organizations LIMIT 1')

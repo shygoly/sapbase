@@ -12,6 +12,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { AtomicRegistryModule } from '../src/atomic-registry/atomic-registry.module'
 import { AtomicRuntimeModule } from '../src/atomic-runtime/atomic-runtime.module'
+import { addTransactionalDataSource, initializeTransactionalContext, StorageDriver } from 'typeorm-transactional'
 import { JwtAuthGuard } from '../src/auth/jwt-auth.guard'
 import { BlueprintModule } from '../src/blueprint/blueprint.module'
 import { NotificationsModule } from '../src/notifications/notifications.module'
@@ -89,6 +90,7 @@ describe('Notifications + Inbox（N1/N2 e2e）', () => {
     process.env.BLUEPRINT_LICENSE_PUBLIC_KEYS = JSON.stringify([keys.publicPem])
     process.env.BLUEPRINT_LICENSE_PRIVATE_KEY = keys.privatePem
 
+    initializeTransactionalContext({ storageDriver: StorageDriver.ASYNC_LOCAL_STORAGE })
     const moduleRef = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRoot({
@@ -122,6 +124,7 @@ describe('Notifications + Inbox（N1/N2 e2e）', () => {
     app = moduleRef.createNestApplication()
     await app.init()
     dataSource = moduleRef.get(DataSource)
+    addTransactionalDataSource(dataSource)
 
     try {
       await dataSource.query('SELECT 1 FROM organizations LIMIT 1')
