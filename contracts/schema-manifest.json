@@ -405,6 +405,9 @@
         "visible",
         "disabled",
         "order",
+        "surface",
+        "componentKey",
+        "interaction",
         "parentId"
       ]
     },
