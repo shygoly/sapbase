@@ -30,7 +30,7 @@ TS2551 方法名变更                                   16 处
 ## What Changes
 
 - **修复**：按领域逐块把 spec 对齐到**当前实现**的真实契约（命令对象形状、方法签名、枚举）
-- **补回**：缺失的测试工具（`backend/test/utils/*` 已存在，路径与用法一并核实）
+- **补回**：缺失的测试工具（`apps/api/test/utils/*` 已存在，路径与用法一并核实）
 - **删除（如确有必要）**：只允许删"被测行为已被移除"的用例，且必须在 `tasks.md` 里
   逐条列出删了什么、为什么 —— 不允许靠删测试凑绿
 - **MODIFIED**: CI 的 `apps` job 在 `tasks.md` 记录实测证据；若确有范围收窄，
@@ -38,8 +38,8 @@ TS2551 方法名变更                                   16 处
 
 ## Impact
 
-- 受影响：`backend/src/**/*.spec.ts`（六个域）、`backend/test/utils/*`、可能涉及少量
-  `backend/src/**` 中"spec 是对的、实现是错的"之处（这类要单独判定，见下）
+- 受影响：`apps/api/src/**/*.spec.ts`（六个域）、`apps/api/test/utils/*`、可能涉及少量
+  `apps/api/src/**` 中"spec 是对的、实现是错的"之处（这类要单独判定，见下）
 - **不属于本变更**：`backend/test/*.e2e-spec.ts` 里的历史 e2e（`auth` / `roles` / `departments`
   / `users` / `plugins` / `ai-module-lifecycle`）—— 它们需要真实库与完整 AppModule，
   现状是**跑起来会挂住**（早先实测：整目录 e2e 十分钟不返回）。本变更只在 tasks 里

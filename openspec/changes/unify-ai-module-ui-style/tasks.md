@@ -15,13 +15,6 @@
 - [ ] 2.4 Update empty state styling to match standard
 - [ ] 2.5 Ensure consistent spacing and padding
 
-## 3. Update CRM Module Pages
-
-- [ ] 3.1 Verify Customers page uses updated SchemaList
-- [ ] 3.2 Update Orders page if exists
-- [ ] 3.3 Update Financial Transactions page if exists
-- [ ] 3.4 Ensure all CRM pages follow standard patterns
-
 ## 4. Create UI Style Guidelines
 
 - [ ] 4.1 Document table component usage patterns
@@ -32,7 +25,7 @@
 
 ## 5. Validation
 
-- [ ] 5.1 Visual comparison: CRM vs Users/Departments/Roles pages
+- [ ] 5.1 Visual comparison: SchemaList vs Users/Departments/Roles pages
 - [ ] 5.2 Verify all interactive elements work correctly
 - [ ] 5.3 Test pagination functionality
 - [ ] 5.4 Test action buttons functionality

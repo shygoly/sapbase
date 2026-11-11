@@ -49,7 +49,7 @@ rebuild-database（squash 基线，顺带在 CI 里验证"从零重建"）
 `cargo build --release --locked --manifest-path crates/wasm-host/Cargo.toml`，
 否则刚修绿的 53 个套件在 CI 里照样红。这一步已加进 `apps` 与 `e2e` 两个 job。
 
-**仍然不覆盖（写在 CI 注释里，不假装）**：`backend/test/` 下其余历史 e2e
+**仍然不覆盖（写在 CI 注释里，不假装）**：`apps/api/test/` 下其余历史 e2e
 （auth / roles / departments / users / plugins / ai-module-lifecycle）既需要完整 AppModule
 又会挂住，不在任何 job 里。
 
@@ -107,6 +107,21 @@ plugins 共 344 项）全程未变红。
 | --- | --- | --- |
 | `common/events/handlers/audit-log-handler.ts` | 脱敏清单**漏了 `password`**（只有 passwordHash/apiKey/token），而且**只过滤顶层键** —— 事件载荷 `{ type, data: { password } }` 会把密码明文写进审计 | 清单补入 `password` / `secret` / `authorization`，并改为**递归**剔除；数组保持形状。这是"收紧审计"，不是放松 |
 
+
+## 历史 e2e 事实记录（2026-11-11）
+
+已核对 `apps/api/test/` 与 CI：
+
+- 历史 e2e：`auth.e2e-spec.ts`、`roles.e2e-spec.ts`、`departments.e2e-spec.ts`、`users.e2e-spec.ts`、`plugins.e2e-spec.ts`、`ai-module-lifecycle.e2e-spec.ts`。
+- `.github/workflows/ci.yml:138-142` 明确写明这些文件不在 `apps` job 覆盖范围；`e2e` job 只跑维护中的清单，不包含上述文件。
+- 单文件 `npx jest --config ./test/jest-e2e.json --runInBand test/auth.e2e-spec.ts`：
+  `Test Suites: 1 failed, 1 total; Tests: 0 total`，根因是 `import * as request from 'supertest'` 的
+  `TS2349 This expression is not callable`（编译期就失败，不进入 AppModule/DB）。
+- 六个文件一起跑：90 秒无输出、未返回（与既有“整目录会挂住”的记录一致），已终止。
+- 结论：这些 e2e 既未纳入 CI，也不能在当前树稳定执行；本变更只记录事实，不在本次修复/删除/跳过。
+- 建议：另开 `fix-or-retire-legacy-api-e2e` 决定修 import + 真实库夹具，或显式删除/标注 skip；在此之前
+  不得把“53 套件绿”表述为“全部 e2e 绿”。
+
 > 判定：这三条都属于**能力被有意移除**（不是实现漏做）——它们在当前 API 里没有对应物，
 > 而新 API 用更细的规则覆盖了同类关注点。整仓 `tsc` 也从未接受过旧断言，说明它们
 > 不是"曾经绿过之后被改坏"，而是**写下来就没跑过**。
@@ -127,7 +142,7 @@ plugins 共 344 项）全程未变红。
 
 ## 里程碑：历史 e2e 的事实记录（不修，只写清）
 
-- [ ] 记录：`test/auth|roles|departments|users|plugins|ai-module-lifecycle.e2e-spec.ts`
+- [x] 记录：`test/auth|roles|departments|users|plugins|ai-module-lifecycle.e2e-spec.ts`
       需要真实库与完整 AppModule，当前整目录跑会挂住（早先实测 10 分钟不返回）；
       本仓库长期只跑 `atomic-runtime` / `blueprint-pipeline` / `atomic-gates` 三个 e2e。
       建议单独立变更决定它们的去留（修/删/标注 skip），不要装作它们不存在。

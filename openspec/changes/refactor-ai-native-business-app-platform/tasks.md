@@ -99,6 +99,6 @@
   tool-audit/suspend/activate; `rls.e2e-spec` passed cross-tenant read filtering, write denial
   under a non-owner role, and owner/superuser startup rejection.
 - Verification limitation: `next build` reached type checking but is blocked by the pre-existing
-  missing file `speckit/src/lib/api/shipping/types`. A targeted TypeScript check of the new app
+  missing file `libs/api-client/src/api/shipping/types`. A targeted TypeScript check of the new app
   switcher, store, API client, and business-app API passed.
 - OpenSpec: `validate refactor-ai-native-business-app-platform --strict` passed.

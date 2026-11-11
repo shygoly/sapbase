@@ -2,7 +2,7 @@
 
 ## Why
 
-本 change 为 `harden-browser-plugin-and-data-boundaries`，顺序 02，优先级 **P0（浏览器信任与事实边界；不代表公网已利用）**。重新审查基线为 **weichen `ce1e538dcec6539f66bba80d5413a3b6741486c9`**，文档分支 `docs/weichen-ai-native-remediation-20261110`。前置为 `refactor-ai-native-control-plane-boundaries`；01/02/03 可并行隔离开发，后置联合验收不阻断前段契约开发。
+本 change 为 `harden-browser-plugin-and-data-boundaries`，顺序 02，优先级 **P0（浏览器信任与事实边界；不代表公网已利用）**。重新审查基线为 **weichen `ce1e538dcec6539f66bba80d5413a3b6741486c9`**，文档分支 `weichen-ai-native-remediation-20261110` 分支。前置为 `refactor-ai-native-control-plane-boundaries`；01/02/03 可并行隔离开发，后置联合验收不阻断前段契约开发。
 
 此稿不是旧 main 结论搬运：后端、API 与 UI 已拆为多个 libs，已有 PG identity/sessions、data-scope、蓝图 UI consumer 与 test-evidence 资产；目录迁移既不证明修复，也不证明旧风险仍然成立。
 

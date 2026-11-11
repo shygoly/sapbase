@@ -2,7 +2,7 @@
 
 ### Requirement: Role Mapping Declaration
 
-`permissions.json` MAY declare `roleMappings` mapping an AI role to platform permission
+`permissions.json` MAY declare `roleMappings` mapping an AI role to platform permission points; the runtime SHALL
 points. A mapped role SHALL be considered present when any mapped permission point is held.
 
 `roleMappings` MUST NOT bypass platform RBAC checks; it only maps AI roles for Blueprint

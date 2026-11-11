@@ -20,19 +20,19 @@ Additionally, `speckit-legacy` contains valuable Phase 5 features (i18n, theme m
 
 - **Affected specs**: New capability `schema-driven-generation`
 - **Affected code**: 
-  - `speckit/src/core/schema/` (new directory)
-  - `speckit/src/components/schema-form.tsx` (new component)
-  - `speckit/src/components/schema-list.tsx` (new component)
-  - `speckit/public/specs/` (new directory structure)
+  - `libs/ui-runtime/src/schema/` (new directory)
+  - `libs/ui-runtime/src/components/schema-form.tsx` (new component)
+  - `libs/ui-runtime/src/components/schema-list.tsx` (new component)
+  - `apps/web-portal/public/specs/` (new directory structure)
   - Existing Runtime components (integration points)
 - **Breaking changes**: None (additive only)
 
 ## Migration Source
 
-- **Source**: `speckit-legacy/src/core/schema/` → `speckit/src/core/schema/`
-- **Source**: `speckit-legacy/src/components/schema-form.tsx` → `speckit/src/components/schema-form.tsx`
-- **Source**: `speckit-legacy/src/components/schema-list.tsx` → `speckit/src/components/schema-list.tsx`
-- **Source**: `speckit-legacy/public/specs/` → `speckit/public/specs/`
+- **Source**: `speckit-legacy/src/core/schema/` → `libs/ui-runtime/src/schema/`
+- **Source**: `speckit-legacy/src/components/schema-form.tsx` → `libs/ui-runtime/src/components/schema-form.tsx`
+- **Source**: `speckit-legacy/src/components/schema-list.tsx` → `libs/ui-runtime/src/components/schema-list.tsx`
+- **Source**: `speckit-legacy/public/specs/` → `apps/web-portal/public/specs/`
 
 ## Success Criteria
 

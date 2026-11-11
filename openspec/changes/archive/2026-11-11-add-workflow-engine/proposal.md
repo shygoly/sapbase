@@ -1,5 +1,8 @@
 # Change: Add Workflow Engine
 
+> Status: SUPERSEDED by Blueprint record transition on 2026-11-10. Do not apply.
+> Historical: `/workflows` and `/workflow-instances` now return 410; see `apps/api/src/legacy-workflow-gone`.
+
 ## Why
 
 The system currently has state machine definitions stored in AI module definitions (`step3_stateFlow`), but lacks an execution engine to actually run these workflows. Users can define state machines (e.g., Lead: 新建→已联系→合格|不合格; Opportunity: 初步接触→需求分析→方案报价→谈判中→赢单|输单), but there's no runtime system to:

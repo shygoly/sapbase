@@ -27,10 +27,10 @@ This will enable the system to leverage AI for generating Patch DSL modules whil
   - Modified capability: `crm-module` (for testing)
   - Modified capability: `patch-dsl-system` (for AI integration)
 - **Affected code**:
-  - `speckit/src/app/admin/ai-models/` - Model configuration pages
-  - `speckit/src/app/admin/ai-modules/` - Module development, testing, review pages
-  - `speckit/src/lib/ai/` - AI client and module management services
-  - `speckit/src/core/patch/` - Enhanced Patch Gateway with AI integration
+  - `apps/web-console/src/app/admin/ai-models/` - Model configuration pages
+  - `apps/web-console/src/app/admin/ai-modules/` - Module development, testing, review pages
+  - `libs/app-shared/src/lib/ai/` - AI client and module management services
+  - `libs/app-shared/src/core/patch/` - Enhanced Patch Gateway with AI integration
   - Database: New tables for AI models, modules, tests, reviews
 - **Breaking changes**: None (additive only)
 

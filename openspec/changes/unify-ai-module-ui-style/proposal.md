@@ -1,5 +1,7 @@
 # Change: Unify AI-Generated Module UI Style
 
+> SchemaList owner: `migrate-schema-system-from-legacy`. This change only contributes style deltas.
+
 ## Why
 
 Currently, AI-generated modules (like CRM) use different UI components and styling compared to the standard system modules (Users, Departments, Roles). This inconsistency creates:
@@ -23,11 +25,10 @@ All AI-generated modules should follow the same UI patterns, components, and sty
 ## Impact
 
 - **Affected specs**: 
-  - Modified capability: `crm-module` (UI consistency)
+  - Modified capability: `ui-consistency`
   - Modified capability: `patch-dsl-system` (UI generation guidelines)
 - **Affected code**:
-  - `speckit/src/components/schema-list.tsx` - Update to match standard styling
-  - `speckit/src/app/crm/**` - Update CRM pages to use consistent components
+  - `libs/ui-runtime/src/components/schema-list.tsx` - Update to match standard styling
   - Future AI-generated modules will follow these patterns
 - **Breaking changes**: None (visual only, functionality preserved)
 

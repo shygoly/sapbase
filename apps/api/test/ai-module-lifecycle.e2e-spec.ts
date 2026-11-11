@@ -1,5 +1,6 @@
 /**
- * Full lifecycle E2E test: create → submit-review → approve → publish → generate-system → deploy → unpublish.
+ * Full lifecycle E2E test: create → submit-review → approve → publish → unpublish.
+ * Code generation / deploy endpoints were removed; the test asserts they stay 404.
  * Requires an authenticated user with system:manage and system:generate (e.g. admin).
  * Run after DB seed so permissions exist, or test creates a user with required permissions.
  */
@@ -54,7 +55,7 @@ describe('AI Module full lifecycle (e2e)', () => {
     await app.close()
   })
 
-  it('runs full lifecycle: create → submit-review → approve → publish → generate-system → deploy → unpublish', async () => {
+  it('runs full lifecycle: create → submit-review → approve → publish → unpublish; codegen endpoints are gone', async () => {
     const server = request(app.getHttpServer())
     const auth = { Authorization: `Bearer ${token}` }
 
@@ -98,26 +99,18 @@ describe('AI Module full lifecycle (e2e)', () => {
     expect(published.status).toBe(AIModuleStatus.PUBLISHED)
     expect(published.publishedAt).toBeDefined()
 
-    // 6. Generate system (stub returns jobId and status)
+    // 6. Code generation / deploy were removed by add-dsl-management-and-display.
+    //    Keep 404 assertions so a re-introduced endpoint fails this supersede guard.
     const genRes = await server.post(`/api/ai-modules/${moduleId}/generate-system`).set(auth)
-    expect([200, 201]).toContain(genRes.status)
-    const genResult = genRes.body?.data ?? genRes.body
-    expect(genResult).toHaveProperty('jobId')
-    expect(genResult).toHaveProperty('status')
-    expect(genResult.jobId).toBeTruthy()
+    expect(genRes.status).toBe(404)
 
-    // 7. Deploy (stub returns deployId and status)
     const deployRes = await server
       .post('/api/system/deploy')
       .set(auth)
-      .send({ moduleId, jobId: (genRes.body?.data ?? genRes.body).jobId })
-    expect([200, 201]).toContain(deployRes.status)
-    const deployResult = deployRes.body?.data ?? deployRes.body
-    expect(deployResult).toHaveProperty('deployId')
-    expect(deployResult).toHaveProperty('status')
-    expect(deployResult.deployId).toBeTruthy()
+      .send({ moduleId })
+    expect(deployRes.status).toBe(404)
 
-    // 8. Unpublish (uninstall)
+    // 7. Unpublish (uninstall)
     const unpublishRes = await server.post(`/api/ai-modules/${moduleId}/unpublish`).set(auth)
     expect([200, 201]).toContain(unpublishRes.status)
     const unpublished = unpublishRes.body?.data ?? unpublishRes.body

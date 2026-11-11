@@ -1,5 +1,7 @@
 # Change: Refactor sapbase into an AI-native business app platform
 
+> 物理拆分 / 三库 build / error 级规则已完成，本 change 不重做；任务收敛见 `refactor-ai-native-control-plane-boundaries` design §8。
+
 ## Why
 
 sapbase already has the core of a platform: tenant-aware organizations, signed Blueprint packages,
@@ -51,10 +53,10 @@ app-scoped tool catalog.
   - `agent-runtime` (new)
   - `ai-module-management` (AI-native authoring additions)
 - Affected code:
-  - `backend/src/organizations`, `backend/src/auth*`, `backend/src/common/*`
-  - `backend/src/blueprint`, `backend/src/semantic-runtime`, `backend/src/module-registry`
-  - `backend/src/agent-tools`, `backend/src/chat`, `backend/src/ai-models`, `backend/src/ai-modules`
-  - `speckit/src/core/{navigation,auth,interaction}`, `speckit/src/app/[locale]`
+  - `libs/platform-core/src/organizations`, `libs/platform-core/src/auth*`, `apps/api/src/common/*`
+  - `apps/api/src/blueprint`, `apps/api/src/semantic-runtime`, `apps/api/src/module-registry`
+  - `apps/api/src/agent-tools`, `apps/api/src/chat`, `apps/api/src/ai-models`, `apps/api/src/ai-modules`
+  - `libs/ui-layout/src/core/{navigation,auth}`, `apps/web-portal/src/app`
   - shared schemas, migrations, seeders, deployment manifests, and CI
 - Breaking risks:
   - Existing tenant-only APIs must acquire app context or an explicit platform/admin scope.

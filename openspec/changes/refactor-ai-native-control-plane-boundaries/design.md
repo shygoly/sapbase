@@ -98,6 +98,19 @@ Host 通过受限 Registry/MCP façade 取得工具，不注入该窄提议服�
 
 安全回退先停模型/Builder/自动发布，保留稳定安装、持久事件与拒绝门；不恢复 body.role、独立 manifest 发布、URL 包旁路或自动引擎切换。源码镜像回滚、元数据版本回退、数据补偿由不同 owner 处理；不能仅因为有旧镜像/Release 即认定安全。03/06 验证读 schema 与数据兼容，缺证据保持当前安全版本。
 
+
+### 8. 与 refactor-ai-native-business-app-platform 的任务收敛
+
+| 任务 | 处置 | 理由 |
+|---|---|---|
+| 3.5 Move hardcoded ERP/shipping routes | 保留 | 业务路由迁移，不是物理拆分重做 |
+| 3.6 Add a CRM application | 保留 | 产品能力；CRM 生成页已由 add-dsl-management 删除，不冲突 |
+| 4.9 Migrate current chat to app-scoped Agent session | 保留 | 功能接线，不是目录重做 |
+| 7.5 Reconcile migrate-to-saas-architecture | 保留 | 文档/架构对账 |
+| 物理拆分 / 三库 build / error 级规则重做 | 删除（当前不存在） | refactor-app-workspace-split 已完成；本次核查未发现旧重做任务 |
+
+有效权限合成的 ADR 入口：组织角色、应用角色、直授与 `users.roleId` 的优先级 MUST 由独立 ADR 冻结后，identity / review / business-app 三个 change 才能 apply。本 change 不替产品决定算法，只要求先有 ADR。
+
 ## Verification and Risks
 
 现有命令已核对：`npm run check:boundaries`、`npm run check:all`、`npm run build:libs`、`npm run build`、`npm run test --workspace @sap/api`、`npm run test:e2e --workspace @sap/api`、`npm run build --workspace @sap/web-portal` / `@sap/web-console`、`npm run wasm:test`。本次均不运行实现测试或安装/构建服务；`npm run lint` 的 API 子脚本带 --fix，也不作为只读审查命令。拟新增 `npm run check:ai-boundaries`、`npm run test:architecture-contracts`，其实现/实际运行结果不得预先宣称已存在或通过。

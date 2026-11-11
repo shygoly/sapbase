@@ -1,5 +1,7 @@
 # Change: Add Patch DSL System for Declarative Schema Modifications
 
+> Spec delta note: ADDED Requirement names are new; the semantic overlap with `integrate-versioned-schema-human-ai-workbench` is handled by the owner/order rule in `reconcile-pending-openspec-changes`.
+
 ## Why
 
 Currently, AI assistants and developers must directly modify code files to make changes to pages, forms, permissions, and other system components. This approach has several critical problems:
@@ -27,14 +29,14 @@ The Patch DSL system enables **declarative, validated, versioned, and hot-reload
 
 - **Affected specs**: New capability `patch-dsl-system`
 - **Affected code**:
-  - `speckit/src/core/patch/` (new directory)
+  - `libs/app-shared/src/core/patch/` (new directory)
     - `types.ts` - Patch DSL type definitions
     - `validator.ts` - Patch validation and security rules
     - `executor.ts` - Patch execution engine
     - `version-control.ts` - Version management and rollback
     - `hot-reload.ts` - Hot reloading mechanism
-  - `speckit/src/core/schema/resolver.ts` - Integration with patch system
-  - `speckit/public/patches/` - Patch storage directory
+  - `libs/ui-runtime/src/schema/resolver.ts` - Integration with patch system
+  - `apps/web-portal/public/patches/` - Patch storage directory
   - AI integration layer (new interface)
 - **Breaking changes**: None (additive only, existing code continues to work)
 

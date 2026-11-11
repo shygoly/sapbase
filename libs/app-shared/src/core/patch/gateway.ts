@@ -259,6 +259,13 @@ export class PatchGateway {
   }
 
   /**
+   * Return the tool definition consumed by the Agent tool layer.
+   */
+  getToolDefinition() {
+    return PATCH_GENERATION_TOOL_DEFINITION
+  }
+
+  /**
    * Generate UUID
    */
   private generateUUID(): string {
@@ -276,6 +283,39 @@ export class PatchGateway {
     return str.charAt(0).toUpperCase() + str.slice(1)
   }
 }
+
+/**
+ * Tool definition exposed to the Agent tool layer.
+ * The actual handler should call `PatchGateway.generatePatch` and then require
+ * the normal L1/L2/L3 confirmation path before `PatchManager.applyPatch`.
+ */
+export const PATCH_GENERATION_TOOL_DEFINITION = {
+  name: 'erp_patch_generate',
+  description:
+    '根据自然语言意图生成 Patch DSL 文档并做 dry-run；只生成/校验，不直接改代码或写入业务数据。',
+  parameters: {
+    type: 'object',
+    properties: {
+      intent: {
+        type: 'string',
+        minLength: 1,
+        description: '要修改的页面、字段、权限或菜单的自然语言描述',
+      },
+      targetSchema: {
+        type: 'string',
+        description: '目标 schema 名称，例如 Customer / customers',
+      },
+    },
+    required: ['intent'],
+    additionalProperties: false,
+  },
+  permission: 'tool:patch:generate',
+  write: false,
+  confirmation: 'none',
+  timeoutMs: 30000,
+  untrustedResult: true,
+  sensitiveArgs: [],
+} as const
 
 /**
  * Helper functions for common patch generation patterns

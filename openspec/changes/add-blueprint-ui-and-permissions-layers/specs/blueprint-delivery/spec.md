@@ -2,7 +2,7 @@
 
 ### Requirement: UI and Permissions Layers
 
-Blueprint packages MAY contain `ui.json` and `permissions.json`.
+Blueprint packages MAY contain `ui.json` and `permissions.json`; the platform SHALL validate both files when present.
 
 `ui.json` SHALL declare pages (identifier/type/entity and optional route/fields) and optional
 menus. `permissions.json` SHALL declare role → resources → scope/actions.

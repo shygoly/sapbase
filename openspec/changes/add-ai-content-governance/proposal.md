@@ -1,5 +1,7 @@
 # Change: AI 内容治理
 
+> CheckProvider owner: `add-review-and-approval-platform`. This change implements content-safety as a provider, not a second registry.
+
 ## Why
 
 平台已有 Agent 会话、工具契约、知识/评测与审批基础，但对“AI 生成内容”缺少治理：

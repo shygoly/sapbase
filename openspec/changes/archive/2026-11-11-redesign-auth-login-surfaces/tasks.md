@@ -14,7 +14,7 @@
 
 ## 3. 验收
 
-- [ ] 3.1 两台面登录成功路径与选组织路径回归
+- [x] 3.1 两台面登录成功路径与选组织路径回归
 - [x] 3.2 窄屏单栏可用；无明显营销风装饰
 - [x] 3.3 肉眼可区分 Portal vs Console 登录标题/副文案
 - [x] 3.4 `openspec validate redesign-auth-login-surfaces --strict`

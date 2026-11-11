@@ -11,7 +11,7 @@
 | 资产 | 位置 | 角色 |
 |---|---|---|
 | 工具契约与白名单 | `contracts/tools.json` + `AGENT-TOOLS.md` | 唯一工具真源 |
-| 执行链 | `backend/src/agent-tools/agent-tool.registry.ts` | 契约 → 参数 → 权限 → 确认 → 执行 → 审计 |
+| 执行链 | `apps/api/src/agent-tools/agent-tool.registry.ts` | 契约 → 参数 → 权限 → 确认 → 执行 → 审计 |
 | 确认令牌 | `confirmation-token.service.ts` | 写操作一次性、带参数摘要、TTL |
 | 双 profile 协议 | `docs/protocols/piagent.md` | runtime / builder 的边界 |
 | 进化闭环 | `docs/protocols/agent-evolution.md` + `agent-eval` / `agent-feedback` | A0–A3、G0–G6 |

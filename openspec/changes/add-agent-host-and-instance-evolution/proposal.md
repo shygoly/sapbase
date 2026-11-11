@@ -34,9 +34,9 @@ A1/A2 治理与发布生命周期（`add-builder-governance-loop` / `add-a2-rele
 
 - 新增能力：`agent-host`、`instance-evolution`
 - 受影响的现有实现（实现阶段）：
-  - `backend/src/agent-tools`（MCP 投影、profile 收窄）
-  - `backend/src/agent-sessions`、`backend/src/agent-knowledge`（untrusted 边界）
-  - `backend/src/releases`、`backend/src/blueprint`（`platformVersion` / 回流）
+  - `apps/api/src/agent-tools`（MCP 投影、profile 收窄）
+  - `apps/api/src/agent-sessions`、`apps/api/src/agent-knowledge`（untrusted 边界）
+  - `apps/api/src/releases`、`apps/api/src/blueprint`（`platformVersion` / 回流）
   - `contracts/tools.json`（投影元数据：传输、超时、是否可经宿主暴露）
   - 部署清单（每实例一个宿主单元、独立网段、最小权限）
 - 依赖：本变更假设 `refactor-ai-native-business-app-platform` 的 `agent-runtime` 落地

@@ -1,5 +1,8 @@
 # Change: Full System Generation and Deploy
 
+> Status: SUPERSEDED by add-dsl-management-and-display on 2026-11-10. Do not apply.
+> Historical: code generation and `generate-system` were removed; DSL viewing/management is the current direction.
+
 ## Why
 The product goal is to **generate the full system** from the module definition (six-step or Patch DSL): both **frontend and backend source code** that can be re-deployed. Once generated, the system SHALL support **automatic deployment**. The actions that trigger **code generation** and **deploy** are highly sensitive and SHALL require the **highest permission**; for testing, the admin user SHALL be able to perform these actions.
 

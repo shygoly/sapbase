@@ -1,5 +1,8 @@
 # Change: Refactor Workflow Module to DDD Architecture
 
+> Status: SUPERSEDED by Blueprint record transition on 2026-11-10. Do not apply.
+> Historical: the legacy workflow module was removed; `/workflows` now returns 410 and record transitions live under `/api/blueprints/:id/records/:entity/:recordId/transition`.
+
 ## Why
 
 The current workflow module (`backend/src/workflows/`) follows a traditional layered architecture where business logic, data access, and infrastructure concerns are mixed together. This creates several problems:

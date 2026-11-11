@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/patch-dsl.schema.json",
+  "title": "Patch DSL Document",
+  "description": "声明式 Schema 修改文档。只修改 Schema JSON，不生成代码；由 PatchValidator / PatchExecutor 消费。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "patchId", "timestamp", "actor", "scope", "operation", "target", "payload"],
+  "properties": {
+    "version": {
+      "const": "1.0",
+      "description": "Patch DSL 版本；当前只接受 1.0"
+    },
+    "patchId": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description": "Patch UUID"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 时间"
+    },
+    "actor": {
+      "enum": ["ai", "human"]
+    },
+    "scope": {
+      "enum": ["page", "object", "permission", "state", "menu"]
+    },
+    "operation": {
+      "enum": ["add", "update", "remove", "reorder", "replace"]
+    },
+    "target": {
+      "$ref": "#/definitions/target"
+    },
+    "payload": {
+      "type": "object",
+      "description": "按 scope 解释的修改内容；详细形状由 PatchValidator 做语义校验"
+    },
+    "securityLevel": {
+      "enum": ["L1", "L2", "L3"],
+      "description": "由 validator 赋值；客户端提交值会被覆盖"
+    },
+    "dependsOn": {
+      "type": "array",
+      "items": { "type": "string", "format": "uuid" },
+      "description": "依赖的 patchId；批量执行时按拓扑序"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500
+    }
+  },
+  "definitions": {
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "identifier"],
+      "properties": {
+        "type": {
+          "enum": ["page", "object", "field", "action", "state", "role", "menu", "permission"]
+        },
+        "identifier": { "type": "string", "minLength": 1 },
+        "path": { "type": "string" }
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "label"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "type": {
+          "enum": [
+            "text",
+            "number",
+            "email",
+            "password",
+            "select",
+            "multiselect",
+            "checkbox",
+            "date",
+            "datetime",
+            "textarea",
+            "relation",
+            "file"
+          ]
+        },
+        "component": { "type": "string" },
+        "required": { "type": "boolean" },
+        "readonly": { "type": "boolean" },
+        "hidden": { "type": "boolean" },
+        "placeholder": { "type": "string" },
+        "description": { "type": "string" },
+        "relationObject": { "type": "string" }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "label", "type"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["primary", "secondary", "danger"] },
+        "permissions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "menuItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "path"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "pattern": "^/" },
+        "icon": { "type": "string" },
+        "order": { "type": "integer" },
+        "permissions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "path"],
+            "properties": {
+              "label": { "type": "string" },
+              "path": { "type": "string", "pattern": "^/" },
+              "icon": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "permissionPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allow": { "type": "array", "items": { "type": "string" } },
+        "deny": { "type": "array", "items": { "type": "string" } },
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "permissions": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "view": { "type": "array", "items": { "type": "string" } },
+            "create": { "type": "array", "items": { "type": "string" } },
+            "edit": { "type": "array", "items": { "type": "string" } },
+            "delete": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

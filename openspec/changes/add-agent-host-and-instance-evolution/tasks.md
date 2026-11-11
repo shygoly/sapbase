@@ -14,7 +14,7 @@
       `AGENT_TOOL_TRANSPORT=mcp` 时走 MCP、默认 `direct` 保持行为等价；
       租户/权限/确认令牌按引用传递（`_meta.contextId`），模型参数无法伪造；profile 收窄在 listTools 生效
 - [x] 1.5 拒绝路径单测已存在并复跑通过：未知工具、参数非法、权限不足、缺确认令牌
-      （`backend/src/agent-tools/agent-tool.registry.spec.ts`）
+      （`apps/api/src/agent-tools/agent-tool.registry.spec.ts`）
 
 ## 2. 宿主接入（P1）
 

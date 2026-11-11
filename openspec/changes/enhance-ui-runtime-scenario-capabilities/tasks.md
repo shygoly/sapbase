@@ -8,7 +8,7 @@
 
 - [x] 1.1 在 `ui-runtime` 定义能力开关类型：查询区、批量操作、确认、空/错态、
       Timeline、草稿、离开防误触、虚拟化阈值、format 管道
-      （`libs/ui-runtime/src/runtime/types.ts`）
+      （`libs/ui-runtime/src/schema/types.ts`）
 - [x] 1.2 扩展 Page/Collection/Form/Detail model：可选 `fieldAccess` / `rowAccess` /
       `actions[]`；缺省兼容现有 `permissions`
 - [ ] 1.3 定义菜单/UI 元数据可选字段：`componentKey`、`interaction`

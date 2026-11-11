@@ -10,7 +10,7 @@
 
 ## 2. Core Schema System Migration
 
-- [x] 2.1 Create `speckit/src/core/schema/` directory
+- [x] 2.1 Create `libs/ui-runtime/src/schema/` directory
 - [x] 2.2 Migrate `types.ts` from legacy, adapt imports and type names
 - [x] 2.3 Migrate `resolver.ts`, update file loading paths for Next.js `public/` directory
 - [x] 2.4 Migrate `validator.ts`, ensure validation logic compatibility
@@ -20,20 +20,20 @@
 
 ## 3. Dynamic UI Components Migration
 
-- [x] 3.1 Create `speckit/src/components/schema-form.tsx`
+- [x] 3.1 Create `libs/ui-runtime/src/components/schema-form.tsx`
 - [x] 3.2 Migrate SchemaForm from legacy, adapt to current shadcn/ui components
 - [x] 3.3 Ensure compatibility with React Hook Form and Zod
 - [x] 3.4 Support all field types: text, number, email, password, select, checkbox, date, datetime, textarea, relation
-- [x] 3.5 Create `speckit/src/components/schema-list.tsx`
+- [x] 3.5 Create `libs/ui-runtime/src/components/schema-list.tsx`
 - [x] 3.6 Migrate SchemaList from legacy, adapt to current table components
 - [x] 3.7 Implement sorting, pagination, and filtering features
 - [ ] 3.8 Write component tests for SchemaForm and SchemaList
 
 ## 4. Schema Files Structure
 
-- [x] 4.1 Create `speckit/public/specs/objects/` directory
-- [x] 4.2 Create `speckit/public/specs/views/` directory
-- [x] 4.3 Create `speckit/public/specs/pages/` directory
+- [x] 4.1 Create `apps/web-portal/public/specs/objects/` directory
+- [x] 4.2 Create `apps/web-portal/public/specs/views/` directory
+- [x] 4.3 Create `apps/web-portal/public/specs/pages/` directory
 - [x] 4.4 Copy example ObjectSchema files (user.json, department.json)
 - [x] 4.5 Copy example ViewSchema files (user-list.json, user-form.json)
 - [x] 4.6 Copy example PageSchema files (users.json, users-create.json, users-edit.json)
@@ -50,7 +50,7 @@
 
 ## 6. Documentation and Examples
 
-- [x] 6.1 Create `speckit/docs/schema-system.md` with usage guide
+- [x] 6.1 Create `docs/schema-system.md` with usage guide
 - [x] 6.2 Document how to create new ObjectSchema
 - [x] 6.3 Document how to create new ViewSchema
 - [x] 6.4 Document how to create new PageSchema

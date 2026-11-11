@@ -15,21 +15,21 @@ export class SchemaResolver {
   /**
    * Resolve a complete page schema with all references
    */
-  async resolvePage(path: string): Promise<ResolvedPageSchema> {
+  async resolvePage(path: string, version?: number): Promise<ResolvedPageSchema> {
     // Load page schema
-    const pageSchema = await this.loadPageSchema(path)
+    const pageSchema = await this.loadPageSchema(path, version)
     if (!pageSchema) {
       throw new Error(`Page schema not found: ${path}`)
     }
 
     // Load view schema
-    const viewSchema = await this.loadViewSchema(pageSchema.view)
+    const viewSchema = await this.loadViewSchema(pageSchema.view, version)
     if (!viewSchema) {
       throw new Error(`View schema not found: ${pageSchema.view}`)
     }
 
     // Load object schema
-    const objectSchema = await this.loadObjectSchema(viewSchema.object)
+    const objectSchema = await this.loadObjectSchema(viewSchema.object, version)
     if (!objectSchema) {
       throw new Error(`Object schema not found: ${viewSchema.object}`)
     }
@@ -61,17 +61,21 @@ export class SchemaResolver {
   /**
    * Load object schema
    */
-  async loadObjectSchema(name: string): Promise<ObjectSchema | null> {
-    if (this.objectCache.has(name)) {
-      return this.objectCache.get(name)!
+  async loadObjectSchema(name: string, version?: number): Promise<ObjectSchema | null> {
+    const cacheKey = version ? `${name}@v${version}` : name
+    if (this.objectCache.has(cacheKey)) {
+      return this.objectCache.get(cacheKey)!
     }
 
     try {
-      const response = await fetch(`/specs/objects/${name}.json`)
+      const url = version
+        ? `/specs/versions/${name}/v${version}.json`
+        : `/specs/objects/${name}.json`
+      const response = await fetch(url)
       if (!response.ok) return null
 
       const schema = (await response.json()) as ObjectSchema
-      this.objectCache.set(name, schema)
+      this.objectCache.set(cacheKey, schema)
       return schema
     } catch {
       return null
@@ -81,17 +85,21 @@ export class SchemaResolver {
   /**
    * Load view schema
    */
-  async loadViewSchema(name: string): Promise<ViewSchema | null> {
-    if (this.viewCache.has(name)) {
-      return this.viewCache.get(name)!
+  async loadViewSchema(name: string, version?: number): Promise<ViewSchema | null> {
+    const cacheKey = version ? `${name}@v${version}` : name
+    if (this.viewCache.has(cacheKey)) {
+      return this.viewCache.get(cacheKey)!
     }
 
     try {
-      const response = await fetch(`/specs/views/${name}.json`)
+      const url = version
+        ? `/specs/versions/${name}/v${version}.json`
+        : `/specs/views/${name}.json`
+      const response = await fetch(url)
       if (!response.ok) return null
 
       const schema = (await response.json()) as ViewSchema
-      this.viewCache.set(name, schema)
+      this.viewCache.set(cacheKey, schema)
       return schema
     } catch {
       return null
@@ -102,7 +110,7 @@ export class SchemaResolver {
    * Load page schema
    * @param identifier - Can be a path (e.g., '/crm/customers') or filename (e.g., 'customers')
    */
-  async loadPageSchema(identifier: string): Promise<PageSchema | null> {
+  async loadPageSchema(identifier: string, version?: number): Promise<PageSchema | null> {
     // Extract filename from path if it's a full path
     let filename = identifier
     if (identifier.startsWith('/')) {
@@ -110,19 +118,23 @@ export class SchemaResolver {
       filename = identifier.split('/').filter(Boolean).pop() || identifier
     }
 
-    if (this.pageCache.has(filename)) {
-      return this.pageCache.get(filename)!
+    const cacheKey = version ? `${filename}@v${version}` : filename
+    if (this.pageCache.has(cacheKey)) {
+      return this.pageCache.get(cacheKey)!
     }
 
     try {
-      const response = await fetch(`/specs/pages/${filename}.json`)
+      const url = version
+        ? `/specs/versions/${filename}/v${version}.json`
+        : `/specs/pages/${filename}.json`
+      const response = await fetch(url)
       if (!response.ok) return null
 
       const schema = (await response.json()) as PageSchema
-      this.pageCache.set(filename, schema)
+      this.pageCache.set(cacheKey, schema)
       // Also cache by path if it's different
       if (schema.path && schema.path !== filename) {
-        this.pageCache.set(schema.path, schema)
+        this.pageCache.set(`${schema.path}${version ? `@v${version}` : ''}`, schema)
       }
       return schema
     } catch {
@@ -211,12 +223,10 @@ export class SchemaResolver {
    * Clear specific cache
    */
   clearCacheFor(type: 'object' | 'view' | 'page', name: string): void {
-    if (type === 'object') {
-      this.objectCache.delete(name)
-    } else if (type === 'view') {
-      this.viewCache.delete(name)
-    } else if (type === 'page') {
-      this.pageCache.delete(name)
+    const cache =
+      type === 'object' ? this.objectCache : type === 'view' ? this.viewCache : this.pageCache
+    for (const key of Array.from(cache.keys())) {
+      if (key === name || key.startsWith(`${name}@v`)) cache.delete(key)
     }
   }
 }

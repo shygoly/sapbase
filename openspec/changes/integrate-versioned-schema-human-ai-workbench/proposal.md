@@ -2,7 +2,7 @@
 
 ## Why
 
-本次重新审查固定于 **weichen `ce1e538dcec6539f66bba80d5413a3b6741486c9`**，文档分支 `docs/weichen-ai-native-remediation-20261110`。旧 main 结论仅是复核候选，不是本基线事实。优先级 **P1**，顺序 **08**；本 change 只补现有消费者的版本、参数编辑和协作闭环，不重建 UI Runtime。
+本次重新审查固定于 **weichen `ce1e538dcec6539f66bba80d5413a3b6741486c9`**，文档分支 `weichen-ai-native-remediation-20261110` 分支。旧 main 结论仅是复核候选，不是本基线事实。优先级 **P1**，顺序 **08**；本 change 只补现有消费者的版本、参数编辑和协作闭环，不重建 UI Runtime。
 
 weichen 已有正式动态路由及真实 Schema 渲染：`apps/web-portal/src/app/dashboard/apps/[packageId]/[[...page]]/page.tsx:1–13` 调用 `libs/ui-runtime/src/blueprint/BlueprintAppRuntime.tsx`，后者获取 UI/实体/权限并用 SchemaList、SchemaForm 查询和创建真实 Blueprint records（`:130–169`、`:239–272`）。因此删除“没有 Schema 路由/字段渲染/服务端 UI 消费者”的修复任务，只保留回归验收。Page/Form/Collection/Detail 的包装组件仍可供手写页面使用，不要求全部改写成另一套三层 Page→View→Object 引擎。
 

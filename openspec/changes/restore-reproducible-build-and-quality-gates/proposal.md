@@ -2,7 +2,7 @@
 
 ## Why
 
-顺序 **03**；优先级 **P0（必需工程证据与交付阻断）**；前置 `refactor-ai-native-control-plane-boundaries`。重新审查基线为 **weichen / `ce1e538dcec6539f66bba80d5413a3b6741486c9`**，文档分支 `docs/weichen-ai-native-remediation-20261110`。本提案只规划剩余缺口，不 apply，不把 main 的构建诊断、测试数量或离线复现作为本基线实测。
+顺序 **03**；优先级 **P0（必需工程证据与交付阻断）**；前置 `refactor-ai-native-control-plane-boundaries`。重新审查基线为 **weichen / `ce1e538dcec6539f66bba80d5413a3b6741486c9`**，文档分支 `weichen-ai-native-remediation-20261110` 分支。本提案只规划剩余缺口，不 apply，不把 main 的构建诊断、测试数量或离线复现作为本基线实测。
 
 ### 已实现与剩余证据
 

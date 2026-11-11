@@ -2,7 +2,7 @@
 
 ### Requirement: Query Index Plan
 
-The semantic layer MAY declare `indexed: true` on a field. When declared, the runtime
+The semantic layer MAY declare `indexed: true` on a field; when declared, the runtime SHALL
 MUST create an idempotent expression index that matches the query/sort expression used by
 `record-query` (`data->>'field'` for text, `(data->>'field')::numeric` for numeric).
 

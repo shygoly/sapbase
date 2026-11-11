@@ -2,7 +2,7 @@
 
 ### Requirement: Explicit Query Index Declaration
 
-The semantic layer MAY declare `indexed: boolean` on a field. `indexed` only declares a
+The semantic layer MAY declare `indexed: boolean` on a field; the compiler SHALL treat `indexed` only as a
 query index candidate; it MUST NOT change validation, uniqueness or storage semantics.
 
 #### Scenario: indexed is optional

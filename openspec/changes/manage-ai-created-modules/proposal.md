@@ -33,10 +33,10 @@ This will enable:
   - Modified capability: `ai-module-management` (add module registration)
   - Modified capability: `crm-module` (register as AI-created module)
 - **Affected code**:
-  - `backend/src/module-registry/` - New module registry service and entities
-  - `backend/src/ai-modules/` - Add module registration on creation
-  - `speckit/src/app/admin/module-registry/` - Module registry management UI
-  - `speckit/src/app/admin/module-registry/[id]/` - Module detail and relationship view
+  - `apps/api/src/module-registry/` - New module registry service and entities
+  - `apps/api/src/ai-modules/` - Add module registration on creation
+  - `apps/web-console/src/app/admin/module-registry/` - Module registry management UI
+  - `apps/web-console/src/app/admin/module-registry/[id]/（待新增）` - Module detail and relationship view
   - Database: New tables for module registry, relationships, capabilities, statistics
 - **Breaking changes**: None (additive only)
 

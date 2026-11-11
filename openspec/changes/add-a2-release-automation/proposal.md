@@ -1,5 +1,8 @@
 # Change: A2 低风险发布自动化（P5）
 
+> Status: LEGACY (whitelist superseded). The A2 whitelist in this change is superseded by
+> `add-evidence-governed-builder-and-limited-a2` on 2026-11-10; keep for history, do not extend.
+
 > 执行顺序：**7 / 8**
 > 依赖：变更 3–6（Release、Runtime、Knowledge/Eval、Builder A1）
 > 参考：`docs/reference/06-evolution-loop.md` §0/§7、`07-adoption-and-checks.md` §P5

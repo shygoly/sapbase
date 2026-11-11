@@ -11,7 +11,7 @@ import { parseArgs, printHelp } from './lib/common.mjs'
 
 const opts = parseArgs()
 if (opts.help) {
-  printHelp('check-all.mjs', '顺序运行 check-domain-doc / check-meta-docs / check-agent-tools / check-auth-permissions。')
+  printHelp('check-all.mjs', '顺序运行 check-domain-doc / check-meta-docs / check-agent-tools / check-auth-permissions / check-boundaries / check-openspec-hygiene。')
   process.exit(0)
 }
 
@@ -22,6 +22,7 @@ const scripts = [
   'check-agent-tools.mjs',
   'check-auth-permissions.mjs',
   'check-boundaries.mjs',
+  'check-openspec-hygiene.mjs',
 ]
 const passthrough = process.argv.slice(2)
 

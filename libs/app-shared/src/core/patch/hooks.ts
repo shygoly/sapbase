@@ -2,6 +2,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import type { PatchManager } from './patch-manager'
 import type { Patch } from './types'
 
@@ -10,16 +11,19 @@ import type { Patch } from './types'
  */
 export function useHotReload(patchManager: PatchManager | null) {
   const [reloadKey, setReloadKey] = useState(0)
+  const router = useRouter()
 
   useEffect(() => {
     if (!patchManager) return
 
     const unsubscribe = patchManager.onHotReload(() => {
       setReloadKey((prev) => prev + 1)
+      // Next.js App Router: re-fetch server components without a full reload.
+      router.refresh()
     })
 
     return unsubscribe
-  }, [patchManager])
+  }, [patchManager, router])
 
   return reloadKey
 }

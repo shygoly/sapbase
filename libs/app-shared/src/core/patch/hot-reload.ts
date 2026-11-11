@@ -36,10 +36,8 @@ export class HotReloader {
     schemaType: 'object' | 'view' | 'page',
     schemaName: string
   ): void {
-    // Clear from registry
-    const _key = `${schemaType}:${schemaName}`
-    // Note: SchemaRegistry doesn't have a delete method, so we'll need to reload
-    // For now, we'll trigger a full reload
+    // Clear resolver cache for the specific schema, then notify consumers.
+    this.schemaResolver.clearCacheFor(schemaType, schemaName)
 
     // Debounce reload calls
     this.debounceReload()
@@ -49,8 +47,9 @@ export class HotReloader {
    * Invalidate all caches
    */
   invalidateAll(): void {
-    // Clear registry
+    // Clear registry and resolver caches
     this.schemaRegistry.clear()
+    this.schemaResolver.clearCache()
 
     // Debounce reload calls
     this.debounceReload()

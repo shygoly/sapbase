@@ -39,6 +39,15 @@ export class PatchExecutor {
     const warnings: string[] = []
     let updatedSchema: any = null
 
+    // Menu patches are navigation metadata; they do not have a schema document.
+    if (patch.scope === 'menu') {
+      return {
+        success: true,
+        patchId: patch.patchId,
+        warnings: ['Menu patches are handled separately'],
+      }
+    }
+
     try {
       // Load current schema if not provided
       if (!currentSchema) {
@@ -88,11 +97,6 @@ export class PatchExecutor {
             errors,
             warnings
           )
-          break
-        case 'menu':
-          // Menu patches don't modify schemas directly
-          warnings.push('Menu patches are handled separately')
-          updatedSchema = schemaCopy
           break
         default:
           errors.push(`Unknown patch scope: ${patch.scope}`)

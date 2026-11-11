@@ -9,6 +9,7 @@ import { PatchExecutor } from './executor'
 import { VersionControl } from './version-control'
 import { HotReloader } from './hot-reload'
 import { AuditLogger } from './audit-logger'
+import { PatchRateLimiter } from './rate-limiter'
 import { SchemaResolver } from '../schema/resolver'
 import { SchemaRegistry } from '../schema/registry'
 
@@ -22,14 +23,17 @@ export class PatchManager {
   private hotReloader: HotReloader
   private auditLogger: AuditLogger
   private schemaResolver: SchemaResolver
+  private rateLimiter: PatchRateLimiter
   public schemaRegistry: SchemaRegistry // Made public for gateway access
 
   constructor(
     schemaResolver: SchemaResolver,
-    schemaRegistry: SchemaRegistry
+    schemaRegistry: SchemaRegistry,
+    rateLimiter: PatchRateLimiter = new PatchRateLimiter()
   ) {
     this.schemaResolver = schemaResolver
     this.schemaRegistry = schemaRegistry
+    this.rateLimiter = rateLimiter
     this.validator = new PatchValidator(schemaRegistry)
     this.executor = new PatchExecutor(schemaRegistry)
     this.versionControl = new VersionControl()
@@ -43,8 +47,20 @@ export class PatchManager {
   async applyPatch(
     patch: Patch,
     actorPermissions?: string[],
-    requireConfirmation?: (patch: Patch, securityLevel: SecurityLevel) => Promise<boolean>
+    requireConfirmation?: (patch: Patch, securityLevel: SecurityLevel) => Promise<boolean>,
+    actorKey: string = patch.actor
   ): Promise<PatchExecutionResult> {
+    const limit = this.rateLimiter.check(actorKey)
+    if (!limit.allowed) {
+      const error = `Patch rate limit exceeded; retry after ${limit.retryAfterMs}ms`
+      this.auditLogger.logRejection(patch, error)
+      return {
+        success: false,
+        patchId: patch.patchId,
+        errors: [error],
+      }
+    }
+
     // Step 1: Validate patch
     const validation = this.validator.validate(patch, actorPermissions)
 
@@ -95,10 +111,11 @@ export class PatchManager {
 
     // Step 4: Create version
     const schemaName = patch.target.identifier
-    const schemaType = this.getSchemaTypeFromScope(patch.scope)
+    const schemaType = this.getSchemaTypeFromScope(patch.scope, schemaName)
     const updatedSchema = result.changes?.after
 
     if (updatedSchema) {
+      this.registerUpdatedSchema(schemaType, schemaName, updatedSchema)
       const version = this.versionControl.createVersion(
         schemaName,
         schemaType,
@@ -118,6 +135,7 @@ export class PatchManager {
       }
     }
 
+    this.auditLogger.log(patch, result)
     return result
   }
 
@@ -369,7 +387,8 @@ export class PatchManager {
    * Get schema type from patch scope
    */
   private getSchemaTypeFromScope(
-    scope: Patch['scope']
+    scope: Patch['scope'],
+    identifier?: string
   ): 'object' | 'view' | 'page' {
     switch (scope) {
       case 'object':
@@ -378,10 +397,25 @@ export class PatchManager {
       case 'page':
         return 'page'
       case 'permission':
-        // Permissions can be on any schema type
-        return 'object' // Default
+        if (identifier && this.schemaRegistry.getPage(identifier)) return 'page'
+        if (identifier && this.schemaRegistry.getView(identifier)) return 'view'
+        return 'object'
       default:
         return 'object'
+    }
+  }
+
+  private registerUpdatedSchema(
+    schemaType: 'object' | 'view' | 'page',
+    schemaName: string,
+    schema: any
+  ): void {
+    if (schemaType === 'page') {
+      this.schemaRegistry.registerPage(schemaName, schema)
+    } else if (schemaType === 'view') {
+      this.schemaRegistry.registerView(schemaName, schema)
+    } else {
+      this.schemaRegistry.registerObject(schemaName, schema)
     }
   }
 }

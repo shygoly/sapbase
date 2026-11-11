@@ -2,7 +2,7 @@
 
 ## Why
 
-本提案重新审查基线为 `ce1e538dcec6539f66bba80d5413a3b6741486c9`，文档分支为 `docs/weichen-ai-native-remediation-20261110`。旧 main 评估仅提供复核候选，不作为本基线事实。weichen 已实际拆分 `apps/api`、`apps/web-portal`、`apps/web-console` 与平台/工具/UI 库；不能继续把它们描述为未落地的架构图。仍需冻结的是跨层授权、最小 DI 端口、候选证据与运行版本的不同真源，以及故障不改变执行规则的接口契约，而不是重新迁目录。
+本提案重新审查基线为 `ce1e538dcec6539f66bba80d5413a3b6741486c9`，文档分支为 `weichen-ai-native-remediation-20261110` 分支。旧 main 评估仅提供复核候选，不作为本基线事实。weichen 已实际拆分 `apps/api`、`apps/web-portal`、`apps/web-console` 与平台/工具/UI 库；不能继续把它们描述为未落地的架构图。仍需冻结的是跨层授权、最小 DI 端口、候选证据与运行版本的不同真源，以及故障不改变执行规则的接口契约，而不是重新迁目录。
 
 `openspec/project.md:109` 允许运行时 AI 以 Agent Host 存在，`:121` 又笼统限制 LLM 只在设计/编译时；`docs/META_LANGUAGE.md:315` 的不变量是生产 Runtime 不含设计时 Jev，不是禁止受控 Host 调用模型。本项拟澄清“业务 Kernel 的事实、规则、授权与提交不依赖模型”，保留 Jev 隔离与平台判定权。
 

@@ -22,7 +22,7 @@
 
 ### Requirement: Test Utility Contract
 
-spec 引用的测试工具（`backend/test/utils/*` 等）MUST 存在且**路径正确**；
+spec 引用的测试工具（`apps/api/test/utils/*` 等）MUST 存在且**路径正确**；
 MUST NOT 用路径模糊匹配（如 jest `moduleNameMapper`）掩盖写错的导入。
 
 #### Scenario: 导入路径必须真实可解析

@@ -2,7 +2,7 @@
 
 ## Why
 
-本提案重新审查基线为 **weichen `ce1e538dcec6539f66bba80d5413a3b6741486c9`**，文档分支为 `docs/weichen-ai-native-remediation-20261110`。旧 main 评估只用于问题候选，不作为本次实测。新基线已把 Release 实现迁入 `libs/platform-release`；`apps/api` 保留装配/兼容导出。已有安装事务、行锁、追加修订、回退重载摘要检查、可信安装守卫、PG jobs、编译缓存以及真实蓝图 UI consumer 均予以保留，不再提出重建这些能力。
+本提案重新审查基线为 **weichen `ce1e538dcec6539f66bba80d5413a3b6741486c9`**，文档分支为 `weichen-ai-native-remediation-20261110` 分支。旧 main 评估只用于问题候选，不作为本次实测。新基线已把 Release 实现迁入 `libs/platform-release`；`apps/api` 保留装配/兼容导出。已有安装事务、行锁、追加修订、回退重载摘要检查、可信安装守卫、PG jobs、编译缓存以及真实蓝图 UI consumer 均予以保留，不再提出重建这些能力。
 
 仍需整改的是“发布目录里的 active”尚未成为“安装和用户实际执行的定义”：`libs/platform-release/src/releases/releases.service.ts:371–440` 不更新安装修订，`:474–480` 只取最新 active；`apps/api/src/business-apps/business-apps.service.ts:270–288` 的上下文不含版本；`apps/api/src/semantic-runtime/semantic-runtime.service.ts:2103–2105` 仍按传入包 ID 装载。新 UI 确实已经接入路由，但 `apps/web-portal/src/app/dashboard/apps/[packageId]/[[...page]]/page.tsx:1–13` 与 `libs/ui-runtime/src/blueprint/BlueprintAppRuntime.tsx:130–169,250–253` 都沿 URL 包 ID 调用定义和记录接口。因此不是“没有 UI”，而是它尚未消费安装有效版本。
 

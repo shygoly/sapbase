@@ -2,7 +2,7 @@
 
 ### Requirement: Page and Permission Declarations
 
-The semantic authoring layer MAY declare pages and permissions. `definitionToBlueprint`
+The semantic authoring layer MAY declare pages and permissions; `definitionToBlueprint` SHALL
 MUST map non-empty pages to `ui.json` and non-empty permission rules to
 `permissions.json`.
 

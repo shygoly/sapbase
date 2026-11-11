@@ -32,7 +32,7 @@
 
 ## 5. 内容安全
 
-- [ ] 5.1 `ContentSafetyProvider` 接口 + registry
+- [ ] 5.1 实现复核平台 `CheckProvider` 的 content-safety provider（不新建第二 registry）
 - [ ] 5.2 输入/输出检测；pass/warn/fail；异常 fail-closed
 - [ ] 5.3 与复核平台 `check` 步骤集成
 - [ ] 5.4 证据/版本/审计
