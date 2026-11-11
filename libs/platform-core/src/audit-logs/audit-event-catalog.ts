@@ -81,6 +81,9 @@ export const AUDIT_EVENT_CATALOG: AuditEventDefinition[] = [
   def('offline.entitlement.grant', 'offline_entitlement', ['actor'], 'long'),
   def('offline.entitlement.revoke', 'offline_entitlement', ['actor'], 'long', true),
   def('offline.cleanup', 'offline_entitlement', ['actor'], 'long'),
+  def('document.run', 'document', ['actor'], 'long'),
+  def('document.edit', 'document', ['actor'], 'long'),
+  def('document.convert', 'document', ['actor'], 'long', true),
 ]
 
 const BY_ACTION = new Map(AUDIT_EVENT_CATALOG.map((item) => [item.action, item]))

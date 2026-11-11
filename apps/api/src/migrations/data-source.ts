@@ -49,6 +49,7 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1794900000000-AddApprovalFinalStep.ts'),
     path.join(__dirname, '1795000000000-AddMetricsPlatform.ts'),
     path.join(__dirname, '1795100000000-AddOfflineContent.ts'),
+    path.join(__dirname, '1795200000000-AddDocumentIntelligence.ts'),
   ],
   synchronize: false,
   logging: true,

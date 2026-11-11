@@ -64,6 +64,9 @@ const DIRECT_TABLES = [
   'offline_packages',
   'offline_entitlements',
   'offline_devices',
+  'document_parse_runs',
+  'document_sections',
+  'document_candidates',
   'asset_variants',
   'asset_upload_sessions',
 ] as const

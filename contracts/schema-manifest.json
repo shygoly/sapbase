@@ -1714,6 +1714,65 @@
         "status",
         "lastSeenAt"
       ]
+    },
+    "document_parse_runs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "assetId",
+        "status",
+        "stage",
+        "progress",
+        "parser",
+        "sourceName",
+        "pageCount",
+        "draftVersion",
+        "confirmedVersion",
+        "error",
+        "options",
+        "createdBy"
+      ]
+    },
+    "document_sections": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "runId",
+        "key",
+        "parentKey",
+        "title",
+        "level",
+        "ordinal",
+        "content",
+        "pageNumber",
+        "anchor",
+        "metadata"
+      ]
+    },
+    "document_candidates": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "runId",
+        "key",
+        "sectionKey",
+        "kind",
+        "title",
+        "body",
+        "confidence",
+        "anchor",
+        "status",
+        "targetResourceKey",
+        "targetEntityId",
+        "metadata",
+        "convertedAt"
+      ]
     }
   }
 }

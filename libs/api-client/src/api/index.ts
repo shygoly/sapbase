@@ -119,3 +119,10 @@ export {
   type OfflineDeviceRecord,
   type OfflineEntitlementRecord,
 } from './offline.api'
+
+export {
+  documentIntelligenceApi,
+  type DocumentRun,
+  type DocumentSection,
+  type DocumentCandidate,
+} from './document-intelligence.api'

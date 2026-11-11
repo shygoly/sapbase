@@ -488,6 +488,27 @@ manifest/资产篡改拒绝
 实现落点：`apps/api/src/offline/` + `libs/api-client/src/offline/`；契约：`schemas/offline.schema.json`；
 领域表：`DOMAIN.md`「离线内容」；决策：`DECISIONS.md` D-20。
 
+### 3.22 Document Intelligence（文档智能）
+
+文档解析是**untrusted 内容的结构化草案**，不是直接写入业务真源：
+
+- **ParseRun**：`document_parse_runs` 记录 asset/status/stage/progress/parser/pageCount/draftVersion。
+- **Parser**：PDF 文本层 / PPTX / DOCX / TXT-MD；文件类型/大小/页数/zip bomb 限制；不执行宏/脚本/外链。
+- **Structure**：规则章节/编号提取 + 候选知识点；候选必须有来源锚点（页/行/quote）；低置信度标记。
+- **Draft**：章节/候选可编辑、合并、拆分、排序；变更升 draftVersion；确认锁定 confirmedVersion。
+- **Convert**：确认后按声明式映射写目标资源；`(runId,candidateKey)` 幂等，目标冲突可定位。
+- **Security**：untrusted 包裹、PII 脱敏、伪造锚点拒绝；模型/提示词/操作者审计。
+
+```text
+未确认 draftVersion 不得转换
+候选无锚点拒绝
+重复转换不新增实体；目标冲突不静默覆盖
+旧知识/课程/导入流程不变
+```
+
+实现落点：`apps/api/src/document-intelligence/`；契约：`schemas/document-intelligence.schema.json`；
+领域表：`DOMAIN.md`「文档智能」；决策：`DECISIONS.md` D-21。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -566,6 +587,11 @@ manifest/资产篡改拒绝
 69. **短期下载令牌**：不得暴露永久对象 URL；令牌过期/伪造拒绝（INV-OF-03）。
 70. **过期/撤销即停**：授权过期/撤销后不可播放或续期（INV-OF-04）。
 71. **离线标识保留**：AI 内容 manifest 必须带显式/隐式标识，缺失拒绝（INV-OF-05）。
+72. **文档 untrusted**：解析内容不执行宏/脚本/外链；候选不直接写业务真源（INV-DI-01）。
+73. **锚点强制**：每个候选必须有页/行/quote 来源锚点，伪造拒绝（INV-DI-02）。
+74. **草案版本**：编辑升 draftVersion；未确认当前版本不得转换（INV-DI-03）。
+75. **转换幂等**：重复转换不新增实体；目标冲突可定位、不静默覆盖（INV-DI-04）。
+76. **旧流程不变**：旧知识/课程/导入/CRUD 不改（INV-DI-05）。
 
 ---
 

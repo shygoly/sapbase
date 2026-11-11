@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/document-intelligence.schema.json",
+  "$defs": {
+    "parseRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetId", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "assetId": { "type": "string", "format": "uuid" },
+        "status": { "enum": ["queued", "running", "succeeded", "failed", "cancelled"] },
+        "stage": { "type": ["string", "null"] },
+        "progress": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "parser": { "type": ["string", "null"] },
+        "pageCount": { "type": "integer", "minimum": 0 },
+        "draftVersion": { "type": "integer", "minimum": 1 },
+        "confirmedVersion": { "type": ["integer", "null"] },
+        "error": { "type": ["string", "null"] }
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "title", "level", "anchor"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "runId": { "type": "string", "format": "uuid" },
+        "key": { "type": "string" },
+        "parentKey": { "type": ["string", "null"] },
+        "title": { "type": "string", "minLength": 1 },
+        "level": { "type": "integer", "minimum": 1 },
+        "ordinal": { "type": "integer" },
+        "content": { "type": "string" },
+        "pageNumber": { "type": ["integer", "null"] },
+        "anchor": {
+          "type": "object",
+          "required": ["page", "line"],
+          "properties": {
+            "page": { "type": ["integer", "null"] },
+            "line": { "type": "integer", "minimum": 1 },
+            "quote": { "type": "string" }
+          }
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "sectionKey", "kind", "title", "anchor", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "runId": { "type": "string", "format": "uuid" },
+        "key": { "type": "string" },
+        "sectionKey": { "type": "string" },
+        "kind": { "enum": ["knowledge", "concept", "relation"] },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "confidence": { "type": ["string", "number"] },
+        "anchor": { "type": "object" },
+        "status": { "enum": ["pending", "accepted", "rejected"] },
+        "targetResourceKey": { "type": ["string", "null"] },
+        "targetEntityId": { "type": ["string", "null"], "format": "uuid" }
+      }
+    },
+    "convertRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetResourceKey"],
+      "properties": {
+        "targetResourceKey": { "enum": ["knowledge", "course", "section"] },
+        "packageId": { "type": "string" },
+        "entity": { "type": "string" }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/parseRun" },
+    { "$ref": "#/$defs/section" },
+    { "$ref": "#/$defs/candidate" },
+    { "$ref": "#/$defs/convertRequest" }
+  ]
+}

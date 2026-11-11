@@ -54,6 +54,7 @@
     "test:ai-governance:e2e": "node tests/ai-governance.e2e.js",
     "test:metrics:e2e": "node tests/metrics.e2e.js",
     "test:offline:e2e": "node tests/offline.e2e.js",
+    "test:document-intelligence:e2e": "node tests/document-intelligence.e2e.js",
     "check:links": "node scripts/meta/check-doc-links.mjs",
     "meta:openspec-ledger": "node scripts/meta/openspec-ledger.mjs",
     "check:openspec-ledger": "node scripts/meta/openspec-ledger.mjs --check",

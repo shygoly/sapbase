@@ -46,6 +46,7 @@ import { RecordOperation } from './record-lifecycle/record-operation.entity'
 import { AiContentProvenance, AiContentLabel, AiScoreRecord } from './ai-governance/ai-governance.entities'
 import { MetricDefinition, MetricValue, Dashboard, DashboardWidget, MetricAlert, MetricAlertEvent } from './metrics/metrics.entities'
 import { OfflinePackage, OfflineEntitlement, OfflineDevice } from './offline/offline.entities'
+import { DocumentParseRun, DocumentSection, DocumentCandidate } from './document-intelligence/document.entities'
 import { OutboxDelivery } from './outbox/outbox-delivery.entity'
 import { OutboxEvent } from './outbox/outbox-event.entity'
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
@@ -123,6 +124,9 @@ export const APP_ENTITIES = [
   OfflinePackage,
   OfflineEntitlement,
   OfflineDevice,
+  DocumentParseRun,
+  DocumentSection,
+  DocumentCandidate,
   AgentConfirmationToken,
   BusinessAppInstallation,
   BusinessAppInstallationRevision,

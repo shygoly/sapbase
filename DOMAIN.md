@@ -51,6 +51,9 @@
 | offline_packages | 离线内容 |
 | offline_entitlements | 离线内容 |
 | offline_devices | 离线内容 |
+| document_parse_runs | 文档智能 |
+| document_sections | 文档智能 |
+| document_candidates | 文档智能 |
 | ai_content_labels | AI 内容治理 |
 | ai_score_records | AI 内容治理 |
 | assets | 资产 |
@@ -452,6 +455,41 @@ enforcement:
   - test:tests/notification-center.test.js#XSS
 db: none
 spec: tests/notification-center.test.js
+```
+
+---
+
+## 文档智能
+
+覆盖表：document_parse_runs, document_sections, document_candidates
+
+解析运行绑定资产，记录状态/stage/progress/parser/draftVersion；章节与候选保存页/行/quote 锚点；
+候选转换后记录 targetResourceKey/targetEntityId，重复转换幂等。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| document_parse_runs.assetId | assets.id | 运行对应文档资产 | none | 不复制原始文件 |
+| document_sections.runId | document_parse_runs.id | 章节归属运行 | none | key 唯一 |
+| document_candidates.runId | document_parse_runs.id | 候选归属运行 | none | key 唯一 |
+| document_candidates.targetEntityId | blueprint_records.id | 转换目标 | none | 可回溯；知识目标记 metadata |
+
+### 状态词
+
+运行 `queued/running/succeeded/failed/cancelled`；候选 `pending/accepted/rejected`。
+
+### 不变量
+
+```yaml invariant
+id: INV-DI-01
+tables: [document_parse_runs, document_sections, document_candidates]
+desc: untrusted 文档只产出草案；候选锚点强制；编辑升版本；确认后幂等转换；旧流程不变。
+trigger: 解析/编辑/确认/转换
+enforcement:
+  - test:apps/api/src/document-intelligence/document-parser.spec.ts#RuleStructureExtractor
+db: rls:document_parse_runs
+spec: apps/api/src/document-intelligence/document-parser.spec.ts
 ```
 
 ---

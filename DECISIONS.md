@@ -429,6 +429,26 @@ code_markers:
   - libs/api-client/src/offline/client.ts
 ```
 
+### D-21：文档解析产出草案 + 锚点，确认后声明式转换
+
+```yaml decision
+id: D-21
+title: 文档解析产出草案 + 锚点，确认后声明式转换
+status: accepted
+date: 2026-11
+context: |
+  文档（尤其外部 PPT/PDF）是不可信输入；直接把 LLM/规则抽取结果写入课程/知识会绕过人工确认，
+  也无法追溯某条内容来自哪一页。
+decision: |
+  解析只生成 sections/candidates 草案与页/行/quote 锚点；编辑升 draftVersion，确认锁定版本后才允许
+  转换。转换按 (runId,candidateKey) 幂等写目标资源，冲突返回可定位错误；宏/脚本/外链不执行。
+references:
+  - INV-DI-01
+  - INV-DI-02
+code_markers:
+  - apps/api/src/document-intelligence/document-intelligence.service.ts
+```
+
 ---
 
 ## 附录：命名空间约定
