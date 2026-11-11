@@ -675,6 +675,7 @@ export class AIModulesService {
     stepId: string,
     userInput: string,
     context?: string,
+    organizationId?: string,
   ): Promise<Record<string, any>> {
     if (!stepId?.trim()) {
       throw new BadRequestException('stepId is required')
@@ -688,7 +689,18 @@ export class AIModulesService {
     }
 
     try {
-      const systemPrompt = getDefinitionStepPrompt(stepId)
+      const registryContext = organizationId
+        ? await this.moduleRegistryService.getAiGenerationContext(organizationId)
+        : []
+      const systemPrompt =
+        getDefinitionStepPrompt(stepId) +
+        (registryContext.length > 0
+          ? `\n\n当前组织已注册模块（只读上下文；避免重复造实体/端点，命名保持一致）：\n${JSON.stringify(
+              registryContext,
+              null,
+              2,
+            )}`
+          : '')
       const defaultModel = await this.aiModelsService.findDefault()
       if (!defaultModel) {
         throw new BadRequestException('No active AI model configured')
@@ -751,6 +763,7 @@ export class AIModulesService {
   async generateAllDefinitionSteps(
     userInput: string,
     moduleId?: string,
+    organizationId?: string,
   ): Promise<Record<string, any>> {
     const rawInput = (userInput ?? '').trim()
     if (!rawInput.length) {
@@ -765,13 +778,23 @@ export class AIModulesService {
       const stepUserInput = i === 0 ? rawInput : ''
       const contextStr = i > 0 ? JSON.stringify(contextObj, null, 2) : ''
 
-      let stepResult: Record<string, any> = await this.generateDefinitionStep(stepId, stepUserInput, contextStr)
+      let stepResult: Record<string, any> = await this.generateDefinitionStep(
+        stepId,
+        stepUserInput,
+        contextStr,
+        organizationId,
+      )
 
       if (stepId === 'state-flow') {
         const normalized = normalizeStep3ForSave(stepResult)
         if ('error' in normalized) {
           try {
-            stepResult = await this.generateDefinitionStep(stepId, stepUserInput, contextStr)
+            stepResult = await this.generateDefinitionStep(
+              stepId,
+              stepUserInput,
+              contextStr,
+              organizationId,
+            )
             const retryNormalized = normalizeStep3ForSave(stepResult)
             if ('error' in retryNormalized) {
               throw new BadRequestException(`State flow invalid after retry: ${retryNormalized.error}`)

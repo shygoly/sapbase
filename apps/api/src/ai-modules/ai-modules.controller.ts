@@ -332,11 +332,13 @@ export class AIModulesController {
   @Auth('system:manage')
   async generateDefinitionStep(
     @Body() body: { stepId: string; userInput: string; context?: string },
+    @OrganizationId() organizationId: string,
   ): Promise<Record<string, any>> {
     return this.aiModulesService.generateDefinitionStep(
       body.stepId,
       body.userInput ?? '',
       body.context,
+      organizationId,
     )
   }
 
@@ -344,6 +346,7 @@ export class AIModulesController {
   @Auth('system:manage')
   async generateAllDefinitionSteps(
     @Body() body: { userInput: string; moduleId?: string },
+    @OrganizationId() organizationId: string,
   ): Promise<Record<string, any>> {
     if (!body?.userInput?.trim()) {
       throw new BadRequestException('userInput is required')

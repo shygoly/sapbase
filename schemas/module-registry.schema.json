@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/module-registry.schema.json",
+  "title": "Module Registry",
+  "description": "AI 创建/注册模块、能力、关系、统计与配置文档的形状。关系边只允许同组织模块。",
+  "$defs": {
+    "moduleType": { "enum": ["crud", "workflow", "integration", "report", "analytics"] },
+    "moduleStatus": { "enum": ["active", "inactive", "deprecated", "error"] },
+    "healthStatus": { "enum": ["healthy", "warning", "error"] },
+    "capabilityType": { "enum": ["crud", "query", "action", "workflow"] },
+    "relationshipType": {
+      "enum": ["dependency", "integration", "data-flow", "hierarchical"]
+    },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "moduleType", "version", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "description": { "type": ["string", "null"] },
+        "moduleType": { "$ref": "#/$defs/moduleType" },
+        "version": { "type": "string", "maxLength": 50 },
+        "status": { "$ref": "#/$defs/moduleStatus" },
+        "dependsOnAtomics": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9-]+@[^@]+$" }
+        },
+        "aiModuleId": { "type": ["string", "null"], "format": "uuid" },
+        "metadata": {
+          "type": ["object", "null"],
+          "properties": {
+            "schemaPath": { "type": "string" },
+            "apiBasePath": { "type": "string" },
+            "entities": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capabilityType", "operations", "apiEndpoints"],
+      "properties": {
+        "capabilityType": { "$ref": "#/$defs/capabilityType" },
+        "entity": { "type": ["string", "null"], "maxLength": 255 },
+        "operations": { "type": "array", "items": { "type": "string" } },
+        "apiEndpoints": { "type": "array", "items": { "type": "string" } },
+        "description": { "type": ["string", "null"] }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetModuleId", "relationshipType"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "targetModuleId": { "type": "string", "format": "uuid" },
+        "relationshipType": { "$ref": "#/$defs/relationshipType" },
+        "description": { "type": ["string", "null"] },
+        "configuration": { "type": ["object", "null"] }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entity": { "type": ["string", "null"] },
+        "recordCount": { "type": "integer", "minimum": 0 },
+        "lastUpdate": { "type": ["string", "null"], "format": "date-time" },
+        "errorCount": { "type": "integer", "minimum": 0 },
+        "averageResponseTime": { "type": ["number", "null"], "minimum": 0 },
+        "healthStatus": { "$ref": "#/$defs/healthStatus" },
+        "collectedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "configurationDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configType"],
+      "properties": {
+        "configType": { "enum": ["schema", "usage", "api", "relationship"] },
+        "schema": { "type": ["object", "null"] },
+        "documentation": { "type": ["string", "null"] },
+        "metadata": { "type": ["object", "null"] }
+      }
+    },
+    "health": {
+      "type": "object",
+      "required": ["moduleId", "status", "checks"],
+      "properties": {
+        "moduleId": { "type": "string", "format": "uuid" },
+        "status": { "$ref": "#/$defs/healthStatus" },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "status", "detail"],
+            "properties": {
+              "name": { "type": "string" },
+              "status": { "enum": ["pass", "warn", "error"] },
+              "detail": { "type": "string" }
+            }
+          }
+        },
+        "statistics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/statistics" }
+        }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/module" },
+    { "$ref": "#/$defs/capability" },
+    { "$ref": "#/$defs/relationship" },
+    { "$ref": "#/$defs/configurationDocument" },
+    { "$ref": "#/$defs/health" }
+  ]
+}

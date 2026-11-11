@@ -73,6 +73,54 @@ export interface CreateCapabilityDto {
   description?: string
 }
 
+export interface ModuleRelationshipGraph {
+  nodes: Array<{
+    id: string
+    name: string
+    moduleType: string
+    status: string
+    version: string
+  }>
+  edges: Array<{
+    id: string
+    source: string
+    target: string
+    type: string
+    description?: string | null
+  }>
+  summary: {
+    modules: number
+    edges: number
+    dependencies: number
+    integrations: number
+    dataFlows: number
+  }
+}
+
+export interface ModuleHealth {
+  moduleId: string
+  status: 'healthy' | 'warning' | 'error'
+  checks: Array<{ name: string; status: 'pass' | 'warn' | 'error'; detail: string }>
+  statistics: ModuleStatistics[]
+}
+
+export interface ModuleHealthOverview {
+  total: number
+  healthy: number
+  warning: number
+  error: number
+  modules: Array<{ id: string; name: string; status: string }>
+}
+
+export interface ModuleConfiguration {
+  id: string
+  moduleId: string
+  configType: string
+  schema?: Record<string, any> | null
+  documentation?: string | null
+  metadata?: Record<string, any> | null
+}
+
 export interface CreateRelationshipDto {
   targetModuleId: string
   relationshipType: string
@@ -130,8 +178,49 @@ export const moduleRegistryApi = {
     return response.data?.data || response.data
   },
 
+  updateRelationship: async (
+    id: string,
+    relId: string,
+    dto: Partial<CreateRelationshipDto>,
+  ): Promise<ModuleRelationship> => {
+    const response = await httpClient.put(`/api/module-registry/${id}/relationships/${relId}`, dto)
+    return response.data?.data || response.data
+  },
+
   removeRelationship: async (id: string, relId: string): Promise<void> => {
     await httpClient.delete(`/api/module-registry/${id}/relationships/${relId}`)
+  },
+
+  getGraph: async (): Promise<ModuleRelationshipGraph> => {
+    const response = await httpClient.get('/api/module-registry/graph')
+    return response.data?.data || response.data
+  },
+
+  getHealthOverview: async (): Promise<ModuleHealthOverview> => {
+    const response = await httpClient.get('/api/module-registry/health')
+    return response.data?.data || response.data
+  },
+
+  getHealth: async (id: string): Promise<ModuleHealth> => {
+    const response = await httpClient.get(`/api/module-registry/${id}/health`)
+    return response.data?.data || response.data
+  },
+
+  collectStatistics: async (id: string): Promise<ModuleStatistics[]> => {
+    const response = await httpClient.post(`/api/module-registry/${id}/statistics/collect`)
+    return response.data?.data || response.data || []
+  },
+
+  updateStatus: async (id: string, status: string): Promise<ModuleRegistry> => {
+    const response = await httpClient.put(`/api/module-registry/${id}/status`, { status })
+    return response.data?.data || response.data
+  },
+
+  getDocumentation: async (
+    id: string,
+  ): Promise<{ moduleId: string; markdown: string; generatedAt: string }> => {
+    const response = await httpClient.get(`/api/module-registry/${id}/documentation`)
+    return response.data?.data || response.data
   },
 
   getStatistics: async (id: string): Promise<ModuleStatistics[]> => {
@@ -148,7 +237,7 @@ export const moduleRegistryApi = {
     return response.data?.data || response.data
   },
 
-  getConfigurations: async (id: string): Promise<any[]> => {
+  getConfigurations: async (id: string): Promise<ModuleConfiguration[]> => {
     const response = await httpClient.get(`/api/module-registry/${id}/configurations`)
     return response.data?.data || response.data || []
   },
@@ -158,12 +247,28 @@ export const moduleRegistryApi = {
     configType: string,
     schema?: Record<string, any>,
     documentation?: string,
-  ): Promise<any> => {
+  ): Promise<ModuleConfiguration> => {
     const response = await httpClient.post(`/api/module-registry/${id}/configurations`, {
       configType,
       schema,
       documentation,
     })
     return response.data?.data || response.data
+  },
+
+  updateConfiguration: async (
+    id: string,
+    configId: string,
+    dto: Partial<Pick<ModuleConfiguration, 'configType' | 'schema' | 'documentation' | 'metadata'>>,
+  ): Promise<ModuleConfiguration> => {
+    const response = await httpClient.put(
+      `/api/module-registry/${id}/configurations/${configId}`,
+      dto,
+    )
+    return response.data?.data || response.data
+  },
+
+  deleteConfiguration: async (id: string, configId: string): Promise<void> => {
+    await httpClient.delete(`/api/module-registry/${id}/configurations/${configId}`)
   },
 }

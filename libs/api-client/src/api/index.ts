@@ -28,7 +28,20 @@ export {
   type AIModuleVersionPage,
   type AIModuleVersionDiff,
 } from './ai-modules.api'
-export { moduleRegistryApi } from './module-registry.api'
+export {
+  moduleRegistryApi,
+  type ModuleRegistry,
+  type ModuleCapability,
+  type ModuleRelationship,
+  type ModuleStatistics,
+  type ModuleRelationshipGraph,
+  type ModuleHealth,
+  type ModuleHealthOverview,
+  type ModuleConfiguration,
+  type CreateModuleRegistryDto,
+  type CreateCapabilityDto,
+  type CreateRelationshipDto,
+} from './module-registry.api'
 export { pluginsApi } from './plugins.api'
 export { atomicApi } from './atomic.api'
 export { systemApi } from './system.api'

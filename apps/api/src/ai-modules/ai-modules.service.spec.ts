@@ -40,6 +40,9 @@ describe('AIModulesService', () => {
     create: jest.fn((row: unknown) => row),
     save: jest.fn(async (row: unknown) => row),
   }
+  const mockModuleRegistry = {
+    getAiGenerationContext: jest.fn(async () => [] as any[]),
+  }
   const mockBlueprintService = {
     materialize: jest.fn(async () => ({
       packageId: 'ticket-app-1.0.0',
@@ -73,7 +76,7 @@ describe('AIModulesService', () => {
         },
         {
           provide: ModuleRegistryService,
-          useValue: {},
+          useValue: mockModuleRegistry,
         },
         { provide: AIModuleBlueprintService, useValue: mockBlueprintService },
       ],
@@ -129,6 +132,52 @@ describe('AIModulesService', () => {
       expect(result.entities![0]).toHaveProperty('identifier')
       expect(result.entities![0]).toHaveProperty('fields')
       expect(Array.isArray(result.entities![0].fields)).toBe(true)
+    })
+
+    it('injects registered module context into the generation prompt', async () => {
+      jest.spyOn(aiModelsService, 'findDefault').mockResolvedValue({
+        id: 'model-1',
+        name: 'Kimi',
+        model: 'kimi-for-coding',
+        baseUrl: 'https://api.kimi.com/coding/',
+        apiKey: 'test-key',
+      } as any)
+      mockModuleRegistry.getAiGenerationContext.mockResolvedValueOnce([
+        {
+          id: 'module-1',
+          name: 'CRM Module',
+          entities: ['Customer'],
+          capabilities: [
+            {
+              entity: 'Customer',
+              operations: ['read'],
+              apiEndpoints: ['/api/customers'],
+            },
+          ],
+        },
+      ])
+      mockedAxios.post.mockResolvedValue({
+        data: {
+          content: [
+            {
+              text: JSON.stringify({
+                entities: [
+                  {
+                    identifier: 'Ticket',
+                    fields: [{ name: 'title', type: 'string', required: true }],
+                  },
+                ],
+              }),
+            },
+          ],
+        },
+      })
+
+      await service.generateDefinitionStep('object-model', 'create ticket', undefined, 'org-1')
+      const payload = mockedAxios.post.mock.calls[0][1] as any
+      expect(mockModuleRegistry.getAiGenerationContext).toHaveBeenCalledWith('org-1')
+      expect(payload.messages[0].content).toContain('CRM Module')
+      expect(payload.messages[0].content).toContain('/api/customers')
     })
 
     it('rejects a step output that does not match the step schema', async () => {

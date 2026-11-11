@@ -35,19 +35,19 @@
 
 ## 5. Module Relationship Management
 
-- [ ] 5.1 Create relationship types (dependency, integration, data-flow)
-- [ ] 5.2 Implement relationship CRUD operations
-- [ ] 5.3 Add relationship validation (circular dependency detection)
-- [ ] 5.4 Create relationship visualization data structure
+- [x] 5.1 `ModuleRelationship` 支持 dependency/integration/data-flow/hierarchical；类型校验
+- [x] 5.2 add/update/remove/query + 同组织/自引用/重复校验
+- [x] 5.3 `assertNoDependencyCycle` 返回具体路径（A → B → A）
+- [x] 5.4 `GET /module-registry/graph` + 详情页 SVG 图
 
 ## 6. Frontend Module Registry UI
 
 - [x] 6.1 Create module registry list page (`/admin/module-registry`)
-- [ ] 6.2 Create module detail page (`/admin/module-registry/[id]`)
-- [ ] 6.3 Create module relationship visualization component
-- [ ] 6.4 Create module capability display component
-- [ ] 6.5 Create module statistics dashboard
-- [ ] 6.6 Create module configuration editor
+- [x] 6.2 详情页 `/admin/module-registry/[id]`
+- [x] 6.3 SVG `RelationshipGraph`（当前模块居中，类型区分线型）
+- [x] 6.4 能力卡片：实体/类型/操作/端点
+- [x] 6.5 统计表 + “收集统计”按钮
+- [x] 6.6 配置新增/编辑/删除 + Schema JSON
 
 ## 7. AI Context Awareness API
 
@@ -56,29 +56,29 @@
 - [x] 7.3 Create `/api/ai/modules/:id/capabilities` endpoint
 - [x] 7.4 Create `/api/ai/modules/:id/relationships` endpoint
 - [x] 7.5 Create `/api/ai/modules/:id/statistics` endpoint
-- [ ] 7.6 Integrate with AI module generation to provide context
+- [x] 7.6 `getAiGenerationContext` 注入六步生成 system prompt
 
 ## 8. Module Status & Health Tracking
 
-- [ ] 8.1 Implement module status tracking (active, inactive, error)
-- [ ] 8.2 Collect module data statistics (record counts, last update)
-- [ ] 8.3 Monitor module performance metrics
-- [ ] 8.4 Track module error rates
-- [ ] 8.5 Create health check endpoints
+- [x] 8.1 `PUT /:id/status`（active/inactive/deprecated/error）
+- [x] 8.2 `POST /:id/statistics/collect`：information_schema + COUNT(*)
+- [x] 8.3 `averageResponseTime` 记录每次收集耗时
+- [x] 8.4 `module.error-rate` 健康检查（errorCount/recordCount）
+- [x] 8.5 `GET /:id/health` + `GET /module-registry/health`
 
 ## 9. Module Configuration Documentation
 
-- [ ] 9.1 Create configuration schema structure
-- [ ] 9.2 Implement configuration documentation editor
-- [ ] 9.3 Add module usage documentation
-- [ ] 9.4 Generate API documentation from module schemas
-- [ ] 9.5 Create relationship documentation
+- [x] 9.1 `schemas/module-registry.schema.json`
+- [x] 9.2 详情页配置编辑器（configType/schema/documentation）
+- [x] 9.3 `usage` 配置类型 + 编辑器
+- [x] 9.4 `GET /:id/documentation` 生成 Markdown（可下载）
+- [x] 9.5 生成文档包含关系（入/出 + 描述）
 
 ## 10. Validation & Testing
 
-- [ ] 10.1 Test module registration flow
-- [ ] 10.2 Test module relationship management
-- [ ] 10.3 Test AI context awareness API
-- [ ] 10.4 Test CRM module registration
-- [ ] 10.5 Test module statistics collection
-- [ ] 10.6 Validate module registry UI functionality
+- [x] 10.1 jest：registration/status/AI context（39 tests）
+- [x] 10.2 jest + e2e：CRUD/重复/环检测
+- [x] 10.3 `getAiGenerationContext` 单测 + 生成 prompt 注入测试
+- [x] 10.4 运行时 smoke：CRM 模块 graph/health/docs/collect 200
+- [x] 10.5 单测（真实表 COUNT）+ 运行时 collect 201
+- [x] 10.6 `tests/module-registry.e2e.js` 通过

@@ -11,7 +11,15 @@ import {
   BadRequestException,
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
-import { ModuleRegistryService, CreateModuleRegistryDto, CreateCapabilityDto, CreateRelationshipDto } from './module-registry.service'
+import {
+  ModuleRegistryService,
+  CreateModuleRegistryDto,
+  CreateCapabilityDto,
+  CreateRelationshipDto,
+  UpdateRelationshipDto,
+  UpdateConfigurationDto,
+} from './module-registry.service'
+import { ModuleStatus } from './module-registry.entity'
 import { BlueprintExportError } from './blueprint-export'
 import { PackageError } from '../blueprint/packager'
 import { Auth } from '../common/decorators/auth.decorator'
@@ -46,6 +54,18 @@ export class ModuleRegistryController {
       filtered = filtered.filter((m) => m.moduleType === type)
     }
     return filtered
+  }
+
+  @Get('graph')
+  @ApiOperation({ summary: '模块关系图（节点 + 有向边）' })
+  async graph(@OrganizationId() organizationId: string) {
+    return this.moduleRegistryService.getRelationshipGraph(organizationId)
+  }
+
+  @Get('health')
+  @ApiOperation({ summary: '组织模块健康总览' })
+  async healthOverview(@OrganizationId() organizationId: string) {
+    return this.moduleRegistryService.getHealthOverview(organizationId)
   }
 
   @Get(':id')
@@ -148,6 +168,17 @@ export class ModuleRegistryController {
     return this.moduleRegistryService.addRelationship(id, dto, organizationId)
   }
 
+  @Put(':id/relationships/:relId')
+  @ApiOperation({ summary: 'Update module relationship' })
+  async updateRelationship(
+    @Param('id') id: string,
+    @Param('relId') relId: string,
+    @Body() dto: UpdateRelationshipDto,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.moduleRegistryService.updateRelationship(id, relId, dto, organizationId)
+  }
+
   @Delete(':id/relationships/:relId')
   @ApiOperation({ summary: 'Remove module relationship' })
   async removeRelationship(
@@ -157,14 +188,46 @@ export class ModuleRegistryController {
   ) {
     // Verify module belongs to organization
     await this.moduleRegistryService.findOne(id, organizationId)
-    await this.moduleRegistryService.removeRelationship(id, relId)
+    await this.moduleRegistryService.removeRelationship(id, relId, organizationId)
     return { message: 'Relationship removed successfully' }
   }
 
   @Get(':id/statistics')
   @ApiOperation({ summary: 'Get module statistics' })
-  async getStatistics(@Param('id') id: string) {
+  async getStatistics(@Param('id') id: string, @OrganizationId() organizationId: string) {
+    await this.moduleRegistryService.findOne(id, organizationId)
     return this.moduleRegistryService.getStatistics(id)
+  }
+
+  @Post(':id/statistics/collect')
+  @ApiOperation({ summary: '从真实表收集模块统计' })
+  async collectStatistics(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.moduleRegistryService.collectStatistics(id, organizationId)
+  }
+
+  @Get(':id/health')
+  @ApiOperation({ summary: '单模块健康检查' })
+  async health(@Param('id') id: string, @OrganizationId() organizationId: string) {
+    return this.moduleRegistryService.getHealth(id, organizationId)
+  }
+
+  @Get(':id/documentation')
+  @ApiOperation({ summary: '生成模块 API/关系/配置文档（Markdown）' })
+  async documentation(@Param('id') id: string, @OrganizationId() organizationId: string) {
+    return this.moduleRegistryService.generateDocumentation(id, organizationId)
+  }
+
+  @Put(':id/status')
+  @ApiOperation({ summary: '更新模块状态（active/inactive/deprecated/error）' })
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() body: { status: ModuleStatus },
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.moduleRegistryService.setStatus(id, body.status, organizationId)
   }
 
   @Put(':id/statistics/:entity')
@@ -173,13 +236,16 @@ export class ModuleRegistryController {
     @Param('id') id: string,
     @Param('entity') entity: string,
     @Body() stats: Partial<any>,
+    @OrganizationId() organizationId: string,
   ) {
+    await this.moduleRegistryService.findOne(id, organizationId)
     return this.moduleRegistryService.updateStatistics(id, entity, stats)
   }
 
   @Get(':id/configurations')
   @ApiOperation({ summary: 'Get module configurations' })
-  async getConfigurations(@Param('id') id: string) {
+  async getConfigurations(@Param('id') id: string, @OrganizationId() organizationId: string) {
+    await this.moduleRegistryService.findOne(id, organizationId)
     return this.moduleRegistryService.getConfigurations(id)
   }
 
@@ -188,12 +254,41 @@ export class ModuleRegistryController {
   async addConfiguration(
     @Param('id') id: string,
     @Body() body: { configType: string; schema?: any; documentation?: string },
+    @OrganizationId() organizationId: string,
   ) {
+    await this.moduleRegistryService.findOne(id, organizationId)
     return this.moduleRegistryService.addConfiguration(
       id,
       body.configType,
       body.schema,
       body.documentation,
     )
+  }
+
+  @Put(':id/configurations/:configId')
+  @ApiOperation({ summary: '编辑模块配置文档' })
+  async updateConfiguration(
+    @Param('id') id: string,
+    @Param('configId') configId: string,
+    @Body() dto: UpdateConfigurationDto,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.moduleRegistryService.updateConfiguration(
+      id,
+      configId,
+      dto,
+      organizationId,
+    )
+  }
+
+  @Delete(':id/configurations/:configId')
+  @ApiOperation({ summary: '删除模块配置文档' })
+  async deleteConfiguration(
+    @Param('id') id: string,
+    @Param('configId') configId: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    await this.moduleRegistryService.deleteConfiguration(id, configId, organizationId)
+    return { message: 'Configuration removed successfully' }
   }
 }

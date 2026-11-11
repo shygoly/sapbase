@@ -8,7 +8,6 @@ import { Button } from '@sap/app-shared/components/ui/button'
 import { Badge } from '@sap/app-shared/components/ui/badge'
 import { Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useLocale } from '@sap/app-shared/hooks/use-locale'
 import {
   Table,
   TableBody,
@@ -24,7 +23,6 @@ export default function ModuleRegistryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const notification = useNotification()
   const router = useRouter()
-  const locale = useLocale()
 
   useEffect(() => {
     fetchModules()
@@ -128,7 +126,7 @@ export default function ModuleRegistryPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/${locale}/admin/module-registry/${module.id}`)}
+                            onClick={() => router.push(`/admin/module-registry/${module.id}`)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>

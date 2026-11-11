@@ -165,7 +165,6 @@ The system SHALL provide a user interface for managing the module registry.
 - **AND** SHALL allow filtering by relationship type
 - **AND** SHALL allow adding/removing relationships
 
-## MODIFIED Requirements
 
 ### Requirement: AI Module Creation Integration
 The AI module creation process SHALL automatically register modules in the module registry.

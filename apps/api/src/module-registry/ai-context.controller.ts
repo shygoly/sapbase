@@ -2,9 +2,11 @@ import { Controller, Get, Param, Query } from '@nestjs/common'
 import { ApiTags, ApiOperation } from '@nestjs/swagger'
 import { ModuleRegistryService } from './module-registry.service'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
+import { Auth } from '../common/decorators/auth.decorator'
 
 @ApiTags('AI Context')
 @Controller('ai/modules')
+@Auth('system:manage')
 export class AIContextController {
   constructor(private readonly moduleRegistryService: ModuleRegistryService) {}
 
