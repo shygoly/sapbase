@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, Optional } from '@nestjs/common'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Role } from './role.entity'
@@ -10,6 +11,7 @@ export class RolesService {
   constructor(
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async create(createRoleDto: CreateRoleDto, organizationId: string): Promise<Role> {
@@ -17,7 +19,18 @@ export class RolesService {
       ...createRoleDto,
       organizationId,
     })
-    return this.rolesRepository.save(role)
+    const saved = await this.rolesRepository.save(role)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'role.created',
+      resource: 'role',
+      resourceId: saved.id,
+      actor: 'system:role',
+      status: 'success',
+      metadata: { name: saved.name },
+      source: 'role',
+    })
+    return saved
   }
 
   async findAll(organizationId: string): Promise<Role[]> {
@@ -46,11 +59,32 @@ export class RolesService {
   async update(id: string, updateRoleDto: UpdateRoleDto, organizationId: string): Promise<Role> {
     const role = await this.findOne(id, organizationId)
     Object.assign(role, updateRoleDto)
-    return this.rolesRepository.save(role)
+    const saved = await this.rolesRepository.save(role)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'role.updated',
+      resource: 'role',
+      resourceId: saved.id,
+      actor: 'system:role',
+      status: 'success',
+      metadata: { name: saved.name },
+      source: 'role',
+    })
+    return saved
   }
 
   async remove(id: string, organizationId: string): Promise<void> {
     const role = await this.findOne(id, organizationId)
     await this.rolesRepository.remove(role)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'role.deleted',
+      resource: 'role',
+      resourceId: id,
+      actor: 'system:role',
+      status: 'success',
+      metadata: { name: role.name },
+      source: 'role',
+    })
   }
 }

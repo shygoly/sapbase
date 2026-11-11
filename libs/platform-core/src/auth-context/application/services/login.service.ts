@@ -19,6 +19,7 @@ import { UserLoggedInEvent } from '../../domain/events'
 import { OrganizationMemberRolesService } from '../../../identity/organization-member-roles.service'
 import { AuthLoginEventsService } from '../../../identity/auth-login-events.service'
 import { AuthSessionsService, hashRefreshToken } from '../../../identity/auth-sessions.service'
+import { AuditLogsService } from '../../../audit-logs/audit-logs.service'
 
 export interface LoginCommand {
   email: string
@@ -61,6 +62,7 @@ export class LoginService {
     @Optional() private readonly memberRoles?: OrganizationMemberRolesService,
     @Optional() private readonly loginEvents?: AuthLoginEventsService,
     @Optional() private readonly sessions?: AuthSessionsService,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async execute(command: LoginCommand): Promise<LoginResult> {
@@ -163,6 +165,18 @@ export class LoginService {
       new UserLoggedInEvent(user.id, user.email, selectedOrgId, new Date()),
     )
 
+    await this.auditLogs?.create({
+      organizationId: selectedOrgId,
+      action: 'auth.login',
+      resource: 'session',
+      actor: user.id,
+      actorType: 'user',
+      status: 'success',
+      ip: command.ip ?? null,
+      userAgent: command.userAgent ?? null,
+      source: 'auth',
+    })
+
     return {
       access_token,
       user: {
@@ -197,6 +211,18 @@ export class LoginService {
       ip: command.ip ?? null,
       userAgent: command.userAgent ?? null,
       reason,
+    })
+    await this.auditLogs?.create({
+      organizationId: command.organizationId,
+      action: 'auth.login.failed',
+      resource: 'session',
+      actor: email || 'unknown',
+      actorType: 'user',
+      status: 'failure',
+      ip: command.ip ?? null,
+      userAgent: command.userAgent ?? null,
+      metadata: { reason },
+      source: 'auth',
     })
   }
 

@@ -6,6 +6,7 @@ import { ScopeMembership } from '@sap/platform-core/data-scope/entities/scope-me
 import { JobsModule } from '@sap/platform-core/jobs/jobs.module'
 import { EventBusModule } from '../common/events/event-bus.module'
 import { NotificationsModule } from '../notifications/notifications.module'
+import { AuditLogsModule } from '@sap/platform-core/audit-logs/audit-logs.module'
 import { BlueprintRecord } from '../semantic-runtime/blueprint-record.entity'
 import { OrganizationMemberRole } from '../identity/organization-member-role.entity'
 import { BlueprintApproval } from '../semantic-runtime/blueprint-approval.entity'
@@ -30,6 +31,7 @@ import { WorkItemsService } from './work-items.service'
     JobsModule,
     EventBusModule,
     NotificationsModule,
+    AuditLogsModule,
     TypeOrmModule.forFeature([
       BlueprintApproval,
       BlueprintRecord,

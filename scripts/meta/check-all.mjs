@@ -22,6 +22,7 @@ const scripts = [
   'check-agent-tools.mjs',
   'check-auth-permissions.mjs',
   'check-boundaries.mjs',
+  'check-audit-writes.mjs',
   'check-openspec-hygiene.mjs',
 ]
 const passthrough = process.argv.slice(2)

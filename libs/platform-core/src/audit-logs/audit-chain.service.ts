@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { DataSource, EntityManager } from 'typeorm'
 import { randomUUID } from 'node:crypto'
+import { currentTransactionManager } from '../common/transaction/current-manager'
 import {
   buildAuditHashPayload,
   canonicalAuditPayload,
@@ -30,7 +31,8 @@ export class AuditChainService {
   constructor(private readonly dataSource: DataSource) {}
 
   async record(input: AuditChainInput, manager?: EntityManager): Promise<AuditChainRow> {
-    if (manager) return this.recordWith(manager, input)
+    const active = manager ?? currentTransactionManager(this.dataSource)
+    if (active) return this.recordWith(active, input)
     return this.dataSource.transaction((entityManager) => this.recordWith(entityManager, input))
   }
 

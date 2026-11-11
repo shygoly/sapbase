@@ -16,6 +16,8 @@ import { JobsModule } from './jobs/jobs.module'
 import { AssetsModule } from './assets/assets.module'
 import { RolesModule } from './roles/roles.module'
 import { AuditLogsModule } from './audit-logs/audit-logs.module'
+import { AuditJobsModule } from './audit-jobs/audit-jobs.module'
+import { AuditExportsModule } from './audit-exports/audit-exports.module'
 import { SettingsModule } from './settings/settings.module'
 import { PermissionsModule } from './permissions/permissions.module'
 import { MenuModule } from './menu/menu.module'
@@ -112,6 +114,8 @@ try {
     AssetsModule,
     RolesModule,
     AuditLogsModule,
+    AuditJobsModule,
+    AuditExportsModule,
     SettingsModule,
     PermissionsModule,
     MenuModule,

@@ -7,6 +7,7 @@ import { AgentEvalService } from '../agent-eval/agent-eval.service'
 import { OutboxModule } from '../outbox/outbox.module'
 import { OutboxService } from '../outbox/outbox.service'
 import { AIModulesModule } from '../ai-modules/ai-modules.module'
+import { AuditLogsModule } from '@sap/platform-core/audit-logs/audit-logs.module'
 import { AIModulesService } from '../ai-modules/ai-modules.service'
 import { NotificationRecord } from '../notifications/notification.entity'
 import { BlueprintService } from '../blueprint/blueprint.service'
@@ -47,6 +48,7 @@ import { ReleaseTestEvidenceService } from './release-test-evidence.service'
     AgentEvalModule,
     OutboxModule,
     AIModulesModule,
+    AuditLogsModule,
   ],
   controllers: [ReleasesBuilderController, ReleasesRuntimeController],
   providers: [

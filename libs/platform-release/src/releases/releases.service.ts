@@ -1,4 +1,5 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common'
+import { AuditLogsService } from '@sap/platform-core/audit-logs/audit-logs.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { DataSource, Repository } from 'typeorm'
@@ -66,6 +67,7 @@ export class ReleasesService {
     private readonly dataSource: DataSource,
     private readonly aiModules: ReleaseAiModulePort,
     private readonly cache: ReleaseCacheService,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async createDraft(input: {
@@ -482,6 +484,21 @@ export class ReleasesService {
         payload: { appInstallationId: input.appInstallationId, cohort: input.cohort ?? null },
       }),
     )
+    await this.auditLogs?.create({
+      organizationId: input.organizationId,
+      action: input.action === 'rollback' ? 'release.rollback' : 'release.activate',
+      resource: 'release',
+      resourceId: input.releaseId,
+      actor: input.activatedBy ?? 'system',
+      status: 'success',
+      metadata: {
+        appKey: release.appKey,
+        version: release.version,
+        appInstallationId: input.appInstallationId,
+        cohort: input.cohort ?? null,
+      },
+      source: 'release',
+    })
     await this.cache.bumpActiveVersion(input.organizationId, release.appKey)
     if (input.activatedBy) {
       await this.notifications.save(

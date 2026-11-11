@@ -58,7 +58,7 @@ describe('async consumers job types', () => {
         choices: [{ message: { content: 'generated text' } }],
       })),
     }
-    const service = new AiContentJobService(reg as never, models as never)
+    const service = new AiContentJobService(reg as never, models as never, { create: jest.fn() } as never)
     service.onModuleInit()
     const definition = reg.register.mock.calls[0][0]
     const result = await definition.handler(
@@ -127,6 +127,7 @@ describe('async consumers job types', () => {
       reg as never,
       { importMaster: jest.fn() } as never,
       records as never,
+      { create: jest.fn() } as never,
     )
     service.onModuleInit()
     expect(reg.register.mock.calls.map((call) => call[0].type).sort()).toEqual([

@@ -12,6 +12,24 @@ export const SCHEDULED_JOBS = [
     idempotent: true,
   },
   {
+    jobKey: 'audit.checkpoint_scan',
+    cron: '0 2 * * *',
+    timeoutMs: 10 * 60_000,
+    idempotent: true,
+  },
+  {
+    jobKey: 'audit.verify_scan',
+    cron: '30 2 * * *',
+    timeoutMs: 10 * 60_000,
+    idempotent: true,
+  },
+  {
+    jobKey: 'audit.retention_scan',
+    cron: '0 3 * * *',
+    timeoutMs: 10 * 60_000,
+    idempotent: true,
+  },
+  {
     jobKey: 'review.sla_scan',
     cron: '*/10 * * * *',
     timeoutMs: 60_000,

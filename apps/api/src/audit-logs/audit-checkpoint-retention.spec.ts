@@ -106,4 +106,55 @@ describe('AuditRetentionService', () => {
     )
     expect(manager.query.mock.calls[1][0]).toContain('legalHold')
   })
+
+  it('恢复：从归档 JSONL 回灌并写 audit.restore', async () => {
+    const manager = { query: jest.fn(async () => []) }
+    const chain = { record: jest.fn(async () => ({ id: 'a1' })) }
+    const storage = {
+      get: jest.fn(async () =>
+        Buffer.from(JSON.stringify({ id: 'a1', organizationId: 'org-1', seq: '1', action: 'x' })),
+      ),
+    }
+    const archives = {
+      findOne: jest.fn(async () => ({ id: 'arc-1', objectKey: 'k', organizationId: 'org-1' })),
+    }
+    const service = new AuditRetentionService(
+      { transaction: jest.fn(async (fn: any) => fn(manager)) } as never,
+      archives as never,
+      storage as never,
+      chain as never,
+    )
+    await expect(service.restore('org-1', 'arc-1', 'u1')).resolves.toEqual({
+      restored: 1,
+      archiveId: 'arc-1',
+    })
+    expect(manager.query).toHaveBeenCalledWith(
+      expect.stringContaining("set_config('app.audit_break_glass', 'on', true)"),
+    )
+    expect(chain.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'audit.restore', actor: 'u1' }),
+    )
+  })
+
+  it('法律保留：break-glass 更新并留 audit.legal_hold', async () => {
+    const manager = { query: jest.fn(async () => [{ id: 'a1' }]) }
+    const chain = { record: jest.fn(async () => ({ id: 'a2' })) }
+    const service = new AuditRetentionService(
+      { transaction: jest.fn(async (fn: any) => fn(manager)) } as never,
+      { create: jest.fn(), save: jest.fn() } as never,
+      undefined,
+      chain as never,
+    )
+    await expect(
+      service.setLegalHold({
+        organizationId: 'org-1',
+        id: 'a1',
+        legalHold: true,
+        actor: 'u1',
+      }),
+    ).resolves.toEqual({ updated: true })
+    expect(chain.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'audit.legal_hold', resourceId: 'a1' }),
+    )
+  })
 })

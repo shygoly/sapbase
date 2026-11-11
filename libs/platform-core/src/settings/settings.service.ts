@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, Optional } from '@nestjs/common'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Setting } from './setting.entity'
@@ -9,6 +10,7 @@ export class SettingsService {
   constructor(
     @InjectRepository(Setting)
     private settingsRepository: Repository<Setting>,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async create(userId: string, createSettingDto: CreateSettingDto, organizationId: string): Promise<Setting> {
@@ -26,7 +28,17 @@ export class SettingsService {
       organizationId,
       ...createSettingDto,
     })
-    return this.settingsRepository.save(setting)
+    const saved = await this.settingsRepository.save(setting)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'settings.update',
+      resource: 'settings',
+      actor: userId,
+      status: 'success',
+      metadata: { change: 'create', settingId: saved.id },
+      source: 'settings',
+    })
+    return saved
   }
 
   async findByUserId(userId: string, organizationId: string): Promise<Setting> {
@@ -65,7 +77,17 @@ export class SettingsService {
 
     // Update only provided fields
     Object.assign(setting, updateSettingDto)
-    return this.settingsRepository.save(setting)
+    const saved = await this.settingsRepository.save(setting)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'settings.update',
+      resource: 'settings',
+      actor: userId,
+      status: 'success',
+      metadata: { change: 'update', settingId: saved.id },
+      source: 'settings',
+    })
+    return saved
   }
 
   private getDefaultSettings(userId: string, organizationId: string): Setting {

@@ -84,6 +84,59 @@ export const auditLogsApi = {
   /**
    * Download exported file
    */
+  async verify(): Promise<{
+    valid: boolean
+    checked: number
+    reason?: string
+    brokenAt?: number
+    checkpointSeq?: string | null
+  }> {
+    const response = await httpClient.get<any>('/api/audit-logs/verify')
+    return response.data.data || response.data
+  },
+
+  async createCheckpoint(): Promise<{ seq?: string; signature?: string | null } | null> {
+    const response = await httpClient.post<any>('/api/audit-logs/checkpoint', {})
+    return response.data.data ?? response.data
+  },
+
+  async listCheckpoints(): Promise<Array<Record<string, unknown>>> {
+    const response = await httpClient.get<any>('/api/audit-logs/checkpoints')
+    return response.data.data || response.data || []
+  },
+
+  async listArchives(): Promise<Array<Record<string, unknown>>> {
+    const response = await httpClient.get<any>('/api/audit-logs/archives')
+    return response.data.data || response.data || []
+  },
+
+  async restore(archiveId: string): Promise<{ restored: number; archiveId: string }> {
+    const response = await httpClient.post<any>('/api/audit-logs/restore', { archiveId })
+    return response.data.data || response.data
+  },
+
+  async setLegalHold(
+    id: string,
+    legalHold: boolean,
+    reason?: string,
+  ): Promise<{ updated: boolean }> {
+    const response = await httpClient.post<any>(`/api/audit-logs/${id}/legal-hold`, {
+      legalHold,
+      reason,
+    })
+    return response.data.data || response.data
+  },
+
+  async alerts(windowMinutes = 1440): Promise<{
+    windowMinutes: number
+    alerts: Array<Record<string, unknown>>
+  }> {
+    const response = await httpClient.get<any>('/api/audit-logs/alerts', {
+      params: { windowMinutes },
+    })
+    return response.data.data || response.data
+  },
+
   downloadFile(blob: Blob, filename: string) {
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')

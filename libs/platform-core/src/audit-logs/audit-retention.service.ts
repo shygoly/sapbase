@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, Repository } from 'typeorm'
 import { OBJECT_STORAGE, type ObjectStorage } from '../assets/object-storage'
 import { AuditArchive } from './audit-archive.entity'
+import { AuditChainService } from './audit-chain.service'
+import { currentTransactionManager } from '../common/transaction/current-manager'
 
 export interface ArchiveResult {
   archived: number
@@ -26,6 +28,8 @@ export class AuditRetentionService {
     @Optional()
     @Inject(OBJECT_STORAGE)
     private readonly storage?: ObjectStorage,
+    @Optional()
+    private readonly chain?: AuditChainService,
   ) {}
 
   async archive(organizationId: string, toSeq: number): Promise<ArchiveResult> {
@@ -76,8 +80,133 @@ export class AuditRetentionService {
     return { archived: rows.length, fromSeq, toSeq: lastSeq, objectKey }
   }
 
-  async cleanup(organizationId: string, now = new Date()): Promise<number> {
-    return this.dataSource.transaction(async (manager) => {
+  async listArchives(organizationId: string): Promise<AuditArchive[]> {
+    return this.archives.find({
+      where: { organizationId },
+      order: { createdAt: 'DESC' },
+    })
+  }
+
+  async restore(
+    organizationId: string,
+    archiveId: string,
+    actor = 'system',
+  ): Promise<{ restored: number; archiveId: string }> {
+    if (!this.storage) {
+      throw new ForbiddenException('未配置对象存储，无法恢复审计日志')
+    }
+    const archive = await this.archives.findOne({ where: { id: archiveId, organizationId } })
+    if (!archive?.objectKey) {
+      throw new ForbiddenException('归档不存在或不可恢复')
+    }
+    const buffer = await this.storage.get(archive.objectKey)
+    const rows = buffer
+      .toString('utf8')
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+    let restored = 0
+    const runRestore = async (manager: import('typeorm').EntityManager) => {
+      await manager.query(`SELECT set_config('app.audit_break_glass', 'on', true)`)
+      for (const row of rows) {
+        try {
+          await manager.query(
+            `INSERT INTO public.audit_logs (
+               id, "createdAt", "updatedAt", "organizationId", action, resource, actor,
+               "actorType", status, "resourceId", changes, metadata, timestamp,
+               seq, "prevHash", hash, "hashAlgo", payload,
+               "appInstallationId", ip, "userAgent", "correlationId", source,
+               "retentionUntil", "legalHold", "archivedAt"
+             ) VALUES ($1, now(), now(), $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb,
+                       $11, $12, $13, $14, $15, $16::jsonb, $17, $18, $19, $20, $21, $22, $23, $24)
+             ON CONFLICT (id) DO NOTHING`,
+            [
+              row.id,
+              row.organizationId,
+              row.action,
+              row.resource,
+              row.actor,
+              row.actorType ?? 'user',
+              row.status,
+              row.resourceId ?? null,
+              JSON.stringify(row.changes ?? null),
+              JSON.stringify(row.metadata ?? null),
+              row.timestamp,
+              row.seq,
+              row.prevHash,
+              row.hash,
+              row.hashAlgo ?? 'sha256',
+              JSON.stringify(row.payload ?? null),
+              row.appInstallationId ?? null,
+              row.ip ?? null,
+              row.userAgent ?? null,
+              row.correlationId ?? null,
+              row.source ?? null,
+              row.retentionUntil ?? null,
+              row.legalHold ?? false,
+              row.archivedAt ?? null,
+            ],
+          )
+          restored += 1
+        } catch {
+          // 已被清理或链冲突时跳过；恢复结果以实际插入为准。
+        }
+      }
+    }
+    const activeRestore = currentTransactionManager(this.dataSource)
+    if (activeRestore) await runRestore(activeRestore)
+    else await this.dataSource.transaction((manager) => runRestore(manager))
+    await this.chain?.record({
+      organizationId,
+      action: 'audit.restore',
+      resource: 'audit_log',
+      actor,
+      status: 'success',
+      metadata: { archiveId, objectKey: archive.objectKey, restored },
+      source: 'retention',
+    })
+    return { restored, archiveId }
+  }
+
+  async setLegalHold(input: {
+    organizationId: string
+    id: string
+    legalHold: boolean
+    actor: string
+    reason?: string
+  }): Promise<{ updated: boolean }> {
+    const runHold = async (manager: import('typeorm').EntityManager) => {
+      await manager.query(`SELECT set_config('app.audit_break_glass', 'on', true)`)
+      const rows = (await manager.query(
+        `UPDATE public.audit_logs SET "legalHold" = $3
+          WHERE id = $1 AND "organizationId" = $2 RETURNING id`,
+        [input.id, input.organizationId, input.legalHold],
+      )) as Array<{ id: string }>
+      return rows.length > 0
+    }
+    const activeHold = currentTransactionManager(this.dataSource)
+    const updated = activeHold
+      ? await runHold(activeHold)
+      : await this.dataSource.transaction((manager) => runHold(manager))
+    await this.chain?.record({
+      organizationId: input.organizationId,
+      action: 'audit.legal_hold',
+      resource: 'audit_log',
+      actor: input.actor,
+      status: 'success',
+      resourceId: input.id,
+      metadata: { legalHold: input.legalHold, reason: input.reason ?? null },
+      source: 'retention',
+    })
+    return { updated }
+  }
+
+  async cleanup(
+    organizationId: string,
+    now = new Date(),
+    options: { actor?: string; reason?: string } = {},
+  ): Promise<number> {
+    const run = async (manager: import('typeorm').EntityManager) => {
       await manager.query(`SELECT set_config('app.audit_break_glass', 'on', true)`)
       const rows = (await manager.query(
         `DELETE FROM public.audit_logs
@@ -90,6 +219,27 @@ export class AuditRetentionService {
         [organizationId, now],
       )) as Array<{ id: string }>
       return rows.length
+    }
+    const active = currentTransactionManager(this.dataSource)
+    const deleted = active
+      ? await run(active)
+      : await this.dataSource.transaction((manager) => run(manager))
+    // break-glass 必须留痕；独立于删除事务写回审计链。
+    await this.chain?.record({
+      organizationId,
+      action: 'audit.break_glass',
+      resource: 'audit_log',
+      actor: options.actor ?? 'system',
+      actorType: 'user',
+      status: 'success',
+      metadata: {
+        deleted,
+        reason: options.reason ?? 'retention-cleanup',
+        at: now.toISOString(),
+      },
+      source: 'retention',
+      legalHold: false,
     })
+    return deleted
   }
 }

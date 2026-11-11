@@ -10,6 +10,7 @@ import { EffectivePermissionsService } from '../roles/effective-permissions.serv
 import { OrganizationMemberRolesService } from '../identity/organization-member-roles.service'
 import { AuthSessionsService, hashRefreshToken } from '../identity/auth-sessions.service'
 import { AuthLoginEventsService } from '../identity/auth-login-events.service'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 
 export interface JwtPayload {
   sub: string
@@ -30,6 +31,7 @@ export class AuthService {
     @Optional() private memberRoles?: OrganizationMemberRolesService,
     @Optional() private sessions?: AuthSessionsService,
     @Optional() private loginEvents?: AuthLoginEventsService,
+    @Optional() private auditLogs?: AuditLogsService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -142,6 +144,18 @@ export class AuthService {
       refreshTokenHash: hashRefreshToken(refreshToken),
       ip: input.ip ?? null,
       userAgent: input.userAgent ?? null,
+    })
+    await this.auditLogs?.create({
+      organizationId: input.organizationId,
+      action: 'auth.login',
+      resource: 'session',
+      actor: user.id,
+      actorType: 'user',
+      status: 'success',
+      ip: input.ip ?? null,
+      userAgent: input.userAgent ?? null,
+      metadata: { provider: input.provider },
+      source: 'sso',
     })
 
     await this.loginEvents?.record({

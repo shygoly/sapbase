@@ -3,6 +3,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  StreamableFile,
 } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
@@ -17,6 +18,11 @@ export class ResponseInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       map((data) => {
+        // 文件流不能被包装成 JSON（审计/报表导出）。
+        if (data instanceof StreamableFile) {
+          return data
+        }
+
         // If data is already an ApiResponseDto, return as is
         if (data instanceof ApiResponseDto) {
           return data

@@ -322,6 +322,28 @@ code_markers:
   - apps/api/src/review/work-items.service.ts
 ```
 
+### D-16：审计链用 PostgreSQL advisory lock + HMAC checkpoint，不做外部 WORM
+
+```yaml decision
+id: D-16
+title: 审计链用 PostgreSQL advisory lock + HMAC checkpoint，不做外部 WORM
+status: accepted
+date: 2026-11
+context: |
+  审计需要可验证的防篡改证据，但引入外部 WORM/区块链会增加部署与一致性成本；
+  只靠触发器又无法证明历史行未被整体重写。
+decision: |
+  audit_logs 只追加，每组织 advisory lock 串行分配 seq；hash 链 + HMAC checkpoint 锚点。
+  保留期清理/恢复走 break-glass 事务并写 audit.break_glass；查询/导出也写审计。
+  未知 action 标 custom 并告警，不静默当普通日志。
+references:
+  - INV-AU-01
+  - INV-AU-04
+code_markers:
+  - libs/platform-core/src/audit-logs/audit-chain.service.ts
+  - libs/platform-core/src/audit-logs/audit-verification.service.ts
+```
+
 ---
 
 ## 附录：命名空间约定

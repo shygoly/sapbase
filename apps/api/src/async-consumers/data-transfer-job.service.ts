@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { JobTypeRegistry } from '@sap/platform-core/jobs/job-types'
+import { AuditLogsService } from '@sap/platform-core/audit-logs/audit-logs.service'
 import { BlueprintRecord } from '../semantic-runtime/blueprint-record.entity'
 import { SemanticRuntimeService } from '../semantic-runtime/semantic-runtime.service'
 
@@ -27,6 +28,7 @@ export class DataTransferJobService implements OnModuleInit {
     private readonly runtime: SemanticRuntimeService,
     @InjectRepository(BlueprintRecord)
     private readonly records: Repository<BlueprintRecord>,
+    private readonly auditLogs: AuditLogsService,
   ) {}
 
   onModuleInit(): void {
@@ -69,6 +71,20 @@ export class DataTransferJobService implements OnModuleInit {
             ctx.organizationId,
           )
           await ctx.progress(100)
+          await this.auditLogs.create({
+            organizationId: ctx.organizationId,
+            action: 'data.import',
+            resource: 'record',
+            actor: 'system:job',
+            status: 'success',
+            metadata: {
+              jobId: ctx.jobId,
+              packageId: payload.packageId,
+              entity: payload.entity,
+              result,
+            },
+            source: 'job',
+          })
           return { result }
         },
       })
@@ -130,6 +146,15 @@ export class DataTransferJobService implements OnModuleInit {
             content = JSON.stringify(items, null, 2)
           }
           await ctx.progress(100, { count: items.length })
+          await this.auditLogs.create({
+            organizationId: ctx.organizationId,
+            action: 'data.export',
+            resource: 'record',
+            actor: 'system:job',
+            status: 'success',
+            metadata: { jobId: ctx.jobId, entity: payload.entity ?? null, format, count: items.length },
+            source: 'job',
+          })
           return {
             result: {
               entity: payload.entity ?? null,

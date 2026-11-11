@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/audit.schema.json",
+  "title": "Audit Chain",
+  "description": "审计事件、检查点、归档与验证结果。audit_logs 只追加；payload/hash 是链证据。",
+  "$defs": {
+    "retentionClass": { "enum": ["short", "standard", "long", "legal"] },
+    "auditEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "resource", "actor", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "seq": { "type": ["integer", "null"], "minimum": 1 },
+        "prevHash": { "type": ["string", "null"], "maxLength": 128 },
+        "hash": { "type": ["string", "null"], "maxLength": 128 },
+        "hashAlgo": { "const": "sha256" },
+        "action": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "resource": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "actor": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "actorType": { "enum": ["user", "agent", "service", "system"] },
+        "status": { "enum": ["success", "failure", "pending"] },
+        "resourceId": { "type": ["string", "null"], "format": "uuid" },
+        "changes": { "type": ["object", "null"] },
+        "metadata": { "type": ["object", "null"] },
+        "payload": { "type": ["object", "null"] },
+        "source": { "type": ["string", "null"], "maxLength": 64 },
+        "correlationId": { "type": ["string", "null"], "maxLength": 128 },
+        "retentionClass": { "$ref": "#/$defs/retentionClass" },
+        "retentionUntil": { "type": ["string", "null"], "format": "date-time" },
+        "legalHold": { "type": "boolean" },
+        "archivedAt": { "type": ["string", "null"], "format": "date-time" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "seq", "hash"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "seq": { "type": "integer", "minimum": 1 },
+        "hash": { "type": "string", "minLength": 1 },
+        "signature": { "type": ["string", "null"] },
+        "signer": { "type": ["string", "null"] },
+        "metadata": { "type": ["object", "null"] }
+      }
+    },
+    "archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "fromSeq", "toSeq", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "fromSeq": { "type": "integer", "minimum": 1 },
+        "toSeq": { "type": "integer", "minimum": 1 },
+        "objectKey": { "type": ["string", "null"] },
+        "manifest": { "type": ["object", "null"] },
+        "status": { "enum": ["pending", "archived", "restored", "failed"] }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "valid", "checked"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "valid": { "type": "boolean" },
+        "checked": { "type": "integer", "minimum": 0 },
+        "brokenAt": { "type": "integer", "minimum": 1 },
+        "reason": { "type": "string" },
+        "checkpointSeq": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/auditEvent" },
+    { "$ref": "#/$defs/checkpoint" },
+    { "$ref": "#/$defs/archive" },
+    { "$ref": "#/$defs/verification" }
+  ]
+}

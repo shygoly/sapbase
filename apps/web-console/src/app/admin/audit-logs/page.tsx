@@ -11,6 +11,8 @@ import { AuditLog, AuditAction } from '@sap/app-shared/lib/api/types'
 import { useNotification } from '@sap/app-shared/core/ui/ui-hooks'
 import { AuditLogsList } from './components/audit-logs-list'
 import { TableSkeleton } from '@sap/app-shared/components/loading-skeleton'
+import { Button } from '@sap/app-shared/components/ui/button'
+import { Badge } from '@sap/app-shared/components/ui/badge'
 import { PageRuntime, type PageModel } from '@sap/app-shared/components/runtime'
 import { CollectionRuntime, type CollectionModel } from '@sap/app-shared/components/runtime'
 
@@ -37,6 +39,9 @@ export default function AuditLogsPage() {
   const [total, setTotal] = useState(0)
   const [action, setAction] = useState<AuditAction | ''>('')
   const [resourceType, setResourceType] = useState('')
+  const [chain, setChain] = useState<{ valid: boolean; checked: number; reason?: string } | null>(null)
+  const [alerts, setAlerts] = useState<Array<Record<string, unknown>>>([])
+  const [archives, setArchives] = useState<Array<Record<string, unknown>>>([])
   const notification = useNotification()
 
   // Fetch audit logs
@@ -58,7 +63,27 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     fetchLogs()
+    auditLogsApi.listArchives().then(setArchives).catch(() => setArchives([]))
   }, [page, pageSize, action, resourceType])
+
+  const verifyChain = async () => {
+    try {
+      setChain(await auditLogsApi.verify())
+      setAlerts((await auditLogsApi.alerts()).alerts)
+      notification.success('Audit chain verified')
+    } catch {
+      notification.error('Audit chain verification failed')
+    }
+  }
+
+  const createCheckpoint = async () => {
+    try {
+      await auditLogsApi.createCheckpoint()
+      notification.success('Checkpoint created')
+    } catch {
+      notification.error('Checkpoint failed')
+    }
+  }
 
   const handleExport = async (format: 'csv' | 'json') => {
     try {
@@ -80,6 +105,31 @@ export default function AuditLogsPage() {
   return (
     <PageRuntime model={AuditLogsPageModel} isLoading={isLoading}>
       <div className="space-y-6">
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-4">
+          <button
+            onClick={verifyChain}
+            className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+          >
+            Verify chain
+          </button>
+          <button
+            onClick={createCheckpoint}
+            className="rounded-lg border border-input px-3 py-2 text-sm hover:bg-muted"
+          >
+            Create checkpoint
+          </button>
+          {chain ? (
+            <span className={chain.valid ? 'text-sm text-green-700' : 'text-sm text-red-700'}>
+              {chain.valid
+                ? `链有效：${chain.checked} 条`
+                : `链失败：${chain.reason ?? 'unknown'}`}
+            </span>
+          ) : null}
+          {alerts.length > 0 ? (
+            <span className="text-sm text-amber-700">{alerts.length} 条审计告警</span>
+          ) : null}
+        </div>
+
         {/* Filters */}
         <div className="flex gap-4 rounded-lg border border-border bg-card p-4">
           <div className="flex-1">
@@ -124,6 +174,28 @@ export default function AuditLogsPage() {
             </select>
           </div>
         </div>
+
+        {archives.length > 0 ? (
+          <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+            <h3 className="text-sm font-medium">归档</h3>
+            {archives.slice(0, 5).map((archive) => (
+              <div key={String(archive.id)} className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="font-mono">{String(archive.fromSeq)}-{String(archive.toSeq)}</span>
+                <Badge>{String(archive.status)}</Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    await auditLogsApi.restore(String(archive.id))
+                    notification.success('Archive restored')
+                  }}
+                >
+                  Restore
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         {/* Audit Logs Table */}
         <CollectionRuntime model={AuditLogsCollectionModel} isLoading={isLoading}>

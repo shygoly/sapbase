@@ -66,3 +66,7 @@ out/
 # compat package build output
 shared-schemas/dist/
 test-results/
+
+# Local object storage (audit exports/assets)
+.data/
+apps/api/.data/

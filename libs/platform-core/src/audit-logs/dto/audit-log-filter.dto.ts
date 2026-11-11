@@ -2,6 +2,26 @@ import { IsString, IsOptional, IsUUID, IsNumber, Min } from 'class-validator'
 
 export class AuditLogFilterDto {
   @IsOptional()
+  @IsUUID()
+  organizationId?: string
+
+  @IsOptional()
+  @IsString()
+  source?: string
+
+  @IsOptional()
+  @IsString()
+  actorType?: string
+
+  @IsOptional()
+  @IsString()
+  correlationId?: string
+
+  @IsOptional()
+  @IsString()
+  status?: 'success' | 'failure' | 'pending'
+
+  @IsOptional()
   @IsString()
   actor?: string
 

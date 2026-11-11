@@ -17,6 +17,9 @@
 | jobKey | 触发时点 | 入口 | 作用 |
 |---|---|---|---|
 | `semantic.suggest_transitions` | `0 2 * * *`（每日 02:00） | `apps/api/src/semantic-runtime/suggestion-cron.ts#run` | 为每个组织写入 Blueprint 状态迁移建议日志 |
+| `audit.checkpoint_scan` | `0 2 * * *`（每日） | `apps/api/src/audit-jobs/audit-jobs.service.ts#checkpointAll` | 每组织生成审计检查点（HMAC） |
+| `audit.verify_scan` | `30 2 * * *`（每日） | `apps/api/src/audit-jobs/audit-jobs.service.ts#verifyAll` | 全组织审计链验证并写审计 |
+| `audit.retention_scan` | `0 3 * * *`（每日） | `apps/api/src/audit-jobs/audit-jobs.service.ts#retentionAll` | 过期归档审计清理（break-glass 留痕） |
 | `review.sla_scan` | `*/10 * * * *`（每 10 分钟） | `apps/api/src/review/review-sla.service.ts#scan` | 审批到期提醒与超时升级（幂等） |
 | `notifications.publish_scheduled` | `*/5 * * * *`（每 5 分钟） | `apps/api/src/notifications/notification-retention.service.ts#runScheduledPublish` | 发布 `publishAt` 到期的定时公告 |
 | `notifications.cleanup_expired` | `15 3 * * *`（每日 03:15） | `apps/api/src/notifications/notification-retention.service.ts#runCleanup` | 软删除过期通知/公告/投递，写清理运行审计 |

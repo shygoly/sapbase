@@ -10,11 +10,13 @@ import { AuthController } from './auth.controller'
 import { JwtStrategy } from './jwt.strategy'
 import { AuthContextModule } from '../auth-context/auth-context.module'
 import { IdentityModule } from '../identity/identity.module'
+import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 
 @Module({
   imports: [
     AuthContextModule,
     IdentityModule,
+    AuditLogsModule,
     UsersModule,
     OrganizationsModule,
     RolesModule,

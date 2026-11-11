@@ -373,6 +373,31 @@ SLA 到期提醒/升级幂等；无审批人必须告警，不静默通过
 实现落点：`apps/api/src/review/`；契约：`schemas/review-approval.schema.json`；
 领域表：`DOMAIN.md`「复核与审批」；决策：`DECISIONS.md` D-15。
 
+### 3.17 Audit & Tamper Evidence（审计链）
+
+审计是**只追加证据链**，不是业务状态：
+
+- **AuditEvent**：`audit_logs` 一行；`seq` 按组织单调，`hash = SHA256(prevHash + canonical payload)`。
+- **Checkpoint**：`audit_checkpoints` 记录某 seq 的 hash 与 HMAC 签名，作为验证锚点。
+- **Archive**：`audit_archives` 存 JSONL 对象键与 manifest；清理只删已归档、非 legalHold、过期行。
+- **Break-glass**：DDL 触发器拒绝 UPDATE/DELETE；只有 `app.audit_break_glass=on` 的保留期清理/恢复可例外，且必须留 `audit.break_glass` 审计。
+- **Catalog**：已知 action 缺必填字段拒绝；未知 action 标 `source=custom` + 告警。
+- **Retention**：`retentionClass → retentionUntil`；legalHold 阻止清理。
+
+执行语义：
+
+```text
+审计只追加；业务代码不得 UPDATE/DELETE audit_logs
+每组织 advisory lock 串行分配 seq；并发写入不得重号/断链
+失败审计独立事务，业务回滚仍留痕
+验证从最新 checkpoint 锚点向后重算；签名/链/hash 任一不符即失败
+归档先写对象存储再标记 archivedAt；恢复需 break-glass 后重新验证
+查询/导出本身也写审计（audit.query / audit.export）
+```
+
+实现落点：`libs/platform-core/src/audit-logs/` + `apps/api/src/audit-jobs/`；
+契约：`schemas/audit.schema.json`；领域表：`DOMAIN.md`「审计」；决策：`DECISIONS.md` D-16。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -423,6 +448,12 @@ SLA 到期提醒/升级幂等；无审批人必须告警，不静默通过
 41. **轮次只追加**：resubmit 新建 round，旧 round 只读（INV-RV-03）。
 42. **待办是投影**：work_items 不成为第二真源，源表变更/关闭后同步（INV-RV-04）。
 43. **代决定留痕**：委托必须记录 from/to 与审计，不得静默替代（INV-RV-05）。
+44. **审计只追加**：业务代码不得 UPDATE/DELETE `audit_logs`；break-glass 仅限保留期清理/恢复（INV-AU-01）。
+45. **链连续**：每组织 seq 单调、prevHash 衔接、hash 可重算；并发不得重号/断链（INV-AU-02）。
+46. **失败也留痕**：失败审计独立事务写入，业务回滚不丢失败证据（INV-AU-03）。
+47. **检查点可信**：验证从 checkpoint 锚点开始；签名/链/hash 任一不符即失败（INV-AU-04）。
+48. **保留期可执行**：legalHold 阻止清理；未归档/未过期不得删除（INV-AU-05）。
+49. **查询/导出可审计**：访问审计本身写 `audit.query`/`audit.export`，敏感字段脱敏（INV-AU-06）。
 
 ---
 

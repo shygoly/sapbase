@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { Injectable, Optional, UnauthorizedException } from '@nestjs/common'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { MoreThan, Repository } from 'typeorm'
 import { createHash, randomUUID } from 'node:crypto'
@@ -31,6 +32,7 @@ export class AuthSessionsService {
   constructor(
     @InjectRepository(AuthSession)
     private readonly repository: Repository<AuthSession>,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async create(input: CreateSessionInput): Promise<AuthSession> {
@@ -88,10 +90,23 @@ export class AuthSessionsService {
   }
 
   async revoke(sid: string, reason = 'logout'): Promise<boolean> {
+    const row = await this.repository.findOne({ where: { sid, status: 'active' } })
     const result = await this.repository.update(
       { sid, status: 'active' },
       { status: 'revoked', revokedAt: new Date(), revokedReason: reason },
     )
+    if (row) {
+      await this.auditLogs?.create({
+        organizationId: row.organizationId,
+        action: 'auth.session.revoked',
+        resource: 'session',
+        resourceId: row.userId,
+        actor: 'system:session',
+        status: 'success',
+        metadata: { sid, reason },
+        source: 'auth',
+      })
+    }
     return (result.affected ?? 0) > 0
   }
 
@@ -104,6 +119,18 @@ export class AuthSessionsService {
       { organizationId, sid, status: 'active' },
       { status: 'revoked', revokedAt: new Date(), revokedReason: reason },
     )
+    if ((result.affected ?? 0) > 0) {
+      await this.auditLogs?.create({
+        organizationId,
+        action: 'auth.session.revoked',
+        resource: 'session',
+        resourceId: sid,
+        actor: 'system:session',
+        status: 'success',
+        metadata: { reason, scope: 'sid' },
+        source: 'auth',
+      })
+    }
     return (result.affected ?? 0) > 0
   }
 
@@ -116,6 +143,18 @@ export class AuthSessionsService {
       { organizationId, userId, status: 'active' },
       { status: 'revoked', revokedAt: new Date(), revokedReason: reason },
     )
+    if ((result.affected ?? 0) > 0) {
+      await this.auditLogs?.create({
+        organizationId,
+        action: 'auth.session.revoked',
+        resource: 'session',
+        resourceId: userId,
+        actor: 'system:session',
+        status: 'success',
+        metadata: { reason, scope: 'all', revoked: result.affected },
+        source: 'auth',
+      })
+    }
     return result.affected ?? 0
   }
 

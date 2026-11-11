@@ -12,6 +12,7 @@ import { ReviewComment } from './review-comment.entity'
 import { ReviewEvent } from './review-event.entity'
 import { WorkItemsService } from './work-items.service'
 import { ReviewDelegationService } from './review-delegation.service'
+import { AuditLogsService } from '@sap/platform-core/audit-logs/audit-logs.service'
 import { normalizeSelector, selectorMatchesActor, type AssigneeActor } from './assignee-selector'
 
 export type ReviewDecisionAction = 'approve' | 'reject' | 'request-changes'
@@ -37,6 +38,7 @@ export class ReviewDecisionService {
     private readonly comments: Repository<ReviewComment>,
     private readonly workItems: WorkItemsService,
     @Optional() private readonly delegations?: ReviewDelegationService,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async act(
@@ -114,6 +116,27 @@ export class ReviewDecisionService {
       }),
     )
     await this.workItems.close(organizationId, 'approval', approval.id)
+    await this.auditLogs?.create({
+      organizationId,
+      action:
+        action === 'approve'
+          ? 'review.approve'
+          : action === 'reject'
+            ? 'review.reject'
+            : 'review.request_changes',
+      resource: 'approval',
+      resourceId: approval.id,
+      actor: actor.userId,
+      status: 'success',
+      metadata: {
+        ruleId: approval.ruleId,
+        recordId: approval.recordId,
+        round: approval.round,
+        stepIndex: approval.stepIndex,
+        delegatedFrom,
+      },
+      source: 'review',
+    })
     return saved
   }
 

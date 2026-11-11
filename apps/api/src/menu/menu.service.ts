@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
+import { AuditLogsService } from '@sap/platform-core/audit-logs/audit-logs.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository, IsNull } from 'typeorm'
 import { MenuItem } from './menu.entity'
@@ -8,6 +9,7 @@ export class MenuService {
   constructor(
     @InjectRepository(MenuItem)
     private menuRepository: Repository<MenuItem>,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async findAll(organizationId: string): Promise<MenuItem[]> {
@@ -80,7 +82,17 @@ export class MenuService {
       organizationId,
       parent: parent ?? undefined,
     })
-    return this.menuRepository.save(item) as Promise<MenuItem>
+    const saved = (await this.menuRepository.save(item)) as MenuItem
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'menu.changed',
+      resource: 'menu',
+      actor: 'system:menu',
+      status: 'success',
+      metadata: { id: saved.id, label: saved.label, change: 'create' },
+      source: 'menu',
+    })
+    return saved
   }
 
   async update(id: string, menuItem: Partial<MenuItem>, organizationId: string): Promise<MenuItem | null> {
@@ -102,6 +114,15 @@ export class MenuService {
     }
 
     await this.menuRepository.update({ id, organizationId }, updateData as never)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'menu.changed',
+      resource: 'menu',
+      actor: 'system:menu',
+      status: 'success',
+      metadata: { id, change: 'update' },
+      source: 'menu',
+    })
     return this.menuRepository.findOne({
       where: { id, organizationId },
       relations: ['children', 'parent'],
@@ -115,6 +136,15 @@ export class MenuService {
       { parent: null } as never,
     )
     await this.menuRepository.delete({ id, organizationId })
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'menu.changed',
+      resource: 'menu',
+      actor: 'system:menu',
+      status: 'success',
+      metadata: { id, change: 'delete' },
+      source: 'menu',
+    })
   }
 
   async reorder(items: { id: string; order: number }[], organizationId: string): Promise<MenuItem[]> {

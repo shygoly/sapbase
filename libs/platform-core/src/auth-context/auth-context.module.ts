@@ -22,6 +22,7 @@ import { JwtService } from './infrastructure/external/jwt.service'
 import { PasswordService } from './infrastructure/external/password.service'
 import { EffectivePermissionsResolver } from './infrastructure/external/effective-permissions.resolver'
 import { IdentityModule } from '../identity/identity.module'
+import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { IdentityModule } from '../identity/identity.module'
     OrganizationContextModule,
     RolesModule,
     IdentityModule,
+    AuditLogsModule,
   ],
   providers: [
     {

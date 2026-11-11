@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common'
 import { JobTypeRegistry } from '@sap/platform-core/jobs/job-types'
 import { AIModelsService } from '../ai-models/ai-models.service'
+import { AuditLogsService } from '@sap/platform-core/audit-logs/audit-logs.service'
 
 function extractText(response: unknown): string {
   const r = response as {
@@ -23,6 +24,7 @@ export class AiContentJobService implements OnModuleInit {
   constructor(
     private readonly registry: JobTypeRegistry,
     private readonly models: AIModelsService,
+    private readonly auditLogs: AuditLogsService,
   ) {}
 
   onModuleInit(): void {
@@ -62,6 +64,24 @@ export class AiContentJobService implements OnModuleInit {
         const text = extractText(response)
         if (!text.trim()) throw new BadRequestException('AI 响应没有文本内容')
         await ctx.progress(100)
+        await this.auditLogs.create({
+          organizationId: ctx.organizationId,
+          action: 'ai.model.call',
+          resource: 'ai_model',
+          actor: 'system:job',
+          status: 'success',
+          metadata: { jobId: ctx.jobId, model: model.model ?? model.name },
+          source: 'job',
+        })
+        await this.auditLogs.create({
+          organizationId: ctx.organizationId,
+          action: 'ai.generate',
+          resource: 'ai_module',
+          actor: 'system:job',
+          status: 'success',
+          metadata: { jobId: ctx.jobId, model: model.model ?? model.name, chars: text.length },
+          source: 'job',
+        })
         return { result: { model: model.model ?? model.name, text } }
       },
     })

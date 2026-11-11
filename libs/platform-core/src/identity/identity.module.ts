@@ -25,12 +25,14 @@ import { UsersModule } from '../users/users.module'
 import { RolesModule } from '../roles/roles.module'
 import { ServiceClient } from './service-client.entity'
 import { OrganizationMemberRolesService } from './organization-member-roles.service'
+import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 
 @Module({
   imports: [
     UsersModule,
     RolesModule,
     OrganizationsModule,
+    AuditLogsModule,
     TypeOrmModule.forFeature([
       OrganizationMemberRole,
       AuthSession,

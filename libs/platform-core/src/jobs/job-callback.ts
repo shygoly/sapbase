@@ -1,7 +1,8 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { lookup } from 'node:dns/promises'
 import { isIP } from 'node:net'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { JobQueue } from './job-queue'
 import type { JobRecord } from './job-types'
 
@@ -173,9 +174,38 @@ export interface JobCallbackOptions extends SafeUrlOptions {
  */
 @Injectable()
 export class JobCallbackService {
-  constructor(private readonly queue?: JobQueue) {}
+  constructor(
+    private readonly queue?: JobQueue,
+    @Optional() private readonly auditLogs?: AuditLogsService,
+  ) {}
 
   async deliver(
+    job: JobRecord,
+    options: JobCallbackOptions = {},
+  ): Promise<CallbackDeliveryResult> {
+    const result = await this.deliverOnce(job, options)
+    if (job.callbackUrl && job.organizationId) {
+      await this.auditLogs?.create({
+        organizationId: job.organizationId,
+        action: 'integration.sync',
+        resource: 'connector',
+        actor: 'system:job-callback',
+        status: result.outcome === 'delivered' ? 'success' : 'failure',
+        metadata: {
+          jobId: job.id,
+          type: job.type,
+          outcome: result.outcome,
+          attempts: result.attempts,
+          status: result.status ?? null,
+          error: result.error ?? null,
+        },
+        source: 'integration',
+      })
+    }
+    return result
+  }
+
+  private async deliverOnce(
     job: JobRecord,
     options: JobCallbackOptions = {},
   ): Promise<CallbackDeliveryResult> {

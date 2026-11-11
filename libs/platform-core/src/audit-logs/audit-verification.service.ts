@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { DataSource } from 'typeorm'
+import { createHmac } from 'node:crypto'
 import { computeAuditHash, stableStringify } from './audit-chain'
 
 export interface AuditVerificationResult {
@@ -8,6 +9,7 @@ export interface AuditVerificationResult {
   checked: number
   brokenAt?: number
   reason?: string
+  checkpointSeq?: string | null
 }
 
 interface AuditRow {
@@ -26,16 +28,50 @@ export class AuditVerificationService {
   constructor(private readonly dataSource: DataSource) {}
 
   async verify(organizationId: string): Promise<AuditVerificationResult> {
+    const checkpoints = (await this.dataSource.query(
+      `SELECT seq, hash, signature FROM public.audit_checkpoints
+        WHERE "organizationId" = $1 ORDER BY seq DESC LIMIT 1`,
+      [organizationId],
+    )) as Array<{ seq: string | number; hash: string; signature: string | null }>
+    const checkpoint = checkpoints[0]
+    if (checkpoint) {
+      const secret = process.env.AUDIT_CHECKPOINT_SECRET
+      if (checkpoint.signature) {
+        if (!secret) {
+          return {
+            organizationId,
+            valid: false,
+            checked: 0,
+            reason: 'checkpoint 有签名但未配置 AUDIT_CHECKPOINT_SECRET',
+            checkpointSeq: String(checkpoint.seq),
+          }
+        }
+        const expected = createHmac('sha256', secret)
+          .update(`${organizationId}:${checkpoint.seq}:${checkpoint.hash}`)
+          .digest('hex')
+        if (expected !== checkpoint.signature) {
+          return {
+            organizationId,
+            valid: false,
+            checked: 0,
+            reason: 'checkpoint 签名不匹配',
+            checkpointSeq: String(checkpoint.seq),
+          }
+        }
+      }
+    }
+
     const rows = (await this.dataSource.query(
       `SELECT seq, "prevHash", hash, payload
          FROM public.audit_logs
         WHERE "organizationId" = $1 AND seq IS NOT NULL
+          ${checkpoint ? 'AND seq > $2' : ''}
         ORDER BY seq ASC`,
-      [organizationId],
+      checkpoint ? [organizationId, checkpoint.seq] : [organizationId],
     )) as AuditRow[]
 
-    let prevHash = 'genesis'
-    let expectedSeq = 1
+    let prevHash = checkpoint?.hash ?? 'genesis'
+    let expectedSeq = checkpoint ? Number(checkpoint.seq) + 1 : 1
     let checked = 0
     for (const row of rows) {
       const seq = Number(row.seq)
@@ -80,6 +116,11 @@ export class AuditVerificationService {
       expectedSeq += 1
       checked += 1
     }
-    return { organizationId, valid: true, checked }
+    return {
+      organizationId,
+      valid: true,
+      checked,
+      checkpointSeq: checkpoint ? String(checkpoint.seq) : null,
+    }
   }
 }

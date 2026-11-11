@@ -16,6 +16,7 @@ import { JobsService } from '@sap/platform-core/jobs/jobs.service'
 import { OrganizationMember } from '../organizations/organization-member.entity'
 import { OrganizationMemberRole } from '../identity/organization-member-role.entity'
 import { EventBusService } from '../common/events/event-bus.service'
+import { AuditLogsService } from '@sap/platform-core/audit-logs/audit-logs.service'
 import { NotificationService } from '../websocket/services/notification.service'
 import { Announcement, type AnnouncementStatus } from './announcement.entity'
 import { AnnouncementAudience } from './announcement-audience.entity'
@@ -108,6 +109,7 @@ export class AnnouncementsService {
     private readonly notifications: NotificationService,
     @Optional() private readonly jobs?: JobsService,
     @Optional() private readonly eventBus?: EventBusService,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async list(organizationId: string, status?: AnnouncementStatus): Promise<Announcement[]> {
@@ -280,6 +282,16 @@ export class AnnouncementsService {
     row.publishedAt = new Date()
     await this.announcements.save(row)
     await this.dispatchPublished(organizationId, row.id)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'announcement.publish',
+      resource: 'announcement',
+      resourceId: row.id,
+      actor: row.createdBy ?? 'system',
+      status: 'success',
+      metadata: { audienceType: row.audienceType, delivered },
+      source: 'announcement',
+    })
     return { announcement: row, delivered }
   }
 
@@ -362,7 +374,17 @@ export class AnnouncementsService {
     }
     row.status = 'withdrawn'
     row.withdrawnAt = new Date()
-    return this.announcements.save(row)
+    const saved = await this.announcements.save(row)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'announcement.withdraw',
+      resource: 'announcement',
+      resourceId: saved.id,
+      actor: saved.createdBy ?? 'system',
+      status: 'success',
+      source: 'announcement',
+    })
+    return saved
   }
 
   async markRead(organizationId: string, id: string, userId: string): Promise<boolean> {

@@ -9,6 +9,7 @@ import { AuditCheckpointService } from './audit-checkpoint.service'
 import { AuditRetentionService } from './audit-retention.service'
 import { AuditCheckpoint } from './audit-checkpoint.entity'
 import { AuditArchive } from './audit-archive.entity'
+import { AuditAlertService } from './audit-alert.service'
 
 @Module({
   imports: [TypeOrmModule.forFeature([AuditLog, AuditCheckpoint, AuditArchive])],
@@ -18,6 +19,7 @@ import { AuditArchive } from './audit-archive.entity'
     AuditVerificationService,
     AuditCheckpointService,
     AuditRetentionService,
+    AuditAlertService,
   ],
   controllers: [AuditLogsController],
   exports: [
@@ -26,6 +28,7 @@ import { AuditArchive } from './audit-archive.entity'
     AuditVerificationService,
     AuditCheckpointService,
     AuditRetentionService,
+    AuditAlertService,
   ],
 })
 export class AuditLogsModule {}

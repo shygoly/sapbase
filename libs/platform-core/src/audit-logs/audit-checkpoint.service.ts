@@ -47,6 +47,14 @@ export class AuditCheckpointService {
     )
   }
 
+  async list(organizationId: string): Promise<AuditCheckpoint[]> {
+    return this.checkpoints.find({
+      where: { organizationId },
+      order: { seq: 'DESC' },
+      take: 100,
+    })
+  }
+
   async latest(organizationId: string): Promise<AuditCheckpoint | null> {
     return this.checkpoints.findOne({
       where: { organizationId },

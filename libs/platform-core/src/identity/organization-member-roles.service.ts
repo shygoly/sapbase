@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { OrganizationMemberRole, type RoleBindingSource } from './organization-member-role.entity'
@@ -23,6 +24,7 @@ export class OrganizationMemberRolesService {
   constructor(
     @InjectRepository(OrganizationMemberRole)
     private readonly repository: Repository<OrganizationMemberRole>,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async grant(
@@ -40,7 +42,18 @@ export class OrganizationMemberRolesService {
       existing.validFrom = input.validFrom ?? existing.validFrom
       existing.validTo = input.validTo ?? existing.validTo
       existing.createdBy = input.createdBy ?? existing.createdBy
-      return this.repository.save(existing)
+      const saved = await this.repository.save(existing)
+      await this.auditLogs?.create({
+        organizationId,
+        action: 'permission.changed',
+        resource: 'role_binding',
+        resourceId: userId,
+        actor: input.createdBy ?? 'system:role-binding',
+        status: 'success',
+        metadata: { userId, roleName: input.roleName, change: 'grant' },
+        source: 'identity',
+      })
+      return saved
     }
     const row = this.repository.create({
       organizationId,
@@ -53,7 +66,18 @@ export class OrganizationMemberRolesService {
       validTo: input.validTo ?? null,
       createdBy: input.createdBy ?? null,
     })
-    return this.repository.save(row)
+    const saved = await this.repository.save(row)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'permission.changed',
+      resource: 'role_binding',
+      resourceId: userId,
+      actor: input.createdBy ?? 'system:role-binding',
+      status: 'success',
+      metadata: { userId, roleName: input.roleName, change: 'grant' },
+      source: 'identity',
+    })
+    return saved
   }
 
   async revoke(
@@ -65,6 +89,18 @@ export class OrganizationMemberRolesService {
       { organizationId, userId, roleName, status: 'active' },
       { status: 'inactive' },
     )
+    if ((result.affected ?? 0) > 0) {
+      await this.auditLogs?.create({
+        organizationId,
+        action: 'permission.changed',
+        resource: 'role_binding',
+        resourceId: userId,
+        actor: 'system:role-binding',
+        status: 'success',
+        metadata: { userId, roleName, change: 'revoke' },
+        source: 'identity',
+      })
+    }
     return (result.affected ?? 0) > 0
   }
 

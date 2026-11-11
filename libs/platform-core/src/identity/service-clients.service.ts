@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { createHash, randomBytes } from 'node:crypto'
@@ -37,6 +38,7 @@ export class ServiceClientsService {
   constructor(
     @InjectRepository(ServiceClient)
     private readonly repository: Repository<ServiceClient>,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async list(organizationId: string): Promise<ServiceClient[]> {
@@ -76,7 +78,18 @@ export class ServiceClientsService {
       lastUsedAt: null,
       ipAllowlist: input.ipAllowlist ?? null,
     })
-    return { client: await this.repository.save(row), secret }
+    const saved = await this.repository.save(row)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'auth.service_token.issued',
+      resource: 'service_client',
+      resourceId: saved.id,
+      actor: 'system:service-client',
+      status: 'success',
+      metadata: { key: saved.key, change: 'create' },
+      source: 'identity',
+    })
+    return { client: saved, secret }
   }
 
   async update(
@@ -102,7 +115,18 @@ export class ServiceClientsService {
     const secret = randomBytes(32).toString('hex')
     row.secretHash = hashClientSecret(secret)
     row.status = 'active'
-    return { client: await this.repository.save(row), secret }
+    const saved = await this.repository.save(row)
+    await this.auditLogs?.create({
+      organizationId,
+      action: 'auth.service_token.issued',
+      resource: 'service_client',
+      resourceId: saved.id,
+      actor: 'system:service-client',
+      status: 'success',
+      metadata: { key: saved.key, change: 'rotate' },
+      source: 'identity',
+    })
+    return { client: saved, secret }
   }
 
   async authenticate(
