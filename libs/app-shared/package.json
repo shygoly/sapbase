@@ -15,6 +15,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./components/app-switcher": "./src/components/app-switcher.tsx",
+    "./components/announcement-body": "./src/components/announcement-body.tsx",
     "./components/brand/brand-logo": "./src/components/brand/brand-logo.tsx",
     "./components/brand/brand-theme-applier": "./src/components/brand/brand-theme-applier.tsx",
     "./components/brand/file-upload": "./src/components/brand/file-upload.tsx",

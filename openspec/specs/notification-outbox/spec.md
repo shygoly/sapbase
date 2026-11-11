@@ -72,3 +72,22 @@ MUST NOT 要求调用方先知道是哪张单。
 **Then** 该批准与待办状态变更 SHALL 在同一事务内完成
 **And** 待办中 MUST NOT 再出现该项
 
+
+### Requirement: Notification Center Boundary
+
+通知中心 SHALL 拥有 `notifications`、`notification_preferences`、`announcements` 与投递状态；
+outbox 只负责把业务事件交给订阅者，MUST NOT 把通知当成事件真源。
+
+#### Scenario: 通知失败不回滚业务
+
+**Given** 一次业务事务已经成功提交
+**When** 通知持久化或 WebSocket 推送失败
+**Then** 业务事务 MUST NOT 回滚
+**And** 通知失败 SHALL 可重试/可查询
+
+#### Scenario: 偏好不删除站内通知
+
+**Given** 用户关闭了某分类的站内提示或处于免打扰
+**When** 该分类通知到达
+**Then** 站内通知 SHALL 仍然持久化
+**And** 只有 WebSocket/额外投递 SHALL 被跳过

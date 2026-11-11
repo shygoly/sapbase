@@ -38,6 +38,7 @@ import { NotificationPreference } from './notifications/notification-preference.
 import { Announcement } from './notifications/announcement.entity'
 import { AnnouncementAudience } from './notifications/announcement-audience.entity'
 import { AnnouncementDelivery } from './notifications/announcement-delivery.entity'
+import { NotificationCleanupRun } from './notifications/notification-cleanup-run.entity'
 import { OutboxDelivery } from './outbox/outbox-delivery.entity'
 import { OutboxEvent } from './outbox/outbox-event.entity'
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
@@ -98,6 +99,7 @@ export const APP_ENTITIES = [
   Announcement,
   AnnouncementAudience,
   AnnouncementDelivery,
+  NotificationCleanupRun,
   AgentConfirmationToken,
   BusinessAppInstallation,
   BusinessAppInstallationRevision,

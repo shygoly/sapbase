@@ -1,7 +1,7 @@
 {
   "name": "customer-form",
   "type": "form",
-  "object": "Customer",
+  "object": "customer",
   "label": "客户表单",
   "description": "Customer form view",
   "layout": {

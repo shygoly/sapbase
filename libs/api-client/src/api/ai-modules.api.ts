@@ -36,6 +36,38 @@ export interface AIModule {
   updatedAt: string
 }
 
+
+export interface AIModuleDslSummary {
+  id: string
+  name: string
+  description: string | null
+  status: AIModuleStatus
+  version: string
+  updatedAt: string
+  dslKeys: string[]
+  hasDefinition: boolean
+}
+
+export interface AIModuleDslBundle {
+  module: {
+    id: string
+    name: string
+    description: string | null
+    status: AIModuleStatus
+    version: string
+    updatedAt: string
+  }
+  patchContent: Record<string, any>
+  definition: Record<string, any> | null
+}
+
+export interface AIModuleDslSearchResult {
+  items: AIModuleDslSummary[]
+  total: number
+  page: number
+  limit: number
+}
+
 export interface AIModuleTest {
   id: string
   moduleId: string
@@ -216,5 +248,29 @@ export const aiModulesApi = {
   async getDefinition(id: string): Promise<any> {
     const response = await httpClient.get<any>(`/api/ai-modules/${id}/definition`)
     return response.data.data || response.data
+  },
+
+  async searchDsl(params: { search?: string; page?: number; limit?: number } = {}): Promise<AIModuleDslSearchResult> {
+    const response = await httpClient.get<any>('/api/ai-modules/dsl', { params })
+    return response.data.data || response.data
+  },
+
+  async getDsl(id: string): Promise<AIModuleDslBundle> {
+    const response = await httpClient.get<any>(`/api/ai-modules/${id}/dsl`)
+    return response.data.data || response.data
+  },
+
+  async exportDsl(id: string): Promise<string> {
+    const bundle = await this.getDsl(id)
+    return JSON.stringify(
+      {
+        module: bundle.module,
+        patchContent: bundle.patchContent,
+        definition: bundle.definition,
+        exportedAt: new Date().toISOString(),
+      },
+      null,
+      2,
+    )
   },
 }

@@ -54,4 +54,8 @@ export class NotificationRecord extends TenantAwareEntity {
 
   @Column({ type: 'boolean', default: false })
   mandatory: boolean
+
+  /** 保留期清理只写 deletedAt，不物理删除；列表/统计默认排除。 */
+  @Column({ type: 'timestamptz', nullable: true })
+  deletedAt: Date | null
 }

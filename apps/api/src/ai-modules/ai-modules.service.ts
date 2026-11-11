@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { In, Repository } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
 import { AIModule, AIModuleStatus } from './ai-module.entity'
 import { AIModuleTest, TestStatus } from './ai-module-test.entity'
@@ -68,6 +68,106 @@ export class AIModulesService {
       throw new NotFoundException(`AI Module with ID ${id} not found`)
     }
     return module
+  }
+
+  /**
+   * Browse/search saved Module DSL (patchContent) without generating code.
+   */
+  async searchDsl(
+    organizationId: string,
+    input: { search?: string; page?: number; limit?: number } = {},
+  ): Promise<{
+    items: Array<{
+      id: string
+      name: string
+      description: string | null
+      status: AIModuleStatus
+      version: string
+      updatedAt: Date
+      dslKeys: string[]
+      hasDefinition: boolean
+    }>
+    total: number
+    page: number
+    limit: number
+  }> {
+    const page = Math.max(1, Number(input.page) || 1)
+    const limit = Math.min(100, Math.max(1, Number(input.limit) || 20))
+    const search = input.search?.trim()
+
+    const qb = this.aiModuleRepository
+      .createQueryBuilder('module')
+      .where('module.organizationId = :organizationId', { organizationId })
+      .orderBy('module.updatedAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+
+    if (search) {
+      qb.andWhere(
+        "(LOWER(module.name) LIKE :q OR LOWER(COALESCE(module.description, '')) LIKE :q OR LOWER(CAST(module.patchContent AS TEXT)) LIKE :q)",
+        { q: `%${search.toLowerCase()}%` },
+      )
+    }
+
+    const [modules, total] = await qb.getManyAndCount()
+    const definitions = await this.aiModuleDefinitionRepository.find({
+      where: { aiModuleId: In(modules.map((module) => module.id)) },
+      select: ['aiModuleId'],
+    })
+    const withDefinition = new Set(definitions.map((definition) => definition.aiModuleId))
+
+    return {
+      items: modules.map((module) => ({
+        id: module.id,
+        name: module.name,
+        description: module.description ?? null,
+        status: module.status,
+        version: module.version,
+        updatedAt: module.updatedAt,
+        dslKeys:
+          module.patchContent && typeof module.patchContent === 'object'
+            ? Object.keys(module.patchContent)
+            : [],
+        hasDefinition: withDefinition.has(module.id),
+      })),
+      total,
+      page,
+      limit,
+    }
+  }
+
+  /**
+   * Read both DSL artifacts for one module: patchContent and the original 6-step definition.
+   */
+  async getDslBundle(
+    id: string,
+    organizationId: string,
+  ): Promise<{
+    module: {
+      id: string
+      name: string
+      description: string | null
+      status: AIModuleStatus
+      version: string
+      updatedAt: Date
+    }
+    patchContent: Record<string, any>
+    definition: AIModuleDefinition | null
+  }> {
+    const module = await this.findOne(id, organizationId)
+    const definition = await this.getDefinition(id)
+    return {
+      module: {
+        id: module.id,
+        name: module.name,
+        description: module.description ?? null,
+        status: module.status,
+        version: module.version,
+        updatedAt: module.updatedAt,
+      },
+      patchContent: module.patchContent ?? {},
+      definition,
+    }
   }
 
   async create(createDto: Partial<AIModule>, organizationId: string): Promise<AIModule> {

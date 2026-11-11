@@ -32,4 +32,15 @@ export class Announcement extends TenantAwareEntity {
 
   @Column({ type: 'uuid', nullable: true })
   createdBy: string | null
+
+  /** 公告保留天数：到期后只软删除，审计引用仍可追溯。 */
+  @Column({ type: 'int', default: 30 })
+  retentionDays: number
+
+  /** 附件只存 https/http 链接与展示名，不存二进制。 */
+  @Column({ type: 'jsonb', nullable: true })
+  attachments: Array<{ name: string; url: string }> | null
+
+  @Column({ type: 'timestamptz', nullable: true })
+  deletedAt: Date | null
 }

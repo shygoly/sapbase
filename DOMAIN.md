@@ -37,6 +37,7 @@
 | announcements | 通知与公告 |
 | announcement_audiences | 通知与公告 |
 | announcement_deliveries | 通知与公告 |
+| notification_cleanup_runs | 通知与公告 |
 | assets | 资产 |
 | asset_variants | 资产 |
 | asset_upload_sessions | 资产 |
@@ -354,11 +355,13 @@ spec: apps/api/src/review/review.ddl.spec.ts
 
 ## 通知与公告
 
-覆盖表：notification_preferences, announcements, announcement_audiences, announcement_deliveries
+覆盖表：notification_preferences, announcements, announcement_audiences, announcement_deliveries, notification_cleanup_runs
 
 通知中心扩展。`notifications` 增加分类/优先级/动作链接/过期/已读时间/强制标记；
 `notification_preferences` 存分类渠道开关与免打扰；`announcements` 是公告草稿/发布/撤回；
 `announcement_audiences` 存 audience 明细；`announcement_deliveries` 存逐用户投递/已读状态。
+通知/公告/投递均用 `deletedAt` 软删除；`notification_cleanup_runs` 记录每次保留期清理的
+保留天数与软删除/过期计数。
 
 ### 关系
 
@@ -368,11 +371,13 @@ spec: apps/api/src/review/review.ddl.spec.ts
 | announcements.organizationId | organizations.id | 公告归属组织 | none | RLS 兜底 |
 | announcement_audiences.announcementId | announcements.id | 受众归属公告 | none | 删除公告级联 |
 | announcement_deliveries.announcementId | announcements.id | 投递归属公告 | none | 逐用户唯一 |
+| notification_cleanup_runs.organizationId | organizations.id | 清理运行归属组织 | none | 只记计数，不复制正文 |
 
 ### 状态词
 
 公告状态使用 `draft` / `scheduled` / `published` / `withdrawn` / `expired`；
 投递状态使用 `pending` / `delivered` / `read` / `failed`。通知优先级使用 `low` / `normal` / `high` / `urgent`。
+清理运行状态使用 `running` / `succeeded` / `failed`。
 
 ### 不变量
 
@@ -385,6 +390,50 @@ enforcement:
   - test:apps/api/src/notifications/notification-center.ddl.spec.ts#NOTIFICATION_CENTER_DDL
 db: rls:notifications
 spec: apps/api/src/notifications/notification-center.ddl.spec.ts
+```
+
+```yaml invariant
+id: INV-NT-02
+tables: [notifications, notification_preferences]
+desc: 站内通知持久化不受偏好影响；偏好只影响 WS/额外投递；mandatory 绕过 mutedUntil。
+trigger: 通知投递/偏好变更
+enforcement:
+  - test:apps/api/src/websocket/services/notification.service.spec.ts#偏好
+db: rls:notifications
+spec: apps/api/src/websocket/services/notification.service.spec.ts
+```
+
+```yaml invariant
+id: INV-NT-03
+tables: [announcement_deliveries]
+desc: 公告投递按 (announcementId,userId) 幂等；重复发布不产生第二条通知或 delivery。
+trigger: 公告发布/重试/扇出
+enforcement:
+  - test:apps/api/src/notifications/announcements.service.spec.ts#publish all
+db: rls:notifications
+spec: apps/api/src/notifications/announcements.service.spec.ts
+```
+
+```yaml invariant
+id: INV-NT-04
+tables: [notifications, announcements, announcement_deliveries]
+desc: 过期通知/公告/投递只写 deletedAt 软删除；清理运行写 notification_cleanup_runs。
+trigger: 保留期清理/公告过期
+enforcement:
+  - test:apps/api/src/notifications/notification-retention.service.spec.ts#cleanupOrganization
+db: rls:notifications
+spec: apps/api/src/notifications/notification-retention.service.spec.ts
+```
+
+```yaml invariant
+id: INV-NT-05
+tables: [announcements]
+desc: 公告正文只渲染安全 Markdown 子集，不执行原始 HTML；链接只允许 http/https。
+trigger: 公告正文存储/渲染
+enforcement:
+  - test:tests/notification-center.test.js#XSS
+db: none
+spec: tests/notification-center.test.js
 ```
 
 ---

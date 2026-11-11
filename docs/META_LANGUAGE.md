@@ -299,6 +299,32 @@ SSO 失败/同步源不可用 → fail-closed，不降级到“信任调用方�
 实现落点：`libs/platform-core/src/identity/`；契约：`schemas/identity.schema.json`；
 领域表：`DOMAIN.md`「身份与会话」；决策：`DECISIONS.md` D-10。
 
+### 3.14 Notification Center & Announcements（通知与公告）
+
+站内通知是**持久消息**，不是事件（outbox）也不是任务（async-job）：
+
+- **Notification**：`notifications` 行；分类/优先级/动作链接/过期/已读时间/强制标记。
+- **Preference**：`notification_preferences` 按组织 + 用户 + 分类存渠道开关/免打扰。
+- **Announcement**：`announcements` 草稿 → `scheduled`/`published` → `withdrawn` → `expired`；
+  audience 存 `announcement_audiences`（role/user/scope_node/scope_subtree）。
+- **Delivery**：`announcement_deliveries` 逐用户投递/已读，唯一键 `(announcementId,userId)`。
+- **Retention**：通知默认 30 天；公告按 `retentionDays`；到期只写 `deletedAt`，
+  清理运行写 `notification_cleanup_runs`。
+
+执行语义：
+
+```text
+站内持久化不受偏好影响；偏好只决定 WS/额外投递；mandatory 绕过 mute
+audience 只从服务端成员/角色/数据范围解析，跨租户节点拒绝，解析失败按空集合
+重复发布按 (announcementId,userId) 幂等，不产生第二条通知
+超过阈值的大组织扇出走 notification.announcement_fanout 任务（进度/取消/重试）
+正文只渲染安全 Markdown 子集；不执行原始 HTML，链接只允许 http/https
+过期/撤回公告只软删除，统计与审计引用保留
+```
+
+实现落点：`apps/api/src/notifications/`；契约：`schemas/notification-center.schema.json`；
+领域表：`DOMAIN.md`「通知与公告」；决策：`DECISIONS.md` D-11/D-12。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -334,6 +360,11 @@ SSO 失败/同步源不可用 → fail-closed，不降级到“信任调用方�
 26. **会话以 sid 为准**：JWT 携带 sid；吊销/过期后守卫必须拒绝，旧无 sid token 仅按过期时间兼容（INV-ID-02）。
 27. **SSO/同步 fail-closed**：源不可用、签名/state/nonce 失败不得降级为信任调用方（INV-ID-03）。
 28. **服务令牌不携带用户权限真相**：代用户调用必须服务端重解析权限与数据范围（INV-ID-04）。
+29. **站内持久化优先于偏好**：偏好只影响 WS/额外投递；`mandatory` 绕过 mute（INV-NT-02）。
+30. **公告 audience 同组织**：role/user/scope 只从服务端解析，跨租户节点拒绝，解析失败按空集合（INV-NT-01）。
+31. **公告投递幂等**：唯一键 `(announcementId,userId)`；重复发布不产生第二条通知（INV-NT-03）。
+32. **过期只软删除**：通知/公告/投递用 `deletedAt` 标记，统计与审计引用保留（INV-NT-04）。
+33. **富文本不执行原始 HTML**：只渲染安全 Markdown 子集，链接协议白名单 http/https（INV-NT-05）。
 
 ---
 

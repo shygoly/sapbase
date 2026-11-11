@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/notification-center.schema.json",
+  "title": "Notification Center and Announcements",
+  "description": "通知中心/公告的持久化形状与请求契约。表是真相；WS 只是在线提示。",
+  "$defs": {
+    "notificationCategory": {
+      "enum": ["system", "approval", "announcement", "task", "security", "business"]
+    },
+    "notificationPriority": {
+      "enum": ["low", "normal", "high", "urgent"]
+    },
+    "notificationType": {
+      "enum": ["info", "success", "warning", "error"]
+    },
+    "audience": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {
+        "type": {
+          "enum": ["role", "user", "scope_node", "scope_subtree"]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      }
+    },
+    "attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "url"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "url": {
+          "type": "string",
+          "pattern": "^https?://",
+          "maxLength": 2048
+        }
+      }
+    },
+    "announcementInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "body"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "body": { "type": "string", "minLength": 1 },
+        "audienceType": {
+          "enum": ["all", "role", "user", "scope_node", "scope_subtree"]
+        },
+        "audiences": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/audience" }
+        },
+        "publishAt": {
+          "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+        },
+        "expiresAt": {
+          "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+        },
+        "retentionDays": { "type": "integer", "minimum": 1, "maximum": 3650 },
+        "attachments": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/attachment" }
+        }
+      }
+    },
+    "notificationRecord": {
+      "type": "object",
+      "required": [
+        "userId",
+        "organizationId",
+        "type",
+        "title",
+        "category",
+        "priority",
+        "read",
+        "mandatory"
+      ],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "userId": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "type": { "$ref": "#/$defs/notificationType" },
+        "title": { "type": "string", "maxLength": 255 },
+        "body": { "type": ["string", "null"] },
+        "category": { "$ref": "#/$defs/notificationCategory" },
+        "priority": { "$ref": "#/$defs/notificationPriority" },
+        "actionUrl": { "type": ["string", "null"], "maxLength": 1024 },
+        "sourceEventId": { "type": ["string", "null"] },
+        "expiresAt": { "type": ["string", "null"], "format": "date-time" },
+        "read": { "type": "boolean" },
+        "readAt": { "type": ["string", "null"], "format": "date-time" },
+        "mandatory": { "type": "boolean" },
+        "deletedAt": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "announcementDelivery": {
+      "type": "object",
+      "required": ["announcementId", "userId", "status"],
+      "properties": {
+        "announcementId": { "type": "string", "format": "uuid" },
+        "userId": { "type": "string", "format": "uuid" },
+        "status": { "enum": ["pending", "delivered", "read", "failed"] },
+        "deliveredAt": { "type": ["string", "null"], "format": "date-time" },
+        "readAt": { "type": ["string", "null"], "format": "date-time" },
+        "error": { "type": ["string", "null"], "maxLength": 255 },
+        "deletedAt": { "type": ["string", "null"], "format": "date-time" }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/announcementInput" },
+    { "$ref": "#/$defs/notificationRecord" },
+    { "$ref": "#/$defs/announcementDelivery" }
+  ]
+}

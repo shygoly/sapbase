@@ -43,6 +43,10 @@ export {
   type CreateAnnouncementInput,
   type UpdateAnnouncementInput,
   type AnnouncementStats,
+  type AnnouncementAttachment,
+  type AnnouncementDelivery,
+  type AnnouncementDeliveryPage,
+  type AnnouncementPublishResult,
 } from './announcements.api'
 export { dashboardApi, type DashboardSummary } from './dashboard.api'
 export { constantsApi } from './shipping/constants.api'

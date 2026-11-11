@@ -15,7 +15,7 @@
 - [x] 2.3 Migrate `resolver.ts`, update file loading paths for Next.js `public/` directory
 - [x] 2.4 Migrate `validator.ts`, ensure validation logic compatibility
 - [x] 2.5 Migrate `registry.ts`, adapt registry implementation
-- [ ] 2.6 Write unit tests for each core module
+- [x] 2.6 Write unit tests for each core module（`tests/schema-system.test.js`：registry/validator/resolver）
 - [x] 2.7 Ensure 100% TypeScript type coverage
 
 ## 3. Dynamic UI Components Migration
@@ -27,7 +27,7 @@
 - [x] 3.5 Create `libs/ui-runtime/src/components/schema-list.tsx`
 - [x] 3.6 Migrate SchemaList from legacy, adapt to current table components
 - [x] 3.7 Implement sorting, pagination, and filtering features
-- [ ] 3.8 Write component tests for SchemaForm and SchemaList
+- [x] 3.8 Write component tests for SchemaForm and SchemaList（SSR render + sort/paginate helpers）
 
 ## 4. Schema Files Structure
 
@@ -45,8 +45,8 @@
 - [x] 5.2 Create adapter function `buildCollectionModelFromSchema()` for CollectionRuntime
 - [x] 5.3 Create adapter function `buildFormModelFromSchema()` for FormRuntime
 - [x] 5.4 Update SchemaResolver to work with Next.js App Router
-- [ ] 5.5 Create example page using Schema system with Runtime components
-- [ ] 5.6 Write integration tests
+- [x] 5.5 Create example page using Schema system with Runtime components（`apps/web-portal/src/app/dashboard/schema-example/page.tsx`）
+- [x] 5.6 Write integration tests（resolver + SchemaForm/SchemaList + schema-example smoke）
 
 ## 6. Documentation and Examples
 
@@ -60,20 +60,20 @@
 ## 7. Testing and Validation
 
 - [x] 7.1 Run TypeScript type checking (`npm run type-check`) - Script not available, but no linter errors found
-- [ ] 7.2 Run build (`npm run build`) - ensure no errors (running in background)
-- [ ] 7.3 Test Schema loading from JSON files
-- [ ] 7.4 Test SchemaForm with all field types
-- [ ] 7.5 Test SchemaList with sorting and pagination
-- [ ] 7.6 Test integration with Runtime components
-- [ ] 7.7 Verify existing pages still work (no regressions)
+- [x] 7.2 `npm run build` 通过（API + portal + console）
+- [x] 7.3 schema-example 实际加载 `/specs/pages/customers.json`（并修正 view 的 `Customer` → `customer` 大小写）
+- [x] 7.4 SchemaForm 覆盖 12 种字段类型（`tests/schema-system.test.js`）
+- [x] 7.5 SchemaList 排序/分页 helper 测试通过
+- [x] 7.6 schema-example 在 `PageRuntime` 中渲染 resolver 结果
+- [x] 7.7 登录 + dashboard + schema-example smoke 通过；全量 build 通过
 - [x] 7.8 Run `openspec validate migrate-schema-system-from-legacy --strict`
 
 ## 8. Phase 5 Features Evaluation (Separate Task)
 
-- [ ] 8.1 Evaluate i18n system from legacy for migration
-- [ ] 8.2 Evaluate theme management system for migration
-- [ ] 8.3 Evaluate error handling system for migration
-- [ ] 8.4 Evaluate notification system for migration
-- [ ] 8.5 Evaluate custom hooks for migration
-- [ ] 8.6 Evaluate utility functions for migration
-- [ ] 8.7 Create separate proposal if migration is recommended
+- [x] 8.1 i18n 评估：当前实现已覆盖，不迁移（`docs/migration/phase5-evaluation.md`）
+- [x] 8.2 theme 评估：当前实现已覆盖，不迁移
+- [x] 8.3 error handling 评估：当前实现已覆盖，不迁移
+- [x] 8.4 notification 评估：当前实现已覆盖，不迁移
+- [x] 8.5 hooks 评估：当前实现已覆盖，不迁移
+- [x] 8.6 utilities 评估：当前实现已覆盖，不迁移
+- [x] 8.7 结论：不推荐整包迁移，不新建 proposal

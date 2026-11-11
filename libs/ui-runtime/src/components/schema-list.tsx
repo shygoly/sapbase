@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronUp, ChevronDown, Edit2, Trash2 } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -10,15 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from '@sap/ui-kit/table'
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from '@sap/ui-kit/pagination'
 import { Button } from '@sap/ui-kit/button'
 import type { ObjectSchema, FieldDefinition } from '../schema/types'
 
@@ -32,6 +23,30 @@ interface SchemaListProps {
 }
 
 type SortDirection = 'asc' | 'desc' | null
+
+export function sortRows(
+  data: Record<string, any>[],
+  sortField: string | null,
+  sortDirection: SortDirection,
+): Record<string, any>[] {
+  if (!sortField || !sortDirection) return [...data]
+  return [...data].sort((a, b) => {
+    const aVal = a[sortField]
+    const bVal = b[sortField]
+    if (aVal === bVal) return 0
+    if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1
+    return sortDirection === 'asc' ? 1 : -1
+  })
+}
+
+export function paginateRows(
+  data: Record<string, any>[],
+  page: number,
+  perPage = 10,
+): Record<string, any>[] {
+  const start = (Math.max(1, page) - 1) * perPage
+  return data.slice(start, start + perPage)
+}
 
 export function SchemaList({
   schema,
@@ -48,20 +63,7 @@ export function SchemaList({
   const itemsPerPage = 10
 
   useEffect(() => {
-    let sorted = [...data]
-
-    if (sortField && sortDirection) {
-      sorted.sort((a, b) => {
-        const aVal = a[sortField]
-        const bVal = b[sortField]
-
-        if (aVal === bVal) return 0
-        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1
-        return sortDirection === 'asc' ? 1 : -1
-      })
-    }
-
-    setFilteredData(sorted)
+    setFilteredData(sortRows(data, sortField, sortDirection))
     setCurrentPage(1) // Reset to first page when data changes
   }, [data, sortField, sortDirection])
 
@@ -84,20 +86,27 @@ export function SchemaList({
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage)
+  const paginatedData = paginateRows(filteredData, currentPage, itemsPerPage)
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading...</div>
+    return (
+      <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground">
+        Loading...
+      </div>
+    )
   }
 
   if (filteredData.length === 0) {
-    return <div className="text-center py-8 text-muted-foreground">No data</div>
+    return (
+      <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground">
+        No data
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border">
+    <div className="space-y-4 rounded-lg border border-border bg-card">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -143,26 +152,31 @@ export function SchemaList({
                     <div className="flex gap-2">
                       {onEdit && (
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
+                          aria-label="Edit"
+                          title="Edit"
                           onClick={(e) => {
                             e.stopPropagation()
                             onEdit(row)
                           }}
                         >
-                          Edit
+                          <Edit2 className="h-4 w-4" />
                         </Button>
                       )}
                       {onDelete && (
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
+                          aria-label="Delete"
+                          title="Delete"
+                          className="text-destructive hover:text-destructive"
                           onClick={(e) => {
                             e.stopPropagation()
                             onDelete(row)
                           }}
                         >
-                          Delete
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
                     </div>
@@ -175,51 +189,42 @@ export function SchemaList({
       </div>
 
       {totalPages > 1 && (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-              />
-            </PaginationItem>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
-              // Show first page, last page, current page, and pages around current
-              const showPage =
-                page === 1 ||
-                page === totalPages ||
-                (page >= currentPage - 1 && page <= currentPage + 1)
-
-              if (!showPage && page === 2) {
-                return <PaginationEllipsis key="ellipsis-start" />
-              }
-              if (!showPage && page === totalPages - 1) {
-                return <PaginationEllipsis key="ellipsis-end" />
-              }
-              if (!showPage) return null
-
-              return (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page)}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              )
-            })}
-
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+        <div className="flex items-center justify-between border-t border-border px-6 py-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+            {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={page === currentPage ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -212,6 +212,51 @@ code_markers:
   - libs/platform-core/src/roles/effective-permissions.service.ts
 ```
 
+### D-11：通知中心站内表是真相，偏好只影响额外投递
+
+```yaml decision
+id: D-11
+title: 通知中心站内表是真相，偏好只影响额外投递
+status: accepted
+date: 2026-11
+context: |
+  通知既是审计/待办入口，也是用户可配置的提醒。把“关闭通知”实现成不写表，
+  会丢审批待办与合规证据；把 mandatory 也交给偏好，会让强制公告失效。
+decision: |
+  notifications 表是唯一真相；notification_preferences 只决定 WS 推送/邮件/推送渠道。
+  站内持久化不受偏好影响；mandatory 通知绕过 mutedUntil。读/未读与过期时间持久化。
+references:
+  - INV-NT-02
+code_markers:
+  - apps/api/src/websocket/services/notification.service.ts
+  - apps/api/src/notifications/notification-preferences.service.ts
+```
+
+### D-12：公告扇出幂等，大组织走 async-job，保留期只软删除
+
+```yaml decision
+id: D-12
+title: 公告扇出幂等，大组织走 async-job，保留期只软删除
+status: accepted
+date: 2026-11
+context: |
+  公告发布可能覆盖整个组织。HTTP 请求内逐用户写库会超时且不可恢复；
+  物理删除过期数据会破坏审计、统计与合规引用。
+decision: |
+  audience 在服务端解析（role/user/scope_node/scope_subtree），投递按
+  (announcementId,userId) 幂等。超过阈值时入队 notification.announcement_fanout，
+  由 async-job 提供进度/取消/重试。通知默认保留 30 天、公告按 retentionDays；
+  清理只写 deletedAt 并记录 notification_cleanup_runs，不物理删除。
+references:
+  - INV-NT-01
+  - INV-NT-03
+  - INV-NT-04
+code_markers:
+  - apps/api/src/notifications/announcements.service.ts
+  - apps/api/src/notifications/notification-retention.service.ts
+  - apps/api/src/notifications/announcement-fanout.job.ts
+```
+
 ---
 
 ## 附录：命名空间约定

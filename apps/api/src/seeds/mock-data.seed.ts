@@ -432,54 +432,6 @@ async function seedDatabase() {
       organizationId: defaultOrg.id,
     })
 
-    // Create CRM Management parent menu item
-    const crmManagement = await menuItemRepository.save({
-      label: 'CRM Management',
-      icon: 'users',
-      order: 2,
-      visible: true,
-      disabled: false,
-      permissions: ['customers:read', 'orders:read', 'transactions:read'],
-      organizationId: defaultOrg.id,
-    })
-
-    // Create child items for CRM Management
-    const crmChildren = await menuItemRepository.save([
-      {
-        label: 'Customer Management',
-        path: '/crm/customers',
-        icon: 'users',
-        order: 1,
-        visible: true,
-        disabled: false,
-        permissions: ['customers:read'],
-        parent: crmManagement,
-        organizationId: defaultOrg.id,
-      },
-      {
-        label: 'Order Management',
-        path: '/crm/orders',
-        icon: 'shopping',
-        order: 2,
-        visible: true,
-        disabled: false,
-        permissions: ['orders:read'],
-        parent: crmManagement,
-        organizationId: defaultOrg.id,
-      },
-      {
-        label: 'Financial Transactions',
-        path: '/crm/transactions',
-        icon: 'dollar',
-        order: 3,
-        visible: true,
-        disabled: false,
-        permissions: ['transactions:read'],
-        parent: crmManagement,
-        organizationId: defaultOrg.id,
-      },
-    ])
-
     // Create parent menu items for System Management
     const systemManagement = await menuItemRepository.save({
       label: 'System Management',
@@ -678,12 +630,25 @@ async function seedDatabase() {
       },
     ])
 
-    const menuItems = [dashboardItem, crmManagement, ...crmChildren, systemManagement, ...systemChildren, aiManagement, ...aiChildren, ...standaloneItems]
+    const menuItems = [dashboardItem, systemManagement, ...systemChildren, aiManagement, ...aiChildren, ...standaloneItems]
     
     // Delete any existing menu items with order > Profile's order (order 5)
     // This ensures we remove Settings, Reports, Analytics if they exist
     // Note: AI Management is now order 4, Profile is order 5
     const existingItems = await menuItemRepository.find()
+
+    // Remove menu items generated for the retired CRM codegen pages.
+    const generatedCrmMenus = existingItems.filter(
+      (item) => item.label === 'CRM Management' || item.path?.startsWith('/crm/'),
+    )
+    for (const item of generatedCrmMenus) {
+      await menuItemRepository.update({ parent: { id: item.id } }, { parent: null } as any)
+    }
+    if (generatedCrmMenus.length > 0) {
+      await menuItemRepository.delete(generatedCrmMenus.map((item) => item.id))
+      console.log(`Deleted ${generatedCrmMenus.length} generated CRM menu items`)
+    }
+
     const itemsToDelete = existingItems.filter(item => {
       // Delete standalone items (no parent) with order > 5, but keep Profile
       if (!item.parent && item.order > 5 && item.label !== 'Profile') {

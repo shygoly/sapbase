@@ -22,4 +22,7 @@ export class AnnouncementDelivery extends TenantAwareEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   error: string | null
+
+  @Column({ type: 'timestamptz', nullable: true })
+  deletedAt: Date | null
 }

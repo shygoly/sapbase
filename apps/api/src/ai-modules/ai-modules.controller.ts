@@ -52,6 +52,42 @@ export class AIModulesController {
     return this.aiModulesService.findAll(organizationId, status)
   }
 
+  @Get('dsl')
+  @Auth()
+  async browseDsl(
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @OrganizationId() organizationId?: string,
+  ) {
+    if (!organizationId) {
+      throw new NotFoundException('Organization ID is required')
+    }
+    return this.aiModulesService.searchDsl(organizationId, {
+      search,
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+    })
+  }
+
+  @Get(':id/dsl')
+  @Auth()
+  async getDsl(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.aiModulesService.getDslBundle(id, organizationId)
+  }
+
+  @Get(':id/dsl/export')
+  @Auth()
+  async exportDsl(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.aiModulesService.getDslBundle(id, organizationId)
+  }
+
   @Get(':id')
   @Auth()
   async findOne(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<AIModule> {

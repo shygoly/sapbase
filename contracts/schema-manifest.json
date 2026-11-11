@@ -474,7 +474,14 @@
         "body",
         "read",
         "sourceEventId",
-        "metadata"
+        "metadata",
+        "category",
+        "priority",
+        "actionUrl",
+        "expiresAt",
+        "readAt",
+        "mandatory",
+        "deletedAt"
       ]
     },
     "brand_configs": {
@@ -1298,7 +1305,10 @@
         "expiresAt",
         "publishedAt",
         "withdrawnAt",
-        "createdBy"
+        "createdBy",
+        "retentionDays",
+        "attachments",
+        "deletedAt"
       ]
     },
     "announcement_audiences": {
@@ -1312,6 +1322,23 @@
         "audienceValue"
       ]
     },
+    "notification_cleanup_runs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "startedAt",
+        "finishedAt",
+        "status",
+        "notificationRetentionDays",
+        "notificationsDeleted",
+        "deliveriesDeleted",
+        "announcementsExpired",
+        "announcementsDeleted",
+        "error"
+      ]
+    },
     "announcement_deliveries": {
       "columns": [
         "id",
@@ -1323,7 +1350,8 @@
         "status",
         "deliveredAt",
         "readAt",
-        "error"
+        "error",
+        "deletedAt"
       ]
     },
     "audit_checkpoints": {

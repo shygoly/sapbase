@@ -17,6 +17,8 @@
 | jobKey | 触发时点 | 入口 | 作用 |
 |---|---|---|---|
 | `semantic.suggest_transitions` | `0 2 * * *`（每日 02:00） | `apps/api/src/semantic-runtime/suggestion-cron.ts#run` | 为每个组织写入 Blueprint 状态迁移建议日志 |
+| `notifications.publish_scheduled` | `*/5 * * * *`（每 5 分钟） | `apps/api/src/notifications/notification-retention.service.ts#runScheduledPublish` | 发布 `publishAt` 到期的定时公告 |
+| `notifications.cleanup_expired` | `15 3 * * *`（每日 03:15） | `apps/api/src/notifications/notification-retention.service.ts#runCleanup` | 软删除过期通知/公告/投递，写清理运行审计 |
 | `release.guardrail_check` | `30 * * * *`（每小时 :30） | `apps/api/src/release-automation/release-automation-jobs.service.ts#guardrailCheck` | 扫描 A2 策略并记录护栏检查 |
 | `release.review_due` | `0 9 * * *`（每日 09:00） | `apps/api/src/release-automation/release-automation-jobs.service.ts#reviewDue` | 24h 未复核的 A2 策略自动降回 A1 |
 
@@ -46,6 +48,21 @@ steps:
 ```
 
 **说明**：本 job 只写建议日志，不改变任何业务记录状态；写状态必须由人确认后走正常迁移接口。
+
+### 2. 公告定时发布与保留期清理
+
+```yaml flow
+id: FLOW-NOTIFY-01
+name: 公告定时发布与保留期清理
+trigger: notifications.publish_scheduled
+steps:
+  - actor: apps/api/src/notifications/notification-retention.service.ts#runScheduledPublish
+    produces: [announcement_deliveries, notifications, notification_cleanup_runs]
+    consumes: [announcements, announcement_audiences]
+```
+
+**说明**：定时发布只处理 `status=scheduled` 且 `publishAt <= now` 的公告；清理只写
+`deletedAt`，不物理删除。大组织扇出走 `notification.announcement_fanout` 任务。
 
 ---
 

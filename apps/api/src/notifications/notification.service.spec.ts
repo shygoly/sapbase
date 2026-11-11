@@ -10,7 +10,11 @@ describe('NotificationService center helpers', () => {
     const service = new NotificationService(dataSourceWith({ count }) as never)
     await expect(service.unreadCount('u1', 'org-1')).resolves.toBe(3)
     expect(count).toHaveBeenCalledWith({
-      where: { userId: 'u1', organizationId: 'org-1', read: false },
+      where: expect.objectContaining({
+        userId: 'u1',
+        organizationId: 'org-1',
+        read: false,
+      }),
     })
   })
 
@@ -19,7 +23,7 @@ describe('NotificationService center helpers', () => {
     const service = new NotificationService(dataSourceWith({ update }) as never)
     await expect(service.markAllRead('u1', 'org-1')).resolves.toBe(2)
     expect(update).toHaveBeenCalledWith(
-      { userId: 'u1', organizationId: 'org-1', read: false },
+      expect.objectContaining({ userId: 'u1', organizationId: 'org-1', read: false }),
       { read: true, readAt: expect.any(Date) },
     )
   })

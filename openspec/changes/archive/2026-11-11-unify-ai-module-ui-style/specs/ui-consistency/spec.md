@@ -1,6 +1,6 @@
 # UI Consistency Specification
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: AI-Generated Module UI Consistency
 All AI-generated modules SHALL use the same UI components, styling, and patterns as standard system modules.
@@ -59,8 +59,6 @@ The `SchemaList` component SHALL match the styling and patterns of standard list
 - **THEN** it SHALL use icon buttons instead of text buttons
 - **AND** SHALL use the same styling as standard modules
 - **AND** SHALL support Edit and Delete actions with consistent icons
-
-## ADDED Requirements
 
 ### Requirement: UI Style Guidelines for AI Module Generation
 The system SHALL provide UI style guidelines for AI module generation.

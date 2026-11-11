@@ -12,6 +12,18 @@ export const SCHEDULED_JOBS = [
     idempotent: true,
   },
   {
+    jobKey: 'notifications.publish_scheduled',
+    cron: '*/5 * * * *',
+    timeoutMs: 60_000,
+    idempotent: true,
+  },
+  {
+    jobKey: 'notifications.cleanup_expired',
+    cron: '15 3 * * *',
+    timeoutMs: 5 * 60_000,
+    idempotent: true,
+  },
+  {
     jobKey: 'release.review_due',
     cron: '0 9 * * *',
     timeoutMs: 60_000,

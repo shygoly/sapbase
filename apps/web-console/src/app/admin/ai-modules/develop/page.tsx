@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { aiModulesApi, type AIModule } from '@sap/app-shared/lib/api/ai-modules.api'
 import { moduleRegistryApi, type ModuleRegistry } from '@sap/app-shared/lib/api/module-registry.api'
 import { useNotification } from '@sap/app-shared/core/ui/ui-hooks'
@@ -365,6 +366,9 @@ export default function AIModuleDevelopPage() {
               onClick={() => handleModeChange('modify')}
             >
               Modify Existing
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/admin/ai-modules/dsl">DSL browser</Link>
             </Button>
           </div>
 
