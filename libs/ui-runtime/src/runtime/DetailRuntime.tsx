@@ -14,8 +14,9 @@
 
 import React from 'react';
 import { PermissionGuard } from '../core/auth/permission-guard';
+import { RuntimeAccessProvider, type RuntimeAccessModel } from './runtime-access';
 
-export interface DetailModel {
+export interface DetailModel extends RuntimeAccessModel {
   /**
    * Unique identifier for the detail view
    */
@@ -80,8 +81,10 @@ export function DetailRuntime({
   }
 
   // If no permissions required, render directly
+  const content = <RuntimeAccessProvider model={model}>{children}</RuntimeAccessProvider>;
+
   if (!model.permissions || model.permissions.length === 0) {
-    return <>{children}</>;
+    return content;
   }
 
   // Wrap with permission guard
@@ -91,7 +94,7 @@ export function DetailRuntime({
       requireAll={model.requireAll}
       fallback={model.accessDeniedFallback}
     >
-      {children}
+      {content}
     </PermissionGuard>
   );
 }

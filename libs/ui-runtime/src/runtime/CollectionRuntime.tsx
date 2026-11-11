@@ -14,8 +14,9 @@
 
 import React from 'react';
 import { PermissionGuard } from '../core/auth/permission-guard';
+import { RuntimeAccessProvider, type RuntimeAccessModel } from './runtime-access';
 
-export interface CollectionModel {
+export interface CollectionModel extends RuntimeAccessModel {
   /**
    * Unique identifier for the collection
    */
@@ -79,8 +80,10 @@ export function CollectionRuntime({
   }
 
   // If no permissions required, render directly
+  const content = <RuntimeAccessProvider model={model}>{children}</RuntimeAccessProvider>;
+
   if (!model.permissions || model.permissions.length === 0) {
-    return <>{children}</>;
+    return content;
   }
 
   // Wrap with permission guard
@@ -90,7 +93,7 @@ export function CollectionRuntime({
       requireAll={model.requireAll}
       fallback={model.accessDeniedFallback}
     >
-      {children}
+      {content}
     </PermissionGuard>
   );
 }

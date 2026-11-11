@@ -38,6 +38,8 @@ export interface FieldDefinition {
   relationObject?: string // For relation fields
   relationField?: string // For relation fields
   displayAs?: 'switch' | 'checkbox' | 'radio' // Display preference for certain field types
+  /** 单位标识（kg/m3/pcs…）；只影响展示，不静默换算。 */
+  unit?: string
   permissions?: {
     view?: string[]
     edit?: string[]
@@ -106,8 +108,31 @@ export interface ViewSchema {
   updatedAt?: string
 }
 
+
+// UI component/interaction metadata (additive; unknown values must fall back)
+export type UiComponentKey =
+  | 'default-list'
+  | 'default-form'
+  | 'default-detail'
+  | 'workbench'
+  | 'dashboard'
+  | 'timeline'
+
+export interface UiInteraction {
+  pagination?: 'client' | 'server' | 'none'
+  confirm?: 'none' | 'dirty' | 'destructive'
+  draft?: { enabled?: boolean; maxBytes?: number }
+  virtualization?: { threshold?: number }
+}
+
+export interface UiMetadata {
+  /** 白名单组件键；未知值按页面类型回退默认组件，禁止远端脚本/动态 import。 */
+  componentKey?: UiComponentKey | string
+  interaction?: UiInteraction
+}
+
 // Page metadata
-export interface PageMetadata {
+export interface PageMetadata extends UiMetadata {
   title: string
   description?: string
   icon?: string
@@ -123,7 +148,7 @@ export interface LifecycleHooks {
 }
 
 // Page Schema - defines routing and metadata
-export interface PageSchema {
+export interface PageSchema extends UiMetadata {
   path: string
   view: string // Reference to ViewSchema
   label?: string
@@ -136,7 +161,7 @@ export interface PageSchema {
 }
 
 // Resolved page schema - fully resolved with all references
-export interface ResolvedPageSchema {
+export interface ResolvedPageSchema extends UiMetadata {
   path: string
   type: 'list' | 'form' | 'detail' | 'dashboard'
   fields: FieldDefinition[]

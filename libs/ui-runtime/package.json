@@ -29,7 +29,8 @@
     "./schema/resolver": "./src/schema/resolver.ts",
     "./schema/types": "./src/schema/types.ts",
     "./schema/validator": "./src/schema/validator.ts",
-    "./blueprint/BlueprintAppRuntime": "./src/blueprint/BlueprintAppRuntime.tsx"
+    "./blueprint/BlueprintAppRuntime": "./src/blueprint/BlueprintAppRuntime.tsx",
+    "./format": "./src/format/index.ts"
   },
   "dependencies": {
     "@sap/ui-kit": "*",

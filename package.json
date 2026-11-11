@@ -33,6 +33,7 @@
     "lint:boundaries": "nx graph --file=.nx/boundary-graph.json >/dev/null && eslint \"apps/api/src/**/*.ts\" \"libs/**/*.ts\" \"apps/*/src/**/*.ts\" \"apps/*/src/**/*.tsx\" --no-error-on-unmatched-pattern",
     "check:boundaries": "node scripts/meta/check-boundaries.mjs",
     "test:meta": "node --test scripts/meta/lib/*.test.mjs",
+    "test:ui-runtime": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' node -r ts-node/register/transpile-only --test tests/ui-runtime-format.test.js",
     "test:locale-routing": "node tests/locale-routing.test.js",
     "test:locale-routing:e2e": "node tests/locale-routing.e2e.js",
     "test:auth-login:e2e": "node tests/auth-login.e2e.js",

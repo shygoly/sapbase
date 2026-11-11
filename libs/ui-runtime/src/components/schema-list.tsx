@@ -12,6 +12,7 @@ import {
 } from '@sap/ui-kit/table'
 import { Button } from '@sap/ui-kit/button'
 import type { ObjectSchema, FieldDefinition } from '../schema/types'
+import { formatFieldValue } from '../format'
 
 interface SchemaListProps {
   schema: ObjectSchema
@@ -241,13 +242,13 @@ function renderCellValue(value: any, field: FieldDefinition): React.ReactNode {
 
     case 'date':
     case 'datetime':
-      return new Date(value).toLocaleDateString()
+      return formatFieldValue(value, field.type)
 
     case 'select':
       const option = field.options?.find(o => o.value === value)
       return option?.label || value
 
     default:
-      return String(value).substring(0, 100)
+      return formatFieldValue(value, field.type, { unit: field.unit }).substring(0, 100)
   }
 }
