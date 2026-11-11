@@ -342,3 +342,238 @@ The system SHALL track all AI module operations.
 - **AND** SHALL allow viewing version differences
 - **AND** SHALL allow rolling back to previous version
 
+### Requirement: Role Mapping Declaration
+
+`permissions.json` MAY declare `roleMappings` mapping an AI role to platform permission points; the runtime SHALL
+points. A mapped role SHALL be considered present when any mapped permission point is held.
+
+`roleMappings` MUST NOT bypass platform RBAC checks; it only maps AI roles for Blueprint
+resource decisions.
+
+#### Scenario: Mapped role
+
+- **GIVEN** `roleMappings.sales = ['crm:sales']`
+- **WHEN** a user has `crm:sales`
+- **THEN** rules for `sales` SHALL apply
+
+#### Scenario: No mapping
+
+- **GIVEN** no `roleMappings` entry for `sales`
+- **WHEN** a user has role `member`
+- **THEN** the `sales` rules SHALL NOT apply
+
+### Requirement: Sign and Load Existing AI Packages
+
+The backend SHALL be able to add a license to an existing `.erpkg`, repack it, compile/stamp
+it, and sign it with Ed25519.
+
+After signing, the package MUST be loadable for the licensed tenant. If load fails, the
+module MUST NOT record `loadedAt`.
+
+#### Scenario: Sign an AI package
+
+- **GIVEN** an unsigned AI `.erpkg` with a compiled IR digest
+- **WHEN** `deliverPackage` is called with `grantedTo` containing the tenant
+- **THEN** the package SHALL contain `license.json`
+- **AND** `manifest.signature` SHALL be present
+- **AND** loading it with that tenant SHALL succeed
+
+#### Scenario: Tenant not licensed
+
+- **GIVEN** a signed package granted to `org-a`
+- **WHEN** it is loaded with `org-b`
+- **THEN** loading SHALL fail as unauthorized
+- **AND** `metadata.blueprint.loadedAt` SHALL NOT be written
+
+### Requirement: AI Blueprint Delivery Endpoint
+
+`POST /ai-modules/:id/blueprint/deliver` SHALL accept `grantedTo`, optional `expiresAt`,
+`issuer`, `resell`, and perform sign + load verification.
+
+#### Scenario: Successful delivery
+
+- **WHEN** a module has `metadata.blueprint.packageId` and the request is valid
+- **THEN** the response SHALL include the package id and IR digest
+- **AND** `metadata.blueprint` SHALL record signed/loaded timestamps and grant
+
+#### Scenario: Missing private key
+
+- **WHEN** `BLUEPRINT_LICENSE_PRIVATE_KEY` is not configured
+- **THEN** the request SHALL fail
+- **AND** the package SHALL remain unchanged
+
+### Requirement: AI Definition Produces a Compiled Blueprint Package
+
+`generateFromDefinition` MUST materialize the converted Blueprint layers into a `.erpkg`
+and compile it with `stamp: true` before reporting success.
+
+The module MUST record the resulting `packageId` and `irDigest`. A packaging or compilation
+failure MUST fail the request and MUST NOT leave a half-written package in the packages
+directory.
+
+#### Scenario: Successful generation
+
+- **WHEN** a valid six-step definition is converted
+- **THEN** a `.erpkg` SHALL be written to the configured packages directory
+- **AND** it SHALL be compiled and stamped with an IR digest
+- **AND** `module.metadata.blueprint.packageId` SHALL reference it
+
+#### Scenario: Compilation failure
+
+- **WHEN** the generated package fails compilation (e.g. unresolved atomic dependency)
+- **THEN** the request SHALL fail
+- **AND** the partially written `.erpkg` SHALL be removed
+- **AND** `module.metadata.blueprint` SHALL NOT be updated
+
+### Requirement: Real Package Export
+
+`module_registry.exportBlueprint` MUST return the AI-generated package when the module
+records `metadata.blueprint.packageId`. It MUST only fall back to the minimal skeleton
+when no real package exists.
+
+#### Scenario: AI module export
+
+- **GIVEN** a module with `metadata.blueprint.packageId` and an existing package
+- **WHEN** the module is exported
+- **THEN** the response SHALL point at the real package
+- **AND** the package SHALL retain AI fields/states/rules
+
+#### Scenario: Legacy module export
+
+- **GIVEN** a module without a real package
+- **WHEN** the module is exported
+- **THEN** the existing minimal skeleton SHALL be produced
+
+### Requirement: Server-Side Patch Application
+
+The backend SHALL apply supported Patch DSL scopes (`object`, `state`) to the persisted
+six-step definition and recompile a new Blueprint package.
+
+Unsupported scopes (`page`, `permission`, `menu`) MUST fail with a clear error.
+The backend MUST NOT silently ignore them.
+
+#### Scenario: Add a field
+
+- **GIVEN** an entity `Ticket` with field `title`
+- **WHEN** an `object/add` patch adds `priority`
+- **THEN** the persisted definition SHALL include `priority`
+- **AND** a new package version SHALL be compiled
+
+#### Scenario: Unsupported page patch
+
+- **WHEN** a `page/update` patch is applied
+- **THEN** the request SHALL fail with `unsupported-scope`
+- **AND** the current definition/package SHALL remain unchanged
+
+### Requirement: Patch Security Levels
+
+The server SHALL reject `securityLevel: L3` patches and SHALL require explicit
+`confirmed: true` for `securityLevel: L2` patches.
+
+#### Scenario: L3 rejected
+
+- **WHEN** a patch declares L3
+- **THEN** the request SHALL fail
+- **AND** no definition/package SHALL be written
+
+#### Scenario: L2 requires confirmation
+
+- **WHEN** a patch declares L2 without `confirmed: true`
+- **THEN** the request SHALL fail with a confirmation error
+
+### Requirement: Patch Produces a New Version
+
+Applying a patch MUST bump the module patch version and MUST create a new package
+whose id includes the new version. The previous package MUST NOT be overwritten.
+
+#### Scenario: Version bump
+
+- **GIVEN** module version `1.0.0`
+- **WHEN** a valid patch is applied
+- **THEN** the module version SHALL become `1.0.1`
+- **AND** the package id SHALL be `<blueprint>-1.0.1`
+
+### Requirement: Strict Definition JSON Validation
+
+Every AI definition step output SHALL be validated against its step-specific JSON Schema
+before it is returned to the client or persisted.
+
+Validation failure SHALL return a clear error containing the step id and field path.
+The backend MUST NOT persist an invalid step.
+
+#### Scenario: Valid object model
+
+- **WHEN** the AI returns `{ entities: [{ identifier, fields }] }` matching the object-model schema
+- **THEN** the step SHALL be accepted and persisted
+
+#### Scenario: Invalid field type
+
+- **WHEN** a field declares an unsupported `type`
+- **THEN** the request SHALL fail with the field path and allowed types
+- **AND** no definition row SHALL be written
+
+#### Scenario: Persisted definition is validated
+
+- **WHEN** `saveDefinition` receives a definition with a non-empty invalid step
+- **THEN** it SHALL reject the write
+- **AND** existing persisted data SHALL remain unchanged
+
+### Requirement: Deterministic Definition to Blueprint
+
+`generateFromDefinition` SHALL convert the six-step definition to Blueprint layers
+deterministically. It MUST NOT call an LLM for a second “Model DSL” translation.
+
+The resulting `patchContent` SHALL contain `objects` and the Blueprint layers
+(`semantic`, `flows`, and optional `rules` / `experience`) so existing publish metadata
+extraction continues to work.
+
+#### Scenario: Nested definition
+
+- **WHEN** the definition uses `objectModel` / `stateFlow`
+- **THEN** conversion SHALL produce semantic and flows layers
+
+#### Scenario: Flat wizard payload
+
+- **WHEN** the definition uses `entities` / `states` / `transitions`
+- **THEN** it SHALL be normalized to the same internal shape before conversion
+
+#### Scenario: Conversion failure
+
+- **WHEN** an entity has no state machine or a field has an invalid name
+- **THEN** the request SHALL fail with the conversion reason
+- **AND** no module patch content SHALL be overwritten
+
+### Requirement: No Silent Empty Patch
+
+AI response extraction MUST fail explicitly when the response contains no JSON object or
+invalid JSON. It MUST NOT substitute a default empty patch.
+
+#### Scenario: Malformed response
+
+- **WHEN** the model returns prose without a JSON object
+- **THEN** the request SHALL fail with a parsing error
+- **AND** no module record SHALL be updated
+
+### Requirement: Full Lifecycle E2E Test
+The system SHALL provide an executable end-to-end test that covers the full AI module lifecycle: create, approve, generate system, deploy, and uninstall (unpublish).
+
+#### Scenario: Test sequence create through uninstall
+- **WHEN** the full lifecycle E2E test runs
+- **THEN** the test SHALL create an AI module (e.g. via POST create) and assert success and a valid module id
+- **AND** SHALL submit the module for review and then approve it (submit-review, then review with decision approved) and assert status transition
+- **AND** SHALL call the generate-system endpoint for the module and assert 200 and a non-empty jobId or status
+- **AND** SHALL call the deploy endpoint (e.g. with moduleId or jobId) and assert 200 and a non-empty deployId or status
+- **AND** SHALL unpublish the module and assert status is unpublished
+- **AND** SHALL use an identity that has permission to perform all actions (e.g. admin or user with `system:generate` and review rights)
+
+#### Scenario: Lifecycle test is runnable in test environment
+- **WHEN** the test environment is set up (e.g. database seeded with admin and `system:generate` permission)
+- **THEN** the full lifecycle test SHALL be runnable via a single command or script (e.g. npm script or test runner)
+- **AND** SHALL not require real code generation or real deployment; it MAY use stub endpoints and assert on status/jobId responses
+- **AND** SHALL be documented so that CI or a developer can run it after seed
+
+#### Scenario: Uninstall step means at least unpublish
+- **WHEN** the lifecycle test performs the "uninstall" (卸载) step
+- **THEN** the test SHALL at least call unpublish on the module and assert the module status is unpublished
+- **AND** MAY additionally trigger teardown of a deployed artifact when the system supports such an operation
+

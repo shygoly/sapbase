@@ -51,7 +51,6 @@
 **When** 审计被写入
 **Then** 记录 SHALL 包含插件 id、被拒的声明项与失败状态
 
-## MODIFIED Requirements
 
 ### Requirement: Plugin Static Safety Signal
 

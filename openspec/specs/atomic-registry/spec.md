@@ -6,7 +6,8 @@ TBD - created by archiving change add-wasm-atomic-runtime. Update Purpose after 
 ### Requirement: Atomic Contract Definition
 
 系统 SHALL 允许定义与版本化**原子契约**（Atomic Contract），描述一个最小业务能力的接口与约束，
-且契约与其实现解耦。
+且契约与其实现解耦。契约 MAY 声明该原子的**执行预算**（`cpuBudget`，fuel 指令单位）；
+未声明时由平台取默认预算。
 
 #### Scenario: 定义计算型原子契约
 
@@ -22,6 +23,13 @@ TBD - created by archiving change add-wasm-atomic-runtime. Update Purpose after 
 **And** 同一 `atomicType` 下不同 `version` SHALL 可共存
 **And** 系统 SHALL 拒绝 `kind` 为 `command` / `effect` 的契约（v1 不支持写入型原子）
 
+#### Scenario: 声明执行预算
+
+**Given** 一个原子契约
+**When** 其声明可选字段 `cpuBudget`（正整数，fuel 单位）
+**Then** 该预算 SHALL 被持久化并在执行时作为指令上限传递
+**And** 未声明 `cpuBudget` 的既有契约 SHALL 不受影响（仍可登记与执行，取平台默认预算）
+
 #### Scenario: 契约版本解析
 
 **Given** `available-inventory` 存在 `1.0.0` 与 `1.1.0` 两个版本
@@ -31,21 +39,23 @@ TBD - created by archiving change add-wasm-atomic-runtime. Update Purpose after 
 
 ### Requirement: Implementation Binding with Admission Evidence
 
-每个原子契约 SHALL 可绑定一个或多个实现，Wasm 实现 MUST 携带模块哈希、ABI 版本与准入证据。
+绑定实现 SHALL 记录能指认"客户同意运行的那一份代码"的证据（`moduleSha256` / `abiVersion` / `tier` /
+复现构建引用 / 审查背书）。绑定到 `shadow` / `canary` / `active` 时，
+MUST 同时满足闸 4 的证据门；吊销动作不受此限制。
 
-#### Scenario: 绑定 Wasm 实现
+#### Scenario: 绑定可运行状态需要证据
 
-**Given** 原子契约 `available-inventory@1.0.0` 处于 `active`
-**And** 一个经准入的 Wasm 模块，其清单声明 `sha256`、`abiVersion = 1`、`tier = A`
-**When** 将该模块绑定为该契约的实现
-**Then** 系统 SHALL 记录 `moduleSha256` / `abiVersion` / `tier` / 闸报告 / 审查背书
-**And** 该实现的 `status` SHALL 取自准入状态机（不得为 `active` 之外的越权赋值）
+**Given** 一个尚未经过影子期的实现
+**When** 请求绑定为 `active`
+**Then** 绑定 SHALL 失败并指明缺少的阶段
+**And** MUST NOT 写入任何"部分绑定"的记录
 
-#### Scenario: 拒绝无准入证据的实现
+#### Scenario: 吊销始终可达
 
-**Given** 一个声称来自第三方（`tier = B`）的原子实现
-**When** 其缺少复现构建引用或审查背书
-**Then** 系统 SHALL 拒绝绑定，并返回缺失字段说明
+**Given** 一个缺少晋升证据的实现
+**When** 请求将其吊销
+**Then** 吊销 SHALL 成功
+**And** 该实现 MUST NOT 再被执行
 
 ### Requirement: Module Manifest Import
 
@@ -78,4 +88,24 @@ TBD - created by archiving change add-wasm-atomic-runtime. Update Purpose after 
 **Then** 系统 SHALL 记录模块与原子的关联
 **And** 发布时 SHALL 校验每个依赖原子存在且其实现状态可执行
 **And** 依赖不满足时 SHALL 拒绝发布并指明缺失的原子
+
+### Requirement: Output Audit Declaration
+
+原子契约 SHALL 能声明输出管控所需的判据前提：执行档位（`outputAudit`）、
+输出行的可交换性（`commutative`）、逐列值域（`range`）。
+这些声明 MUST 为**可选**，且未声明时 MUST NOT 被解释为"已通过该项判据"。
+
+#### Scenario: 未声明即不判
+
+**Given** 一个契约未声明 `commutative`
+**When** 执行输出管控
+**Then** 置换不变性 MUST NOT 被判定
+**And** 审计 SHALL 记录该项为"未判"
+
+#### Scenario: 非法声明被拒
+
+**Given** 一个契约声明了未知的 `outputAudit` 档位，或某列 `range` 的下界大于上界
+**When** 登记或导入该契约
+**Then** 校验 SHALL 失败
+**And** SHALL 指明具体字段与原因
 

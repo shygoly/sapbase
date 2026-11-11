@@ -117,3 +117,109 @@ MUST NOT 在读取时改写存储（读不改写），MUST NOT 让非空约束�
 **Then** 编译 SHALL 通过，且该字段的依赖（行实体与其金额字段）SHALL 被记录
 **And** 依赖不存在或成环时 SHALL 编译失败
 
+### Requirement: Page and Permission Declarations
+
+The semantic authoring layer MAY declare pages and permissions; `definitionToBlueprint` SHALL
+MUST map non-empty pages to `ui.json` and non-empty permission rules to
+`permissions.json`.
+
+Empty or absent declarations MUST NOT create empty layers.
+
+#### Scenario: Pages map to UI layer
+
+- **WHEN** the definition contains pages for `Ticket`
+- **THEN** `ui.json` SHALL contain those pages
+- **AND** `irDigest` SHALL change when a page changes
+
+#### Scenario: Empty pages
+
+- **WHEN** the definition contains `pages: []`
+- **THEN** no `ui.json` SHALL be written
+
+### Requirement: Patch Support for UI and Permissions
+
+Server-side patches SHALL support `page`, `permission`, and `menu` scopes with
+add/update/remove operations. Unsupported payloads MUST fail explicitly.
+
+#### Scenario: Add page
+
+- **WHEN** a `page/add` patch provides `payload.page`
+- **THEN** the definition SHALL contain the page
+- **AND** the next compile SHALL include it in `ui.json`
+
+#### Scenario: Add permission rule
+
+- **WHEN** a `permission/add` patch provides `payload.permission`
+- **THEN** the rule SHALL be persisted and published
+
+#### Scenario: Add menu without pages
+
+- **WHEN** a `menu/add` patch is applied to a definition with no pages
+- **THEN** it SHALL fail because `ui.json` requires a non-empty page list
+
+### Requirement: Explicit Query Index Declaration
+
+The semantic layer MAY declare `indexed: boolean` on a field; the compiler SHALL treat `indexed` only as a
+query index candidate; it MUST NOT change validation, uniqueness or storage semantics.
+
+#### Scenario: indexed is optional
+
+- **GIVEN** a field without `indexed`
+- **WHEN** the package is compiled
+- **THEN** compilation SHALL succeed
+- **AND** no query index SHALL be planned for that field
+
+#### Scenario: indexed remains orthogonal to unique
+
+- **GIVEN** a field with `unique: true` and `indexed: true`
+- **WHEN** indexes are applied
+- **THEN** the unique index SHALL still be created
+- **AND** the query index plan SHALL remain independent
+
+### Requirement: Declarative Data Scope Metadata
+
+蓝图语义层 SHALL 允许实体声明可选 `dataScope`，包含 `ownerField` 与 `bindings`。
+每个 binding MUST 声明 `dimension` 与 `kind`（`field` / `owner` / `relation`），
+并携带对应字段或关联实体信息。平台 MUST NOT 在语义层硬编码行业维度名。
+
+#### Scenario: 字段绑定
+
+- **WHEN** `Student` 声明 `dataScope.bindings = [{ dimension: "class", kind: "field", field: "classId" }]`
+- **AND** `classId` 是已声明的 text 字段
+- **THEN** 编译 SHALL 通过
+- **AND** 运行时 SHALL 能用 `classId` 解析班级范围
+
+#### Scenario: 关系绑定
+
+- **WHEN** `Course` 声明 `kind: "relation"`，关联实体为 `TeachingAssignment`，
+  `fromField: "courseId"`、`actorField: "teacherId"`
+- **THEN** 编译 SHALL 通过
+- **AND** 关联实体与字段 MUST 存在于同一蓝图
+
+#### Scenario: 绑定字段不存在
+
+- **WHEN** `dataScope` 引用 `semantic.json` 中不存在的字段
+- **THEN** 编译 SHALL 失败并指明实体与字段
+
+#### Scenario: ownerField 类型不合法
+
+- **WHEN** `ownerField` 指向非 text 字段或指向不存在的字段
+- **THEN** 编译 SHALL 失败并指明原因
+
+#### Scenario: 未知 binding kind
+
+- **WHEN** binding 声明了 `kind: "expression"` 等未支持的值
+- **THEN** 编译 SHALL 失败
+- **AND** MUST NOT 忽略未知 kind 继续编译
+
+### Requirement: Data Scope Metadata Is Optional
+
+`dataScope` MUST 是可选层。未声明该层的实体 MUST 保持既有语义与运行时行为，
+MUST NOT 被默认收窄或默认放开。
+
+#### Scenario: 未声明 dataScope
+
+- **WHEN** 实体没有 `dataScope` 声明
+- **THEN** 编译 SHALL 通过
+- **AND** 运行时行为 SHALL 与升级前一致
+
