@@ -13,4 +13,5 @@ export class WorkItem extends TenantAwareEntity {
   @Column({ type: 'varchar', length: 16, default: 'normal' }) priority: 'low' | 'normal' | 'high' | 'urgent'
   @Column({ type: 'timestamptz', nullable: true }) dueAt: Date | null
   @Column({ type: 'jsonb', nullable: true }) metadata: Record<string, unknown> | null
+  @Column({ type: 'timestamptz', nullable: true }) readAt: Date | null
 }

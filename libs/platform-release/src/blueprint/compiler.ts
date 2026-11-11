@@ -156,7 +156,7 @@ export interface ApprovalRule {
   id: string
   entity: string
   when: string
-  steps: Array<{ role: string }>
+  steps: Array<{ role: string; slaHours?: number }>
 }
 
 interface AccountingEntry {
@@ -1264,6 +1264,14 @@ function detectRuleConflicts(
   }
 
   for (const rule of rules.approval) {
+    for (const [index, step] of rule.steps.entries()) {
+      if (
+        step.slaHours !== undefined &&
+        (!Number.isInteger(step.slaHours) || step.slaHours < 1 || step.slaHours > 720)
+      ) {
+        conflicts.push(`审批规则 ${rule.id} 第 ${index + 1} 步 slaHours 必须是 1–720 的整数`)
+      }
+    }
     const fields = fieldNamesOf(entities, rule.entity)
     if (!fields) {
       conflicts.push(`悬空引用：审批规则 ${rule.id} 引用了不存在的实体 ${rule.entity}`)

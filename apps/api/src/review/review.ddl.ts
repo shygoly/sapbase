@@ -9,6 +9,8 @@ export const REVIEW_APPROVAL_DDL: string[] = [
   `ALTER TABLE public.blueprint_approvals ADD COLUMN IF NOT EXISTS comment text`,
   `ALTER TABLE public.blueprint_approvals ADD COLUMN IF NOT EXISTS "decidedBy" uuid`,
   `ALTER TABLE public.blueprint_approvals ADD COLUMN IF NOT EXISTS "dueAt" timestamp with time zone`,
+  `ALTER TABLE public.blueprint_approvals ADD COLUMN IF NOT EXISTS "reminderSentAt" timestamp with time zone`,
+  `ALTER TABLE public.blueprint_approvals ADD COLUMN IF NOT EXISTS "escalatedAt" timestamp with time zone`,
   `UPDATE public.blueprint_approvals SET round = 1 WHERE round IS NULL`,
   `UPDATE public.blueprint_approvals SET kind = 'human' WHERE kind IS NULL`,
   `ALTER TABLE public.blueprint_approvals DROP CONSTRAINT IF EXISTS "UQ_2d647c4c3aba8401909305918b1"`,
@@ -82,10 +84,12 @@ export const REVIEW_APPROVAL_DDL: string[] = [
     priority character varying(16) DEFAULT 'normal'::character varying NOT NULL,
     "dueAt" timestamp with time zone,
     metadata jsonb,
+    "readAt" timestamp with time zone,
     CONSTRAINT "PK_work_items" PRIMARY KEY (id),
     CONSTRAINT "UQ_work_item_org_source" UNIQUE ("organizationId", "sourceType", "sourceId"),
     CONSTRAINT "FK_work_item_org" FOREIGN KEY ("organizationId") REFERENCES public.organizations(id)
   )`,
+  `ALTER TABLE public.work_items ADD COLUMN IF NOT EXISTS "readAt" timestamp with time zone`,
   `CREATE INDEX IF NOT EXISTS idx_work_item_org_status_priority
      ON public.work_items USING btree ("organizationId", status, priority, "dueAt")`,
 ]

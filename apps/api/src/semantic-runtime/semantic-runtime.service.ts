@@ -1382,7 +1382,9 @@ export class SemanticRuntimeService {
             checkResult: null,
             comment: null,
             decidedBy: null,
-            dueAt: null,
+            dueAt: step.slaHours ? new Date(Date.now() + step.slaHours * 3_600_000) : null,
+            reminderSentAt: null,
+            escalatedAt: null,
             status: 'pending',
           }),
         )

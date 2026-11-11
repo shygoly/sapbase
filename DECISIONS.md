@@ -300,6 +300,28 @@ code_markers:
   - libs/agent-tools/src/mcp/agent-tool-mcp.bridge.ts
 ```
 
+### D-15：复核扩展现有审批链，work item 只做投影
+
+```yaml decision
+id: D-15
+title: 复核扩展现有审批链，work item 只做投影
+status: accepted
+date: 2026-11
+context: |
+  现有 blueprint_approvals 只有角色步骤和 approve，缺少驳回/重提/机器检测/SLA/委托；
+  另建 workflow 引擎会形成第二套策略与状态真源。
+decision: |
+  在 blueprint_approvals 上扩展 round/kind/selector/assignee/checkResult/dueAt/SLA；
+  人工动作、机器检测、委托都写同一审批链与 review_events；work_items 只是待办投影，
+  inbox 双读兼容旧 approvals；机器检测异常/超时 fail-closed，warn 必须人工确认。
+references:
+  - INV-RV-01
+  - INV-RV-02
+code_markers:
+  - apps/api/src/review/review-decision.service.ts
+  - apps/api/src/review/work-items.service.ts
+```
+
 ---
 
 ## 附录：命名空间约定

@@ -624,6 +624,16 @@ P2 再扩展：非空约束，以及「冲突时返回可定位的错误」的�
 审计：`audit_logs.action = blueprint.record.approval`（ruleId / role / stepIndex / 结果 / actor）。
 `steps[].role` 必须是平台已知角色（编译期已判）。
 
+**复核/审批扩展**（`add-review-and-approval-platform`）：
+
+- 步骤支持 `kind=human|check`、`selector`（role/user/position/creator）、`assignee`、`dueAt`。
+- 机器检测 `checkProvider` 走 `review.check` 任务；`pass/fail/warn`，异常/超时 fail-closed 为 `fail`，
+  `warn` 必须人工确认，不能当 `pass`。
+- 动作：`approve / reject / request-changes`；`resubmit` 创建新 `round`，旧 round 只读。
+- 只有当前 pending 步骤的合法审批人可操作；委托写 `review_delegations` 并记录 from/to 审计。
+- SLA 到期提醒/升级幂等；无审批人必须告警，不得静默通过。
+- 待办中心 `work_items` 只是 `blueprint_approvals` 的投影；旧 `inbox` 行为保持兼容。
+
 ### 10.4 记账分录（运行时也判平衡）
 
 表 `blueprint_journal_entries`：金额用 **`amountUnits` bigint + `scale` integer**（与 `money.ts` 同构），不用 numeric/float。唯一约束 `(recordId, ruleId, account, side)` 防重复过账。

@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/review-approval.schema.json",
+  "title": "Review & Approval",
+  "description": "复核/审批步骤、审批人选择器、机器检测结果与通用工作项。",
+  "$defs": {
+    "assigneeSelector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "role"],
+          "properties": { "kind": { "const": "role" }, "role": { "type": "string" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "userId"],
+          "properties": {
+            "kind": { "const": "user" },
+            "userId": { "type": "string", "format": "uuid" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "positionKey"],
+          "properties": {
+            "kind": { "const": "position" },
+            "positionKey": { "type": "string" },
+            "dimension": { "type": "string" },
+            "anchor": { "const": "record" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "creator" } }
+        }
+      ]
+    },
+    "reviewCheckResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["pass", "fail", "warn"] },
+        "evidence": { "type": "object" },
+        "provider": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "reviewStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["round", "stepIndex", "kind", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "ruleId": { "type": "string" },
+        "round": { "type": "integer", "minimum": 1 },
+        "stepIndex": { "type": "integer", "minimum": 0 },
+        "kind": { "enum": ["human", "check"] },
+        "role": { "type": "string" },
+        "selector": { "$ref": "#/$defs/assigneeSelector" },
+        "assignee": { "type": ["object", "null"] },
+        "checkProvider": { "type": ["string", "null"] },
+        "checkResult": { "$ref": "#/$defs/reviewCheckResult" },
+        "status": { "enum": ["pending", "approved", "rejected"] },
+        "comment": { "type": ["string", "null"] },
+        "decidedBy": { "type": ["string", "null"] },
+        "dueAt": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "workItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "sourceType", "sourceId", "title", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "sourceType": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "sourceId": { "type": "string", "format": "uuid" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "status": { "enum": ["open", "done", "dismissed"] },
+        "assigneeId": { "type": ["string", "null"], "format": "uuid" },
+        "priority": { "enum": ["low", "normal", "high", "urgent"] },
+        "dueAt": { "type": ["string", "null"], "format": "date-time" },
+        "readAt": { "type": ["string", "null"], "format": "date-time" },
+        "metadata": { "type": ["object", "null"] }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/reviewStep" },
+    { "$ref": "#/$defs/workItem" }
+  ]
+}

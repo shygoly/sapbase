@@ -41,6 +41,7 @@ export class WorkItemsService {
       existing.metadata = input.metadata ?? existing.metadata
       if (existing.status === 'done' || existing.status === 'dismissed') {
         existing.status = 'open'
+        existing.readAt = null
       }
       return this.repository.save(existing)
     }
@@ -73,15 +74,68 @@ export class WorkItemsService {
 
   async list(
     organizationId: string,
-    options: { status?: WorkItem['status']; assigneeId?: string } = {},
+    options: {
+      status?: WorkItem['status']
+      assigneeId?: string
+      sourceType?: string
+      unreadOnly?: boolean
+      limit?: number
+    } = {},
   ): Promise<WorkItem[]> {
-    return this.repository.find({
-      where: {
+    const qb = this.repository
+      .createQueryBuilder('item')
+      .where('item.organizationId = :organizationId', { organizationId })
+      .orderBy('item.priority', 'DESC')
+      .addOrderBy('item.dueAt', 'ASC')
+      .addOrderBy('item.createdAt', 'ASC')
+    if (options.status) qb.andWhere('item.status = :status', { status: options.status })
+    if (options.assigneeId) {
+      qb.andWhere('item.assigneeId = :assigneeId', { assigneeId: options.assigneeId })
+    }
+    if (options.sourceType) {
+      qb.andWhere('item.sourceType = :sourceType', { sourceType: options.sourceType })
+    }
+    if (options.unreadOnly) qb.andWhere('item.readAt IS NULL')
+    qb.take(Math.min(200, Math.max(1, options.limit ?? 50)))
+    return qb.getMany()
+  }
+
+  async markRead(
+    organizationId: string,
+    id: string,
+    assigneeId?: string,
+  ): Promise<boolean> {
+    const result = await this.repository.update(
+      {
+        id,
         organizationId,
-        ...(options.status ? { status: options.status } : {}),
-        ...(options.assigneeId ? { assigneeId: options.assigneeId } : {}),
+        ...(assigneeId ? { assigneeId } : {}),
       },
-      order: { priority: 'DESC', dueAt: 'ASC', createdAt: 'ASC' },
-    })
+      { readAt: new Date() },
+    )
+    return (result.affected ?? 0) > 0
+  }
+
+  async markAllRead(organizationId: string, assigneeId?: string): Promise<number> {
+    const qb = this.repository
+      .createQueryBuilder()
+      .update(WorkItem)
+      .set({ readAt: new Date() })
+      .where('"organizationId" = :organizationId', { organizationId })
+      .andWhere('"readAt" IS NULL')
+      .andWhere('"status" = :status', { status: 'open' })
+    if (assigneeId) qb.andWhere('"assigneeId" = :assigneeId', { assigneeId })
+    const result = await qb.execute()
+    return result.affected ?? 0
+  }
+
+  async unreadCount(organizationId: string, assigneeId?: string): Promise<number> {
+    const qb = this.repository
+      .createQueryBuilder('item')
+      .where('item.organizationId = :organizationId', { organizationId })
+      .andWhere('item.status = :status', { status: 'open' })
+      .andWhere('item.readAt IS NULL')
+    if (assigneeId) qb.andWhere('item.assigneeId = :assigneeId', { assigneeId })
+    return qb.getCount()
   }
 }

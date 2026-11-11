@@ -12,6 +12,8 @@ export interface AssigneeActor {
 
 export interface RecordAnchorContext {
   creatorId?: string | null
+  /** 资源键（实体/蓝图资源），用于查找 scope_bindings 字段绑定。 */
+  resourceKey?: string
   data?: Record<string, unknown>
 }
 

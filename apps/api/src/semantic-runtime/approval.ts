@@ -8,6 +8,7 @@ export type ApprovalStepStatus = 'pending' | 'approved' | 'rejected'
 
 export interface ApprovalStepDecl {
   role: string
+  slaHours?: number
 }
 
 export interface ApprovalRuleDecl {
@@ -20,6 +21,7 @@ export interface ApprovalRuleDecl {
 export interface ApprovalStepState {
   index: number
   role: string
+  slaHours?: number
   status: ApprovalStepStatus
   actor?: string
   decidedAt?: string | null
@@ -44,6 +46,7 @@ export function buildPendingSteps(rule: ApprovalRuleDecl): ApprovalStepState[] {
   return rule.steps.map((step, index) => ({
     index,
     role: step.role,
+    slaHours: step.slaHours,
     status: 'pending' as const,
   }))
 }

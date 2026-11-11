@@ -350,6 +350,29 @@ audience 只从服务端成员/角色/数据范围解析，跨租户节点拒绝
 实现落点：`apps/api/src/search/`；契约：`schemas/search.schema.json`；
 领域表：`DOMAIN.md`「搜索」；决策：`DECISIONS.md` D-13。
 
+### 3.16 Review & Approval（复核/审批）
+
+复核是**步骤链**，不是第二套工作流引擎：
+
+- **ReviewStep**：`blueprint_approvals` 扩展 `round/kind/selector/assignee/checkProvider/checkResult/dueAt`。
+- **AssigneeSelector**：`role` / `user` / `position`（可 anchor=record）/ `creator`；解析为空则阻塞。
+- **CheckProvider**：机器检测走 `review.check` 任务；pass/fail/warn，异常/超时 fail-closed 为 fail。
+- **WorkItem**：`work_items` 是待办投影，源表仍是 `blueprint_approvals` 等业务表。
+- **Delegation**：`review_delegations` 记录代决定，审计保留原审批人与代理人。
+
+执行语义：
+
+```text
+只有当前 pending 步骤的合法审批人可操作；越权 403
+resubmit 创建新 round，旧 round 只读
+机器检测 fail 阻断；warn 必须人工确认，不能当 pass
+驳回后不得直接发布/迁移；整体 approved 才放行
+SLA 到期提醒/升级幂等；无审批人必须告警，不静默通过
+```
+
+实现落点：`apps/api/src/review/`；契约：`schemas/review-approval.schema.json`；
+领域表：`DOMAIN.md`「复核与审批」；决策：`DECISIONS.md` D-15。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -395,6 +418,11 @@ audience 只从服务端成员/角色/数据范围解析，跨租户节点拒绝
 36. **索引只存可展示字段**：敏感字段不进入 `search_documents`（INV-SE-03）。
 37. **索引失败不阻塞业务**：写入失败可重试/重建，业务事务不回滚（INV-SE-04）。
 38. **无命中不等于无权限**：全文无命中时走 trigram 兜底，权限拒绝单独表达（INV-SE-05）。
+39. **审批步骤只有合法审批人可操作**：role/selector/assignee 任一配置都必须满足（INV-RV-01）。
+40. **机器检测 fail-closed**：异常/超时/未知 provider 记 fail；warn 不得当 pass（INV-RV-02）。
+41. **轮次只追加**：resubmit 新建 round，旧 round 只读（INV-RV-03）。
+42. **待办是投影**：work_items 不成为第二真源，源表变更/关闭后同步（INV-RV-04）。
+43. **代决定留痕**：委托必须记录 from/to 与审计，不得静默替代（INV-RV-05）。
 
 ---
 

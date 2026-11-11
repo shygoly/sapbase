@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
@@ -10,6 +11,7 @@ import { BlueprintApproval } from '../semantic-runtime/blueprint-approval.entity
 import { ReviewComment } from './review-comment.entity'
 import { ReviewEvent } from './review-event.entity'
 import { WorkItemsService } from './work-items.service'
+import { ReviewDelegationService } from './review-delegation.service'
 import { normalizeSelector, selectorMatchesActor, type AssigneeActor } from './assignee-selector'
 
 export type ReviewDecisionAction = 'approve' | 'reject' | 'request-changes'
@@ -34,6 +36,7 @@ export class ReviewDecisionService {
     @InjectRepository(ReviewComment)
     private readonly comments: Repository<ReviewComment>,
     private readonly workItems: WorkItemsService,
+    @Optional() private readonly delegations?: ReviewDelegationService,
   ) {}
 
   async act(
@@ -50,8 +53,30 @@ export class ReviewDecisionService {
     if (approval.status !== 'pending') {
       throw new ConflictException(`审批步骤状态 ${approval.status} 不可操作`)
     }
+    // 机器检测步骤不能被人工绕过：只有 warn 可由人工明确确认，且必须写理由。
+    if (approval.kind === 'check') {
+      const checkStatus = (approval.checkResult as { status?: string } | null)?.status
+      if (checkStatus !== 'warn') {
+        throw new ConflictException('机器检测尚未完成，不能人工操作该步骤')
+      }
+      if (action !== 'approve') {
+        throw new ConflictException('warn 只能人工确认通过或由作者修改后重提')
+      }
+      if (!comment || !comment.trim()) {
+        throw new ConflictException('warn 必须填写明确确认理由')
+      }
+    }
+    let delegatedFrom: string | null = null
     if (!this.isAllowed(approval, actor)) {
-      throw new ForbiddenException('不是当前步骤的合法审批人')
+      const delegation = await this.delegations?.findActive(
+        organizationId,
+        approvalId,
+        actor.userId,
+      )
+      if (!delegation) {
+        throw new ForbiddenException('不是当前步骤的合法审批人')
+      }
+      delegatedFrom = delegation.fromUserId
     }
     approval.status = action === 'approve' ? 'approved' : 'rejected'
     approval.actor = actor.userId
@@ -81,7 +106,11 @@ export class ReviewDecisionService {
         recordId: approval.recordId,
         type: action === 'approve' ? 'approve' : action === 'reject' ? 'reject' : 'request_changes',
         actorId: actor.userId,
-        payload: { comment: comment ?? null, round: approval.round },
+        payload: {
+          comment: comment ?? null,
+          round: approval.round,
+          delegatedFrom,
+        },
       }),
     )
     await this.workItems.close(organizationId, 'approval', approval.id)
@@ -165,7 +194,8 @@ export class ReviewDecisionService {
   }
 
   isAllowed(approval: BlueprintApproval, actor: ReviewDecisionActor): boolean {
-    if (approval.role && !actor.roleKeys?.includes(approval.role)) return false
+    // check 步骤不按角色授权；只有 warn 人工确认路径，权限由 review:act 控制。
+    if (approval.kind !== 'check' && approval.role && !actor.roleKeys?.includes(approval.role)) return false
     if (approval.assignee && typeof approval.assignee === 'object') {
       const assignee = approval.assignee as { userId?: unknown }
       if (typeof assignee.userId === 'string' && assignee.userId !== actor.userId) return false

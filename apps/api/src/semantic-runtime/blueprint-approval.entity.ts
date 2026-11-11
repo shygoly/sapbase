@@ -20,7 +20,7 @@ export class BlueprintApproval extends TenantAwareEntity {
   @Column()
   ruleId: string
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', default: 1 })
   round: number
 
   @Column({ type: 'int' })
@@ -61,4 +61,10 @@ export class BlueprintApproval extends TenantAwareEntity {
 
   @Column({ type: 'timestamp', nullable: true })
   decidedAt?: Date
+
+  @Column({ type: 'timestamptz', nullable: true })
+  reminderSentAt: Date | null
+
+  @Column({ type: 'timestamptz', nullable: true })
+  escalatedAt: Date | null
 }

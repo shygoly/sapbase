@@ -12,6 +12,12 @@ export const SCHEDULED_JOBS = [
     idempotent: true,
   },
   {
+    jobKey: 'review.sla_scan',
+    cron: '*/10 * * * *',
+    timeoutMs: 60_000,
+    idempotent: true,
+  },
+  {
     jobKey: 'notifications.publish_scheduled',
     cron: '*/5 * * * *',
     timeoutMs: 60_000,

@@ -76,3 +76,15 @@ export { apiClient, httpClient } from './client'
 export * from './types'
 
 export { searchApi, type SearchHit, type SearchResult, type SearchParams } from './search.api'
+
+export {
+  reviewApi,
+  type WorkItem,
+  type WorkItemStatus,
+  type WorkItemPriority,
+  type ReviewStep,
+  type ReviewComment,
+  type ReviewEvent,
+  type ReviewDelegation,
+  type ReviewOverview,
+} from './review.api'

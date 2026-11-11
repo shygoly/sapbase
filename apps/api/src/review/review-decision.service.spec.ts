@@ -138,3 +138,54 @@ describe('ReviewDecisionService', () => {
   })
 
 })
+
+describe('ReviewDecisionService machine check guard', () => {
+  function checkSetup(checkResult: unknown) {
+    const approval = {
+      id: 'a1',
+      organizationId: 'org-1',
+      recordId: 'r1',
+      role: 'teacher',
+      kind: 'check',
+      status: 'pending',
+      round: 1,
+      selector: null,
+      assignee: null,
+      checkResult,
+    }
+    const approvals = {
+      findOne: jest.fn(async () => approval),
+      save: jest.fn(async (row) => row),
+    }
+    const service = new ReviewDecisionService(
+      approvals as never,
+      { create: jest.fn((row) => row), save: jest.fn(async (row) => row) } as never,
+      { create: jest.fn((row) => row), save: jest.fn(async (row) => row) } as never,
+      { close: jest.fn() } as never,
+    )
+    return { service }
+  }
+
+  it('未完成机器检测不能人工通过', async () => {
+    const { service } = checkSetup(null)
+    await expect(
+      service.act('org-1', 'a1', { userId: 'u1', roleKeys: ['teacher'] }, 'approve', 'ok'),
+    ).rejects.toBeInstanceOf(ConflictException)
+  })
+
+  it('warn 必须有明确确认理由', async () => {
+    const { service } = checkSetup({ status: 'warn', evidence: {} })
+    await expect(
+      service.act('org-1', 'a1', { userId: 'u1', roleKeys: ['teacher'] }, 'approve'),
+    ).rejects.toThrow(/确认理由/)
+    await expect(
+      service.act(
+        'org-1',
+        'a1',
+        { userId: 'u1', roleKeys: ['teacher'] },
+        'approve',
+        '已人工核对 warn 项',
+      ),
+    ).resolves.toMatchObject({ status: 'approved' })
+  })
+})

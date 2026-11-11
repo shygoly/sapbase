@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { DataSource } from 'typeorm'
 import { BlueprintApproval } from '../semantic-runtime/blueprint-approval.entity'
+import { WorkItem } from '../review/work-item.entity'
 
 export type InboxItem = {
   approvalId: string
@@ -25,6 +26,27 @@ type InboxCaller = {
 @Injectable()
 export class InboxService {
   constructor(private readonly dataSource: DataSource) {}
+
+  /**
+   * 双读兼容：新待办中心读 work_items；旧 /inbox 继续读 blueprint_approvals。
+   * 两个来源都只读，真源仍是各自业务表。
+   */
+  async listWorkItemsForCaller(
+    user?: InboxCaller & { userId?: string },
+  ): Promise<WorkItem[]> {
+    const organizationId = user?.organizationId
+    if (!organizationId) return []
+    const qb = this.dataSource
+      .getRepository(WorkItem)
+      .createQueryBuilder('item')
+      .where('item.organizationId = :organizationId', { organizationId })
+      .andWhere('item.status = :status', { status: 'open' })
+      .orderBy('item.priority', 'DESC')
+      .addOrderBy('item.dueAt', 'ASC')
+      .take(100)
+    if (user?.userId) qb.andWhere('item.assigneeId = :userId', { userId: user.userId })
+    return qb.getMany()
+  }
 
   async listForCaller(user?: InboxCaller): Promise<InboxItem[]> {
     const role = typeof user?.role === 'string' ? user.role.trim() : ''
