@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
-import axios from 'axios'
 import { AIModelsService } from '../../../ai-models/ai-models.service'
 import { extractAiJsonObject } from '../../../ai-modules/ai-response'
 import type { IAIModelService, AIModel } from '../../domain/services'
@@ -22,7 +21,7 @@ export class AIModelService implements IAIModelService {
   }
 
   async generatePatch(prompt: string, context?: string): Promise<Record<string, any>> {
-    const defaultModel = await this.findDefault()
+    const defaultModel = await this.aiModelsService.findDefault()
     if (!defaultModel) {
       throw new BadRequestException('No active AI model configured')
     }
@@ -33,34 +32,15 @@ export class AIModelService implements IAIModelService {
     }
 
     try {
-      const baseUrl = defaultModel.baseUrl || 'https://api.kimi.com/coding/'
-      const apiUrl = `${baseUrl.replace(/\/$/, '')}/v1/messages`
+      const responseData = await this.aiModelsService.generate(defaultModel, {
+        system:
+          'You are a Patch DSL generator. Generate valid Patch DSL JSON from natural language descriptions.',
+        user: userContent,
+        maxTokens: 2000,
+        temperature: 0.2,
+      })
 
-      const response = await axios.post(
-        apiUrl,
-        {
-          model: defaultModel.model || 'kimi-for-coding',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a Patch DSL generator. Generate valid Patch DSL JSON from natural language descriptions.',
-            },
-            {
-              role: 'user',
-              content: userContent,
-            },
-          ],
-          max_tokens: 2000,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${defaultModel.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      )
-
-      const raw = this.extractPatchFromResponse(response.data)
+      const raw = this.extractPatchFromResponse(responseData)
       return this.normalizePatchContent(raw, 'ai')
     } catch (error) {
       throw new BadRequestException(
@@ -70,7 +50,7 @@ export class AIModelService implements IAIModelService {
   }
 
   async generateFromDefinition(definition: Record<string, any>): Promise<Record<string, any>> {
-    const defaultModel = await this.findDefault()
+    const defaultModel = await this.aiModelsService.findDefault()
     if (!defaultModel) {
       throw new BadRequestException('No active AI model configured')
     }
@@ -79,29 +59,15 @@ export class AIModelService implements IAIModelService {
     const systemPrompt = `You are a Model DSL generator. You will receive a structured module definition with: entities (and fields), relationships, states/transitions, pages (list/form/detail), permission rules, and reports. Generate a single valid Model DSL JSON that implements this module. The Model DSL should define objects (from entities), relations (from relationships), state machines if applicable, pages, permissions, and reports. Return valid JSON only, no markdown or explanation.`
 
     try {
-      const baseUrl = defaultModel.baseUrl || 'https://api.kimi.com/coding/'
-      const apiUrl = `${baseUrl.replace(/\/$/, '')}/v1/messages`
+      const responseData = await this.aiModelsService.generate(defaultModel, {
+        system: systemPrompt,
+        user: `Module definition:\n${definitionJson}`,
+        maxTokens: 4000,
+        temperature: 0.2,
+        timeoutMs: 120_000,
+      })
 
-      const response = await axios.post(
-        apiUrl,
-        {
-          model: defaultModel.model || 'kimi-for-coding',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Module definition:\n${definitionJson}` },
-          ],
-          max_tokens: 4000,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${defaultModel.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 120000,
-        },
-      )
-
-      const raw = this.extractPatchFromResponse(response.data)
+      const raw = this.extractPatchFromResponse(responseData)
       return this.normalizePatchContent(raw, 'ai')
     } catch (error) {
       throw new BadRequestException(
@@ -118,6 +84,21 @@ export class AIModelService implements IAIModelService {
     raw: Record<string, any>,
     actor: 'ai' | 'human' = 'ai',
   ): Record<string, any> {
+    // Some providers wrap the patch as {"patch": {...}} instead of the protocol shape.
+    const wrapped =
+      raw.patch && typeof raw.patch === 'object' && !Array.isArray(raw.patch)
+        ? (raw.patch as Record<string, any>)
+        : null
+    const payload =
+      raw.payload && typeof raw.payload === 'object' && !Array.isArray(raw.payload)
+        ? raw.payload
+        : wrapped ?? {}
+    const identifier =
+      (wrapped?.module as string | undefined) ??
+      (wrapped?.entity as string | undefined) ??
+      (wrapped?.identifier as string | undefined) ??
+      ((raw.target as Record<string, any> | undefined)?.identifier as string | undefined) ??
+      'NewObject'
     const normalized: Record<string, any> = {
       version: raw.version ?? '1.0',
       patchId: raw.patchId ?? uuidv4(),
@@ -125,8 +106,8 @@ export class AIModelService implements IAIModelService {
       actor: raw.actor ?? actor,
       scope: raw.scope ?? 'object',
       operation: raw.operation ?? 'add',
-      target: raw.target ?? { type: 'object', identifier: 'NewObject' },
-      payload: raw.payload ?? {},
+      target: raw.target ?? { type: 'object', identifier },
+      payload,
     }
     if (raw.description != null) normalized.description = raw.description
     if (raw.dependsOn != null) normalized.dependsOn = raw.dependsOn

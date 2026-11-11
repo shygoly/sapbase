@@ -37,7 +37,7 @@ This will enable the system to leverage AI for generating Patch DSL modules whil
 ## Configuration
 
 Environment variables:
-- `KIMI_API_KEY=sk-kimi-NFr9OldbRTRzzyFCJbNTozG1LPP9yb90Uas7AomC4Lz57OomFPk7115ZhDSBHmlJ`
+- `KIMI_API_KEY=$KIMI_API_KEY`
 - `ANTHROPIC_BASE_URL=https://api.kimi.com/coding/`
 
 ## Success Criteria

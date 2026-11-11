@@ -36,7 +36,6 @@ import {
 } from './crm-test-scenarios'
 import { AuditLogsService } from '@sap/platform-core/audit-logs/audit-logs.service'
 import { NotificationService } from '../websocket/services/notification.service'
-import axios from 'axios'
 
 @Injectable()
 export class AIModulesService {
@@ -371,36 +370,17 @@ export class AIModulesService {
     const userContent = `Generate a Patch DSL JSON for: ${naturalLanguagePrompt}`
 
     try {
-      // Generate patch using AI model
-      const baseUrl = defaultModel.baseUrl || 'https://api.kimi.com/coding/'
-      const apiUrl = `${baseUrl.replace(/\/$/, '')}/v1/messages`
-
-      const response = await axios.post(
-        apiUrl,
-        {
-          model: defaultModel.model || 'kimi-for-coding',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a Patch DSL generator. Generate valid Patch DSL JSON from natural language descriptions.',
-            },
-            {
-              role: 'user',
-              content: userContent,
-            },
-          ],
-          max_tokens: 2000,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${defaultModel.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      )
+      // Generate patch using the active model (DeepSeek/OpenAI compatible by default).
+      const responseData = await this.aiModelsService.generate(defaultModel, {
+        system:
+          'You are a Patch DSL generator. Generate valid Patch DSL JSON from natural language descriptions.',
+        user: userContent,
+        maxTokens: 2000,
+        temperature: 0.2,
+      })
 
       // Extract patch JSON from response and normalize to protocol shape (patchId, timestamp, actor)
-      const raw = this.extractPatchFromResponse(response.data)
+      const raw = this.extractPatchFromResponse(responseData)
       const patchContent = this.normalizePatchContent(raw, 'ai')
 
       // Update module
@@ -622,38 +602,19 @@ export class AIModulesService {
     }
 
     try {
-      const baseUrl = defaultModel.baseUrl || 'https://api.kimi.com/coding/'
-      const apiUrl = `${baseUrl.replace(/\/$/, '')}/v1/messages`
       const existingPatch = module.patchContent || {}
 
-      const response = await axios.post(
-        apiUrl,
-        {
-          model: defaultModel.model || 'kimi-for-coding',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a Patch DSL generator. Generate an incremental Patch DSL JSON to modify an existing module. The patch MUST use operation "update" and include only the changes needed. Return JSON only.',
-            },
-            {
-              role: 'user',
-              content: `Existing Patch DSL JSON:\n${JSON.stringify(existingPatch)}\n\nModule Metadata:\n${JSON.stringify(
-                registryModule.metadata || {},
-              )}\n\nChange Request: ${naturalLanguagePrompt}`,
-            },
-          ],
-          max_tokens: 2000,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${defaultModel.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      )
+      const responseData = await this.aiModelsService.generate(defaultModel, {
+        system:
+          'You are a Patch DSL generator. Generate an incremental Patch DSL JSON to modify an existing module. The patch MUST use operation "update" and include only the changes needed. Return JSON only.',
+        user: `Existing Patch DSL JSON:\n${JSON.stringify(existingPatch)}\n\nModule Metadata:\n${JSON.stringify(
+          registryModule.metadata || {},
+        )}\n\nChange Request: ${naturalLanguagePrompt}`,
+        maxTokens: 2000,
+        temperature: 0.2,
+      })
 
-      const raw = this.extractPatchFromResponse(response.data)
+      const raw = this.extractPatchFromResponse(responseData)
       const patchContent = this.normalizePatchContent(raw, 'ai')
 
       module.naturalLanguagePrompt = naturalLanguagePrompt
@@ -718,28 +679,15 @@ export class AIModulesService {
         userMessage = safeInput
       }
 
-      const baseUrl = defaultModel.baseUrl || 'https://api.kimi.com/coding/'
-      const apiUrl = `${baseUrl.replace(/\/$/, '')}/v1/messages`
+      const responseData = await this.aiModelsService.generate(defaultModel, {
+        system: systemPrompt,
+        user: userMessage,
+        maxTokens: 8000,
+        temperature: 0.2,
+        timeoutMs: 120_000,
+      })
 
-      const response = await axios.post(
-        apiUrl,
-        {
-          model: defaultModel.model || 'kimi-for-coding',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          max_tokens: 8000,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${defaultModel.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      )
-
-      let extracted = extractAiJsonObject(response.data)
+      let extracted = extractAiJsonObject(responseData)
       if (stepId === 'state-flow') {
         const normalized = normalizeStep3ForSave(extracted)
         if ('error' in normalized) {
@@ -867,6 +815,21 @@ export class AIModulesService {
     raw: Record<string, any>,
     actor: 'ai' | 'human' = 'ai',
   ): Record<string, any> {
+    // Some providers wrap the patch as {"patch": {...}} instead of the protocol shape.
+    const wrapped =
+      raw.patch && typeof raw.patch === 'object' && !Array.isArray(raw.patch)
+        ? (raw.patch as Record<string, any>)
+        : null
+    const payload =
+      raw.payload && typeof raw.payload === 'object' && !Array.isArray(raw.payload)
+        ? raw.payload
+        : wrapped ?? {}
+    const identifier =
+      (wrapped?.module as string | undefined) ??
+      (wrapped?.entity as string | undefined) ??
+      (wrapped?.identifier as string | undefined) ??
+      ((raw.target as Record<string, any> | undefined)?.identifier as string | undefined) ??
+      'NewObject'
     const normalized: Record<string, any> = {
       version: raw.version ?? '1.0',
       patchId: raw.patchId ?? uuidv4(),
@@ -874,8 +837,8 @@ export class AIModulesService {
       actor: raw.actor ?? actor,
       scope: raw.scope ?? 'object',
       operation: raw.operation ?? 'add',
-      target: raw.target ?? { type: 'object', identifier: 'NewObject' },
-      payload: raw.payload ?? {},
+      target: raw.target ?? { type: 'object', identifier },
+      payload,
     }
     if (raw.description != null) normalized.description = raw.description
     if (raw.dependsOn != null) normalized.dependsOn = raw.dependsOn

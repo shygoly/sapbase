@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
 import { BadRequestException } from '@nestjs/common'
-import axios from 'axios'
 import { AIModulesService } from './ai-modules.service'
 // 服务后来加了「AI 模块定义」仓储依赖（spec 没跟上就 DI 报错）
 import { AIModuleDefinition } from './ai-module-definition.entity'
@@ -12,8 +11,6 @@ import { AIModuleVersion } from './ai-module-version.entity'
 import { AIModelsService } from '../ai-models/ai-models.service'
 import { ModuleRegistryService } from '../module-registry/module-registry.service'
 import { AIModuleBlueprintService } from './ai-module-blueprint.service'
-jest.mock('axios')
-const mockedAxios = axios as jest.Mocked<typeof axios>
 
 describe('AIModulesService', () => {
   let service: AIModulesService
@@ -72,6 +69,7 @@ describe('AIModulesService', () => {
           provide: AIModelsService,
           useValue: {
             findDefault: jest.fn(),
+            generate: jest.fn(),
           },
         },
         {
@@ -118,10 +116,8 @@ describe('AIModulesService', () => {
         baseUrl: 'https://api.kimi.com/coding/',
         apiKey: 'test-key',
       } as any)
-      mockedAxios.post.mockResolvedValue({
-        data: {
-          content: [{ text: JSON.stringify(aiResponseJson) }],
-        },
+      jest.spyOn(aiModelsService, 'generate').mockResolvedValue({
+        choices: [{ message: { content: JSON.stringify(aiResponseJson) } }],
       })
 
       const result = await service.generateDefinitionStep('object-model', crmNarrative)
@@ -156,11 +152,11 @@ describe('AIModulesService', () => {
           ],
         },
       ])
-      mockedAxios.post.mockResolvedValue({
-        data: {
-          content: [
-            {
-              text: JSON.stringify({
+      const generate = jest.spyOn(aiModelsService, 'generate').mockResolvedValue({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
                 entities: [
                   {
                     identifier: 'Ticket',
@@ -169,15 +165,15 @@ describe('AIModulesService', () => {
                 ],
               }),
             },
-          ],
-        },
+          },
+        ],
       })
 
       await service.generateDefinitionStep('object-model', 'create ticket', undefined, 'org-1')
-      const payload = mockedAxios.post.mock.calls[0][1] as any
       expect(mockModuleRegistry.getAiGenerationContext).toHaveBeenCalledWith('org-1')
-      expect(payload.messages[0].content).toContain('CRM Module')
-      expect(payload.messages[0].content).toContain('/api/customers')
+      const input = generate.mock.calls[0][1] as any
+      expect(input.system).toContain('CRM Module')
+      expect(input.system).toContain('/api/customers')
     })
 
     it('rejects a step output that does not match the step schema', async () => {
@@ -188,16 +184,16 @@ describe('AIModulesService', () => {
         baseUrl: 'https://api.kimi.com/coding/',
         apiKey: 'test-key',
       } as any)
-      mockedAxios.post.mockResolvedValue({
-        data: {
-          content: [
-            {
-              text: JSON.stringify({
+      jest.spyOn(aiModelsService, 'generate').mockResolvedValue({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
                 entities: [{ identifier: 'Lead', fields: [{ name: 'name', type: 'sql' }] }],
               }),
             },
-          ],
-        },
+          },
+        ],
       })
 
       await expect(service.generateDefinitionStep('object-model', 'CRM')).rejects.toThrow(

@@ -2,6 +2,7 @@ import { Entity, Column } from 'typeorm'
 import { BaseEntity } from '../common/entities/base.entity'
 
 export enum AIModelProvider {
+  DEEPSEEK = 'deepseek',
   KIMI = 'kimi',
   OPENAI = 'openai',
   ANTHROPIC = 'anthropic',

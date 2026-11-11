@@ -402,20 +402,34 @@ async function seedDatabase() {
     await auditLogRepository.save(auditLogs)
     console.log(`Created ${auditLogs.length} audit logs`)
 
-    // Seed AI Models
+    // Seed AI Models: default provider is DeepSeek (OpenAI-compatible).
+    // API key MUST come from env; never commit real keys to the seed file.
     const aiModelRepository = AppDataSource.getRepository(AIModel)
-    const kimiModel = aiModelRepository.create({
-      name: 'Kimi API',
-      provider: AIModelProvider.KIMI,
-      apiKey: 'sk-kimi-NFr9OldbRTRzzyFCJbNTozG1LPP9yb90Uas7AomC4Lz57OomFPk7115ZhDSBHmlJ',
-      baseUrl: 'https://api.kimi.com/coding/',
-      model: 'kimi-for-coding',
-      status: AIModelStatus.ACTIVE,
-      description: 'Kimi API for AI-powered patch generation',
-      isDefault: true,
+    const deepseekApiKey = process.env.DEEPSEEK_API_KEY ?? ''
+    const deepseekBaseUrl = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1'
+    const deepseekModel = process.env.DEEPSEEK_MODEL || 'deepseek-chat'
+    await aiModelRepository.update({ isDefault: true }, { isDefault: false })
+    let deepseek = await aiModelRepository.findOne({
+      where: { provider: AIModelProvider.DEEPSEEK, model: deepseekModel },
     })
-    await aiModelRepository.save(kimiModel)
-    console.log('Created Kimi AI model configuration')
+    if (!deepseek) {
+      deepseek = aiModelRepository.create({
+        name: 'DeepSeek Chat',
+        provider: AIModelProvider.DEEPSEEK,
+      })
+    }
+    deepseek.apiKey = deepseekApiKey || deepseek.apiKey
+    deepseek.baseUrl = deepseekBaseUrl
+    deepseek.model = deepseekModel
+    deepseek.status = deepseek.apiKey ? AIModelStatus.ACTIVE : AIModelStatus.INACTIVE
+    deepseek.description = 'DeepSeek Chat (OpenAI-compatible) for AI-powered patch generation'
+    deepseek.isDefault = Boolean(deepseek.apiKey)
+    await aiModelRepository.save(deepseek)
+    console.log(
+      deepseek.apiKey
+        ? 'Created DeepSeek AI model configuration (default)'
+        : 'DeepSeek API key missing: model saved inactive',
+    )
 
     // Seed Menu Items with hierarchical structure
     const menuItemRepository = AppDataSource.getRepository(MenuItem)

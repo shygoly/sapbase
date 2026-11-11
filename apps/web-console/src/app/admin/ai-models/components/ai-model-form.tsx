@@ -25,10 +25,10 @@ interface AIModelFormProps {
 export function AIModelForm({ model, onSuccess, onCancel }: AIModelFormProps) {
   const [formData, setFormData] = useState<CreateAIModelDto>({
     name: '',
-    provider: 'kimi',
+    provider: 'deepseek',
     apiKey: '',
-    baseUrl: 'https://api.kimi.com/coding/',
-    model: 'kimi-for-coding',
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
     description: '',
     isDefault: false,
   })
@@ -87,7 +87,7 @@ export function AIModelForm({ model, onSuccess, onCancel }: AIModelFormProps) {
         <Label htmlFor="provider">Provider *</Label>
         <Select
           value={formData.provider}
-          onValueChange={(value: 'kimi' | 'openai' | 'anthropic') =>
+          onValueChange={(value: 'deepseek' | 'kimi' | 'openai' | 'anthropic') =>
             setFormData({ ...formData, provider: value })
           }
         >
@@ -95,6 +95,7 @@ export function AIModelForm({ model, onSuccess, onCancel }: AIModelFormProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="deepseek">DeepSeek</SelectItem>
             <SelectItem value="kimi">Kimi</SelectItem>
             <SelectItem value="openai">OpenAI</SelectItem>
             <SelectItem value="anthropic">Anthropic</SelectItem>
@@ -119,7 +120,7 @@ export function AIModelForm({ model, onSuccess, onCancel }: AIModelFormProps) {
           id="baseUrl"
           value={formData.baseUrl}
           onChange={(e) => setFormData({ ...formData, baseUrl: e.target.value })}
-          placeholder="https://api.kimi.com/coding/"
+          placeholder="https://api.deepseek.com/v1"
         />
       </div>
 
@@ -129,7 +130,7 @@ export function AIModelForm({ model, onSuccess, onCancel }: AIModelFormProps) {
           id="model"
           value={formData.model}
           onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-          placeholder="kimi-for-coding"
+          placeholder="deepseek-chat"
         />
       </div>
 

@@ -3,7 +3,7 @@ import { httpClient } from './client'
 export interface AIModel {
   id: string
   name: string
-  provider: 'kimi' | 'openai' | 'anthropic'
+  provider: 'deepseek' | 'kimi' | 'openai' | 'anthropic'
   apiKey?: string
   baseUrl?: string
   model?: string
@@ -18,7 +18,7 @@ export interface AIModel {
 
 export interface CreateAIModelDto {
   name: string
-  provider: 'kimi' | 'openai' | 'anthropic'
+  provider: 'deepseek' | 'kimi' | 'openai' | 'anthropic'
   apiKey?: string
   baseUrl?: string
   model?: string

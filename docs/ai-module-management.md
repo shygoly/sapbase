@@ -10,7 +10,8 @@ AI 模块从模型配置到发布的完整流程。模块的 DSL 真源是 `ai_m
 - 模型密钥只从服务端环境/密钥引用读取，前端不保存明文。
 - `AIModelsService.findDefault()` 选择 active 默认模型；没有默认模型时生成类接口返回 400。
 - 连接测试只验证凭据与 endpoint，不写入模块内容。
-- 支持 Kimi/Anthropic 兼容 endpoint（`ANTHROPIC_BASE_URL` + `KIMI_API_KEY`）。
+- 默认 DeepSeek（OpenAI 兼容）：`DEEPSEEK_API_KEY` + `DEEPSEEK_BASE_URL` + `DEEPSEEK_MODEL`（默认 `deepseek-chat`）。
+- 仍兼容 Kimi/Anthropic endpoint（`ANTHROPIC_BASE_URL` + `KIMI_API_KEY`），但 Kimi 模型默认 inactive。
 
 ## 2. AI Module Development
 
