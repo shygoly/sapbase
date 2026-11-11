@@ -32,6 +32,7 @@ import { AtomicRuntimeModule } from './atomic-runtime/atomic-runtime.module'
 import { BlueprintModule } from './blueprint/blueprint.module'
 import { OutboxModule } from './outbox/outbox.module'
 import { NotificationsModule } from './notifications/notifications.module'
+import { SearchModule } from './search/search.module'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { ChatModule } from './chat/chat.module'
 import { BusinessAppsModule } from './business-apps/business-apps.module'
@@ -126,6 +127,7 @@ try {
     ReviewModule,
     OutboxModule,
     NotificationsModule,
+    SearchModule,
     AgentToolsModule,
     ChatModule,
     BusinessAppsModule,

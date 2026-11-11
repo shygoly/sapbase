@@ -40,6 +40,7 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1794000000000-AddReviewApprovalPlatform.ts'),
     path.join(__dirname, '1794100000000-AddNotificationRetention.ts'),
     path.join(__dirname, '1794200000000-AddAIModuleVersions.ts'),
+    path.join(__dirname, '1794300000000-CreateSearchDocuments.ts'),
   ],
   synchronize: false,
   logging: true,

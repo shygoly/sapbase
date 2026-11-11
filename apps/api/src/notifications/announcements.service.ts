@@ -15,6 +15,7 @@ import { ScopeNode } from '@sap/platform-core/data-scope/entities/scope-node.ent
 import { JobsService } from '@sap/platform-core/jobs/jobs.service'
 import { OrganizationMember } from '../organizations/organization-member.entity'
 import { OrganizationMemberRole } from '../identity/organization-member-role.entity'
+import { EventBusService } from '../common/events/event-bus.service'
 import { NotificationService } from '../websocket/services/notification.service'
 import { Announcement, type AnnouncementStatus } from './announcement.entity'
 import { AnnouncementAudience } from './announcement-audience.entity'
@@ -106,6 +107,7 @@ export class AnnouncementsService {
     private readonly scopeMemberships: Repository<ScopeMembership>,
     private readonly notifications: NotificationService,
     @Optional() private readonly jobs?: JobsService,
+    @Optional() private readonly eventBus?: EventBusService,
   ) {}
 
   async list(organizationId: string, status?: AnnouncementStatus): Promise<Announcement[]> {
@@ -256,6 +258,7 @@ export class AnnouncementsService {
       row.status = 'published'
       row.publishedAt = new Date()
       await this.announcements.save(row)
+      await this.dispatchPublished(organizationId, row.id)
       const { job } = await this.jobs.create(
         organizationId,
         { userId: row.createdBy ?? 'system', permissions: ['announcements:publish'] },
@@ -276,6 +279,7 @@ export class AnnouncementsService {
     row.status = 'published'
     row.publishedAt = new Date()
     await this.announcements.save(row)
+    await this.dispatchPublished(organizationId, row.id)
     return { announcement: row, delivered }
   }
 
@@ -561,6 +565,13 @@ export class AnnouncementsService {
     }
 
     return [...users]
+  }
+
+  private async dispatchPublished(organizationId: string, announcementId: string): Promise<void> {
+    await this.eventBus?.dispatchToSubscribers('announcement.published', {
+      organizationId,
+      announcementId,
+    })
   }
 
   private normalizeRetentionDays(value: number | undefined): number {

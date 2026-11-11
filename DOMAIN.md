@@ -38,6 +38,7 @@
 | announcement_audiences | 通知与公告 |
 | announcement_deliveries | 通知与公告 |
 | notification_cleanup_runs | 通知与公告 |
+| search_documents | 搜索 |
 | assets | 资产 |
 | asset_variants | 资产 |
 | asset_upload_sessions | 资产 |
@@ -435,6 +436,40 @@ enforcement:
   - test:tests/notification-center.test.js#XSS
 db: none
 spec: tests/notification-center.test.js
+```
+
+---
+
+## 搜索
+
+覆盖表：search_documents
+
+统一搜索索引。`search_documents` 按组织 + 资源键 + 资源 ID 唯一；`title/body` 走 PostgreSQL
+全文（tsvector）与 trigram 兜底，`tags` 为 jsonb 字符串数组。索引是可重建派生物，
+只存可展示字段；删除/过期资源由索引管道移除。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| search_documents.organizationId | organizations.id | 索引归属组织 | none | 跨租户搜索拒绝 |
+
+### 状态词
+
+资源键使用 `announcement` / `asset` / `ai_module` / `agent_knowledge`；
+查询结果不改变业务状态。
+
+### 不变量
+
+```yaml invariant
+id: INV-SE-01
+tables: [search_documents]
+desc: 搜索只返回同组织文档；跨租户查询为空或拒绝；索引不存敏感字段。
+trigger: 搜索查询/索引写入
+enforcement:
+  - test:apps/api/src/search/search.service.spec.ts#SearchService
+db: rls:search_documents
+spec: apps/api/src/search/search.service.spec.ts
 ```
 
 ---

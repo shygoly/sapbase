@@ -257,6 +257,28 @@ code_markers:
   - apps/api/src/notifications/announcement-fanout.job.ts
 ```
 
+### D-13：搜索用 PostgreSQL 全文 + trigram，索引是可重建派生物
+
+```yaml decision
+id: D-13
+title: 搜索用 PostgreSQL 全文 + trigram，索引是可重建派生物
+status: accepted
+date: 2026-11
+context: |
+  教育项目需要跨公告/素材/课程/知识点的统一搜索。引入 ES/OpenSearch 会增加部署与一致性成本；
+  用业务表直接 LIKE 又无法排序、高亮和中文模糊匹配。
+decision: |
+  v1 使用 PostgreSQL tsvector + pg_trgm，GIN 索引；search_documents 按组织隔离，
+  只存可展示字段。索引通过 search.index / search.reindex 任务重建，按 contentHash 幂等；
+  索引失败不回滚业务。pgvector 语义检索为可选 feature flag，不是 v1 必需。
+references:
+  - INV-SE-01
+  - INV-SE-02
+code_markers:
+  - apps/api/src/search/search.service.ts
+  - apps/api/src/search/search-index-job.service.ts
+```
+
 ---
 
 ## 附录：命名空间约定

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/search.schema.json",
+  "title": "Search",
+  "description": "统一搜索文档与查询契约。只存可展示字段；索引是可重建派生物。",
+  "$defs": {
+    "resourceKey": {
+      "enum": ["announcement", "asset", "ai_module", "agent_knowledge"]
+    },
+    "searchDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resourceKey", "resourceId", "title"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "resourceKey": { "$ref": "#/$defs/resourceKey" },
+        "resourceId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 1 },
+        "body": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "maxItems": 50,
+          "items": { "type": "string" }
+        },
+        "metadata": { "type": "object" },
+        "contentHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "indexedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "searchQuery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "q": { "type": "string", "maxLength": 200 },
+        "types": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/resourceKey" }
+        },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "from": { "type": "string", "format": "date-time" },
+        "to": { "type": "string", "format": "date-time" },
+        "page": { "type": "integer", "minimum": 1, "maximum": 500 },
+        "pageSize": { "type": "integer", "minimum": 1, "maximum": 50 }
+      }
+    },
+    "searchHit": {
+      "type": "object",
+      "required": ["resourceKey", "resourceId", "title", "snippet"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "resourceKey": { "$ref": "#/$defs/resourceKey" },
+        "resourceId": { "type": "string" },
+        "title": { "type": "string" },
+        "snippet": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "metadata": { "type": "object" },
+        "rank": { "type": "number" },
+        "indexedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/searchDocument" },
+    { "$ref": "#/$defs/searchQuery" }
+  ]
+}

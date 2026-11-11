@@ -11,7 +11,7 @@
 >
 > **更新（2026-09-25）**：宿主侧 Wasm 运行时（Wasmtime）与 Blueprint 包/编译器均已落地，
 > 第 3、5.1、5.3 节的相关行就地更新（变更提案见
-> [`openspec/changes/add-blueprint-package-and-compiler/`](../openspec/changes/add-blueprint-package-and-compiler/proposal.md)）。
+> [`openspec/changes/add-blueprint-package-and-compiler/`](../openspec/changes/archive/2026-11-11-add-blueprint-package-and-compiler/proposal.md)）。
 > 结论摘要里的"缺协议与制品"已不再成立；剩下的空白集中在**图/向量检索、事件溯源、可观测性、部署形态**。
 
 ---

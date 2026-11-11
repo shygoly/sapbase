@@ -49,6 +49,7 @@ const DIRECT_TABLES = [
   'identity_sync_runs',
   'service_clients',
   'assets',
+  'search_documents',
   'asset_variants',
   'asset_upload_sessions',
 ] as const

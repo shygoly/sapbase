@@ -478,6 +478,22 @@
         "collectedAt"
       ]
     },
+    "search_documents": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "resourceKey",
+        "resourceId",
+        "title",
+        "body",
+        "tags",
+        "metadata",
+        "contentHash",
+        "indexedAt"
+      ]
+    },
     "notifications": {
       "columns": [
         "id",

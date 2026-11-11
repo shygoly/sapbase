@@ -74,3 +74,5 @@ export { apiClient, httpClient } from './client'
 
 // Export types
 export * from './types'
+
+export { searchApi, type SearchHit, type SearchResult, type SearchParams } from './search.api'

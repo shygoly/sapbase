@@ -7,11 +7,11 @@
 
 | 指标 | 数量 |
 | --- | --- |
-| 进行中 | 29 |
+| 进行中 | 28 |
 | 已完成未归档 | 0 |
 | 无任务/骨架 | 2 |
-| 已归档 | 56 |
-| 活跃任务 | 245/1174 |
+| 已归档 | 57 |
+| 活跃任务 | 245/1138 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -46,7 +46,6 @@
 | [add-metrics-and-dashboard-platform](../openspec/changes/add-metrics-and-dashboard-platform/) | 指标、看板与预警平台 | 0/53 | 10 req / 1 文件 | [P](../openspec/changes/add-metrics-and-dashboard-platform/proposal.md) [D](../openspec/changes/add-metrics-and-dashboard-platform/design.md) [T](../openspec/changes/add-metrics-and-dashboard-platform/tasks.md) [S](../openspec/changes/add-metrics-and-dashboard-platform/specs) | 2026-11-09 |
 | [add-offline-content-package](../openspec/changes/add-offline-content-package/) | 离线内容包 | 0/42 | 8 req / 1 文件 | [P](../openspec/changes/add-offline-content-package/proposal.md) [D](../openspec/changes/add-offline-content-package/design.md) [T](../openspec/changes/add-offline-content-package/tasks.md) [S](../openspec/changes/add-offline-content-package/specs) | 2026-11-09 |
 | [add-record-lifecycle-and-tree-operations](../openspec/changes/add-record-lifecycle-and-tree-operations/) | 记录生命周期与树操作 | 0/46 | 9 req / 2 文件 | [P](../openspec/changes/add-record-lifecycle-and-tree-operations/proposal.md) [D](../openspec/changes/add-record-lifecycle-and-tree-operations/design.md) [T](../openspec/changes/add-record-lifecycle-and-tree-operations/tasks.md) [S](../openspec/changes/add-record-lifecycle-and-tree-operations/specs) | 2026-11-09 |
-| [add-search-and-retrieval](../openspec/changes/add-search-and-retrieval/) | 搜索与检索 | 0/36 | 8 req / 1 文件 | [P](../openspec/changes/add-search-and-retrieval/proposal.md) [D](../openspec/changes/add-search-and-retrieval/design.md) [T](../openspec/changes/add-search-and-retrieval/tasks.md) [S](../openspec/changes/add-search-and-retrieval/specs) | 2026-11-09 |
 | [migrate-to-saas-architecture](../openspec/changes/migrate-to-saas-architecture/) | Migrate to SaaS Architecture | 45/75 | 21 req / 4 文件 | [P](../openspec/changes/migrate-to-saas-architecture/proposal.md) [D](../openspec/changes/migrate-to-saas-architecture/design.md) [T](../openspec/changes/migrate-to-saas-architecture/tasks.md) [S](../openspec/changes/migrate-to-saas-architecture/specs) | 2026-02-18 |
 
 ## 已完成未归档
@@ -87,6 +86,7 @@ _暂无_
 | [add-plugin-sandbox](../openspec/changes/archive/2026-11-11-add-plugin-sandbox/) | Add Plugin Sandbox | 19/19 | 4 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-plugin-sandbox/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-plugin-sandbox/design.md) [T](../openspec/changes/archive/2026-11-11-add-plugin-sandbox/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-plugin-sandbox/specs) | 2026-11-11 |
 | [add-release-lifecycle-and-activation](../openspec/changes/archive/2026-11-11-add-release-lifecycle-and-activation/) | 业务系统不可变 Release、激活与回退（P2） | 52/52 | 7 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-release-lifecycle-and-activation/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-release-lifecycle-and-activation/design.md) [T](../openspec/changes/archive/2026-11-11-add-release-lifecycle-and-activation/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-release-lifecycle-and-activation/specs) | 2026-11-11 |
 | [add-role-permission-resolution](../openspec/changes/archive/2026-11-11-add-role-permission-resolution/) | 让角色携带的权限点真正生效（角色 → JWT 有效权限） | 24/24 | 1 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-role-permission-resolution/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-role-permission-resolution/design.md) [T](../openspec/changes/archive/2026-11-11-add-role-permission-resolution/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-role-permission-resolution/specs) | 2026-11-11 |
+| [add-search-and-retrieval](../openspec/changes/archive/2026-11-11-add-search-and-retrieval/) | 搜索与检索 | 36/36 | 8 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-search-and-retrieval/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-search-and-retrieval/design.md) [T](../openspec/changes/archive/2026-11-11-add-search-and-retrieval/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-search-and-retrieval/specs) | 2026-11-11 |
 | [add-strict-ai-definition-validation](../openspec/changes/archive/2026-11-11-add-strict-ai-definition-validation/) | 严格校验 AI 模块定义并接通 Blueprint | 20/20 | 3 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-strict-ai-definition-validation/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-strict-ai-definition-validation/design.md) [T](../openspec/changes/archive/2026-11-11-add-strict-ai-definition-validation/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-strict-ai-definition-validation/specs) | 2026-11-11 |
 | [add-wasmtime-host](../openspec/changes/archive/2026-11-11-add-wasmtime-host/) | Add Wasmtime Host | 32/32 | 5 req / 2 文件 | [P](../openspec/changes/archive/2026-11-11-add-wasmtime-host/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-wasmtime-host/design.md) [T](../openspec/changes/archive/2026-11-11-add-wasmtime-host/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-wasmtime-host/specs) | 2026-11-11 |
 | [add-workflow-engine](../openspec/changes/archive/2026-11-11-add-workflow-engine/) | Add Workflow Engine | 29/74 | 9 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-workflow-engine/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-workflow-engine/design.md) [T](../openspec/changes/archive/2026-11-11-add-workflow-engine/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-workflow-engine/specs) | 2026-11-11 |

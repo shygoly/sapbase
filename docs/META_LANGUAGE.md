@@ -325,6 +325,31 @@ audience 只从服务端成员/角色/数据范围解析，跨租户节点拒绝
 实现落点：`apps/api/src/notifications/`；契约：`schemas/notification-center.schema.json`；
 领域表：`DOMAIN.md`「通知与公告」；决策：`DECISIONS.md` D-11/D-12。
 
+### 3.15 Search & Retrieval（搜索与检索）
+
+搜索是**可重建的读模型**，不是业务真源：
+
+- **SearchDocument**：`search_documents`，按组织 + 资源键 + 资源 ID 唯一；
+  只存标题/正文/标签/元数据等可展示字段。
+- **索引**：PostgreSQL `tsvector` 全文 + `pg_trgm` 兜底；GIN 索引，不引入外部搜索集群。
+- **管道**：资源事件 → `search.index` 任务；全量重建 → `search.reindex` 任务。
+  写入按 `contentHash` 幂等，索引失败不阻塞业务事务。
+- **查询**：`GET /search` 支持关键词/类型/标签/时间/分页；结果带 `[[[`/`]]]` 高亮片段。
+- **权限**：只查同组织文档；敏感字段不进入索引；跨租户返回空或拒绝。
+
+执行语义：
+
+```text
+索引是派生物，可删除重建；业务表仍是唯一真源
+同组织 + 资源键 + 资源 ID 唯一；内容 hash 未变不重写
+索引写入失败不回滚业务；失败可重试/重建
+查询只返回可见资源，不返回未授权文档
+中文/短词走 trigram 兜底，不把“没有全文命中”当成“没有权限”
+```
+
+实现落点：`apps/api/src/search/`；契约：`schemas/search.schema.json`；
+领域表：`DOMAIN.md`「搜索」；决策：`DECISIONS.md` D-13。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -365,6 +390,11 @@ audience 只从服务端成员/角色/数据范围解析，跨租户节点拒绝
 31. **公告投递幂等**：唯一键 `(announcementId,userId)`；重复发布不产生第二条通知（INV-NT-03）。
 32. **过期只软删除**：通知/公告/投递用 `deletedAt` 标记，统计与审计引用保留（INV-NT-04）。
 33. **富文本不执行原始 HTML**：只渲染安全 Markdown 子集，链接协议白名单 http/https（INV-NT-05）。
+34. **搜索组织隔离**：只返回同组织文档；跨租户查询为空或拒绝（INV-SE-01）。
+35. **索引可重建**：索引是派生物，按 `(organizationId, resourceKey, resourceId)` 幂等 upsert（INV-SE-02）。
+36. **索引只存可展示字段**：敏感字段不进入 `search_documents`（INV-SE-03）。
+37. **索引失败不阻塞业务**：写入失败可重试/重建，业务事务不回滚（INV-SE-04）。
+38. **无命中不等于无权限**：全文无命中时走 trigram 兜底，权限拒绝单独表达（INV-SE-05）。
 
 ---
 
@@ -491,7 +521,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | [`TECH_STACK_v2.md`](./TECH_STACK_v2.md) | 前端维度的实际事实（纠正了上游模板残留） |
 | [`wasm-modules/`](../wasm-modules/README.md) | 第 3.2、3.3 节的实现（ABI v1 + 闸 0/1/2/5） |
 | [`openspec/specs/atomic-registry/`](../openspec/specs/atomic-registry/spec.md) | 第 2 节协议 2 的落地规格（执行链另见 `wasm-atomic-runtime`） |
-| [`openspec/changes/add-blueprint-package-and-compiler/`](../openspec/changes/add-blueprint-package-and-compiler/proposal.md) | 第 2 节协议 3/4 的落地提案；第 3.8 节的实现设计在其 `design.md` |
+| [`openspec/changes/add-blueprint-package-and-compiler/`](../openspec/changes/archive/2026-11-11-add-blueprint-package-and-compiler/proposal.md) | 第 2 节协议 3/4 的落地提案；第 3.8 节的实现设计在其 `design.md` |
 | [`PACKAGE_MANAGER.md`](./PACKAGE_MANAGER.md) | 第 5.1 节工程元语 |
 
 ---
