@@ -55,6 +55,12 @@ const DIRECT_TABLES = [
   'ai_content_provenance',
   'ai_content_labels',
   'ai_score_records',
+  'metric_definitions',
+  'metric_values',
+  'dashboards',
+  'dashboard_widgets',
+  'metric_alerts',
+  'metric_alert_events',
   'asset_variants',
   'asset_upload_sessions',
 ] as const

@@ -99,3 +99,16 @@ export {
   type ContentLabelType,
   type AiContentType,
 } from './ai-governance.api'
+
+export {
+  metricsApi,
+  type MetricDefinition,
+  type MetricPoint,
+  type MetricQueryResult,
+  type Dashboard,
+  type DashboardWidget,
+  type MetricAlert,
+  type MetricPeriod,
+  type MetricAggregation,
+  type MetricSourceType,
+} from './metrics.api'

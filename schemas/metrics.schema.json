@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/metrics.schema.json",
+  "title": "Metrics & Dashboards",
+  "$defs": {
+    "metricDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "name", "period", "aggregation", "sourceType"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]{1,127}$" },
+        "name": { "type": "string" },
+        "period": { "enum": ["hour", "day", "week", "month"] },
+        "aggregation": { "enum": ["count", "sum", "avg", "min", "max", "ratio", "distinct_count"] },
+        "sourceType": { "enum": ["blueprint", "platform", "event", "computed"] },
+        "sourceConfig": { "type": "object" },
+        "dimensions": { "type": "array", "items": { "type": "string" } },
+        "filters": { "type": "object" },
+        "permissions": { "type": "array", "items": { "type": "string" } },
+        "version": { "type": "integer", "minimum": 1 },
+        "status": { "enum": ["active", "inactive"] }
+      }
+    },
+    "query": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metricKey"],
+      "properties": {
+        "metricKey": { "type": "string" },
+        "from": { "type": "string", "format": "date-time" },
+        "to": { "type": "string", "format": "date-time" },
+        "dimensions": { "type": "array", "items": { "type": "string" } },
+        "filters": { "type": "object" },
+        "scopeNodeIds": { "type": "array", "items": { "type": "string" } },
+        "compare": { "enum": ["none", "previous", "year"] }
+      }
+    },
+    "dashboard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "name"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "key": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": ["string", "null"] },
+        "visibility": { "type": "object" },
+        "defaultFilters": { "type": "object" },
+        "layout": { "type": "array" },
+        "status": { "enum": ["active", "inactive"] }
+      }
+    },
+    "widget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "type", "metricKey"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "dashboardId": { "type": "string", "format": "uuid" },
+        "key": { "type": "string" },
+        "type": { "enum": ["number", "bar", "line", "pie", "ranking", "table"] },
+        "metricKey": { "type": "string" },
+        "config": { "type": "object" },
+        "layout": { "type": "object" },
+        "order": { "type": "integer" }
+      }
+    },
+    "alert": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "metricKey", "operator"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "key": { "type": "string" },
+        "metricKey": { "type": "string" },
+        "operator": { "enum": ["gt", "gte", "lt", "lte", "no_data"] },
+        "threshold": { "type": ["number", "string", "null"] },
+        "windowMinutes": { "type": "integer", "minimum": 1 },
+        "frequencyMinutes": { "type": "integer", "minimum": 1 },
+        "cooldownMinutes": { "type": "integer", "minimum": 0 },
+        "scope": { "type": "object" },
+        "channels": { "type": "array", "items": { "type": "string" } },
+        "status": { "enum": ["active", "inactive"] },
+        "silenceUntil": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "alertEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alertId", "state", "dedupKey"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organizationId": { "type": "string", "format": "uuid" },
+        "alertId": { "type": "string", "format": "uuid" },
+        "state": { "enum": ["firing", "resolved", "silenced"] },
+        "value": { "type": ["number", "string", "null"] },
+        "dedupKey": { "type": "string" },
+        "notifiedAt": { "type": ["string", "null"], "format": "date-time" }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/metricDefinition" },
+    { "$ref": "#/$defs/query" },
+    { "$ref": "#/$defs/dashboard" },
+    { "$ref": "#/$defs/widget" },
+    { "$ref": "#/$defs/alert" },
+    { "$ref": "#/$defs/alertEvent" }
+  ]
+}

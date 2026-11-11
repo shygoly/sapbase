@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { DataSource, type DataSourceOptions } from 'typeorm'
 import {
   addTransactionalDataSource,
+  getDataSourceByName,
   initializeTransactionalContext,
   StorageDriver,
 } from 'typeorm-transactional'
@@ -37,6 +38,7 @@ import { NotificationsModule } from './notifications/notifications.module'
 import { SearchModule } from './search/search.module'
 import { RecordLifecycleModule } from './record-lifecycle/record-lifecycle.module'
 import { AiGovernanceModule } from './ai-governance/ai-governance.module'
+import { MetricsModule } from './metrics/metrics.module'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { AgentHostModule } from './agent-host/agent-host.module'
 import { AsyncConsumersModule } from './async-consumers/async-consumers.module'
@@ -103,7 +105,7 @@ try {
       }),
       dataSourceFactory: async (options) => {
         if (!options) throw new Error('TypeORM DataSource options missing')
-        return addTransactionalDataSource(new DataSource(options))
+        return getDataSourceByName('default') ?? addTransactionalDataSource(new DataSource(options))
       },
     }),
     TenantTransactionModule,
@@ -138,6 +140,7 @@ try {
     SearchModule,
     RecordLifecycleModule,
     AiGovernanceModule,
+    MetricsModule,
     AgentToolsModule,
     AgentHostModule,
     AsyncConsumersModule,

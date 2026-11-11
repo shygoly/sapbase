@@ -42,6 +42,12 @@
 | record_snapshots | 记录生命周期 |
 | record_operations | 记录生命周期 |
 | ai_content_provenance | AI 内容治理 |
+| metric_definitions | 指标与看板 |
+| metric_values | 指标与看板 |
+| dashboards | 指标与看板 |
+| dashboard_widgets | 指标与看板 |
+| metric_alerts | 指标与看板 |
+| metric_alert_events | 指标与看板 |
 | ai_content_labels | AI 内容治理 |
 | ai_score_records | AI 内容治理 |
 | assets | 资产 |
@@ -443,6 +449,44 @@ enforcement:
   - test:tests/notification-center.test.js#XSS
 db: none
 spec: tests/notification-center.test.js
+```
+
+---
+
+## 指标与看板
+
+覆盖表：metric_definitions, metric_values, dashboards, dashboard_widgets, metric_alerts, metric_alert_events
+
+指标定义只允许受控来源（blueprint/platform/event/computed）；日快照写 `metric_values`，
+按 org+metric+version+period+维度唯一；看板 widget 只引用 metricKey；预警事件按
+`(alertId,dedupKey)` 去重，冷却期内不重复通知。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| metric_values.organizationId | organizations.id | 指标值归属组织 | none | 跨租户不聚合 |
+| dashboards.organizationId | organizations.id | 看板归属组织 | none | 可见性校验 |
+| dashboard_widgets.dashboardId | dashboards.id | 组件归属看板 | none | 组件引用指标 |
+| metric_alerts.organizationId | organizations.id | 预警归属组织 | none | 冷却/静默 |
+| metric_alert_events.alertId | metric_alerts.id | 事件归属预警 | none | dedupKey 唯一 |
+
+### 状态词
+
+周期 `hour/day/week/month`；聚合 `count/sum/avg/min/max/ratio/distinct_count`；
+来源 `blueprint/platform/event/computed`；预警事件 `firing/resolved/silenced`。
+
+### 不变量
+
+```yaml invariant
+id: INV-MT-01
+tables: [metric_definitions, metric_values, dashboards, dashboard_widgets, metric_alerts, metric_alert_events]
+desc: 指标来源/聚合受控；口径版本化；快照幂等；预警去重；跨租户隔离；旧报表不变。
+trigger: 指标查询/快照/看板/预警/导出
+enforcement:
+  - test:apps/api/src/metrics/metrics.service.spec.ts#MetricsService
+db: rls:metric_values
+spec: apps/api/src/metrics/metrics.service.spec.ts
 ```
 
 ---

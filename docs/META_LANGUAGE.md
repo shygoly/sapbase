@@ -445,6 +445,28 @@ AI 参考分不能作为正式成绩/归档
 实现落点：`apps/api/src/ai-governance/`；契约：`schemas/ai-governance.schema.json`；
 领域表：`DOMAIN.md`「AI 内容治理」；决策：`DECISIONS.md` D-18。
 
+### 3.20 Metrics & Dashboards（指标/看板）
+
+指标是**受控聚合读模型**，不是业务真源：
+
+- **Definition**：key/period/aggregation/sourceType/sourceConfig/dimensions/permissions/version；口径变更升版本。
+- **Source**：blueprint / platform（表白名单）/ event（审计主题）/ computed（ratio/引用，禁环）。
+- **Snapshot**：`metric_values` 按 org+metric+version+period+维度唯一；重复计算幂等 upsert。
+- **Dashboard/Widget**：widget 只引用 metricKey；可见性校验；复用 ui-kit chart。
+- **Alert**：阈值/窗口/冷却/静默；`metric_alert_events` 去重；恢复事件。
+- **Export**：异步导出，受权限/数据范围约束。
+
+```text
+自定义指标不能写任意 SQL；来源/聚合/维度必须白名单
+同一周期重复计算 = 同结果（幂等）
+预警冷却期内不重复通知；恢复发 resolved
+跨租户不聚合；无权限指标/维度拒绝
+旧 module_statistics / 航运报表不改
+```
+
+实现落点：`apps/api/src/metrics/`；契约：`schemas/metrics.schema.json`；
+领域表：`DOMAIN.md`「指标与看板」；决策：`DECISIONS.md` D-19。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -512,6 +534,12 @@ AI 参考分不能作为正式成绩/归档
 58. **终审卡点**：机器→人工→终审；作者不得自我终审（INV-AIG-04）。
 59. **AI 分仅参考**：未终审 AI 分不得作为正式成绩/归档（INV-AIG-05）。
 60. **申诉强制人工**：申诉后必须人工复核才能 final（INV-AIG-06）。
+61. **指标受控来源**：definition 只能选白名单 source/aggregation/dimension，禁止任意 SQL（INV-MT-01）。
+62. **口径版本化**：定义变更升版本，历史快照保留 metricVersion（INV-MT-02）。
+63. **快照幂等**：同 org/metric/version/period/维度唯一，重复计算结果一致（INV-MT-03）。
+64. **预警去重**：冷却期内不重复通知；恢复发 resolved（INV-MT-04）。
+65. **跨租户隔离**：指标/快照/看板/预警绑定组织，跨租户不聚合（INV-MT-05）。
+66. **旧报表不变**：module_statistics/航运报表/旧页面不改（INV-MT-06）。
 
 ---
 

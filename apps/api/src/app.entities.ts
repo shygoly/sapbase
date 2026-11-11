@@ -44,6 +44,7 @@ import { SearchDocument } from './search/search-document.entity'
 import { RecordSnapshot } from './record-lifecycle/record-snapshot.entity'
 import { RecordOperation } from './record-lifecycle/record-operation.entity'
 import { AiContentProvenance, AiContentLabel, AiScoreRecord } from './ai-governance/ai-governance.entities'
+import { MetricDefinition, MetricValue, Dashboard, DashboardWidget, MetricAlert, MetricAlertEvent } from './metrics/metrics.entities'
 import { OutboxDelivery } from './outbox/outbox-delivery.entity'
 import { OutboxEvent } from './outbox/outbox-event.entity'
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
@@ -112,6 +113,12 @@ export const APP_ENTITIES = [
   AiContentProvenance,
   AiContentLabel,
   AiScoreRecord,
+  MetricDefinition,
+  MetricValue,
+  Dashboard,
+  DashboardWidget,
+  MetricAlert,
+  MetricAlertEvent,
   AgentConfirmationToken,
   BusinessAppInstallation,
   BusinessAppInstallationRevision,

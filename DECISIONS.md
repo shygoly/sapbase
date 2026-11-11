@@ -386,6 +386,28 @@ code_markers:
   - apps/api/src/ai-governance/content-safety.provider.ts
 ```
 
+### D-19：指标用预聚合快照 + 受控 MetricSource，不引入外部 BI/任意 SQL
+
+```yaml decision
+id: D-19
+title: 指标用预聚合快照 + 受控 MetricSource，不引入外部 BI/任意 SQL
+status: accepted
+date: 2026-11
+context: |
+  看板需要跨实体聚合与趋势，但让用户写 SQL 会绕过权限/数据范围，外部 BI 又增加部署和
+  一致性成本；实时全表扫描无法满足首屏性能。
+decision: |
+  指标定义只允许 blueprint/platform/event/computed 四类受控来源与固定聚合；日快照写
+  metric_values（org/metric/version/period/维度唯一），查询优先读快照并有短期缓存。
+  看板 widget 只引用 metricKey；预警事件去重/冷却。
+references:
+  - INV-MT-01
+  - INV-MT-03
+code_markers:
+  - apps/api/src/metrics/metric-source.service.ts
+  - apps/api/src/metrics/metrics.service.ts
+```
+
 ---
 
 ## 附录：命名空间约定

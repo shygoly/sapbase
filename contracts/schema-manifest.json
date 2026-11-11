@@ -1569,6 +1569,107 @@
         "appealReason",
         "metadata"
       ]
+    },
+    "metric_definitions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "key",
+        "name",
+        "period",
+        "aggregation",
+        "sourceType",
+        "sourceConfig",
+        "dimensions",
+        "filters",
+        "permissions",
+        "version",
+        "status",
+        "description"
+      ]
+    },
+    "metric_values": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "metricKey",
+        "metricVersion",
+        "periodStart",
+        "periodEnd",
+        "dimensions",
+        "dimensionHash",
+        "value",
+        "sampleCount",
+        "scopeNodeIds"
+      ]
+    },
+    "dashboards": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "key",
+        "name",
+        "description",
+        "visibility",
+        "defaultFilters",
+        "layout",
+        "status"
+      ]
+    },
+    "dashboard_widgets": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "dashboardId",
+        "key",
+        "type",
+        "metricKey",
+        "config",
+        "layout",
+        "order"
+      ]
+    },
+    "metric_alerts": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "key",
+        "metricKey",
+        "operator",
+        "threshold",
+        "windowMinutes",
+        "frequencyMinutes",
+        "cooldownMinutes",
+        "scope",
+        "channels",
+        "status",
+        "silenceUntil",
+        "metadata"
+      ]
+    },
+    "metric_alert_events": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "alertId",
+        "state",
+        "value",
+        "dedupKey",
+        "notifiedAt",
+        "metadata"
+      ]
     }
   }
 }
