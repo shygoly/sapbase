@@ -43,6 +43,7 @@
     "test:piagent-shell:e2e": "node tests/piagent-shell.e2e.js",
     "test:module-registry:e2e": "node tests/module-registry.e2e.js",
     "test:search:e2e": "node tests/search.e2e.js",
+    "test:evolution:e2e": "node tests/evolution.e2e.js",
     "check:links": "node scripts/meta/check-doc-links.mjs",
     "meta:openspec-ledger": "node scripts/meta/openspec-ledger.mjs",
     "check:openspec-ledger": "node scripts/meta/openspec-ledger.mjs --check",

@@ -16,8 +16,10 @@ import {
   type ReleaseNotificationStore,
   type ReleaseOutboxPort,
 } from './release-ports'
+import { checkUpgradeConflicts, redactBackflow } from './evolution-backflow'
 import {
   assertApproverDistinct,
+  assertDiffWithinEvolutionScope,
   assertEvolutionBinding,
   assertProposalHardRequirements,
   needsSecondApprover,
@@ -120,6 +122,7 @@ export class ReleasesService {
     if (draft.appKey !== input.appKey) throw new BadRequestException('提议只能修改目标 app 的 draft')
     try {
       assertProposalHardRequirements(input)
+      assertDiffWithinEvolutionScope(input.diff, input.evolutionScope)
     } catch (error) {
       throw new BadRequestException((error as Error).message)
     }
@@ -289,6 +292,48 @@ export class ReleasesService {
       createdByAgent: null,
       createdBy: input.createdBy ?? null,
     })
+  }
+
+  /** 实例回流前的脱敏检查；命中项逐条返回，不静默放行。 */
+  checkBackflow(text: string) {
+    return redactBackflow(text)
+  }
+
+  /** 平台升级与实例改动的三方冲突检测；冲突时 compatible=false。 */
+  checkUpgradeConflicts(input: {
+    base: Record<string, unknown>
+    instance: Record<string, unknown>
+    next: Record<string, unknown>
+  }) {
+    return checkUpgradeConflicts(input)
+  }
+
+  /**
+   * 回流路径第一步：实例提议 → 脱敏后的平台评审包。
+   * 不自动创建平台版本；返回明确的下一步与人工审批要求。
+   */
+  async prepareBackflow(id: string, organizationId: string) {
+    const proposal = await this.getProposal(id, organizationId)
+    const payload = {
+      title: proposal.title,
+      summary: proposal.summary,
+      diff: proposal.diff,
+      testPlan: proposal.testPlan,
+      rollbackPlan: proposal.rollbackPlan,
+      platformVersion: proposal.platformVersion,
+      evolutionScope: proposal.evolutionScope,
+    }
+    const redacted = redactBackflow(JSON.stringify(payload))
+    return {
+      proposalId: proposal.id,
+      appKey: proposal.appKey,
+      safe: redacted.safe,
+      findings: redacted.findings,
+      redacted: JSON.parse(redacted.text),
+      next: 'platform-review',
+      requiresManualApproval: true,
+      target: 'platform-template-or-rule-package',
+    }
   }
 
   async getProposal(id: string, organizationId: string): Promise<AppChangeProposal> {

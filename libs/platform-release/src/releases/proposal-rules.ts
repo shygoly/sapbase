@@ -43,6 +43,52 @@ export function assertEvolutionBinding(input: {
   }
 }
 
+const SCOPE_KEYS: Record<string, string[]> = {
+  object: ['object', 'objects', 'entity', 'entities'],
+  field: ['field', 'fields'],
+  form: ['form', 'forms', 'page', 'pages', 'view', 'views'],
+  flow: ['flow', 'flows', 'transition', 'transitions', 'state'],
+  rule: ['rule', 'rules', 'validation'],
+  permission: ['permission', 'permissions', 'role', 'roles'],
+  knowledge: ['knowledge', 'skill', 'skills', 'feedback'],
+}
+
+const FORBIDDEN_DIFF_KEYS = [
+  'tables',
+  'table',
+  'migrations',
+  'migration',
+  'tools',
+  'toolContracts',
+  'contracts',
+  'platformCode',
+  'code',
+  'sql',
+]
+
+/**
+ * 实例演进只到蓝图层：diff 顶层键必须落在已声明 evolutionScope 的允许集合内，
+ * 改表/改工具契约等越界键直接拒绝。
+ */
+export function assertDiffWithinEvolutionScope(
+  diff: Record<string, unknown>,
+  evolutionScope: readonly string[] | null | undefined,
+): void {
+  if (!evolutionScope || evolutionScope.length === 0) return
+  const allowed = new Set<string>()
+  for (const scope of evolutionScope) {
+    for (const key of SCOPE_KEYS[scope] ?? []) allowed.add(key)
+  }
+  for (const key of Object.keys(diff ?? {})) {
+    if (FORBIDDEN_DIFF_KEYS.includes(key)) {
+      throw new Error(`diff.${key} 超出实例演进范围（禁止改表/工具契约/平台代码）`)
+    }
+    if (!allowed.has(key)) {
+      throw new Error(`diff.${key} 不在 evolutionScope 内`)
+    }
+  }
+}
+
 export function assertApproverDistinct(input: { createdBy?: string | null; createdByAgent?: string | null; approverId: string }): void {
   if (input.createdBy && input.createdBy === input.approverId) throw new Error('作者不能批准自己起草的提议')
   if (input.createdByAgent && input.createdByAgent === input.approverId) throw new Error('智能体不能批准自己起草的提议')

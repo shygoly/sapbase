@@ -30,14 +30,14 @@
 - [x] 3.1 提议绑定 `platformVersion` 与 `evolutionScope`（entity/DDL/迁移 179440；approve 时 `assertEvolutionBinding` fail-closed）
 - [x] 3.2 作者 ≠ 批准人：approve 统一走 `assertApproverDistinct`；作者/智能体自批拒绝（schema + 单测）
 - [ ] 3.3 e2e：起草 → 校验 → 预览 → 人批 → 灰度 → 观察 → 回退
-- [ ] 3.4 拒绝用例：越界变更（改表/改工具契约）、缺版本绑定、自批
+- [x] 3.4 拒绝用例：越界 diff/schema 守卫 + 自批 e2e；缺版本绑定由 `assertEvolutionBinding` 单测覆盖
 
 ## 4. 回流与分叉护栏（P3）
 
-- [ ] 4.1 回流脱敏检查：客户名称、金额、单据号、人员信息
-- [ ] 4.2 回流路径：实例提议 → 平台评审 → 模板/规则包 → 平台版本
-- [ ] 4.3 升级冲突检测：结构化 diff + 可执行差异清单，冲突时阻塞升级
-- [ ] 4.4 e2e：冲突阻塞升级；无冲突升级后实例改动保留
+- [x] 4.1 回流脱敏检查：`redactBackflow/scanBackflow`（客户名/金额/单号/人员/手机/邮箱）+ `POST /releases/backflow/check`
+- [x] 4.2 回流路径：`POST /api/builder/proposals/:id/backflow` 生成脱敏平台评审包（requiresManualApproval + next=platform-review）
+- [x] 4.3 升级冲突检测：`checkUpgradeConflicts` 三方合并 + `POST /releases/upgrade/conflicts`；冲突返回 path/base/instance/next
+- [x] 4.4 e2e：`tests/evolution.e2e.js` 验证冲突阻塞 + 单侧改动自动合并 + 回流包脱敏
 
 ## 5. 文档与元语校验（P4）
 

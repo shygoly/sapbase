@@ -1,4 +1,4 @@
-import { assertApproverDistinct, assertEvolutionBinding, assertProposalHardRequirements, needsSecondApprover } from './proposal-rules'
+import { assertApproverDistinct, assertDiffWithinEvolutionScope, assertEvolutionBinding, assertProposalHardRequirements, needsSecondApprover } from './proposal-rules'
 
 describe('proposal rules', () => {
   const base = { diff: {}, evidence: [{}], risk: { breaking: false, permissionChange: false, migration: false, agentBehaviorChange: false }, testPlan: { unit: ['x'] }, rollbackPlan: { strategy: 'deactivate' } }
@@ -26,5 +26,17 @@ describe('proposal rules', () => {
     expect(() => assertEvolutionBinding({ platformVersion: '1.0.0' })).toThrow('evolutionScope')
     expect(() => assertEvolutionBinding({ platformVersion: '1.0.0', evolutionScope: ['unknown'] })).toThrow('未知范围')
     expect(() => assertEvolutionBinding({ platformVersion: '1.0.0', evolutionScope: ['field'] })).not.toThrow()
+  })
+
+  it('rejects diff outside declared evolution scope', () => {
+    expect(() =>
+      assertDiffWithinEvolutionScope({ field: { label: 'x' } }, ['field']),
+    ).not.toThrow()
+    expect(() =>
+      assertDiffWithinEvolutionScope({ tables: { users: 'drop' } }, ['field']),
+    ).toThrow(/超出实例演进范围/)
+    expect(() =>
+      assertDiffWithinEvolutionScope({ form: {} }, ['field']),
+    ).toThrow(/不在 evolutionScope 内/)
   })
 })

@@ -42,6 +42,27 @@ export class ReleasesBuilderController {
     return this.releases.getDraft(id, organizationId)
   }
 
+  @Post('backflow/check')
+  @Auth('system:manage')
+  @ApiOperation({ summary: '实例回流脱敏检查（客户/金额/单号/人员/手机/邮箱）' })
+  checkBackflow(@Body() body: { text: string }) {
+    return this.releases.checkBackflow(body.text)
+  }
+
+  @Post('upgrade/conflicts')
+  @Auth('system:manage')
+  @ApiOperation({ summary: '平台升级与实例改动的三方冲突检测' })
+  checkUpgrade(
+    @Body()
+    body: {
+      base: Record<string, unknown>
+      instance: Record<string, unknown>
+      next: Record<string, unknown>
+    },
+  ) {
+    return this.releases.checkUpgradeConflicts(body)
+  }
+
   @Post('proposals')
   @Auth('system:manage')
   @ApiOperation({ summary: '创建变更提议（服务端硬校验证据/diff/风险/测试/回退）' })
@@ -121,6 +142,16 @@ export class ReleasesBuilderController {
       draftId: body.draftId,
       createdBy: user?.id ?? null,
     })
+  }
+
+  @Post('proposals/:id/backflow')
+  @Auth('system:manage')
+  @ApiOperation({ summary: '实例提议回流：脱敏后生成平台评审包（需人工审批）' })
+  prepareBackflow(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.releases.prepareBackflow(id, organizationId)
   }
 
   @Post('proposals/:id/validate')
