@@ -22,6 +22,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import { AuditLogFilterDto, CreateAuditLogDto } from './dto'
+import { AUDIT_EVENT_CATALOG } from './audit-event-catalog'
 import { ApiResponseDto, PaginatedResponseDto } from '../common'
 import * as Papa from 'papaparse'
 
@@ -56,6 +57,7 @@ export class AuditLogsController {
     @Query('actorType') actorType?: string,
     @Query('correlationId') correlationId?: string,
     @Query('status') status?: string,
+    @Query('legalHold') legalHold?: string,
   ) {
     const filter: AuditLogFilterDto = {
       organizationId,
@@ -63,6 +65,7 @@ export class AuditLogsController {
       actorType,
       correlationId,
       status: status as AuditLogFilterDto['status'],
+      legalHold,
       actor,
       action,
       resource,
@@ -107,6 +110,12 @@ export class AuditLogsController {
   async listArchives(@OrganizationId() organizationId: string) {
     if (!this.retention) return []
     return this.retention.listArchives(organizationId)
+  }
+
+  @Get('catalog')
+  @ApiOperation({ summary: '审计事件目录：动作、必填字段、保留期等级、高风险标记' })
+  eventCatalog() {
+    return AUDIT_EVENT_CATALOG
   }
 
   @Get('checkpoints')

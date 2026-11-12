@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { auditLogsApi } from '@sap/app-shared/lib/api'
-import { AuditLog, AuditAction } from '@sap/app-shared/lib/api/types'
+import { AuditLog, AuditAction, AuditLogFilter } from '@sap/app-shared/lib/api/types'
 import { useNotification } from '@sap/app-shared/core/ui/ui-hooks'
 import { AuditLogsList } from './components/audit-logs-list'
 import { TableSkeleton } from '@sap/app-shared/components/loading-skeleton'
@@ -39,6 +39,11 @@ export default function AuditLogsPage() {
   const [total, setTotal] = useState(0)
   const [action, setAction] = useState<AuditAction | ''>('')
   const [resourceType, setResourceType] = useState('')
+  const [status, setStatus] = useState('')
+  const [actorType, setActorType] = useState('')
+  const [source, setSource] = useState('')
+  const [correlationId, setCorrelationId] = useState('')
+  const [legalHold, setLegalHold] = useState('')
   const [chain, setChain] = useState<{ valid: boolean; checked: number; reason?: string } | null>(null)
   const [alerts, setAlerts] = useState<Array<Record<string, unknown>>>([])
   const [archives, setArchives] = useState<Array<Record<string, unknown>>>([])
@@ -51,6 +56,11 @@ export default function AuditLogsPage() {
       const result = await auditLogsApi.findAll(page, pageSize, {
         action: action as AuditAction | undefined,
         resourceType: resourceType || undefined,
+        status: (status || undefined) as AuditLogFilter['status'],
+        actorType: actorType || undefined,
+        source: source || undefined,
+        correlationId: correlationId || undefined,
+        legalHold: legalHold === '' ? undefined : legalHold === 'true',
       })
       setLogs(result.data || [])
       setTotal(result.total || 0)
@@ -64,7 +74,7 @@ export default function AuditLogsPage() {
   useEffect(() => {
     fetchLogs()
     auditLogsApi.listArchives().then(setArchives).catch(() => setArchives([]))
-  }, [page, pageSize, action, resourceType])
+  }, [page, pageSize, action, resourceType, status, actorType, source, correlationId, legalHold])
 
   const verifyChain = async () => {
     try {
@@ -91,6 +101,11 @@ export default function AuditLogsPage() {
         {
           action: action as AuditAction | undefined,
           resourceType: resourceType || undefined,
+          status: (status || undefined) as AuditLogFilter['status'],
+          actorType: actorType || undefined,
+          source: source || undefined,
+          correlationId: correlationId || undefined,
+          legalHold: legalHold === '' ? undefined : legalHold === 'true',
         },
         format
       )
@@ -131,7 +146,7 @@ export default function AuditLogsPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-4 rounded-lg border border-border bg-card p-4">
+        <div className="flex flex-wrap gap-4 rounded-lg border border-border bg-card p-4">
           <div className="flex-1">
             <label className="block text-sm font-medium text-foreground/80 mb-1">
               Action
@@ -171,6 +186,62 @@ export default function AuditLogsPage() {
               <option value="roles">Roles</option>
               <option value="departments">Departments</option>
               <option value="settings">Settings</option>
+            </select>
+          </div>
+
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">Status</label>
+            <select
+              value={status}
+              onChange={(e) => { setStatus(e.target.value); setPage(1) }}
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Statuses</option>
+              <option value="success">Success</option>
+              <option value="failure">Failure</option>
+              <option value="pending">Pending</option>
+            </select>
+          </div>
+
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">Actor Type</label>
+            <input
+              value={actorType}
+              onChange={(e) => { setActorType(e.target.value); setPage(1) }}
+              placeholder="user / service / system"
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">Source</label>
+            <input
+              value={source}
+              onChange={(e) => { setSource(e.target.value); setPage(1) }}
+              placeholder="api / cron / ui"
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">Correlation ID</label>
+            <input
+              value={correlationId}
+              onChange={(e) => { setCorrelationId(e.target.value); setPage(1) }}
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">Legal Hold</label>
+            <select
+              value={legalHold}
+              onChange={(e) => { setLegalHold(e.target.value); setPage(1) }}
+              className="w-full rounded-lg border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All</option>
+              <option value="true">Held</option>
+              <option value="false">Not held</option>
             </select>
           </div>
         </div>

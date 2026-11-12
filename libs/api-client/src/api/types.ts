@@ -193,23 +193,38 @@ export interface MenuItem extends BaseAuditEntity {
 
 export interface AuditLog extends BaseEntity {
   actor: string // Backend uses 'actor' instead of 'userId'
-  action: AuditAction
+  action: AuditAction | string
   resource: string // Backend uses 'resource' instead of 'resourceType'
   resourceId?: string
   status: 'success' | 'failure' | 'pending'
   changes?: Record<string, any>
   metadata?: Record<string, any>
   timestamp: Date // Backend uses 'timestamp' instead of 'createdAt'
+  actorType?: string | null
+  source?: string | null
+  correlationId?: string | null
+  ip?: string | null
+  userAgent?: string | null
+  seq?: string | null
+  hash?: string | null
+  prevHash?: string | null
+  retentionUntil?: string | null
+  legalHold?: boolean
+  archivedAt?: string | null
 }
 
 export interface AuditLogFilter {
   actor?: string // Backend uses 'actor' instead of 'userId'
-  action?: AuditAction
+  action?: AuditAction | string
   resourceType?: string // Frontend uses 'resourceType', but backend expects 'resource'
   resourceId?: string
   startDate?: string
   endDate?: string
   status?: 'success' | 'failure' | 'pending'
+  actorType?: string
+  source?: string
+  correlationId?: string
+  legalHold?: boolean
 }
 
 // ============ Settings ============

@@ -26,6 +26,11 @@ export const auditLogsApi = {
         ...(filter?.resourceId && { resourceId: filter.resourceId }),
         ...(filter?.startDate && { startDate: filter.startDate }),
         ...(filter?.endDate && { endDate: filter.endDate }),
+        ...(filter?.status && { status: filter.status }),
+        ...(filter?.actorType && { actorType: filter.actorType }),
+        ...(filter?.source && { source: filter.source }),
+        ...(filter?.correlationId && { correlationId: filter.correlationId }),
+        ...(filter?.legalHold !== undefined && { legalHold: String(filter.legalHold) }),
       },
     })
     // Backend returns PaginatedResponseDto: { code, message, data: T[], pagination: { page, pageSize, total, totalPages } }
@@ -102,6 +107,19 @@ export const auditLogsApi = {
 
   async listCheckpoints(): Promise<Array<Record<string, unknown>>> {
     const response = await httpClient.get<any>('/api/audit-logs/checkpoints')
+    return response.data.data || response.data || []
+  },
+
+  async catalog(): Promise<
+    Array<{
+      action: string
+      resource: string
+      requiredFields: string[]
+      retentionClass: string
+      highRisk?: boolean
+    }>
+  > {
+    const response = await httpClient.get<any>('/api/audit-logs/catalog')
     return response.data.data || response.data || []
   },
 

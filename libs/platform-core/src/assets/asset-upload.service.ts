@@ -12,6 +12,11 @@ import { randomUUID } from 'node:crypto'
 import { AssetUploadSession } from './asset-upload-session.entity'
 import { AssetsService } from './assets.service'
 import { OBJECT_STORAGE, type ObjectStorage } from './object-storage'
+import {
+  kindFromAssetNameOrMime,
+  resolveAssetPolicy,
+  validateAssetMetadata,
+} from './asset-policy'
 
 export interface InitUploadInput {
   originalName: string
@@ -28,7 +33,6 @@ export interface UploadPartInput {
   size: number
 }
 
-const DEFAULT_MAX_FILE_BYTES = 200 * 1024 * 1024
 const DEFAULT_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000
 
 /**
@@ -51,13 +55,31 @@ export class AssetUploadService {
     userId: string,
     input: InitUploadInput,
   ): Promise<{ session: AssetUploadSession; uploadUrl: string | null }> {
-    const max = Number(process.env.ASSET_MAX_FILE_BYTES ?? DEFAULT_MAX_FILE_BYTES)
-    if (!Number.isFinite(input.size) || input.size <= 0 || input.size > max) {
-      throw new BadRequestException(`文件大小非法（上限 ${max} bytes）`)
+    const limits = resolveAssetPolicy()
+    const policyError = validateAssetMetadata(input, limits)
+    if (policyError) throw new BadRequestException(policyError)
+
+    const active = await this.sessions.count({
+      where: { organizationId, status: 'uploading' },
+    })
+    if (active >= limits.maxConcurrentUploads) {
+      throw new BadRequestException(
+        `并发上传会话超过上限 ${limits.maxConcurrentUploads}`,
+      )
     }
-    if (!input.mimeType || !input.originalName) {
-      throw new BadRequestException('originalName/mimeType 必填')
+    const pending = await this.sessions.find({
+      where: { organizationId, status: 'uploading' },
+      select: ['expectedSize'],
+    })
+    const pendingBytes = pending.reduce(
+      (sum, session) => sum + Number(session.expectedSize ?? 0),
+      0,
+    )
+    const usedBytes = await this.assets.totalSize(organizationId)
+    if (usedBytes + pendingBytes + input.size > limits.maxOrgBytes) {
+      throw new BadRequestException(`组织存储配额超限（上限 ${limits.maxOrgBytes} bytes）`)
     }
+
     const id = randomUUID()
     const safeName = input.originalName.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 200)
     const objectKey = `org/${organizationId}/uploads/${id}/${safeName}`
@@ -143,7 +165,7 @@ export class AssetUploadService {
       mimeType: session.mimeType,
       size: object.size,
       checksum: session.checksum ?? object.checksum ?? null,
-      kind: kindFromMime(session.mimeType),
+      kind: kindFromAssetNameOrMime(session.originalName, session.mimeType),
       createdBy: session.userId,
     })
     session.status = 'completed'
@@ -160,13 +182,4 @@ export class AssetUploadService {
     session.status = 'aborted'
     return this.sessions.save(session)
   }
-}
-
-function kindFromMime(mimeType: string): 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other' {
-  if (mimeType.startsWith('image/')) return 'image'
-  if (mimeType.startsWith('video/')) return 'video'
-  if (mimeType.startsWith('audio/')) return 'audio'
-  if (mimeType === 'application/pdf' || mimeType.startsWith('text/')) return 'document'
-  if (/zip|tar|gzip|rar|7z/.test(mimeType)) return 'archive'
-  return 'other'
 }

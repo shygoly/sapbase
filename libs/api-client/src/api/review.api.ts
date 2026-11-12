@@ -167,6 +167,16 @@ export const reviewApi = {
     )
   },
 
+  async batchDecide(
+    ids: string[],
+    action: 'approve' | 'reject' | 'request-changes',
+    comment?: string,
+  ): Promise<{ results: Array<{ id: string; ok: boolean; error?: string }> }> {
+    return unwrap(
+      await httpClient.post('/api/review/approvals/batch-decision', { ids, action, comment }),
+    )
+  },
+
   async resubmit(id: string, comment?: string): Promise<ReviewStep[]> {
     return unwrap<ReviewStep[]>(
       await httpClient.post(`/api/review/approvals/${id}/resubmit`, { comment }),

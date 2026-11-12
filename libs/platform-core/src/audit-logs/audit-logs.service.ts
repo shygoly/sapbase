@@ -166,6 +166,11 @@ export class AuditLogsService {
     if (filter?.status) {
       query = query.andWhere('audit_log.status = :status', { status: filter.status })
     }
+    if (filter?.legalHold !== undefined && filter?.legalHold !== '') {
+      query = query.andWhere('audit_log.legalHold = :legalHold', {
+        legalHold: filter.legalHold === 'true',
+      })
+    }
 
     // Get total count
     const total = await query.getCount()

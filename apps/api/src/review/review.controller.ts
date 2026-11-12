@@ -310,6 +310,32 @@ export class ReviewController {
     )
   }
 
+  @Post('approvals/batch-decision')
+  @Auth('review:act')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '批量审批：逐条返回结果，单条失败不影响其余' })
+  async batchDecide(
+    @OrganizationId() organizationId: string,
+    @Body() body: { ids: string[]; action: ReviewDecisionAction; comment?: string },
+    @CurrentUser() user: RuntimeUser | undefined,
+  ) {
+    const ids = Array.isArray(body?.ids) ? body.ids : []
+    const results: Array<{ id: string; ok: boolean; error?: string }> = []
+    for (const id of ids) {
+      try {
+        await this.decisions.act(organizationId, id, actorOf(user), body.action, body.comment)
+        results.push({ id, ok: true })
+      } catch (error) {
+        results.push({
+          id,
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
+    return { results }
+  }
+
   @Post('approvals/:id/delegate')
   @Auth('review:delegate')
   @HttpCode(HttpStatus.OK)

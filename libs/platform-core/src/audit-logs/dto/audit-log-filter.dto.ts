@@ -21,6 +21,11 @@ export class AuditLogFilterDto {
   @IsString()
   status?: 'success' | 'failure' | 'pending'
 
+  /** 法律保留过滤：'true' / 'false'，用字符串接收 query 避免隐式转型 */
+  @IsOptional()
+  @IsString()
+  legalHold?: string
+
   @IsOptional()
   @IsString()
   actor?: string

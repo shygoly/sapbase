@@ -16,6 +16,13 @@ function repo(rows: any[] = []) {
         (row) => row.id === where.id && row.organizationId === where.organizationId,
       ) ?? null,
     ),
+    count: jest.fn(async ({ where }: any) =>
+      store.filter((row) => row.organizationId === where.organizationId && row.status === where.status)
+        .length,
+    ),
+    find: jest.fn(async ({ where }: any) =>
+      store.filter((row) => row.organizationId === where.organizationId && row.status === where.status),
+    ),
   }
 }
 
@@ -23,6 +30,7 @@ function assets(existing: any = null) {
   return {
     findByObjectKey: jest.fn(async () => existing),
     create: jest.fn(async (_org, input) => ({ id: 'asset-1', ...input })),
+    totalSize: jest.fn(async () => 0),
   }
 }
 

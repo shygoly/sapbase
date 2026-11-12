@@ -76,6 +76,16 @@ export class AssetsService {
     return this.assets.findOne({ where: { organizationId, objectKey } })
   }
 
+  async totalSize(organizationId: string): Promise<number> {
+    const raw = await this.assets
+      .createQueryBuilder('asset')
+      .select('COALESCE(SUM(CAST(asset.size AS BIGINT)), 0)', 'total')
+      .where('asset.organizationId = :organizationId', { organizationId })
+      .andWhere("asset.status <> 'deleted'")
+      .getRawOne<{ total: string | number }>()
+    return Number(raw?.total ?? 0)
+  }
+
   async list(organizationId: string, input: ListAssetsInput = {}) {
     const page = Math.max(1, Math.floor(input.page ?? 1))
     const pageSize = Math.max(1, Math.min(100, Math.floor(input.pageSize ?? 20)))
