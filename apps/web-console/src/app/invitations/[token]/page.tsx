@@ -44,7 +44,8 @@ export default function InvitationAcceptPage() {
 
     setIsAccepting(true)
     try {
-      await organizationsApi.acceptInvitation(token)
+      if (!invitation) return
+      await organizationsApi.acceptInvitation(invitation.organizationId, token)
       toast.success('Invitation accepted successfully!')
       // Redirect to dashboard or organization page
       router.push('/dashboard')

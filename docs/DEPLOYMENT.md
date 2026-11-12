@@ -34,3 +34,16 @@ DB_HOST=localhost DB_PORT=55432 DB_USERNAME=postgres DB_PASSWORD=postgres DB_NAM
 - 启动日志必须显示 `synchronize=false`
 - 生产数据库角色不得是表 owner、superuser 或 `BYPASSRLS`
 - 先部署兼容代码，再激活 Release；回退 Release 不需要回滚进程
+
+## SaaS 多租户部署
+
+- 数据库：组织/成员/邀请/活动表 + `organizationId` 索引；生产应用角色必须
+  非 owner、非 superuser、无 `BYPASSRLS`，并设置 `app.organization_id` 事务上下文。
+- 缓存：多实例部署使用 Redis（`CACHE_DRIVER=redis`）；会话缓存只加速，
+  `auth_sessions` 是吊销真源。
+- 订阅：配置 `STRIPE_SECRET_KEY`、`STRIPE_WEBHOOK_SECRET`，前端配置
+  `NEXT_PUBLIC_STRIPE_PRICE_PRO` / `NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE`。
+  未配置时组织/团队功能正常，checkout/portal 返回 400。
+- 迁移：先跑 `npm run identity:backfill-roles -- --apply`，再跑
+  `npm run saas:verify-integrity`；error 为 0 才切换流量。
+- 回滚：先停 Stripe webhook，再回滚应用与迁移；保留 `users.roleId` 兼容回退。

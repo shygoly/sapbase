@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { organizationsApi, Invitation } from '@sap/app-shared/lib/api/organizations.api'
+import { organizationsApi, type Invitation } from '@sap/api-client'
 import { useAuthStore } from '@sap/app-shared/core/store/auth.store'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@sap/app-shared/components/ui/card'
 import { Button } from '@sap/app-shared/components/ui/button'
@@ -41,10 +41,11 @@ export default function InvitationAcceptPage() {
       router.push(`/login?returnUrl=/invitations/${token}`)
       return
     }
+    if (!invitation) return
 
     setIsAccepting(true)
     try {
-      await organizationsApi.acceptInvitation(token)
+      await organizationsApi.acceptInvitation(invitation.organizationId, token)
       toast.success('Invitation accepted successfully!')
       // Redirect to dashboard or organization page
       router.push('/dashboard')

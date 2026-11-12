@@ -16,6 +16,8 @@ export enum ActivityType {
   ACCEPT_INVITATION = 'ACCEPT_INVITATION',
   UPDATE_MEMBER_ROLE = 'UPDATE_MEMBER_ROLE',
   UPDATE_ORGANIZATION = 'UPDATE_ORGANIZATION',
+  CANCEL_INVITATION = 'CANCEL_INVITATION',
+  UPDATE_BRAND_CONFIG = 'UPDATE_BRAND_CONFIG',
 }
 
 @Entity('organization_activities')
@@ -30,19 +32,19 @@ export class OrganizationActivity extends BaseEntity {
   user: User
 
   @Column({ nullable: true })
-  userId: string
+  userId: string | null
 
   @Column({ type: 'varchar', length: 100 })
   action: ActivityType
 
   @Column({ type: 'text', nullable: true })
-  description: string
+  description: string | null
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any>
+  metadata: Record<string, any> | null
 
   @Column({ type: 'varchar', length: 45, nullable: true })
-  ipAddress: string
+  ipAddress: string | null
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   timestamp: Date

@@ -168,3 +168,10 @@ export {
   type ServiceClientRecord,
   type SyncRunRecord,
 } from './identity.api'
+
+export {
+  organizationsApi,
+  type Organization,
+  type OrganizationMember,
+  type Invitation,
+} from './organizations.api'

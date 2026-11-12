@@ -1,4 +1,6 @@
 import { Controller, Post, Get, Body, Param, Req, Res, Headers, RawBodyRequest } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { OrganizationsService } from './organizations.service'
 import { Request, Response } from 'express'
 import { StripeService } from './stripe.service'
 import { Auth } from '../common/decorators/auth.decorator'
@@ -15,7 +17,30 @@ export class SubscriptionsController {
     private readonly stripeService: StripeService,
     @Inject(SUBSCRIPTION_SERVICE)
     private readonly subscriptionService: ISubscriptionService,
+    private readonly organizations: OrganizationsService,
+    private readonly config: ConfigService,
   ) {}
+
+  @Get('status')
+  @Auth()
+  async status(
+    @Param('organizationId') organizationId: string,
+    @CurrentUser() user: User,
+  ) {
+    const organization = await this.organizations.findOne(organizationId, user.id)
+    return {
+      configured: Boolean(this.config.get<string>('STRIPE_SECRET_KEY')),
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        planName: organization.planName,
+        subscriptionStatus: organization.subscriptionStatus,
+        stripeCustomerId: organization.stripeCustomerId,
+        stripeSubscriptionId: organization.stripeSubscriptionId,
+        stripeProductId: organization.stripeProductId,
+      },
+    }
+  }
 
   @Post('checkout')
   @Auth()

@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, BadRequestException } from '@nestjs/common'
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, BadRequestException } from '@nestjs/common'
 import { OrganizationsService } from './organizations.service'
+import { ActivityLogService } from './activity-log.service'
 import { Organization } from './organization.entity'
 import { OrganizationMember, OrganizationRole } from './organization-member.entity'
 import { Auth } from '../common/decorators/auth.decorator'
@@ -25,6 +26,7 @@ export class OrganizationsController {
     private readonly updateOrganizationService: UpdateOrganizationService,
     private readonly getOrganizationService: GetOrganizationService,
     private readonly getMembersService: GetMembersService,
+    private readonly activityLog: ActivityLogService,
   ) {}
 
   @Post()
@@ -84,6 +86,17 @@ export class OrganizationsController {
       }
       throw err
     }
+  }
+
+  @Get(':id/activities')
+  @Auth()
+  async activities(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Query('limit') limit?: string,
+  ) {
+    await this.organizationsService.findOne(id, user.id)
+    return this.activityLog.list(id, limit ? Number(limit) : 50)
   }
 
   @Get(':id/members')

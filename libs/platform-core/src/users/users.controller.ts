@@ -18,6 +18,7 @@ import { UsersService } from './users.service'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { Auth } from '../common/decorators/auth.decorator'
+import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import { ApiResponseDto, PaginatedResponseDto } from '../common'
 
 @ApiTags('Users')
@@ -43,11 +44,12 @@ export class UsersController {
   @ApiOperation({ summary: 'Get all users with pagination' })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
   async findAll(
+    @OrganizationId() organizationId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('pageSize', new DefaultValuePipe(10), ParseIntPipe) pageSize: number = 10,
     @Query('search') search?: string,
   ) {
-    const result = await this.usersService.findAll(page, pageSize, search)
+    const result = await this.usersService.findAll(page, pageSize, search, organizationId)
     return PaginatedResponseDto.create(
       result.data,
       result.page,
@@ -61,8 +63,8 @@ export class UsersController {
   @Auth('users:read')
   @ApiOperation({ summary: 'Get a specific user by ID' })
   @ApiResponse({ status: 200, description: 'User retrieved successfully' })
-  async findOne(@Param('id') id: string) {
-    const user = await this.usersService.findOne(id)
+  async findOne(@Param('id') id: string, @OrganizationId() organizationId: string) {
+    const user = await this.usersService.findOne(id, organizationId)
     return ApiResponseDto.success(user, 'User retrieved successfully')
   }
 
@@ -73,8 +75,9 @@ export class UsersController {
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @OrganizationId() organizationId: string,
   ) {
-    const user = await this.usersService.update(id, updateUserDto)
+    const user = await this.usersService.update(id, updateUserDto, organizationId)
     return ApiResponseDto.success(user, 'User updated successfully')
   }
 
@@ -83,7 +86,10 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a user' })
   @ApiResponse({ status: 204, description: 'User deleted successfully' })
-  async remove(@Param('id') id: string): Promise<void> {
-    return this.usersService.remove(id)
+  async remove(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<void> {
+    return this.usersService.remove(id, organizationId)
   }
 }

@@ -148,8 +148,10 @@ export const organizationsApi = {
   /**
    * Accept invitation
    */
-  async acceptInvitation(token: string): Promise<OrganizationMember> {
-    const response = await httpClient.post<any>(`/api/organizations/api/invitations/accept/${token}`)
+  async acceptInvitation(organizationId: string, token: string): Promise<OrganizationMember> {
+    const response = await httpClient.post<any>(
+      `/api/organizations/${organizationId}/invitations/accept/${token}`,
+    )
     return response.data.data || response.data
   },
 
@@ -157,6 +159,39 @@ export const organizationsApi = {
    * Cancel invitation
    */
   async cancelInvitation(organizationId: string, invitationId: string): Promise<void> {
-    await httpClient.delete(`/api/organizations/${organizationId}/api/invitations/${invitationId}`)
+    await httpClient.delete(`/api/organizations/${organizationId}/invitations/${invitationId}`)
+  },
+
+  async getActivities(organizationId: string, limit = 50) {
+    const response = await httpClient.get<any>(`/api/organizations/${organizationId}/activities`, {
+      params: { limit },
+    })
+    return response.data.data || response.data || []
+  },
+
+  async getSubscriptionStatus(organizationId: string) {
+    const response = await httpClient.get<any>(
+      `/api/organizations/${organizationId}/subscriptions/status`,
+    )
+    return response.data.data || response.data
+  },
+
+  async createCheckoutSession(organizationId: string, priceId: string): Promise<{ url: string }> {
+    const response = await httpClient.post<any>(
+      `/api/organizations/${organizationId}/subscriptions/checkout`,
+      { priceId },
+    )
+    return response.data.data || response.data
+  },
+
+  async createPortalSession(
+    organizationId: string,
+    returnUrl: string,
+  ): Promise<{ url: string }> {
+    const response = await httpClient.post<any>(
+      `/api/organizations/${organizationId}/subscriptions/portal`,
+      { returnUrl },
+    )
+    return response.data.data || response.data
   },
 }

@@ -52,7 +52,6 @@ Users SHALL be able to switch between their organizations.
 - **AND** the UI SHALL refresh to show data from the selected organization
 - **AND** subsequent API requests SHALL use the new organization context
 
-## MODIFIED Requirements
 
 ### Requirement: User Authentication
 User authentication SHALL be modified to support organization context.

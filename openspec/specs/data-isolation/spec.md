@@ -1,7 +1,8 @@
-# Data Isolation Specification
+# data-isolation Specification
 
-## ADDED Requirements
-
+## Purpose
+TBD - created by archiving change migrate-to-saas-architecture. Update Purpose after archive.
+## Requirements
 ### Requirement: Tenant Data Isolation
 All tenant-scoped data SHALL be isolated by organizationId.
 
@@ -52,8 +53,6 @@ System administrators SHALL be able to access data across organizations for supp
 - **AND** the access SHALL be logged for audit purposes
 - **AND** admin actions SHALL be clearly marked in logs
 
-## MODIFIED Requirements
-
 ### Requirement: Entity Schema
 All tenant-scoped entities SHALL include organizationId.
 
@@ -71,3 +70,4 @@ All repository queries SHALL be tenant-aware.
 - **THEN** the query SHALL include organizationId filter
 - **AND** the filter SHALL be applied automatically via interceptor or base repository method
 - **AND** manual queries SHALL also include organizationId filter
+

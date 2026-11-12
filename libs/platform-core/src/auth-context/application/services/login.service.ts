@@ -166,17 +166,19 @@ export class LoginService {
       new UserLoggedInEvent(user.id, user.email, selectedOrgId, new Date()),
     )
 
-    await this.auditLogs?.create({
-      organizationId: selectedOrgId,
-      action: 'auth.login',
-      resource: 'session',
-      actor: user.id,
-      actorType: 'user',
-      status: 'success',
-      ip: command.ip ?? null,
-      userAgent: command.userAgent ?? null,
-      source: 'auth',
-    })
+    if (selectedOrgId) {
+      await this.auditLogs?.create({
+        organizationId: selectedOrgId,
+        action: 'auth.login',
+        resource: 'session',
+        actor: user.id,
+        actorType: 'user',
+        status: 'success',
+        ip: command.ip ?? null,
+        userAgent: command.userAgent ?? null,
+        source: 'auth',
+      })
+    }
 
     return {
       access_token,

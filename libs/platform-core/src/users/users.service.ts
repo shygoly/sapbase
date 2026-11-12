@@ -70,10 +70,19 @@ export class UsersService {
     page: number = 1,
     pageSize: number = 10,
     search?: string,
+    organizationId?: string,
   ): Promise<PaginatedResult<User>> {
     const skip = (page - 1) * pageSize
 
     let query = this.usersRepository.createQueryBuilder('user')
+    if (organizationId) {
+      query = query.innerJoin(
+        OrganizationMember,
+        'member',
+        'member.userId = user.id AND member.organizationId = :organizationId',
+        { organizationId },
+      )
+    }
 
     if (search) {
       query = query.where(
@@ -103,8 +112,9 @@ export class UsersService {
     }
   }
 
-  async findOne(id: string): Promise<User> {
+  async findOne(id: string, organizationId?: string): Promise<User> {
     const user = await BaseCrudHelper.findOneOrFail(this.usersRepository, id, 'User')
+    if (organizationId) await this.assertMember(organizationId, id)
     return (await this.ensureRoleAssociation(user))!
   }
 
@@ -119,7 +129,8 @@ export class UsersService {
     return this.ensureRoleAssociation(user)
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(id: string, updateUserDto: UpdateUserDto, organizationId?: string): Promise<User> {
+    if (organizationId) await this.assertMember(organizationId, id)
     const { roleId, password, departmentId, ...rest } = updateUserDto
     const before = await this.usersRepository.findOne({ where: { id } })
     if (!before) throw new NotFoundException('User not found')
@@ -169,7 +180,8 @@ export class UsersService {
     return (await this.ensureRoleAssociation(updatedUser))!
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, organizationId?: string): Promise<void> {
+    if (organizationId) await this.assertMember(organizationId, id)
     await BaseCrudHelper.removeById(this.usersRepository, id, 'User')
     await this.eventBus?.publishSync(new UserSecurityChangedEvent(id, 'account-deleted'))
   }
@@ -188,6 +200,13 @@ export class UsersService {
     const next = (user.permissionVersion ?? 1) + 1
     await this.usersRepository.update({ id }, { permissionVersion: next })
     return next
+  }
+
+  private async assertMember(organizationId: string, userId: string): Promise<void> {
+    const member = await this.organizationMembersRepository.findOne({
+      where: { organizationId, userId },
+    })
+    if (!member) throw new NotFoundException('User not found in organization')
   }
 
   private async ensureDepartmentExists(departmentId?: string | null): Promise<void> {

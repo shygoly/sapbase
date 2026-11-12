@@ -67,7 +67,8 @@
     "ci": "bash scripts/ci/pipeline.sh",
     "ci:record-evidence": "node scripts/ci/record-test-evidence.mjs",
     "e2e": "node scripts/e2e-release-agent.mjs",
-    "identity:backfill-roles": "node scripts/identity/backfill-member-roles.mjs"
+    "identity:backfill-roles": "node scripts/identity/backfill-member-roles.mjs",
+    "saas:verify-integrity": "node scripts/saas/verify-data-integrity.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

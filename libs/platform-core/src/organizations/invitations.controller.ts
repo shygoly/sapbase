@@ -78,9 +78,8 @@ export class InvitationsController {
         userId: user.id,
         userEmail: user.email,
       })
-      // Load relations for API response - need organizationId from invitation
-      const invitation = await this.invitationsService.getInvitationByToken(token)
-      const members = await this.organizationsService.getMembers(invitation.organizationId, user.id)
+      // Load relations for API response; 已接受邀请不能再走 pending 查询。
+      const members = await this.organizationsService.getMembers(member.organizationId, user.id)
       const found = members.find((m) => m.userId === user.id)
       return found || this.mapDomainMemberToResponse(member)
     } catch (err) {

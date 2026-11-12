@@ -1,7 +1,8 @@
-# Billing and Subscription Specification
+# billing-subscription Specification
 
-## ADDED Requirements
-
+## Purpose
+TBD - created by archiving change migrate-to-saas-architecture. Update Purpose after archive.
+## Requirements
 ### Requirement: Stripe Integration
 The system SHALL integrate with Stripe for subscription and payment processing.
 
@@ -76,8 +77,6 @@ Organizations SHALL have access to billing history.
 - **AND** invoices SHALL be downloadable as PDF
 - **AND** invoices SHALL be fetched from Stripe
 
-## MODIFIED Requirements
-
 ### Requirement: Feature Access Control
 Feature access SHALL be gated by subscription plans.
 
@@ -86,3 +85,4 @@ Feature access SHALL be gated by subscription plans.
 - **THEN** the system SHALL check if the organization's plan includes that feature
 - **AND** if not included, the system SHALL show upgrade prompt or deny access
 - **AND** feature flags SHALL be determined by subscription plan
+

@@ -385,3 +385,27 @@ For API documentation issues:
 - `POST /api/identity/sync/runs/:id/confirm` — 确认高风险离职差异
 - `provider.config.users` 支持静态身份源；`provider.config.confirmDeactivations=true`
   时离职差异先进入 `pending`，人工确认后执行。
+
+## Organizations & SaaS
+
+所有受保护接口需要 `Authorization` 与 `X-Organization-Id`；服务端校验 JWT 组织
+与成员关系，数据库 RLS 兜底。
+
+- `GET/POST /api/organizations`
+- `GET/PATCH /api/organizations/:id`
+- `GET /api/organizations/:id/members`
+- `POST /api/organizations/:id/members` — `{ userId, role }`
+- `DELETE /api/organizations/:id/members/:userId`
+- `PATCH /api/organizations/:id/members/:userId/role` — `{ role }`
+- `GET /api/organizations/:id/activities?limit=`
+- `GET/POST /api/organizations/:id/invitations`
+- `POST /api/organizations/:id/invitations/accept/:token`
+- `DELETE /api/organizations/:id/invitations/:id`
+- `GET /api/invitations/token/:token` — 公开邀请详情
+- `GET /api/organizations/:id/subscriptions/status`
+- `POST /api/organizations/:id/subscriptions/checkout` — `{ priceId }`
+- `POST /api/organizations/:id/subscriptions/portal` — `{ returnUrl }`
+- `POST /api/organizations/:id/subscriptions/webhook` — Stripe 签名 webhook
+
+用户列表/详情已按组织过滤；跨组织用户返回 404。订阅未配置时 status 返回
+`configured=false`，checkout/portal 返回 400。

@@ -8,6 +8,8 @@ import { InvitationsService } from './invitations.service'
 import { SubscriptionsController } from './subscriptions.controller'
 import { BrandConfigController } from './brand-config.controller'
 import { StripeService } from './stripe.service'
+import { ActivityLogService } from './activity-log.service'
+import { OrganizationActivitySubscriber } from './organization-activity.subscriber'
 import { Organization } from './organization.entity'
 import { OrganizationMember } from './organization-member.entity'
 import { Invitation } from './invitation.entity'
@@ -29,8 +31,15 @@ import { StorageModule } from '../common/storage/storage.module'
     StorageModule,
   ],
   controllers: [OrganizationsController, InvitationsController, InvitationsPublicController, SubscriptionsController, BrandConfigController],
-  providers: [OrganizationsService, InvitationsService, StripeService, TenantContextMiddleware],
-  exports: [OrganizationsService, InvitationsService, StripeService],
+  providers: [
+    OrganizationsService,
+    InvitationsService,
+    StripeService,
+    ActivityLogService,
+    OrganizationActivitySubscriber,
+    TenantContextMiddleware,
+  ],
+  exports: [OrganizationsService, InvitationsService, StripeService, ActivityLogService],
 })
 export class OrganizationsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

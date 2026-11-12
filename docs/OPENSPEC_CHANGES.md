@@ -7,11 +7,11 @@
 
 | 指标 | 数量 |
 | --- | --- |
-| 进行中 | 14 |
+| 进行中 | 13 |
 | 已完成未归档 | 0 |
 | 无任务/骨架 | 0 |
-| 已归档 | 71 |
-| 活跃任务 | 81/358 |
+| 已归档 | 72 |
+| 活跃任务 | 36/283 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -32,7 +32,6 @@
 | [refactor-ai-native-control-plane-boundaries](../openspec/changes/refactor-ai-native-control-plane-boundaries/) | 冻结实际控制面边界与保留技术栈的架构契约 | 0/16 | 7 req / 1 文件 | [P](../openspec/changes/refactor-ai-native-control-plane-boundaries/proposal.md) [D](../openspec/changes/refactor-ai-native-control-plane-boundaries/design.md) [T](../openspec/changes/refactor-ai-native-control-plane-boundaries/tasks.md) [S](../openspec/changes/refactor-ai-native-control-plane-boundaries/specs) | 2026-11-10 |
 | [restore-reproducible-build-and-quality-gates](../openspec/changes/restore-reproducible-build-and-quality-gates/) | 收紧现有构建拓扑、CI 门禁与交付证据 | 0/19 | 7 req / 2 文件 | [P](../openspec/changes/restore-reproducible-build-and-quality-gates/proposal.md) [D](../openspec/changes/restore-reproducible-build-and-quality-gates/design.md) [T](../openspec/changes/restore-reproducible-build-and-quality-gates/tasks.md) [S](../openspec/changes/restore-reproducible-build-and-quality-gates/specs) | 2026-11-10 |
 | [unify-effective-release-activation-and-recovery](../openspec/changes/unify-effective-release-activation-and-recovery/) | 变更：统一实际 Release 生效、安装路由与可恢复回退 | 0/18 | 7 req / 2 文件 | [P](../openspec/changes/unify-effective-release-activation-and-recovery/proposal.md) [D](../openspec/changes/unify-effective-release-activation-and-recovery/design.md) [T](../openspec/changes/unify-effective-release-activation-and-recovery/tasks.md) [S](../openspec/changes/unify-effective-release-activation-and-recovery/specs) | 2026-11-10 |
-| [migrate-to-saas-architecture](../openspec/changes/migrate-to-saas-architecture/) | Migrate to SaaS Architecture | 45/75 | 21 req / 4 文件 | [P](../openspec/changes/migrate-to-saas-architecture/proposal.md) [D](../openspec/changes/migrate-to-saas-architecture/design.md) [T](../openspec/changes/migrate-to-saas-architecture/tasks.md) [S](../openspec/changes/migrate-to-saas-architecture/specs) | 2026-02-18 |
 
 ## 已完成未归档
 
@@ -51,6 +50,7 @@ _暂无_
 | [add-education-reference-blueprint](../openspec/changes/archive/2026-11-12-add-education-reference-blueprint/) | 教育参考蓝图（Education Reference Blueprint） | 74/74 | 12 req / 1 文件 | [P](../openspec/changes/archive/2026-11-12-add-education-reference-blueprint/proposal.md) [D](../openspec/changes/archive/2026-11-12-add-education-reference-blueprint/design.md) [T](../openspec/changes/archive/2026-11-12-add-education-reference-blueprint/tasks.md) [S](../openspec/changes/archive/2026-11-12-add-education-reference-blueprint/specs) | 2026-11-12 |
 | [add-external-integration-connector](../openspec/changes/archive/2026-11-12-add-external-integration-connector/) | 外部集成连接器 | 58/58 | 10 req / 1 文件 | [P](../openspec/changes/archive/2026-11-12-add-external-integration-connector/proposal.md) [D](../openspec/changes/archive/2026-11-12-add-external-integration-connector/design.md) [T](../openspec/changes/archive/2026-11-12-add-external-integration-connector/tasks.md) [S](../openspec/changes/archive/2026-11-12-add-external-integration-connector/specs) | 2026-11-12 |
 | [add-identity-federation-and-session-governance](../openspec/changes/archive/2026-11-12-add-identity-federation-and-session-governance/) | 身份联邦与会话治理 | 73/73 | 13 req / 2 文件 | [P](../openspec/changes/archive/2026-11-12-add-identity-federation-and-session-governance/proposal.md) [D](../openspec/changes/archive/2026-11-12-add-identity-federation-and-session-governance/design.md) [T](../openspec/changes/archive/2026-11-12-add-identity-federation-and-session-governance/tasks.md) [S](../openspec/changes/archive/2026-11-12-add-identity-federation-and-session-governance/specs) | 2026-11-12 |
+| [migrate-to-saas-architecture](../openspec/changes/archive/2026-11-12-migrate-to-saas-architecture/) | Migrate to SaaS Architecture | 75/75 | 21 req / 4 文件 | [P](../openspec/changes/archive/2026-11-12-migrate-to-saas-architecture/proposal.md) [D](../openspec/changes/archive/2026-11-12-migrate-to-saas-architecture/design.md) [T](../openspec/changes/archive/2026-11-12-migrate-to-saas-architecture/tasks.md) [S](../openspec/changes/archive/2026-11-12-migrate-to-saas-architecture/specs) | 2026-11-12 |
 | [add-a2-release-automation](../openspec/changes/archive/2026-11-11-add-a2-release-automation/) | A2 低风险发布自动化（P5） | 31/31 | 6 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-a2-release-automation/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-a2-release-automation/design.md) [T](../openspec/changes/archive/2026-11-11-add-a2-release-automation/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-a2-release-automation/specs) | 2026-11-11 |
 | [add-agent-knowledge-and-eval](../openspec/changes/archive/2026-11-11-add-agent-knowledge-and-eval/) | PiAgent 知识库与评测闸门（P3b） | 38/38 | 8 req / 2 文件 | [P](../openspec/changes/archive/2026-11-11-add-agent-knowledge-and-eval/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-agent-knowledge-and-eval/design.md) [T](../openspec/changes/archive/2026-11-11-add-agent-knowledge-and-eval/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-agent-knowledge-and-eval/specs) | 2026-11-11 |
 | [add-ai-blueprint-signing-and-load](../openspec/changes/archive/2026-11-11-add-ai-blueprint-signing-and-load/) | AI Blueprint 签名、授权与装载验证 | 13/13 | 2 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-ai-blueprint-signing-and-load/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-ai-blueprint-signing-and-load/design.md) [T](../openspec/changes/archive/2026-11-11-add-ai-blueprint-signing-and-load/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-ai-blueprint-signing-and-load/specs) | 2026-11-11 |
