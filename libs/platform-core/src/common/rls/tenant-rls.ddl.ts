@@ -41,6 +41,7 @@ const DIRECT_TABLES = [
   'data_policies',
   'scope_versions',
   'jobs',
+  'organization_members',
   'organization_member_roles',
   'auth_sessions',
   'identity_providers',
@@ -184,6 +185,54 @@ export const TENANT_RLS_DDL: string[] = [
       END IF;
     END $$`,
   ),
+  `DO $$ BEGIN
+    IF to_regclass('public.organizations') IS NOT NULL THEN
+      ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS organizations_select ON public.organizations;
+      CREATE POLICY organizations_select ON public.organizations
+        FOR SELECT
+        USING (
+          id::text = public.current_organization_id()::text
+          OR EXISTS (
+            SELECT 1 FROM public.organization_members m
+            WHERE m."organizationId" = organizations.id
+              AND m."userId"::text = public.current_user_id()::text
+          )
+        );
+      DROP POLICY IF EXISTS organizations_insert ON public.organizations;
+      CREATE POLICY organizations_insert ON public.organizations
+        FOR INSERT
+        WITH CHECK (public.current_user_id() IS NOT NULL);
+      DROP POLICY IF EXISTS organizations_update ON public.organizations;
+      CREATE POLICY organizations_update ON public.organizations
+        FOR UPDATE
+        USING (id::text = public.current_organization_id()::text)
+        WITH CHECK (id::text = public.current_organization_id()::text);
+      DROP POLICY IF EXISTS organizations_delete ON public.organizations;
+      CREATE POLICY organizations_delete ON public.organizations
+        FOR DELETE
+        USING (id::text = public.current_organization_id()::text);
+    END IF;
+  END $$`,
+  `DO $$ BEGIN
+    IF to_regclass('public.organization_members') IS NOT NULL THEN
+      DROP POLICY IF EXISTS organization_members_self_read ON public.organization_members;
+      CREATE POLICY organization_members_self_read ON public.organization_members
+        FOR SELECT
+        USING ("userId"::text = public.current_user_id()::text);
+      DROP POLICY IF EXISTS organization_members_onboarding_insert ON public.organization_members;
+      CREATE POLICY organization_members_onboarding_insert ON public.organization_members
+        FOR INSERT
+        WITH CHECK (
+          "userId"::text = public.current_user_id()::text
+          AND role = 'owner'
+          AND NOT EXISTS (
+            SELECT 1 FROM public.organization_members m
+            WHERE m."organizationId" = organization_members."organizationId"
+          )
+        );
+    END IF;
+  END $$`,
   `DO $$ BEGIN
     IF to_regclass('public.atomic_contracts') IS NOT NULL THEN
       ALTER TABLE public.atomic_contracts ENABLE ROW LEVEL SECURITY;

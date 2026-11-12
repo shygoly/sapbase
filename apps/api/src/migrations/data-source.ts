@@ -54,6 +54,7 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1795400000000-AddAssetMediaPipeline.ts'),
     path.join(__dirname, '1795500000000-AddExternalIntegrationConnector.ts'),
     path.join(__dirname, '1795600000000-AddIdentityGovernance.ts'),
+    path.join(__dirname, '1795700000000-ExtendOrganizationRls.ts'),
   ],
   synchronize: false,
   logging: true,

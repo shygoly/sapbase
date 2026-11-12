@@ -11,6 +11,7 @@ describe('tenant RLS DDL', () => {
       'app_installations',
       'app_installation_revisions',
       'agent_confirmation_tokens',
+      'organization_members',
       'outbox_events',
       'scope_dimensions',
       'scope_nodes',
@@ -23,6 +24,10 @@ describe('tenant RLS DDL', () => {
       expect(joined).toContain(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`)
     }
     expect(joined).toContain('tenant_parent_isolation ON public.module_capabilities')
+    expect(joined).toContain('organizations_select')
+    expect(joined).toContain('organizations_insert')
+    expect(joined).toContain('organization_members_self_read')
+    expect(joined).toContain('organization_members_onboarding_insert')
     expect(joined).toContain('atomic_contracts_read')
   })
 
@@ -30,6 +35,14 @@ describe('tenant RLS DDL', () => {
     expect(joined).toContain('public.current_organization_id()')
     expect(joined.match(/WITH CHECK/g)?.length).toBeGreaterThan(30)
     expect(joined).toContain(`current_setting('app.organization_id', true)`)
+  })
+
+  it('组织 onboarding 只允许首个 owner 自加入，成员可读自己的成员关系', () => {
+    expect(joined).toContain(`"userId"::text = public.current_user_id()::text`)
+    expect(joined).toContain(`role = 'owner'`)
+    expect(joined).toContain('NOT EXISTS')
+    expect(joined).toContain('organization_members_self_read')
+    expect(joined).toContain('organizations_insert')
   })
 
   it('子表策略不伪造第二份租户判定', () => {
