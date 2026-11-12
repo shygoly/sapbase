@@ -1,0 +1,143 @@
+{
+  "entities": [
+    {
+      "name": "Customer",
+      "fields": [
+        { "name": "name", "type": "text", "required": true },
+        { "name": "industry", "type": "text" },
+        {
+          "name": "level",
+          "type": "enum",
+          "values": ["A", "B", "C"]
+        },
+        { "name": "creditLimit", "type": "decimal" },
+        { "name": "ownerId", "type": "text" }
+      ],
+      "states": [
+        { "name": "active", "initial": true },
+        { "name": "inactive" },
+        { "name": "archived", "final": true }
+      ],
+      "transitions": [
+        { "from": "active", "to": "inactive" },
+        { "from": "inactive", "to": "active" },
+        { "from": "active", "to": "archived" },
+        { "from": "inactive", "to": "archived" }
+      ],
+      "ownership": { "field": "ownerId", "readAllPermission": "crm.admin" }
+    },
+    {
+      "name": "Contact",
+      "fields": [
+        {
+          "name": "customer",
+          "type": "reference",
+          "reference": "Customer",
+          "required": true
+        },
+        { "name": "name", "type": "text", "required": true },
+        { "name": "email", "type": "text" },
+        { "name": "phone", "type": "text" },
+        { "name": "jobTitle", "type": "text" },
+        { "name": "ownerId", "type": "text" }
+      ],
+      "states": [
+        { "name": "active", "initial": true },
+        { "name": "archived", "final": true }
+      ],
+      "transitions": [{ "from": "active", "to": "archived" }],
+      "ownership": { "field": "ownerId", "readAllPermission": "crm.admin" }
+    },
+    {
+      "name": "Lead",
+      "fields": [
+        { "name": "name", "type": "text", "required": true },
+        { "name": "company", "type": "text" },
+        {
+          "name": "source",
+          "type": "enum",
+          "values": ["web", "referral", "event", "outbound", "other"]
+        },
+        { "name": "estimatedValue", "type": "decimal" },
+        { "name": "ownerId", "type": "text" }
+      ],
+      "states": [
+        { "name": "new", "initial": true },
+        { "name": "qualified" },
+        { "name": "converted" },
+        { "name": "lost", "final": true }
+      ],
+      "transitions": [
+        { "from": "new", "to": "qualified" },
+        { "from": "new", "to": "lost" },
+        { "from": "qualified", "to": "converted" },
+        { "from": "qualified", "to": "lost" }
+      ],
+      "ownership": { "field": "ownerId", "readAllPermission": "crm.admin" }
+    },
+    {
+      "name": "Opportunity",
+      "fields": [
+        { "name": "name", "type": "text", "required": true },
+        {
+          "name": "customer",
+          "type": "reference",
+          "reference": "Customer",
+          "required": true
+        },
+        { "name": "amount", "type": "decimal" },
+        { "name": "ownerId", "type": "text" }
+      ],
+      "states": [
+        { "name": "open", "initial": true },
+        { "name": "qualified" },
+        { "name": "proposal" },
+        { "name": "won", "final": true },
+        { "name": "lost", "final": true }
+      ],
+      "transitions": [
+        { "from": "open", "to": "qualified" },
+        { "from": "open", "to": "lost" },
+        { "from": "qualified", "to": "proposal" },
+        { "from": "qualified", "to": "lost" },
+        { "from": "proposal", "to": "won" },
+        { "from": "proposal", "to": "lost" }
+      ],
+      "ownership": { "field": "ownerId", "readAllPermission": "crm.admin" }
+    },
+    {
+      "name": "Activity",
+      "fields": [
+        { "name": "subject", "type": "text", "required": true },
+        {
+          "name": "type",
+          "type": "enum",
+          "values": ["task", "call", "meeting", "email"]
+        },
+        {
+          "name": "customer",
+          "type": "reference",
+          "reference": "Customer"
+        },
+        {
+          "name": "opportunity",
+          "type": "reference",
+          "reference": "Opportunity"
+        },
+        { "name": "dueAt", "type": "datetime" },
+        { "name": "completed", "type": "boolean", "default": false },
+        { "name": "ownerId", "type": "text" }
+      ],
+      "states": [
+        { "name": "open", "initial": true },
+        { "name": "done", "final": true },
+        { "name": "cancelled", "final": true }
+      ],
+      "transitions": [
+        { "from": "open", "to": "done" },
+        { "from": "open", "to": "cancelled" }
+      ],
+      "ownership": { "field": "ownerId", "readAllPermission": "crm.admin" }
+    }
+  ]
+}

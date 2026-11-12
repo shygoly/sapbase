@@ -474,3 +474,11 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
   `compiled.ui` 解析菜单/路由，并可按用户权限过滤。
 - 平台 shell 只保留通用路由段（dashboard/reports/admin/system-settings）；
   `shipping` 等业务段由应用元数据声明，不在 `route-display`/tab 逻辑里硬编码。
+
+## CRM 应用
+
+- `templates/crm/` 是独立 CRM 应用包：Customer/Contact/Lead/Opportunity/Activity。
+- 菜单/页面只在 `templates/crm/ui.json` 声明（客户/联系人/线索/商机/活动），
+  平台 shell 不包含 CRM 路由或菜单硬编码。
+- `GET /api/apps/:id/navigation` 对 CRM active installation 返回同样的
+  Blueprint UI 导航，证明新应用不需要改 shell。

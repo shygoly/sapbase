@@ -1,0 +1,20 @@
+{
+  "flows": [
+    {
+      "id": "OpportunityFlow",
+      "entity": "Opportunity",
+      "steps": [
+        {
+          "id": "proposal",
+          "on": "proposal",
+          "actions": [
+            {
+              "kind": "require-approval",
+              "rule": "opportunity-large"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

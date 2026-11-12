@@ -1,0 +1,30 @@
+{
+  "rules": "blueprint-rules/v1",
+  "validation": [
+    {
+      "id": "customer-credit-nonneg",
+      "entity": "Customer",
+      "field": "creditLimit",
+      "rule": "greaterOrEqual",
+      "value": 0,
+      "message": "信用额度不能为负"
+    },
+    {
+      "id": "opportunity-amount-nonneg",
+      "entity": "Opportunity",
+      "field": "amount",
+      "rule": "greaterOrEqual",
+      "value": 0,
+      "message": "商机金额不能为负"
+    }
+  ],
+  "approval": [
+    {
+      "id": "opportunity-large",
+      "entity": "Opportunity",
+      "when": "amount > 100000",
+      "steps": [{ "role": "sales-manager" }]
+    }
+  ],
+  "accounting": []
+}

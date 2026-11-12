@@ -1,0 +1,111 @@
+{
+  "ui": "blueprint-ui/v1",
+  "pages": [
+    {
+      "identifier": "CustomerList",
+      "type": "list",
+      "entity": "Customer",
+      "label": "客户",
+      "route": "/dashboard/crm/customers",
+      "fields": ["name", "industry", "level"]
+    },
+    {
+      "identifier": "CustomerForm",
+      "type": "form",
+      "entity": "Customer",
+      "label": "客户编辑",
+      "route": "/dashboard/crm/customers/new",
+      "fields": ["name", "industry", "level", "creditLimit"]
+    },
+    {
+      "identifier": "CustomerDetail",
+      "type": "detail",
+      "entity": "Customer",
+      "label": "客户详情",
+      "route": "/dashboard/crm/customers/:id",
+      "fields": ["name", "industry", "level", "creditLimit"]
+    },
+    {
+      "identifier": "ContactList",
+      "type": "list",
+      "entity": "Contact",
+      "label": "联系人",
+      "route": "/dashboard/crm/contacts",
+      "fields": ["name", "email", "phone", "jobTitle"]
+    },
+    {
+      "identifier": "LeadList",
+      "type": "list",
+      "entity": "Lead",
+      "label": "线索",
+      "route": "/dashboard/crm/leads",
+      "fields": ["name", "company", "source", "estimatedValue"]
+    },
+    {
+      "identifier": "OpportunityList",
+      "type": "list",
+      "entity": "Opportunity",
+      "label": "商机",
+      "route": "/dashboard/crm/opportunities",
+      "fields": ["name", "customer", "amount"]
+    },
+    {
+      "identifier": "OpportunityDetail",
+      "type": "detail",
+      "entity": "Opportunity",
+      "label": "商机详情",
+      "route": "/dashboard/crm/opportunities/:id",
+      "fields": ["name", "customer", "amount"]
+    },
+    {
+      "identifier": "ActivityList",
+      "type": "list",
+      "entity": "Activity",
+      "label": "活动",
+      "route": "/dashboard/crm/activities",
+      "fields": ["subject", "type", "dueAt", "completed"]
+    }
+  ],
+  "menus": [
+    {
+      "identifier": "crm-customers",
+      "label": "客户",
+      "path": "/dashboard/crm/customers",
+      "icon": "users",
+      "order": 1,
+      "permissions": ["crm.customer.read"]
+    },
+    {
+      "identifier": "crm-contacts",
+      "label": "联系人",
+      "path": "/dashboard/crm/contacts",
+      "icon": "user",
+      "order": 2,
+      "permissions": ["crm.contact.read"]
+    },
+    {
+      "identifier": "crm-leads",
+      "label": "线索",
+      "path": "/dashboard/crm/leads",
+      "icon": "list-tree",
+      "order": 3,
+      "permissions": ["crm.lead.read"]
+    },
+    {
+      "identifier": "crm-opportunities",
+      "label": "商机",
+      "path": "/dashboard/crm/opportunities",
+      "icon": "chart",
+      "order": 4,
+      "permissions": ["crm.opportunity.read"]
+    },
+    {
+      "identifier": "crm-activities",
+      "label": "活动",
+      "path": "/dashboard/crm/activities",
+      "icon": "workflow",
+      "order": 5,
+      "permissions": ["crm.activity.read"]
+    }
+  ]
+}

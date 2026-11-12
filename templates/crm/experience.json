@@ -1,0 +1,20 @@
+{
+  "experience": "blueprint-experience/v1",
+  "priority": [
+    {
+      "entity": "Customer",
+      "fields": ["name", "level", "creditLimit"]
+    },
+    {
+      "entity": "Opportunity",
+      "fields": ["name", "customer", "amount"]
+    },
+    {
+      "entity": "Lead",
+      "fields": ["name", "company", "source"]
+    }
+  ],
+  "confirm": [],
+  "automate": [],
+  "surfaces": []
+}
