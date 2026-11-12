@@ -2,6 +2,67 @@
   "permissions": "blueprint-permissions/v1",
   "rules": [
     {
+      "role": "Student",
+      "scope": "policy",
+      "resources": [
+        "Course",
+        "Chapter",
+        "KnowledgePoint",
+        "Material",
+        "LearningRecord",
+        "Assessment",
+        "Attempt",
+        "WrongAnswer",
+        "Recommendation",
+        "StudentBadge",
+        "CourseReview"
+      ],
+      "actions": [
+        "read",
+        "list"
+      ],
+      "dataScope": {
+        "dimension": "self",
+        "depth": "exact"
+      }
+    },
+    {
+      "role": "Teacher",
+      "scope": "policy",
+      "resources": [
+        "Course",
+        "Chapter",
+        "KnowledgePoint",
+        "Material",
+        "EducationClass",
+        "Student",
+        "TeachingTask",
+        "TaskClass",
+        "LearningRecord",
+        "Question",
+        "Assessment",
+        "AssessmentClass",
+        "AssessmentQuestion",
+        "Attempt",
+        "WrongAnswer",
+        "Recommendation",
+        "Badge",
+        "StudentBadge",
+        "CourseReview"
+      ],
+      "actions": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ],
+      "dataScope": {
+        "dimension": "course",
+        "depth": "subtree"
+      }
+    },
+    {
       "role": "Manager",
       "scope": "all",
       "resources": [

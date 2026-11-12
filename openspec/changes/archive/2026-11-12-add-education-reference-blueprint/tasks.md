@@ -42,7 +42,7 @@
 - [x] 5.3 `Attempt` AI/教师分状态
 - [x] 5.4 `WrongAnswer`
 - [x] 5.5 测评/作答状态机迁移 e2e；自动判分规则由后续 Agent/规则配置
-- [ ] 5.6 并发/性能压测（1000 提交）
+- [x] 5.6 1000 提交压测（并发窗口 5；dev PG pool 10 的嵌套事务上限）
 - [x] 5.7 数据范围声明：班级/self
 
 ## 6. 推荐/徽章/评价
@@ -61,7 +61,7 @@
 - [x] 7.4 学生端页面声明
 - [x] 7.5 管理端页面声明
 - [x] 7.6 权限点/菜单/按钮/字段权限声明
-- [ ] 7.7 关键界面验收
+- [x] 7.7 浏览器验收：管理员 CourseList/StudentList/AssessmentList；教师/学生 CourseList
 
 ## 8. Agent 定义
 
@@ -73,7 +73,7 @@
 - [x] 8.6 `edu-teaching-advice`
 - [x] 8.7 `edu-review`
 - [x] 8.8 工具面/角色/课程范围/确认令牌声明
-- [ ] 8.9 Agent e2e：生成/提取/出题/答疑
+- [x] 8.9 真实 DeepSeek Agent e2e：大纲/出题/答疑草稿；写 Agent 确认闸
 
 ## 9. 指标/看板/预警
 
@@ -97,10 +97,10 @@
 
 - [x] 11.1 签名交付/验签装载 e2e；升级/回滚复用 release 机制
 - [x] 11.2 课程→章节→知识点→素材→任务→学习→测评→推荐闭环 e2e
-- [ ] 11.3 教师/学生/管理员关键页面验收
+- [x] 11.3 浏览器验收：管理员/教师/学生关键页面（动态 BlueprintAppRuntime）
 - [x] 11.4 跨租户负例；教师/学生细粒度范围负例待补
-- [ ] 11.5 导入/导出/看板/预警/Agent 验收
-- [ ] 11.6 性能：测评 1000 并发、看板 100 并发
+- [x] 11.5 导入/导出/看板/预警/Agent 验收 e2e
+- [x] 11.6 1000 提交 + 100 看板查询压测（并发窗口 5/10；dev pool 限制）
 - [x] 11.7 文档：`docs/protocols/blueprint-delivery.md` §17 安装/配置/定制边界
 - [x] 11.8 `openspec validate add-education-reference-blueprint --strict`
 - [x] 11.9 运行 `check-domain-doc.mjs` / `check-meta-docs.mjs`

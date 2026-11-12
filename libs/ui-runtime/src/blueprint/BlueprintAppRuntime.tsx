@@ -57,6 +57,8 @@ export interface BlueprintEntitySchema {
   fields: BlueprintEntityField[]
 }
 
+const EMPTY_PERMISSIONS: string[] = []
+
 interface BlueprintAppRuntimeProps {
   packageId: string
   pageId?: string
@@ -102,7 +104,7 @@ function objectSchemaOf(entity: BlueprintEntitySchema): ObjectSchema {
  */
 export function BlueprintAppRuntime({ packageId, pageId }: BlueprintAppRuntimeProps) {
   const user = useAuthStore((state) => state.user)
-  const storePermissions = useAuthStore((state) => state.user?.permissions ?? [])
+  const storePermissions = user?.permissions ?? EMPTY_PERMISSIONS
   const [ui, setUi] = useState<BlueprintUiLayer | null>(null)
   const [entities, setEntities] = useState<BlueprintEntitySchema[]>([])
   const [permissions, setPermissions] = useState<BlueprintPermissionsLayer | null>(null)
