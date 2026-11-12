@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common'
@@ -15,7 +16,10 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { AgentToolRegistry } from './agent-tool.registry'
 import { OptionalAppContextGuard } from '../business-apps/optional-app-context.guard'
 import { CurrentApp } from '../business-apps/current-app.decorator'
-import { composeAppToolCatalog } from '@sap/agent-tools/app-tool-catalog'
+import {
+  composeAppToolCatalog,
+  filterAppToolCatalog,
+} from '@sap/agent-tools/app-tool-catalog'
 import type { BusinessAppExecutionContext } from '@speckit/shared-schemas'
 
 interface AuthedRequest {
@@ -53,13 +57,24 @@ export class AgentToolsController {
   @ApiOperation({
     summary: '组合当前应用的工具目录（平台内建 + 应用来源；重名/命名空间非法拒绝）',
   })
-  appCatalog(@CurrentApp() context?: BusinessAppExecutionContext) {
+  appCatalog(
+    @CurrentApp() context?: BusinessAppExecutionContext,
+    @Request() req?: AuthedRequest,
+    @Query('entitled') entitled?: string,
+  ) {
     if (!context) {
       throw new BadRequestException('缺少应用上下文（X-App-Id）')
     }
-    return composeAppToolCatalog(context, [
+    const composed = composeAppToolCatalog(context, [
       { kind: 'platform', label: 'platform', catalog: this.registry.catalog() },
     ])
+    return filterAppToolCatalog(composed, {
+      agentProfile: 'piagent-runtime',
+      grantedPermissions: req?.user?.permissions ?? [],
+      entitledToolNames: entitled
+        ? entitled.split(',').map((item) => item.trim()).filter(Boolean)
+        : undefined,
+    })
   }
 
   @Post(':name/invoke')

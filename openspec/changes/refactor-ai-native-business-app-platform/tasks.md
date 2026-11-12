@@ -36,7 +36,7 @@
 - [ ] 4.3 Implement resumable event stream and replay after disconnect
 - [ ] 4.4 Filter the tool catalog by app, Agent, user permission, entitlement, and runtime profile
 - [x] 4.4a Resolve app context for chat/tool calls and bind confirmation tokens to the app
-- [ ] 4.4b Compose and filter the actual tool catalog by app entitlement and Agent identity
+- [x] 4.4b Compose and filter the actual tool catalog by app entitlement and Agent identity（filterAppToolCatalog + profile/permission/entitlement + 隐藏原因 + 测试）
 - [x] 4.5 Enforce `allowedAgents` from trusted runtime identity（HTTP/chat 固定 runtime；MCP 只从受控 env 解析；`invokeAs/confirmAs` + 未知 profile 拒绝 + 负例）
 - [ ] 4.6 Enforce run budgets, idempotency, cancellation, and write confirmation
 - [ ] 4.7 Wrap untrusted tool results with source/nonce boundaries and redact audit arguments

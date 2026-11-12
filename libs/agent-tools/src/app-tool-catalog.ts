@@ -3,6 +3,8 @@ import {
   type AgentToolContract,
   type ToolCatalog,
 } from './contracts-loader'
+import type { AgentProfile } from './agent-profile'
+import { isAgentAllowed } from './agent-tool.registry'
 
 export type AppToolCatalogSourceKind =
   | 'platform'
@@ -26,6 +28,28 @@ export interface ComposedAppToolCatalog {
     label: string
     count: number
   }>
+  /** 工具名 → 来源 kind；过滤 entitlement 时区分平台内建与应用工具。 */
+  sourceByTool: Record<string, AppToolCatalogSourceKind>
+}
+
+export interface AppToolCatalogFilter {
+  /** 可信运行时身份；HTTP/chat 固定 runtime，MCP 宿主由受控 env 解析。 */
+  agentProfile: AgentProfile
+  /** 用户功能权限点；工具 permission 必须命中。 */
+  grantedPermissions: readonly string[]
+  /**
+   * 应用 entitlement 显式授权的工具名。缺省表示不做 entitlement 过滤；
+   * 提供时非平台工具必须在列表中，平台内建不受影响。
+   */
+  entitledToolNames?: readonly string[]
+}
+
+export interface AppToolCatalogFilterResult extends ComposedAppToolCatalog {
+  filtered: {
+    total: number
+    visible: number
+    hidden: Array<{ name: string; reason: 'agent' | 'permission' | 'entitlement' }>
+  }
 }
 
 export class AppToolCatalogError extends Error {
@@ -61,6 +85,7 @@ export function composeAppToolCatalog(
   const seen = new Map<string, string>()
   const tools: AgentToolContract[] = []
   const sourceSummary: ComposedAppToolCatalog['sources'] = []
+  const sourceByTool: Record<string, AppToolCatalogSourceKind> = {}
 
   for (const source of sources) {
     let catalog: ToolCatalog
@@ -94,6 +119,7 @@ export function composeAppToolCatalog(
         )
       }
       seen.set(tool.name, source.label ?? source.kind)
+      sourceByTool[tool.name] = source.kind
       tools.push(tool)
     }
   }
@@ -103,5 +129,52 @@ export function composeAppToolCatalog(
     appInstallationId: appContext.appInstallationId,
     tools,
     sources: sourceSummary,
+    sourceByTool,
+  }
+}
+
+/**
+ * 组合后过滤（4.4b）：Agent 身份 → 用户权限 → 应用 entitlement。
+ * 只返回可见工具；隐藏原因保留用于可观测性，不进入模型上下文。
+ */
+export function filterAppToolCatalog(
+  catalog: ComposedAppToolCatalog,
+  filter: AppToolCatalogFilter,
+): AppToolCatalogFilterResult {
+  const entitled = filter.entitledToolNames
+    ? new Set(filter.entitledToolNames)
+    : null
+  const permissions = new Set(filter.grantedPermissions)
+  const visible: AgentToolContract[] = []
+  const hidden: AppToolCatalogFilterResult['filtered']['hidden'] = []
+
+  for (const tool of catalog.tools) {
+    if (!isAgentAllowed(tool, filter.agentProfile)) {
+      hidden.push({ name: tool.name, reason: 'agent' })
+      continue
+    }
+    if (!permissions.has(tool.permission)) {
+      hidden.push({ name: tool.name, reason: 'permission' })
+      continue
+    }
+    if (
+      entitled &&
+      catalog.sourceByTool[tool.name] !== 'platform' &&
+      !entitled.has(tool.name)
+    ) {
+      hidden.push({ name: tool.name, reason: 'entitlement' })
+      continue
+    }
+    visible.push(tool)
+  }
+
+  return {
+    ...catalog,
+    tools: visible,
+    filtered: {
+      total: catalog.tools.length,
+      visible: visible.length,
+      hidden,
+    },
   }
 }
