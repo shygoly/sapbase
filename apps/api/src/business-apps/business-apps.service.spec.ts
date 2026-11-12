@@ -585,3 +585,94 @@ describe('business-app-installation-revision schema', () => {
     expect(result.valid).toBe(false)
   })
 })
+
+describe('BusinessAppsService cross-app service path', () => {
+  const ORG_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+  const ORG_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+  const APP_A = '11111111-1111-4111-8111-111111111111'
+  const APP_B = '22222222-2222-4222-8222-222222222222'
+  const rows = [
+    {
+      id: APP_A,
+      organizationId: ORG_A,
+      appKey: 'erp',
+      blueprintId: 'erp',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      deploymentProfile: 'shared-saas',
+      status: 'active',
+      config: {},
+      license: null,
+      currentRevisionId: null,
+      createdById: USER,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: APP_B,
+      organizationId: ORG_B,
+      appKey: 'crm',
+      blueprintId: 'crm',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      deploymentProfile: 'shared-saas',
+      status: 'active',
+      config: {},
+      license: null,
+      currentRevisionId: null,
+      createdById: USER,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ]
+
+  function serviceWithRows() {
+    const repository = {
+      findOne: jest.fn(async (options: { where: Record<string, unknown> }) =>
+        rows.find((row) =>
+          Object.entries(options.where).every(([key, value]) => row[key as keyof typeof row] === value),
+        ) ?? null,
+      ),
+      find: jest.fn(async (options: { where: Record<string, unknown> }) =>
+        rows.filter((row) =>
+          Object.entries(options.where).every(([key, value]) => row[key as keyof typeof row] === value),
+        ),
+      ),
+    }
+    return new BusinessAppsService(
+      repository as never,
+      {} as never,
+      {} as never,
+      { create: jest.fn() } as never,
+    )
+  }
+
+  it('同一用户/组织不能解析另一组织的应用上下文', async () => {
+    const service = serviceWithRows()
+    await expect(
+      service.resolveExecutionContext({
+        installationId: APP_B,
+        organizationId: ORG_A,
+        userId: USER,
+        grantedPermissions: [],
+      }),
+    ).rejects.toThrow(/不存在|不属于/)
+  })
+
+  it('findForOrganization 不返回跨组织应用', async () => {
+    const service = serviceWithRows()
+    await expect(service.findForOrganization(APP_B, ORG_A)).rejects.toThrow(/不存在|不属于/)
+    await expect(service.findForOrganization(APP_A, ORG_A)).resolves.toMatchObject({
+      appKey: 'erp',
+    })
+  })
+
+  it('listForOrganization 只返回当前组织应用', async () => {
+    const service = serviceWithRows()
+    await expect(service.listForOrganization(ORG_A)).resolves.toEqual([
+      expect.objectContaining({ id: APP_A, appKey: 'erp' }),
+    ])
+  })
+})

@@ -17,7 +17,7 @@
 - [x] 2.6 Retire pass-through `DataIsolationInterceptor`; require transaction context + RLS
 - [ ] 2.7 Map existing records to a default ERP installation with an idempotent backfill
 - [x] 2.8a Add cross-tenant raw-SQL RLS negative tests with a non-owner role
-- [ ] 2.8b Add cross-app service-path negative tests
+- [x] 2.8b Add cross-app service-path negative tests（跨组织 app context / findForOrganization / listForOrganization）
 
 ## 3. App-scoped catalogs and frontend shell
 - [ ] 3.1 Compose platform tools, Blueprint tools, integrations, and shared data capabilities per app
