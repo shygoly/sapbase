@@ -34,7 +34,7 @@ Affected specs：`plugin-system`（3 个独立 ADDED）、`session-governance`�
 
 实际 owner：`libs/app-shared/src/core/plugins/`，`libs/api-client/src/api/`，`libs/shared-state/src/core/store/`，两个 `apps/web-*/src/app/`，`libs/platform-core/src/auth/`、`auth-context/`、`identity/`，仍位于 `apps/api/src/plugins/` 的插件后端，以及 `libs/ui-shipping/src/`。不把 API 兼容壳当主要实施对象。
 
-相关 changes：`add-plugin-sandbox` 后端已接子进程，补其明确排除的浏览器范围；`add-generic-data-scope-authorization` 的既有授权与范围原语直接复用；`redesign-auth-login-surfaces` 只管观感，不重做布局；`add-blueprint-ui-runtime-consumer` 的现有 UI/权限消费者保留；`integrate-kimi-api` / `kimi-api-configuration` 不扩为本项 provider 功能。01 提供无秘密 DTO 与 Registry 事实，06 提供可信有效 ReleaseContext，07/08 消费 BFF/来源/可信确认，09 消费真实浏览器证据；这些联调可后置，缺能力时对应调用拒绝，不制造前置 published 循环。
+相关 changes：`add-plugin-sandbox` 后端已接子进程，补其明确排除的浏览器范围；`add-generic-data-scope-authorization` 的既有授权与范围原语直接复用；`redesign-auth-login-surfaces` 只管观感，不重做布局；`add-blueprint-ui-runtime-consumer` 的现有 UI/权限消费者保留；`kimi-api-configuration` 不扩为本项 provider 功能。01 提供无秘密 DTO 与 Registry 事实，06 提供可信有效 ReleaseContext，07/08 消费 BFF/来源/可信确认，09 消费真实浏览器证据；这些联调可后置，缺能力时对应调用拒绝，不制造前置 published 循环。
 
 ### 不做什么
 

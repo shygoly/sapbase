@@ -9,7 +9,7 @@
 | --- | --- |
 | 进行中 | 18 |
 | 已完成未归档 | 0 |
-| 无任务/骨架 | 2 |
+| 无任务/骨架 | 0 |
 | 已归档 | 67 |
 | 活跃任务 | 139/630 |
 
@@ -44,10 +44,7 @@ _暂无_
 
 ## 无任务/骨架
 
-| Change | 标题 | 任务 | 规格 | 入口 | 最近更新 |
-| --- | --- | --- | --- | --- | --- |
-| [integrate-kimi-api](../openspec/changes/integrate-kimi-api/) | Integrate Kimi API as AI Model for Patch Generation | — | 4 req / 1 文件 | [P](../openspec/changes/integrate-kimi-api/proposal.md) [S](../openspec/changes/integrate-kimi-api/specs) | 2026-11-11 |
-| [create-crm-module](../openspec/changes/create-crm-module/) | Create CRM Module Using Patch DSL Architecture | — | 6 req / 1 文件 | [P](../openspec/changes/create-crm-module/proposal.md) [S](../openspec/changes/create-crm-module/specs) | 2026-02-18 |
+_暂无_
 
 ## 已归档
 

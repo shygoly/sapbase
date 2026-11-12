@@ -1196,7 +1196,7 @@ AI Agent / 预测与推荐 / 异常检测 / 行业协议联盟
 | --- | --- |
 | Phase 0 | 新增 change：`define-platform-protocols` |
 | Phase 1 | 依赖 `migrate-to-saas-architecture`、`refactor-workflow-to-ddd` |
-| Phase 2 | 依赖 `create-crm-module`（作为第一个真实行业样板） |
+| Phase 2 | 首个真实行业样板由教育参考蓝图 / Patch DSL 示例承载（原 `create-crm-module` 骨架已删除） |
 | Phase 3 | 新增 change：`add-blueprint-license-and-capsule` |
 | Phase 4 | 演进 `ai-module-management`、`add-ai-assisted-module-definition` |
 | Phase 5 | 复用 `add-full-system-generation-and-deploy` |
