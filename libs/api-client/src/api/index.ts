@@ -126,3 +126,15 @@ export {
   type DocumentSection,
   type DocumentCandidate,
 } from './document-intelligence.api'
+
+export {
+  bulkApi,
+  type BulkField,
+  type BulkResource,
+  type ImportRun,
+  type ExportRun,
+  type ImportMapping,
+  type ImportRunStatus,
+  type ExportRunStatus,
+  type BulkExportFormat,
+} from './bulk.api'

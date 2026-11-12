@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/bulk-import-export.schema.json",
+  "title": "Bulk Import/Export",
+  "type": "object",
+  "$defs": {
+    "resourceField": {
+      "type": "object",
+      "required": ["key", "label", "type"],
+      "properties": {
+        "key": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "label": { "type": "string", "minLength": 1 },
+        "type": {
+          "enum": [
+            "string",
+            "number",
+            "integer",
+            "boolean",
+            "date",
+            "datetime",
+            "decimal",
+            "enum",
+            "reference",
+            "json"
+          ]
+        },
+        "required": { "type": "boolean" },
+        "enumValues": { "type": "array", "items": { "type": "string" } },
+        "referenceResource": { "type": "string" },
+        "permissions": {
+          "type": "object",
+          "properties": {
+            "read": { "type": "string" },
+            "write": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "pii": { "type": "boolean" },
+        "exportable": { "type": "boolean" },
+        "importable": { "type": "boolean" },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "example": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "resourceDescriptor": {
+      "type": "object",
+      "required": ["resourceKey", "label", "canImport", "canExport", "fields"],
+      "properties": {
+        "resourceKey": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*:[a-zA-Z0-9._:-]+$"
+        },
+        "label": { "type": "string" },
+        "description": { "type": "string" },
+        "canImport": { "type": "boolean" },
+        "canExport": { "type": "boolean" },
+        "fields": { "type": "array", "items": { "$ref": "#/$defs/resourceField" } },
+        "importFormats": { "type": "array", "items": { "enum": ["csv", "json", "xlsx"] } },
+        "exportFormats": {
+          "type": "array",
+          "items": { "enum": ["csv", "json", "xlsx", "md", "pdf"] }
+        }
+      },
+      "additionalProperties": false
+    },
+    "importRun": {
+      "type": "object",
+      "required": ["organizationId", "resourceKey", "mode", "status"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "resourceKey": { "type": "string" },
+        "mode": { "enum": ["atomic", "partial"] },
+        "status": {
+          "enum": ["queued", "running", "succeeded", "partial", "failed", "cancelled"]
+        },
+        "idempotencyKey": { "type": ["string", "null"], "maxLength": 128 },
+        "format": { "enum": ["csv", "json", "xlsx", null] },
+        "objectKey": { "type": ["string", "null"] },
+        "rowCount": { "type": "integer", "minimum": 0 },
+        "successCount": { "type": "integer", "minimum": 0 },
+        "failureCount": { "type": "integer", "minimum": 0 },
+        "mapping": { "type": "object" },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["row", "reason", "message"],
+            "properties": {
+              "row": { "type": "integer", "minimum": 1 },
+              "sheet": { "type": "string" },
+              "column": { "type": "string" },
+              "field": { "type": "string" },
+              "reason": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        },
+        "options": { "type": "object" },
+        "createdBy": { "type": ["string", "null"] },
+        "error": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "exportRun": {
+      "type": "object",
+      "required": ["organizationId", "resourceKey", "format", "status"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "resourceKey": { "type": "string" },
+        "format": { "enum": ["csv", "json", "xlsx", "md", "pdf"] },
+        "status": { "enum": ["queued", "running", "succeeded", "failed", "cancelled"] },
+        "filters": { "type": "object" },
+        "fields": { "type": "array", "items": { "type": "string" } },
+        "rowCount": { "type": "integer", "minimum": 0 },
+        "objectKey": { "type": ["string", "null"] },
+        "assetId": { "type": ["string", "null"], "format": "uuid" },
+        "mimeType": { "type": ["string", "null"] },
+        "expiresAt": { "type": ["string", "null"], "format": "date-time" },
+        "createdBy": { "type": ["string", "null"] },
+        "error": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "importMapping": {
+      "type": "object",
+      "required": ["organizationId", "resourceKey", "name", "mapping"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "resourceKey": { "type": "string" },
+        "name": { "type": "string", "maxLength": 128 },
+        "mapping": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "createdBy": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "resource": { "$ref": "#/$defs/resourceDescriptor" },
+    "importRun": { "$ref": "#/$defs/importRun" },
+    "exportRun": { "$ref": "#/$defs/exportRun" },
+    "importMapping": { "$ref": "#/$defs/importMapping" }
+  },
+  "additionalProperties": false
+}

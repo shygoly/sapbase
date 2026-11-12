@@ -13,6 +13,7 @@ import { Role } from '../roles/role.entity'
 import { MenuItem } from '../menu/menu.entity'
 import { Permission } from '../permissions/permission.entity'
 import { Organization } from '../organizations/organization.entity'
+import { Department } from '../departments/department.entity'
 import {
   OrganizationMember,
   OrganizationRole,
@@ -28,7 +29,7 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'sapbasic',
-  entities: [User, Role, MenuItem, Permission, Organization, OrganizationMember],
+  entities: [User, Role, MenuItem, Permission, Organization, OrganizationMember, Department],
   synchronize: false,
   logging: false,
 })
@@ -70,6 +71,13 @@ const PERMISSION_CATALOG: Array<{ name: string; description: string; category: s
   { name: 'jobs:read', description: '查看异步任务', category: 'jobs' },
   { name: 'jobs:manage', description: '管理异步任务', category: 'jobs' },
   { name: 'documents:read', description: '查看文档解析草案', category: 'documents' },
+  { name: 'imports:read', description: '查看导入运行/模板/错误报告', category: 'bulk' },
+  { name: 'imports:manage', description: '创建/取消/重试导入与保存映射', category: 'bulk' },
+  { name: 'exports:read', description: '查看/下载导出结果', category: 'bulk' },
+  { name: 'exports:manage', description: '创建/取消导出', category: 'bulk' },
+  { name: 'job:bulk.import:create', description: '创建批量导入任务', category: 'bulk' },
+  { name: 'job:bulk.export:create', description: '创建批量导出任务', category: 'bulk' },
+
   { name: 'documents:manage', description: '管理文档解析/确认/转换', category: 'documents' },
   { name: 'offline:read', description: '查看/下载离线内容', category: 'offline' },
   { name: 'offline:manage', description: '管理离线包/设备/授权', category: 'offline' },

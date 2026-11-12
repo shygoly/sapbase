@@ -43,6 +43,7 @@ function writeSourceDir(): string {
             { name: 'done', final: true },
           ],
           transitions: [{ from: 'draft', to: 'done' }],
+          ownership: { field: 'name', readAllPermission: 'sales.order.readall' },
         },
       ],
     }),

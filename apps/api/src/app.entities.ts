@@ -47,6 +47,7 @@ import { AiContentProvenance, AiContentLabel, AiScoreRecord } from './ai-governa
 import { MetricDefinition, MetricValue, Dashboard, DashboardWidget, MetricAlert, MetricAlertEvent } from './metrics/metrics.entities'
 import { OfflinePackage, OfflineEntitlement, OfflineDevice } from './offline/offline.entities'
 import { DocumentParseRun, DocumentSection, DocumentCandidate } from './document-intelligence/document.entities'
+import { ImportRun, ExportRun, ImportMapping } from './bulk/bulk.entities'
 import { OutboxDelivery } from './outbox/outbox-delivery.entity'
 import { OutboxEvent } from './outbox/outbox-event.entity'
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
@@ -127,6 +128,9 @@ export const APP_ENTITIES = [
   DocumentParseRun,
   DocumentSection,
   DocumentCandidate,
+  ImportRun,
+  ExportRun,
+  ImportMapping,
   AgentConfirmationToken,
   BusinessAppInstallation,
   BusinessAppInstallationRevision,

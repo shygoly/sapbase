@@ -7,11 +7,11 @@
 
 | 指标 | 数量 |
 | --- | --- |
-| 进行中 | 19 |
+| 进行中 | 18 |
 | 已完成未归档 | 0 |
 | 无任务/骨架 | 2 |
-| 已归档 | 66 |
-| 活跃任务 | 139/685 |
+| 已归档 | 67 |
+| 活跃任务 | 139/630 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -34,7 +34,6 @@
 | [restore-reproducible-build-and-quality-gates](../openspec/changes/restore-reproducible-build-and-quality-gates/) | 收紧现有构建拓扑、CI 门禁与交付证据 | 0/19 | 7 req / 2 文件 | [P](../openspec/changes/restore-reproducible-build-and-quality-gates/proposal.md) [D](../openspec/changes/restore-reproducible-build-and-quality-gates/design.md) [T](../openspec/changes/restore-reproducible-build-and-quality-gates/tasks.md) [S](../openspec/changes/restore-reproducible-build-and-quality-gates/specs) | 2026-11-10 |
 | [unify-effective-release-activation-and-recovery](../openspec/changes/unify-effective-release-activation-and-recovery/) | 变更：统一实际 Release 生效、安装路由与可恢复回退 | 0/18 | 7 req / 2 文件 | [P](../openspec/changes/unify-effective-release-activation-and-recovery/proposal.md) [D](../openspec/changes/unify-effective-release-activation-and-recovery/design.md) [T](../openspec/changes/unify-effective-release-activation-and-recovery/tasks.md) [S](../openspec/changes/unify-effective-release-activation-and-recovery/specs) | 2026-11-10 |
 | [add-asset-and-media-pipeline](../openspec/changes/add-asset-and-media-pipeline/) | 资产与媒体管道 | 17/67 | 8 req / 2 文件 | [P](../openspec/changes/add-asset-and-media-pipeline/proposal.md) [D](../openspec/changes/add-asset-and-media-pipeline/design.md) [T](../openspec/changes/add-asset-and-media-pipeline/tasks.md) [S](../openspec/changes/add-asset-and-media-pipeline/specs) | 2026-11-09 |
-| [add-bulk-import-export-framework](../openspec/changes/add-bulk-import-export-framework/) | 批量导入/导出框架 | 0/55 | 10 req / 1 文件 | [P](../openspec/changes/add-bulk-import-export-framework/proposal.md) [D](../openspec/changes/add-bulk-import-export-framework/design.md) [T](../openspec/changes/add-bulk-import-export-framework/tasks.md) [S](../openspec/changes/add-bulk-import-export-framework/specs) | 2026-11-09 |
 | [add-education-reference-blueprint](../openspec/changes/add-education-reference-blueprint/) | 教育参考蓝图（Education Reference Blueprint） | 0/74 | 12 req / 1 文件 | [P](../openspec/changes/add-education-reference-blueprint/proposal.md) [D](../openspec/changes/add-education-reference-blueprint/design.md) [T](../openspec/changes/add-education-reference-blueprint/tasks.md) [S](../openspec/changes/add-education-reference-blueprint/specs) | 2026-11-09 |
 | [add-external-integration-connector](../openspec/changes/add-external-integration-connector/) | 外部集成连接器 | 0/58 | 10 req / 1 文件 | [P](../openspec/changes/add-external-integration-connector/proposal.md) [D](../openspec/changes/add-external-integration-connector/design.md) [T](../openspec/changes/add-external-integration-connector/tasks.md) [S](../openspec/changes/add-external-integration-connector/specs) | 2026-11-09 |
 | [migrate-to-saas-architecture](../openspec/changes/migrate-to-saas-architecture/) | Migrate to SaaS Architecture | 45/75 | 21 req / 4 文件 | [P](../openspec/changes/migrate-to-saas-architecture/proposal.md) [D](../openspec/changes/migrate-to-saas-architecture/design.md) [T](../openspec/changes/migrate-to-saas-architecture/tasks.md) [S](../openspec/changes/migrate-to-saas-architecture/specs) | 2026-02-18 |
@@ -54,6 +53,7 @@ _暂无_
 
 | Change | 标题 | 任务 | 规格 | 入口 | 最近更新 |
 | --- | --- | --- | --- | --- | --- |
+| [add-bulk-import-export-framework](../openspec/changes/archive/2026-11-12-add-bulk-import-export-framework/) | 批量导入/导出框架 | 55/55 | 10 req / 1 文件 | [P](../openspec/changes/archive/2026-11-12-add-bulk-import-export-framework/proposal.md) [D](../openspec/changes/archive/2026-11-12-add-bulk-import-export-framework/design.md) [T](../openspec/changes/archive/2026-11-12-add-bulk-import-export-framework/tasks.md) [S](../openspec/changes/archive/2026-11-12-add-bulk-import-export-framework/specs) | 2026-11-12 |
 | [add-a2-release-automation](../openspec/changes/archive/2026-11-11-add-a2-release-automation/) | A2 低风险发布自动化（P5） | 31/31 | 6 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-a2-release-automation/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-a2-release-automation/design.md) [T](../openspec/changes/archive/2026-11-11-add-a2-release-automation/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-a2-release-automation/specs) | 2026-11-11 |
 | [add-agent-knowledge-and-eval](../openspec/changes/archive/2026-11-11-add-agent-knowledge-and-eval/) | PiAgent 知识库与评测闸门（P3b） | 38/38 | 8 req / 2 文件 | [P](../openspec/changes/archive/2026-11-11-add-agent-knowledge-and-eval/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-agent-knowledge-and-eval/design.md) [T](../openspec/changes/archive/2026-11-11-add-agent-knowledge-and-eval/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-agent-knowledge-and-eval/specs) | 2026-11-11 |
 | [add-ai-blueprint-signing-and-load](../openspec/changes/archive/2026-11-11-add-ai-blueprint-signing-and-load/) | AI Blueprint 签名、授权与装载验证 | 13/13 | 2 req / 1 文件 | [P](../openspec/changes/archive/2026-11-11-add-ai-blueprint-signing-and-load/proposal.md) [D](../openspec/changes/archive/2026-11-11-add-ai-blueprint-signing-and-load/design.md) [T](../openspec/changes/archive/2026-11-11-add-ai-blueprint-signing-and-load/tasks.md) [S](../openspec/changes/archive/2026-11-11-add-ai-blueprint-signing-and-load/specs) | 2026-11-11 |

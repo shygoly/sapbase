@@ -1773,6 +1773,60 @@
         "metadata",
         "convertedAt"
       ]
+    },
+    "import_runs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "resourceKey",
+        "mode",
+        "status",
+        "idempotencyKey",
+        "format",
+        "objectKey",
+        "rowCount",
+        "successCount",
+        "failureCount",
+        "mapping",
+        "errors",
+        "options",
+        "createdBy",
+        "error"
+      ]
+    },
+    "export_runs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "resourceKey",
+        "format",
+        "status",
+        "filters",
+        "fields",
+        "rowCount",
+        "objectKey",
+        "assetId",
+        "mimeType",
+        "expiresAt",
+        "createdBy",
+        "error"
+      ]
+    },
+    "import_mappings": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "resourceKey",
+        "name",
+        "mapping",
+        "createdBy"
+      ]
     }
   }
 }

@@ -276,3 +276,38 @@ For API documentation issues:
 - Check Swagger UI at `/api/docs`
 - Review generated OpenAPI spec
 - Contact: api-support@speckit.com
+
+## Bulk Import / Export
+
+资源与模板：
+
+- `GET /api/imports/resources` — 已注册资源与字段定义
+- `GET /api/imports/resource?resourceKey=...&direction=import|export` — 单资源描述
+- `GET /api/imports/template?resourceKey=...&format=csv|xlsx` — 模板下载
+
+导入：
+
+- `POST /api/imports` — multipart `file` 或 JSON `{ assetId }`；可选
+  `resourceKey`、`mode=atomic|partial`、`dryRun`、`mapping`、`mappingName`、
+  `unknownColumns=reject|ignore`、`Idempotency-Key`
+- `GET /api/imports` / `GET /api/imports/:id`
+- `GET /api/imports/:id/errors` — 错误报告 CSV
+- `POST /api/imports/:id/cancel` / `POST /api/imports/:id/retry`
+
+导出：
+
+- `POST /api/exports` — `{ resourceKey, format, fields, filter, sort, order, search,
+  restrictedFieldPolicy, piiPolicy }`
+- `GET /api/exports` / `GET /api/exports/:id`
+- `GET /api/exports/:id/download` — 鉴权下载
+- `GET /api/exports/:id/url?ttl=300` — 短时签名 URL
+- `POST /api/exports/:id/cancel`
+
+映射：
+
+- `GET /api/import-mappings?resourceKey=...`
+- `POST /api/import-mappings`
+- `DELETE /api/import-mappings/:id`
+
+权限：`imports:read|manage`、`exports:read|manage`；异步任务需要
+`job:bulk.import:create` / `job:bulk.export:create`（或 `jobs:manage`）。

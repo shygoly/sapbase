@@ -171,6 +171,40 @@ export function projectSemanticDeclaration(
   }
 }
 
+export interface BatchImportRow {
+  row: number
+  data: Record<string, unknown>
+}
+
+export interface BatchImportError {
+  row: number
+  reason: string
+  field?: string
+  ruleId?: string
+  message: string
+}
+
+export interface BatchImportOptions {
+  mode: 'atomic' | 'partial'
+  dryRun?: boolean
+  isCancelled?: () => Promise<boolean>
+  onProgress?: (done: number, total: number) => Promise<void>
+}
+
+export interface BatchImportResult {
+  imported: number
+  validated: number
+  failed: number
+  errors: BatchImportError[]
+}
+
+export class BatchImportCancelledError extends Error {
+  constructor() {
+    super('导入已取消')
+    this.name = 'BatchImportCancelledError'
+  }
+}
+
 export interface TransitionResult extends BlueprintRecord {
   journalEntries: Array<{
     ruleId: string
@@ -269,6 +303,183 @@ export class SemanticRuntimeService {
     } catch (error) {
       throw mapConstraintError(error, constraintMap) ?? error
     }
+  }
+
+  /** 批量导入（通用框架）：atomic 单事务、partial 逐行事务；dry-run 一律回滚。 */
+  async importBatch(
+    packageId: string,
+    entity: string,
+    rows: BatchImportRow[],
+    options: BatchImportOptions,
+    organizationId: string,
+    actor?: RuntimeActor,
+  ): Promise<BatchImportResult> {
+    if (!organizationId) {
+      throw new RecordWriteError('缺少 organizationId，拒绝导入', 'missing-tenant')
+    }
+    const loaded = await this.loadOrThrow(packageId, organizationId)
+    const template = this.readTemplate(packageId)
+    const declared = template.entities.find((item) => item.name === entity)
+    if (!declared) {
+      throw new RecordWriteError(`模板未声明实体 ${entity}`, 'unknown-entity')
+    }
+    this.assertEntityAccess(loaded, entity, 'create', actor)
+    await this.applyIndexesOrThrow(
+      loaded.manifest.blueprint,
+      loaded.manifest.version,
+      template.entities,
+    )
+    const constraintMap = constraintFieldMap(loaded.manifest.blueprint, {
+      entities: template.entities,
+    })
+    const dryRun = options.dryRun === true
+    const granted = actorPermissions(actor)
+    const errors: BatchImportError[] = []
+    const allowed: BatchImportRow[] = []
+    for (const row of rows) {
+      const forbidden = forbiddenWriteFields(declared, row.data, granted)
+      if (forbidden.length > 0) {
+        errors.push({
+          row: row.row,
+          reason: 'forbidden-field',
+          field: forbidden[0],
+          message: `无权写入字段 ${entity}.${forbidden[0]}`,
+        })
+        continue
+      }
+      allowed.push(row)
+    }
+    const total = rows.length
+    let imported = 0
+    let validated = 0
+
+    const writeOne = async (manager: EntityManager, row: BatchImportRow): Promise<void> => {
+      await this.assertCreateInDataScope(
+        loaded.manifest.blueprint,
+        declared,
+        row.data,
+        organizationId,
+        actor,
+      )
+      const written = await writeDocumentOrRecord(
+        {
+          manager,
+          blueprintId: loaded.manifest.blueprint,
+          blueprintVersion: loaded.manifest.version,
+          organizationId,
+          entities: template.entities,
+          validation: template.validation,
+          constraintMap,
+        },
+        entity,
+        row.data,
+      )
+      await this.ensureApprovalChains(
+        manager,
+        loaded.manifest.blueprint,
+        loaded.manifest.version,
+        organizationId,
+        entity,
+        written.id,
+        written.data,
+        template,
+      )
+    }
+
+    if (options.mode === 'atomic') {
+      if (errors.length > 0) {
+        return { imported: 0, validated: 0, failed: errors.length, errors }
+      }
+      let current: BatchImportRow | undefined
+      try {
+        await this.dataSource.transaction(async (manager) => {
+          for (const row of allowed) {
+            if (options.isCancelled && (await options.isCancelled())) {
+              throw new BatchImportCancelledError()
+            }
+            current = row
+            await writeOne(manager, row)
+          }
+          if (dryRun) throw DRY_RUN_ROLLBACK
+        })
+        imported = dryRun ? 0 : allowed.length
+        validated = dryRun ? allowed.length : 0
+        await options.onProgress?.(total, total)
+        return { imported, validated, failed: 0, errors: [] }
+      } catch (error) {
+        if (error === DRY_RUN_ROLLBACK) {
+          imported = 0
+          validated = allowed.length
+          return { imported, validated, failed: 0, errors: [] }
+        }
+        if (error instanceof BatchImportCancelledError) throw error
+        const mapped = mapConstraintError(error, constraintMap) ?? error
+        const line = current?.row ?? allowed[0]?.row ?? 1
+        errors.push(
+          mapped instanceof RecordWriteError
+            ? {
+                row: line,
+                reason: mapped.reason,
+                field: mapped.field,
+                ruleId: mapped.ruleId,
+                message: mapped.message,
+              }
+            : {
+                row: line,
+                reason: 'write-failed',
+                message: mapped instanceof Error ? mapped.message : String(mapped),
+              },
+        )
+        return { imported: 0, validated: 0, failed: errors.length, errors }
+      }
+    }
+
+    for (const [index, row] of allowed.entries()) {
+      if (options.isCancelled && (await options.isCancelled())) {
+        throw new BatchImportCancelledError()
+      }
+      try {
+        await this.dataSource.transaction(async (manager) => {
+          await writeOne(manager, row)
+          if (dryRun) throw DRY_RUN_ROLLBACK
+        })
+        if (dryRun) validated += 1
+        else imported += 1
+      } catch (error) {
+        if (error === DRY_RUN_ROLLBACK) {
+          validated += 1
+        } else {
+          const mapped = mapConstraintError(error, constraintMap) ?? error
+          errors.push(
+            mapped instanceof RecordWriteError
+              ? {
+                  row: row.row,
+                  reason: mapped.reason,
+                  field: mapped.field,
+                  ruleId: mapped.ruleId,
+                  message: mapped.message,
+                }
+              : {
+                  row: row.row,
+                  reason: 'write-failed',
+                  message: mapped instanceof Error ? mapped.message : String(mapped),
+                },
+          )
+        }
+      }
+      if (options.onProgress && (index + 1) % 50 === 0) {
+        await options.onProgress(index + 1, total)
+      }
+    }
+    await options.onProgress?.(total, total)
+    errors.sort((a, b) => a.row - b.row)
+    return { imported, validated, failed: errors.length, errors }
+  }
+
+  /** 枚举某包声明的实体（字段/状态/引用），供通用导入/导出适配器描述资源。 */
+  async listEntities(packageId: string, organizationId: string): Promise<SemanticEntity[]> {
+    await this.loadOrThrow(packageId, organizationId)
+    return this.readTemplate(packageId).entities
   }
 
   /** 批次反向查询：batchNo → 单据/客户。未知批次 found:false，不 404。 */

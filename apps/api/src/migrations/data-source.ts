@@ -50,6 +50,7 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1795000000000-AddMetricsPlatform.ts'),
     path.join(__dirname, '1795100000000-AddOfflineContent.ts'),
     path.join(__dirname, '1795200000000-AddDocumentIntelligence.ts'),
+    path.join(__dirname, '1795300000000-AddBulkImportExport.ts'),
   ],
   synchronize: false,
   logging: true,

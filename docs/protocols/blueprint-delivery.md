@@ -905,3 +905,24 @@ P2 的 `required` → DB `CHECK (… IS NOT NULL)` 会在「升级加了一个�
 - RLS 仍只做租户隔离，不表达行级范围；行级范围在应用层执行，并有负例测试。
 
 真源：`libs/platform-core/src/data-scope/`、`schemas/data-scope.schema.json`、`DOMAIN.md`「数据范围」。
+
+## 15. 批量导入/导出边界（IE）
+
+批量导入/导出不是第二套写入链，而是现有语义运行时与平台服务之上的**资源适配器**：
+
+- **资源键**：`blueprint:<packageId>:<entity>`、`platform:users`、`platform:departments`；
+  未知资源键拒绝，不提供“任意表名/任意 SQL”入口。
+- **字段定义**：适配器声明 key/type/required/enum/reference/permissions/example；
+  模板生成、列映射与导出字段都从同一份声明派生。
+- **写入**：Blueprint 适配器复用 `validateRecord` / `writeDocumentOrRecord`；
+  `atomic` 单事务全回滚，`partial` 逐行事务。`dry-run` 只在事务内验证后回滚。
+- **权限**：功能权限（`imports:*` / `exports:*`）之外，字段写权限、字段读权限、
+  数据范围与租户隔离继续生效；导出不绕过字段权限。
+- **文件**：xlsx 按不可信 zip 处理（宏、外链、连接、条目数、解压体积、压缩比）；
+  CSV/XLSX 导出对 `= + - @` 前缀做公式注入转义。
+- **异步**：超过同步阈值或大导出走 `bulk.import` / `bulk.export` job；
+  运行记录 `import_runs` / `export_runs` 绑定组织、资源、操作者、幂等键与结果资产。
+- **兼容**：旧 `POST /semantic/:id/import/:entity` 与审计导出保持原行为；
+  新框架独立入口，迁移逐步进行。
+
+真源：`apps/api/src/bulk/`、`DOMAIN.md`「批量导入导出」、`INV-IE-01..05`。

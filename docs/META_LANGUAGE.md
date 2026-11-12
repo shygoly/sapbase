@@ -592,6 +592,11 @@ manifest/资产篡改拒绝
 74. **草案版本**：编辑升 draftVersion；未确认当前版本不得转换（INV-DI-03）。
 75. **转换幂等**：重复转换不新增实体；目标冲突可定位、不静默覆盖（INV-DI-04）。
 76. **旧流程不变**：旧知识/课程/导入/CRUD 不改（INV-DI-05）。
+77. **适配器白名单**：导入/导出只经注册适配器；未知资源键拒绝，不提供任意表/任意 SQL 入口（INV-IE-01）。
+78. **运行记录绑定**：导入/导出运行绑定组织、资源、操作者与幂等键；同幂等键重复提交返回同一运行，不重复写入（INV-IE-02）。
+79. **atomic 全回滚**：atomic 任一行失败整批不落库；partial 仅成功行落库，错误必须带行/列/字段/原因（INV-IE-03）。
+80. **导出不绕过权限**：字段读权限、数据范围、租户隔离逐页生效；敏感/禁止导出字段按策略省略或拒绝并审计（INV-IE-04）。
+81. **不可信文件**：xlsx 宏/外链/超限解压拒绝；导出单元格公式前缀转义；大文件走异步与配额（INV-IE-05）。
 
 ---
 
@@ -634,6 +639,7 @@ workspaces：shared-schemas / speckit / backend / wasm-modules
 | 旧工作流退场 / 只读归档 | [`protocols/workflow-consolidation.md`](./protocols/workflow-consolidation.md) | 410 墓碑、逐条退场理由、四表归档、净损失与回归时机 |
 | Outbox（跨进程事件） | [`protocols/outbox.md`](./protocols/outbox.md) | 事件形状 / 幂等键 / 投递语义 / 重试；进程内总线不走此协议 |
 | 最小可观测（结构化日志） | [`protocols/observability.md`](./protocols/observability.md) | 不做 OTel/Prometheus；N3 只做结构化日志 + 投递失败可定位 |
+| 批量导入/导出 | [`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md) | 资源适配器、atomic/partial、公式注入、异步导出；`INV-IE-01..05` |
 | 通知 / 审批待办 | [`protocols/notifications.md`](./protocols/notifications.md) | 持久化通知、两层去重、角色→用户、`GET /inbox` |
 | 变更提案与任务清单 | `openspec/changes/<change-id>/` | 按 OpenSpec 流程 |
 | Git 工作流 | [`openspec/GIT_WORKFLOW.md`](../openspec/GIT_WORKFLOW.md) | — |
@@ -706,6 +712,11 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 任务尝试 | Job Attempt | `JobAttempt`；`job_attempts` | 🟡 |
 | 任务事件 | Job Event | `JobEvent`；`job_events` | 🟡 |
 | 任务回调 | Job Callback | `JobCallbackService`；HMAC-SHA256 | 🟡 |
+| 批量导入 | Bulk Import | `ImportRun`；`import_runs`；`apps/api/src/bulk/` | ✅ |
+| 批量导出 | Bulk Export | `ExportRun`；`export_runs`；签名下载 + 过期清理 | ✅ |
+| 资源适配器 | Resource Adapter | `ImportAdapter` / `ExportAdapter`；`BulkAdapterRegistry` | ✅ |
+| 列映射 | Column Mapping | `ImportMapping`；`import_mappings`；别名/未知列策略 | ✅ |
+| 部分成功 | Partial Success | `mode=partial`；逐行事务 + 错误报告 | ✅ |
 
 ---
 
@@ -727,6 +738,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.15 | 2026-11-11 | 新增批量导入/导出术语与 INV-IE-01..05：适配器白名单、运行幂等、atomic/partial、导出权限、不可信文件与公式注入防护 |
 | 1.14 | 2026-10-18 | 新增 §3.10「Business App Installation」：在 Organization 与 Blueprint 之间建立租户内应用运行边界；$C$ 补应用实例；术语表补业务应用安装与应用执行上下文；租户请求改用事务上下文 + PostgreSQL RLS |
 | 1.13 | 2026-09-27 | 新增 §3.9「Interaction Surface（临时交互面）」：一次意图的可视化投影，确认或取消后即消失。真源见 `protocols/chat-erp.md` |
 | 1.12 | 2026-09-27 | §5.2「建议迁移」真源补夜间生产者。见 `protocols/record-transition.md` §2.1 |

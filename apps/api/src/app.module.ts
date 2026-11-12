@@ -41,6 +41,7 @@ import { AiGovernanceModule } from './ai-governance/ai-governance.module'
 import { MetricsModule } from './metrics/metrics.module'
 import { OfflineModule } from './offline/offline.module'
 import { DocumentIntelligenceModule } from './document-intelligence/document-intelligence.module'
+import { BulkModule } from './bulk/bulk.module'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { AgentHostModule } from './agent-host/agent-host.module'
 import { AsyncConsumersModule } from './async-consumers/async-consumers.module'
@@ -145,6 +146,7 @@ try {
     MetricsModule,
     OfflineModule,
     DocumentIntelligenceModule,
+    BulkModule,
     AgentToolsModule,
     AgentHostModule,
     AsyncConsumersModule,

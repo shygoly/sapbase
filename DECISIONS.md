@@ -449,6 +449,32 @@ code_markers:
   - apps/api/src/document-intelligence/document-intelligence.service.ts
 ```
 
+### D-22：通用导入/导出走资源适配器 + 运行记录，不复用任意表入口
+
+```yaml decision
+id: D-22
+title: 通用导入/导出走资源适配器 + 运行记录，不复用任意表入口
+status: accepted
+date: 2026-11
+context: |
+  教育项目要求知识点/学生批量导入与万行级导出；如果按表名直接读写，会绕过 Blueprint 校验、
+  字段权限、数据范围与租户隔离，也会形成第二套 ETL。
+decision: |
+  导入/导出只通过注册的 ResourceAdapter（Blueprint 实体、users/departments）暴露字段与写入；
+  import_runs/export_runs 记录组织/资源/操作者/幂等键/错误。atomic 单事务、partial 逐行事务，
+  大文件/大导出走 async-job；导出结果存对象存储并短时签名下载。xlsx 按不可信 zip 限制宏/外链/
+  解压大小，导出统一转义公式前缀。
+references:
+  - INV-IE-01
+  - INV-IE-02
+  - INV-IE-03
+  - INV-IE-04
+  - INV-IE-05
+code_markers:
+  - apps/api/src/bulk/bulk.service.ts
+  - apps/api/src/bulk/bulk-formats.ts
+```
+
 ---
 
 ## 附录：命名空间约定

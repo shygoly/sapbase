@@ -67,6 +67,9 @@ const DIRECT_TABLES = [
   'document_parse_runs',
   'document_sections',
   'document_candidates',
+  'import_runs',
+  'export_runs',
+  'import_mappings',
   'asset_variants',
   'asset_upload_sessions',
 ] as const

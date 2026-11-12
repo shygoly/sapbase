@@ -54,6 +54,9 @@
 | document_parse_runs | 文档智能 |
 | document_sections | 文档智能 |
 | document_candidates | 文档智能 |
+| import_runs | 批量导入导出 |
+| export_runs | 批量导入导出 |
+| import_mappings | 批量导入导出 |
 | ai_content_labels | AI 内容治理 |
 | ai_score_records | AI 内容治理 |
 | assets | 资产 |
@@ -1248,6 +1251,86 @@ enforcement:
   - service:libs/platform-release/src/release-automation/release-automation.service.ts#rollback
 db: none
 spec: apps/api/src/release-automation/release-automation.service.spec.ts
+```
+
+---
+
+## 批量导入导出
+
+覆盖表：import_runs, export_runs, import_mappings
+
+通用导入/导出只经注册适配器（`platform:users`、`platform:departments`、
+`blueprint:<packageId>:<entity>`）；运行记录绑定组织、资源、操作者与幂等键。
+`atomic` 单事务全回滚，`partial` 逐行事务；文件/结果走对象存储，错误明细进 `errors`。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| import_runs.organizationId | organizations.id | 导入归属组织 | none | RLS 隔离；跨租户拒绝 |
+| export_runs.organizationId | organizations.id | 导出归属组织 | none | RLS 隔离；跨租户拒绝 |
+| import_mappings.organizationId | organizations.id | 映射归属组织 | none | 按组织+资源+名称唯一 |
+| export_runs.assetId | assets.id | 导出结果资产 | none | 过期后软删除；不静默删除被引用结果 |
+
+### 不变量
+
+```yaml invariant
+id: INV-IE-01
+tables: [import_runs, export_runs, import_mappings]
+desc: 导入/导出只经资源适配器白名单；未知资源键拒绝，不提供任意表/任意 SQL。
+trigger: BulkAdapterRegistry.importAdapter() / exportAdapter()
+enforcement:
+  - service:apps/api/src/bulk/bulk.registry.ts#importAdapter
+  - service:apps/api/src/bulk/bulk.registry.ts#exportAdapter
+db: none
+spec: apps/api/src/bulk/bulk.registry.spec.ts
+```
+
+```yaml invariant
+id: INV-IE-02
+tables: [import_runs, export_runs]
+desc: 运行绑定组织/资源/操作者/幂等键；同幂等键重复提交返回同一运行，不重复写入。
+trigger: BulkService.createImport()
+enforcement:
+  - service:apps/api/src/bulk/bulk.service.ts#createImport
+db: UQ_import_run_org_idempotency
+spec: apps/api/src/bulk/bulk.service.spec.ts
+```
+
+```yaml invariant
+id: INV-IE-03
+tables: [import_runs]
+desc: atomic 任一行失败整批回滚；partial 仅成功行落库，错误带行/列/字段/原因。
+trigger: SemanticRuntimeService.importBatch()
+enforcement:
+  - service:apps/api/src/semantic-runtime/semantic-runtime.service.ts#importBatch
+db: none
+spec: apps/api/src/bulk/bulk.service.spec.ts
+```
+
+```yaml invariant
+id: INV-IE-04
+tables: [export_runs]
+desc: 导出字段受读权限约束，数据范围/租户逐页生效；敏感字段按策略省略或拒绝并审计。
+trigger: BulkService.selectFields() / processExportRun()
+enforcement:
+  - service:apps/api/src/bulk/bulk.service.ts#selectFields
+  - service:apps/api/src/bulk/bulk.service.ts#processExportRun
+db: none
+spec: apps/api/src/bulk/bulk.service.spec.ts
+```
+
+```yaml invariant
+id: INV-IE-05
+tables: [import_runs, export_runs]
+desc: xlsx 宏/外链/超限解压拒绝；导出公式前缀转义；大文件走异步与配额。
+trigger: parseImportFile() / assertXlsxArchive() / renderExport()
+enforcement:
+  - service:apps/api/src/bulk/bulk-formats.ts#parseImportFile
+  - service:apps/api/src/bulk/bulk-formats.ts#assertXlsxArchive
+  - service:apps/api/src/bulk/bulk-formats.ts#renderExport
+db: none
+spec: apps/api/src/bulk/bulk-formats.spec.ts
 ```
 
 ---
