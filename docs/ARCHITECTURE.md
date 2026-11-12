@@ -508,3 +508,11 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
   CRM 只能通过 `app_capabilities` 的 `customer.lookup` 读取 ERP 声明投影。
 - e2e：`tests/app-switch-isolation.e2e.js` 覆盖安装、导航、私有记录隔离、
   跨 package 403 与能力投影。
+
+
+## 不可信工具结果与审计脱敏
+
+- `untrustedResult=true` 的工具结果在返回前用 `SAP_UNTRUSTED_DATA` + source/nonce 包裹，
+  不允许裸对象进入模型上下文。
+- 工具审计参数递归脱敏：`sensitiveArgs` 声明键与 token/secret/password/authorization/
+  apiKey/credential/cookie 等常见密钥键统一替换为 `***`，嵌套对象/数组同样处理。

@@ -1401,6 +1401,18 @@ db: none
 spec: apps/api/src/agent-sessions/agent-sessions.service.spec.ts
 ```
 
+```yaml invariant
+id: INV-AGENT-11
+tables: [agent_tool_calls]
+desc: untrustedResult 工具结果必须带 source/nonce 边界；审计参数按声明键与常见密钥键递归脱敏。
+trigger: AgentToolRegistry.invoke() / audit()
+enforcement:
+  - service:libs/agent-tools/src/agent-tool.registry.ts#wrapResultIfUntrusted
+  - service:libs/agent-tools/src/agent-tool.registry.ts#redactToolArgs
+db: none
+spec: apps/api/src/agent-tools/agent-tool.registry.spec.ts
+```
+
 ---
 
 ## Agent 知识与评测

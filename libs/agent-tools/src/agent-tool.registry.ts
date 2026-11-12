@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { randomUUID } from 'node:crypto'
 import { missingPermissions } from '@sap/platform-release/atomic-runtime/atomic-permissions'
 import { AtomicExecutor } from '@sap/platform-release/atomic-runtime/atomic-executor.service'
 import { RevocationListService } from '@sap/platform-release/atomic-runtime/revocation-list.service'
@@ -196,7 +197,11 @@ export class AgentToolRegistry {
         appKey: input.appContext?.appKey,
         traceId: input.appContext?.traceId,
       })
-      const response = { ok: true as const, tool: tool.name, result }
+      const response = {
+        ok: true as const,
+        tool: tool.name,
+        result: this.wrapResultIfUntrusted(tool, result),
+      }
       if (cacheKey) this.writeCache.set(cacheKey, response)
       return response
     } catch (error) {
@@ -309,6 +314,18 @@ export class AgentToolRegistry {
         `参数不合法：${check.errors.join('; ')}`,
       )
     }
+  }
+
+  /** 不可信工具结果必须带 source/nonce 边界，不能以裸对象进入模型上下文。 */
+  private wrapResultIfUntrusted(tool: AgentToolContract, result: unknown): unknown {
+    if (!tool.untrustedResult) return result
+    const content =
+      typeof result === 'string' ? result : JSON.stringify(result ?? null)
+    return wrapUntrustedData({
+      content,
+      source: `tool:${tool.name}`,
+      nonce: randomUUID(),
+    })
   }
 
   private async execute(
@@ -444,7 +461,7 @@ export class AgentToolRegistry {
     releaseId?: string | null
     reason?: string
   }): Promise<void> {
-    const redactedArgs = redactArgs(detail.args, detail.sensitiveArgs)
+    const redactedArgs = redactToolArgs(detail.args, detail.sensitiveArgs)
     const sensitiveMap = Object.fromEntries(
       detail.sensitiveArgs.map((key) => [key, '***']),
     )
@@ -473,13 +490,32 @@ export class AgentToolRegistry {
   }
 }
 
-function redactArgs(
+const SECRET_KEY = /token|secret|password|authorization|api[_-]?key|credential|cookie/i
+
+/** 审计参数脱敏：声明键 + 常见密钥键；递归对象/数组，不修改原对象。 */
+export function redactToolArgs(
   args: Record<string, unknown>,
   sensitiveArgs: string[],
+  depth = 0,
 ): Record<string, unknown> {
-  if (sensitiveArgs.length === 0) return args
   const hidden = new Set(sensitiveArgs)
+  const redactValue = (value: unknown, key: string): unknown => {
+    if (hidden.has(key) || SECRET_KEY.test(key)) return '***'
+    if (depth >= 6 || value === null || value === undefined) return value
+    if (Array.isArray(value)) {
+      return value.map((item, index) => {
+        if (item && typeof item === 'object' && !Array.isArray(item)) {
+          return redactToolArgs(item as Record<string, unknown>, sensitiveArgs, depth + 1)
+        }
+        return redactValue(item, `${key}[${index}]`)
+      })
+    }
+    if (typeof value === 'object') {
+      return redactToolArgs(value as Record<string, unknown>, sensitiveArgs, depth + 1)
+    }
+    return value
+  }
   return Object.fromEntries(
-    Object.entries(args).map(([key, value]) => [key, hidden.has(key) ? '***' : value]),
+    Object.entries(args).map(([key, value]) => [key, redactValue(value, key)]),
   )
 }
