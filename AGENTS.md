@@ -62,3 +62,12 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 - PiAgent：[`docs/protocols/piagent.md`](./docs/protocols/piagent.md)
 - Agent 进化闭环：[`docs/protocols/agent-evolution.md`](./docs/protocols/agent-evolution.md)
 - `docs/reference/` 为历史归档，不是入口，不参与校验；冲突时以 `docs/META_LANGUAGE.md` 为准。
+
+
+## 身份与会话边界
+
+- 不要把 `body.role`、调用方 `permissions` 或服务令牌 scope 当作用户权限真相；代用户调用
+  必须经 `DelegatedIdentityService` 重新解析功能权限与数据范围。
+- 新增受保护入口先声明 `@Auth('identity:read'|'identity:manage')` 或业务权限点；会话吊销
+  以 `auth_sessions` 为真源，JWT `sid`/`pv` 不匹配必须拒绝。
+- SSO/身份源 adapter 失败一律 fail-closed；JIT 只给默认角色，不得自动授予高权限。

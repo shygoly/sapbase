@@ -104,6 +104,10 @@ export const IDENTITY_FEDERATION_DDL: string[] = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_auth_login_event_org_created
     ON public.auth_login_events USING btree ("organizationId", "createdAt")`,
+  `CREATE INDEX IF NOT EXISTS idx_auth_login_event_org_email_created
+    ON public.auth_login_events USING btree ("organizationId", email, "createdAt")`,
+  `CREATE INDEX IF NOT EXISTS idx_auth_login_event_org_status_created
+    ON public.auth_login_events USING btree ("organizationId", status, "createdAt")`,
   `CREATE TABLE IF NOT EXISTS public.identity_sync_runs (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     "createdAt" timestamp without time zone DEFAULT now() NOT NULL,
@@ -113,12 +117,20 @@ export const IDENTITY_FEDERATION_DDL: string[] = [
     status character varying(32) DEFAULT 'running'::character varying NOT NULL,
     stats jsonb,
     error jsonb,
+    diff jsonb,
+    "confirmationStatus" character varying(16) DEFAULT 'none'::character varying NOT NULL,
+    "confirmedBy" uuid,
+    "confirmedAt" timestamp with time zone,
     "startedAt" timestamp with time zone DEFAULT now() NOT NULL,
     "finishedAt" timestamp with time zone,
     CONSTRAINT "PK_identity_sync_runs" PRIMARY KEY (id),
     CONSTRAINT "FK_identity_sync_run_org" FOREIGN KEY ("organizationId") REFERENCES public.organizations(id),
     CONSTRAINT "FK_identity_sync_run_provider" FOREIGN KEY ("providerId") REFERENCES public.identity_providers(id) ON DELETE CASCADE
   )`,
+  `CREATE INDEX IF NOT EXISTS idx_identity_provider_org_status
+    ON public.identity_providers USING btree ("organizationId", status)`,
+  `CREATE INDEX IF NOT EXISTS idx_identity_link_org_user
+    ON public.identity_links USING btree ("organizationId", "userId")`,
   `CREATE TABLE IF NOT EXISTS public.service_clients (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     "createdAt" timestamp without time zone DEFAULT now() NOT NULL,
@@ -136,4 +148,6 @@ export const IDENTITY_FEDERATION_DDL: string[] = [
     CONSTRAINT "UQ_service_client_org_key" UNIQUE ("organizationId", key),
     CONSTRAINT "FK_service_client_org" FOREIGN KEY ("organizationId") REFERENCES public.organizations(id)
   )`,
+  `CREATE INDEX IF NOT EXISTS idx_service_client_org_status
+    ON public.service_clients USING btree ("organizationId", status)`,
 ]

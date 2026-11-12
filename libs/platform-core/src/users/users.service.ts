@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository, ILike } from 'typeorm'
 import * as bcrypt from 'bcrypt'
@@ -9,6 +9,8 @@ import { BaseCrudHelper, PaginatedResult } from '../common'
 import { Role } from '../roles/role.entity'
 import { Department } from '../departments/department.entity'
 import { OrganizationMember, OrganizationRole } from '../organizations/organization-member.entity'
+import { EventBusService } from '../common/events/event-bus.service'
+import { UserSecurityChangedEvent } from '../common/events/user-security-changed.event'
 
 @Injectable()
 export class UsersService {
@@ -21,6 +23,7 @@ export class UsersService {
     private departmentsRepository: Repository<Department>,
     @InjectRepository(OrganizationMember)
     private organizationMembersRepository: Repository<OrganizationMember>,
+    @Optional() private readonly eventBus?: EventBusService,
   ) {}
 
   async create(createUserDto: CreateUserDto, organizationId?: string, createdBy?: string): Promise<User> {
@@ -118,6 +121,8 @@ export class UsersService {
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const { roleId, password, departmentId, ...rest } = updateUserDto
+    const before = await this.usersRepository.findOne({ where: { id } })
+    if (!before) throw new NotFoundException('User not found')
     const updateData: Partial<User> = {
       ...rest,
     }
@@ -140,17 +145,49 @@ export class UsersService {
       updateData.departmentId = departmentId
     }
 
+    const statusChanged =
+      rest.status !== undefined && rest.status !== before.status
+    const securityChanged = Boolean(password || roleId || statusChanged)
+    if (securityChanged) {
+      updateData.permissionVersion = (before.permissionVersion ?? 1) + 1
+    }
+
     const updatedUser = await BaseCrudHelper.updateById(
       this.usersRepository,
       id,
       updateData,
       'User',
     )
+    if (securityChanged) {
+      await this.eventBus?.publishSync(
+        new UserSecurityChangedEvent(
+          id,
+          statusChanged ? 'account-disabled' : password ? 'password-changed' : 'role-changed',
+        ),
+      )
+    }
     return (await this.ensureRoleAssociation(updatedUser))!
   }
 
   async remove(id: string): Promise<void> {
-    return BaseCrudHelper.removeById(this.usersRepository, id, 'User')
+    await BaseCrudHelper.removeById(this.usersRepository, id, 'User')
+    await this.eventBus?.publishSync(new UserSecurityChangedEvent(id, 'account-deleted'))
+  }
+
+  /** 鉴权热路径：只读权限版本/状态，不加载角色关系。 */
+  async findAuthState(id: string): Promise<{ permissionVersion: number; status: User['status'] } | null> {
+    return this.usersRepository.findOne({
+      where: { id },
+      select: { id: true, permissionVersion: true, status: true },
+    })
+  }
+
+  async bumpPermissionVersion(id: string): Promise<number> {
+    const user = await this.usersRepository.findOne({ where: { id } })
+    if (!user) throw new NotFoundException('User not found')
+    const next = (user.permissionVersion ?? 1) + 1
+    await this.usersRepository.update({ id }, { permissionVersion: next })
+    return next
   }
 
   private async ensureDepartmentExists(departmentId?: string | null): Promise<void> {

@@ -544,6 +544,8 @@ manifest/资产篡改拒绝
 26. **会话以 sid 为准**：JWT 携带 sid；吊销/过期后守卫必须拒绝，旧无 sid token 仅按过期时间兼容（INV-ID-02）。
 27. **SSO/同步 fail-closed**：源不可用、签名/state/nonce 失败不得降级为信任调用方（INV-ID-03）。
 28. **服务令牌不携带用户权限真相**：代用户调用必须服务端重解析权限与数据范围（INV-ID-04）。
+29. **SSO 适配器 fail-closed**：CAS/OAuth2/OIDC/SAML 的签名/state/nonce/时间窗/默认角色任一失败必须拒绝，不得降级信任（INV-ID-05）。
+30. **服务令牌限流与审计**：令牌只证明客户端/组织/scope；代用户数据范围重新解析，超限/拒绝/使用写审计（INV-ID-06）。
 29. **站内持久化优先于偏好**：偏好只影响 WS/额外投递；`mandatory` 绕过 mute（INV-NT-02）。
 30. **公告 audience 同组织**：role/user/scope 只从服务端解析，跨租户节点拒绝，解析失败按空集合（INV-NT-01）。
 31. **公告投递幂等**：唯一键 `(announcementId,userId)`；重复发布不产生第二条通知（INV-NT-03）。
@@ -736,6 +738,11 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 资产类型 | Asset Kind | `image/video/audio/document/archive/other` | ✅ |
 | 扫描状态 | Scan Status | `pending/clean/infected/error/skipped` | ✅ |
 | 短时签名 URL | Signed URL | `ObjectStorage.signedUrl()`；TTL + 组织绑定 | ✅ |
+| 身份提供方 | Identity Provider | `IdentityProvider`；`identity_providers` | ✅ |
+| 身份映射 | Identity Link | `IdentityLink`；`identity_links` | ✅ |
+| 持久会话 | Auth Session | `AuthSession`；`auth_sessions`；JWT `sid` | ✅ |
+| 权限版本 | Permission Version | `users.permissionVersion`；JWT `pv` | ✅ |
+| 服务客户端 | Service Client | `ServiceClient`；`service_clients` | ✅ |
 | 连接器 | Integration Connector | `IntegrationConnector`；`integration_connectors` | ✅ |
 | 出站消息 | Outbound Message | `OutboundMessage`；`outbound_messages` | ✅ |
 | 入站 Webhook | Webhook Endpoint/Event | `webhook_endpoints` / `webhook_events` | ✅ |
@@ -764,6 +771,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.18 | 2026-11-12 | 补齐身份联邦/会话治理术语与 INV-ID-05/06：SSO fail-closed、服务令牌限流/审计/数据范围 |
 | 1.17 | 2026-11-12 | 新增外部集成术语与 INV-EX-01..06：连接器凭证、出站/入站、只读 DB、增量对账、外部身份 |
 | 1.16 | 2026-11-12 | 新增资产/媒体术语与 INV-AS-01..05：租户隔离、上传校验、处理 fail-closed、访问双闸、配额/保留 |
 | 1.15 | 2026-11-11 | 新增批量导入/导出术语与 INV-IE-01..05：适配器白名单、运行幂等、atomic/partial、导出权限、不可信文件与公式注入防护 |

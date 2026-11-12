@@ -17,7 +17,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { ServiceClientAuthGuard, ServiceScopes } from '@sap/platform-core/identity/service-client-auth.guard'
 import { DelegatedIdentityService } from '@sap/platform-core/identity/delegated-identity.service'
-import { SemanticRuntimeService } from '../semantic-runtime/semantic-runtime.service'
+import { SemanticRuntimeService, toHttpException } from '../semantic-runtime/semantic-runtime.service'
 import { Auth } from '../common/decorators/auth.decorator'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
@@ -293,12 +293,16 @@ export class IntegrationsController {
   ) {
     if (!userId) throw new BadRequestException('缺少 X-On-Behalf-Of')
     if (!req.organizationId) throw new BadRequestException('缺少组织上下文')
-    const identity = await this.delegated.resolve(req.organizationId, userId)
-    return this.runtime.list(packageId, entity, req.organizationId, query, {
-      id: identity.userId,
-      role: identity.role,
-      permissions: identity.permissions,
-    })
+    try {
+      const identity = await this.delegated.resolve(req.organizationId, userId)
+      return await this.runtime.list(packageId, entity, req.organizationId, query, {
+        id: identity.userId,
+        role: identity.role,
+        permissions: identity.permissions,
+      })
+    } catch (error) {
+      toHttpException(error)
+    }
   }
 
   @Get('external/whoami')

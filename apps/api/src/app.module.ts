@@ -43,6 +43,7 @@ import { OfflineModule } from './offline/offline.module'
 import { DocumentIntelligenceModule } from './document-intelligence/document-intelligence.module'
 import { BulkModule } from './bulk/bulk.module'
 import { IntegrationsModule } from './integrations/integrations.module'
+import { IdentityJobsModule } from './identity-jobs/identity-jobs.module'
 import { BlueprintAgentModule } from './blueprint-agent/blueprint-agent.module'
 import { AgentToolsModule } from './agent-tools/agent-tools.module'
 import { AgentHostModule } from './agent-host/agent-host.module'
@@ -150,6 +151,7 @@ try {
     DocumentIntelligenceModule,
     BulkModule,
     IntegrationsModule,
+    IdentityJobsModule,
     BlueprintAgentModule,
     AgentToolsModule,
     AgentHostModule,

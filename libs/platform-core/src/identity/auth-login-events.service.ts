@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { AuthLoginEvent } from './auth-login-event.entity'
+import { EventBusService } from '../common/events/event-bus.service'
+import { AuthLoginAnomalyEvent } from '../common/events/auth-login-anomaly.event'
 
 export interface RecordLoginEventInput {
   organizationId: string
@@ -20,9 +22,22 @@ export class AuthLoginEventsService {
   constructor(
     @InjectRepository(AuthLoginEvent)
     private readonly repository: Repository<AuthLoginEvent>,
+    @Optional() private readonly eventBus?: EventBusService,
   ) {}
 
   async record(input: RecordLoginEventInput): Promise<AuthLoginEvent> {
+    const previousSuccess =
+      input.status === 'success'
+        ? await this.repository.find({
+            where: {
+              organizationId: input.organizationId,
+              email: input.email,
+              status: 'success',
+            },
+            order: { createdAt: 'DESC' },
+            take: 100,
+          })
+        : []
     const row = this.repository.create({
       organizationId: input.organizationId,
       userId: input.userId ?? null,
@@ -34,7 +49,40 @@ export class AuthLoginEventsService {
       reason: input.reason ?? null,
       metadata: input.metadata ?? null,
     })
-    return this.repository.save(row)
+    const saved = await this.repository.save(row)
+    if (input.status === 'success' && previousSuccess.length > 0) {
+      const deviceKey =
+        typeof input.metadata?.deviceId === 'string'
+          ? input.metadata.deviceId
+          : input.userAgent ?? ''
+      const newDevice =
+        Boolean(deviceKey) &&
+        !previousSuccess.some((event) => {
+          const prior =
+            typeof event.metadata?.deviceId === 'string'
+              ? event.metadata.deviceId
+              : event.userAgent ?? ''
+          return prior === deviceKey
+        })
+      const newIp =
+        Boolean(input.ip) &&
+        !previousSuccess.some((event) => event.ip === input.ip)
+      if (newDevice || newIp) {
+        await this.eventBus?.publishSync(
+          new AuthLoginAnomalyEvent(
+            input.organizationId,
+            input.userId ?? null,
+            input.email,
+            saved.id,
+            input.ip ?? null,
+            input.userAgent ?? null,
+            newDevice,
+            newIp,
+          ),
+        )
+      }
+    }
+    return saved
   }
 
   async isLocked(

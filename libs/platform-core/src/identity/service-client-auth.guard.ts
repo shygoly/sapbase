@@ -2,12 +2,16 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
+  Optional,
   SetMetadata,
   UnauthorizedException,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { ServiceClientsService } from './service-clients.service'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 
 export const SERVICE_SCOPES_KEY = 'service_scopes'
 
@@ -24,9 +28,12 @@ export const ServiceScopes = (...scopes: string[]) => SetMetadata(SERVICE_SCOPES
  */
 @Injectable()
 export class ServiceClientAuthGuard implements CanActivate {
+  private readonly rate = new Map<string, number[]>()
+
   constructor(
     private readonly clients: ServiceClientsService,
     private readonly reflector: Reflector,
+    @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -40,8 +47,13 @@ export class ServiceClientAuthGuard implements CanActivate {
     }
     const client = await this.clients.authenticate(organizationId, key, secret)
     if (!client) {
+      await this.audit(organizationId, undefined, 'auth.service_token.rejected', 'failure', {
+        reason: 'invalid-or-expired',
+        key,
+      })
       throw new UnauthorizedException('服务令牌无效、已过期或已停用')
     }
+    this.assertRateLimit(client.id, organizationId, key)
     const required =
       this.reflector.getAllAndOverride<string[]>(SERVICE_SCOPES_KEY, [
         context.getHandler(),
@@ -68,7 +80,50 @@ export class ServiceClientAuthGuard implements CanActivate {
     }
     request.serviceClient = client
     request.organizationId = organizationId
+    if (process.env.SERVICE_TOKEN_AUDIT_SUCCESS === 'true') {
+      await this.audit(organizationId, client.id, 'auth.service_token.used', 'success', {
+        scopes: client.scopes ?? [],
+        key,
+      })
+    }
     return true
+  }
+
+  private assertRateLimit(clientId: string, organizationId: string, key: string): void {
+    const max = Number(process.env.SERVICE_TOKEN_RATE_LIMIT_PER_MINUTE ?? 120)
+    if (!Number.isFinite(max) || max <= 0) return
+    const now = Date.now()
+    const window = (this.rate.get(clientId) ?? []).filter(
+      (timestamp) => now - timestamp < 60_000,
+    )
+    if (window.length >= max) {
+      void this.audit(organizationId, clientId, 'auth.service_token.rate_limited', 'failure', {
+        limit: max,
+        key,
+      })
+      throw new HttpException(`服务令牌限流：每分钟最多 ${max} 次`, HttpStatus.TOO_MANY_REQUESTS)
+    }
+    window.push(now)
+    this.rate.set(clientId, window)
+  }
+
+  private async audit(
+    organizationId: string,
+    resourceId: string | undefined,
+    action: string,
+    status: 'success' | 'failure',
+    metadata: Record<string, unknown>,
+  ): Promise<void> {
+    await this.auditLogs?.create({
+      organizationId,
+      action,
+      resource: 'service_client',
+      resourceId,
+      actor: 'system:service-token',
+      status,
+      metadata,
+      source: 'identity',
+    })
   }
 }
 

@@ -10,6 +10,7 @@
         "KnowledgePoint",
         "Material",
         "LearningRecord",
+        "Student",
         "Assessment",
         "Attempt",
         "WrongAnswer",

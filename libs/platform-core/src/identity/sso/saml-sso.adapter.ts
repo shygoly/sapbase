@@ -1,10 +1,12 @@
 import { requireConfig, SsoError, type SsoAdapter, type SsoCallbackInput, type SsoIdentity } from './sso-adapter'
+import { createSamlXmlDsigVerifier } from './saml-xml-dsig.verifier'
 
 export interface SamlConfig {
   entryPoint?: unknown
   issuer?: unknown
   callbackUrl?: unknown
   certificate?: unknown
+  certificateFingerprint?: unknown
   [key: string]: unknown
 }
 
@@ -36,7 +38,15 @@ export class SamlSsoAdapter implements SsoAdapter {
       typeof config.certificate === 'string' && config.certificate.length > 0
         ? config.certificate
         : null
-    this.verifier = options.verifier ?? (() => false)
+    const fingerprint =
+      typeof config.certificateFingerprint === 'string'
+        ? config.certificateFingerprint
+        : null
+    this.verifier =
+      options.verifier ??
+      (this.certificate
+        ? createSamlXmlDsigVerifier(this.certificate, fingerprint)
+        : () => false)
   }
 
   authorizationUrl(input: { state?: string } = {}): string {

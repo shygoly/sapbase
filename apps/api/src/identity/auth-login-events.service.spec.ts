@@ -4,7 +4,8 @@ describe('AuthLoginEventsService', () => {
   it('记录成功/失败事件，默认 provider=password', async () => {
     const create = jest.fn((row) => ({ id: 'e1', ...row }))
     const save = jest.fn(async (row) => row)
-    const service = new AuthLoginEventsService({ create, save } as never)
+    const find = jest.fn(async () => [])
+    const service = new AuthLoginEventsService({ create, save, find } as never)
     const row = await service.record({
       organizationId: 'org-1',
       email: 'a@example.com',
@@ -56,6 +57,61 @@ describe('AuthLoginEventsService', () => {
     await expect(
       service.isLocked('org-1', 'a@example.com', { maxFailures: 1, windowMinutes: 15 }),
     ).resolves.toBe(false)
+  })
+
+  it('新设备/新 IP 成功登录 → 发布异常事件', async () => {
+    const find = jest.fn(async () => [
+      {
+        id: 'old',
+        status: 'success',
+        ip: '10.0.0.1',
+        userAgent: 'old-agent',
+        metadata: { deviceId: 'old-device' },
+      },
+    ])
+    const create = jest.fn((row) => ({ id: 'new', ...row }))
+    const save = jest.fn(async (row) => row)
+    const publishSync = jest.fn(async () => undefined)
+    const service = new AuthLoginEventsService(
+      { find, create, save } as never,
+      { publishSync } as never,
+    )
+    await service.record({
+      organizationId: 'org-1',
+      userId: 'u1',
+      email: 'a@example.com',
+      status: 'success',
+      ip: '10.0.0.2',
+      userAgent: 'new-agent',
+      metadata: { deviceId: 'new-device' },
+    })
+    expect(publishSync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: 'org-1',
+        userId: 'u1',
+        newDevice: true,
+        newIp: true,
+      }),
+    )
+  })
+
+  it('首次成功登录不告警', async () => {
+    const find = jest.fn(async () => [])
+    const create = jest.fn((row) => ({ id: 'new', ...row }))
+    const save = jest.fn(async (row) => row)
+    const publishSync = jest.fn(async () => undefined)
+    const service = new AuthLoginEventsService(
+      { find, create, save } as never,
+      { publishSync } as never,
+    )
+    await service.record({
+      organizationId: 'org-1',
+      userId: 'u1',
+      email: 'a@example.com',
+      status: 'success',
+      ip: '10.0.0.2',
+    })
+    expect(publishSync).not.toHaveBeenCalled()
   })
 
   it('列表按用户过滤并限制条数', async () => {

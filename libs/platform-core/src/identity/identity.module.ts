@@ -13,6 +13,7 @@ import { ServiceClientAuthGuard } from './service-client-auth.guard'
 import { IdentitySsoService } from './identity-sso.service'
 import { IdentitySsoController } from './identity-sso.controller'
 import { IdentitySourceAdapterRegistry } from './identity-source'
+import { StaticIdentitySourceAdapter } from './identity-source.static'
 import { IdentitySyncService } from './identity-sync.service'
 import { IdentitySyncController } from './identity-sync.controller'
 import { DelegatedIdentityService } from './delegated-identity.service'
@@ -26,6 +27,12 @@ import { RolesModule } from '../roles/roles.module'
 import { ServiceClient } from './service-client.entity'
 import { OrganizationMemberRolesService } from './organization-member-roles.service'
 import { AuditLogsModule } from '../audit-logs/audit-logs.module'
+import { DataScopeModule } from '../data-scope/data-scope.module'
+import {
+  InMemorySessionRevocationBus,
+  SESSION_REVOCATION_BUS,
+} from './session-revocation.bus'
+import { IdentitySecuritySubscriber } from './identity-security.subscriber'
 
 @Module({
   imports: [
@@ -33,6 +40,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module'
     RolesModule,
     OrganizationsModule,
     AuditLogsModule,
+    DataScopeModule,
     TypeOrmModule.forFeature([
       OrganizationMemberRole,
       AuthSession,
@@ -46,12 +54,22 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module'
   providers: [
     OrganizationMemberRolesService,
     AuthSessionsService,
+    InMemorySessionRevocationBus,
     IdentityProvidersService,
     AuthLoginEventsService,
     ServiceClientsService,
     ServiceClientAuthGuard,
     IdentitySsoService,
-    IdentitySourceAdapterRegistry,
+    StaticIdentitySourceAdapter,
+    {
+      provide: IdentitySourceAdapterRegistry,
+      useFactory: (staticAdapter: StaticIdentitySourceAdapter) => {
+        const registry = new IdentitySourceAdapterRegistry()
+        registry.register(staticAdapter)
+        return registry
+      },
+      inject: [StaticIdentitySourceAdapter],
+    },
     IdentitySyncService,
     DelegatedIdentityService,
     EffectivePermissionsService,
@@ -60,12 +78,22 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module'
   exports: [
     OrganizationMemberRolesService,
     AuthSessionsService,
+    InMemorySessionRevocationBus,
     IdentityProvidersService,
     AuthLoginEventsService,
     ServiceClientsService,
     ServiceClientAuthGuard,
     IdentitySsoService,
-    IdentitySourceAdapterRegistry,
+    StaticIdentitySourceAdapter,
+    {
+      provide: IdentitySourceAdapterRegistry,
+      useFactory: (staticAdapter: StaticIdentitySourceAdapter) => {
+        const registry = new IdentitySourceAdapterRegistry()
+        registry.register(staticAdapter)
+        return registry
+      },
+      inject: [StaticIdentitySourceAdapter],
+    },
     IdentitySyncService,
     DelegatedIdentityService,
     TypeOrmModule,

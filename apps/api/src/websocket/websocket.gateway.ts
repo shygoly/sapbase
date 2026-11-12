@@ -9,16 +9,22 @@ import {
   MessageBody,
 } from '@nestjs/websockets'
 import { Server, Socket } from 'socket.io'
-import { Logger, UseGuards } from '@nestjs/common'
+import { Inject, Logger, Optional, UseGuards } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { NotificationService } from './services/notification.service'
 import { CollaborationService } from './services/collaboration.service'
 import { corsOrigins } from '../common/cors'
+import {
+  SESSION_REVOCATION_BUS,
+  type SessionRevocationBus,
+  type SessionRevocationEvent,
+} from '@sap/platform-core/identity/session-revocation.bus'
 
 interface AuthenticatedSocket extends Socket {
   userId?: string
   organizationId?: string
   userEmail?: string
+  sid?: string
 }
 
 /**
@@ -40,11 +46,15 @@ export class AppWebSocketGateway
 
   private readonly logger = new Logger(AppWebSocketGateway.name)
   private readonly connectedUsers = new Map<string, AuthenticatedSocket>()
+  private readonly connectedSessions = new Map<string, AuthenticatedSocket>()
 
   constructor(
     private readonly jwtService: JwtService,
     private readonly notificationService: NotificationService,
     private readonly collaborationService: CollaborationService,
+    @Optional()
+    @Inject(SESSION_REVOCATION_BUS)
+    private readonly revocationBus?: SessionRevocationBus,
   ) {
     // Circular dependency workaround - set notification service gateway reference
     // This will be set after gateway initialization
@@ -57,6 +67,26 @@ export class AppWebSocketGateway
     this.notificationService.setGetOrganizationUsers((orgId) =>
       this.getOrganizationUsers(orgId),
     )
+    this.revocationBus?.subscribe((event) => this.handleSessionRevoked(event))
+  }
+
+  /** 会话吊销后主动断开在线连接；旧 token 的下一次请求仍会被 JWT 守卫拒绝。 */
+  private handleSessionRevoked(event: SessionRevocationEvent): void {
+    if (event.sid) {
+      const socket = this.connectedSessions.get(event.sid)
+      if (socket) {
+        socket.emit('session:revoked', { reason: event.reason })
+        socket.disconnect(true)
+        this.connectedSessions.delete(event.sid)
+      }
+    }
+    if (event.userId) {
+      const socket = this.connectedUsers.get(event.userId)
+      if (socket && (!event.sid || socket.sid !== event.sid)) {
+        socket.emit('session:revoked', { reason: event.reason })
+        socket.disconnect(true)
+      }
+    }
   }
 
   async handleConnection(client: AuthenticatedSocket) {
@@ -73,6 +103,7 @@ export class AppWebSocketGateway
       client.userId = payload.sub || payload.userId
       client.organizationId = payload.organizationId
       client.userEmail = payload.email
+      client.sid = payload.sid
 
       // Join organization room
       if (client.organizationId) {
@@ -86,6 +117,7 @@ export class AppWebSocketGateway
       client.join(`user:${client.userId}`)
 
       this.connectedUsers.set(client.userId!, client)
+      if (client.sid) this.connectedSessions.set(client.sid, client)
 
       // Notify user of successful connection
       client.emit('connected', {
@@ -108,6 +140,7 @@ export class AppWebSocketGateway
       this.collaborationService.handleUserDisconnect(client.userId)
       this.logger.log(`User ${client.userId} disconnected`)
     }
+    if (client.sid) this.connectedSessions.delete(client.sid)
   }
 
   /**

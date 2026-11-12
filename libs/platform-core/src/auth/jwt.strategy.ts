@@ -1,8 +1,9 @@
-import { Injectable, Optional } from '@nestjs/common'
+import { Injectable, Optional, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
-import { AuthSessionService } from './auth-session.port'
+import { AuthSessionsService } from '../identity/auth-sessions.service'
+import { UsersService } from '../users/users.service'
 
 export interface JwtPayload {
   sub: string
@@ -11,13 +12,16 @@ export interface JwtPayload {
   permissions: string[]
   organizationId?: string
   sid?: string
+  /** 权限版本；角色/直授变更后旧 token 拒绝。 */
+  pv?: number
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     config: ConfigService,
-    @Optional() private sessions?: AuthSessionService,
+    @Optional() private sessions?: AuthSessionsService,
+    @Optional() private users?: UsersService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -30,6 +34,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
     if (payload.sid) {
       await this.sessions?.assertActive(payload.sid)
+    }
+    if (payload.pv !== undefined) {
+      const state = await this.users?.findAuthState(payload.sub)
+      if (!state || state.status !== 'active') {
+        throw new UnauthorizedException('账号已停用或不存在')
+      }
+      if ((state.permissionVersion ?? 1) !== payload.pv) {
+        throw new UnauthorizedException('权限已变更，请重新登录')
+      }
     }
     return {
       id: payload.sub,

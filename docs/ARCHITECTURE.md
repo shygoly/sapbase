@@ -453,3 +453,16 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
 前端页面通过 `@sap/ui-runtime` 渲染，能力边界见 `docs/UI_CONTRIBUTION.md`：
 页面/集合/表单/详情权限、字段/动作/行级可见性、草稿与离开守卫、统一格式管道、
 工作台选中与窄屏降级、错误边界、图标白名单。Agent/人不得为修页面旁路改 `libs/*` 生产行为。
+
+
+## 身份与会话治理边界
+
+- 身份提供方按组织配置（CAS/OAuth2/OIDC/SAML），`identity_providers.secretRef` 只存引用；
+  JIT 只给 provider 默认角色，高权限必须手工/同步授予。
+- 组织内多角色走 `organization_member_roles`；有效权限 = 本组织 active 角色并集 ∪ 直授，
+  `users.roleId` 仅兼容回退。
+- `auth_sessions` 是持久会话真源，JWT 带 `sid` 与 `pv`；登出/强制下线/密码/角色/停用/离职
+  立即吊销，缓存只加速。WebSocket 连接同样带 `sid`，吊销后主动断开。
+- 服务令牌只证明客户端/组织/scope；代用户调用必须服务端重新解析功能权限与数据范围，
+  并受限流/审计约束。
+- 身份同步按 provider 隔离，源不可用不降级删除；高风险离职可配置人工确认。

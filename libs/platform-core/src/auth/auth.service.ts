@@ -19,6 +19,8 @@ export interface JwtPayload {
   permissions: string[]
   organizationId?: string
   sid?: string
+  /** 权限版本；角色/直授变更后旧 token 拒绝。 */
+  pv?: number
 }
 
 @Injectable()
@@ -86,6 +88,7 @@ export class AuthService {
       permissions,
       organizationId: selectedOrgId,
       sid,
+      pv: user.permissionVersion ?? 1,
     }
 
     return {
@@ -175,6 +178,7 @@ export class AuthService {
       permissions,
       organizationId: input.organizationId,
       sid,
+      pv: user.permissionVersion ?? 1,
     }
 
     const organizations = await this.organizationsService.findAll(user.id)
@@ -232,6 +236,7 @@ export class AuthService {
       permissions,
       organizationId,
       sid,
+      pv: user.permissionVersion ?? 1,
     }
 
     return {
@@ -282,6 +287,7 @@ export class AuthService {
       permissions,
       organizationId: session.organizationId,
       sid: nextSid,
+      pv: user.permissionVersion ?? 1,
     }
     return {
       access_token: this.jwtService.sign(payload),

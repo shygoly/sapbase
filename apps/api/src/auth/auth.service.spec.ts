@@ -119,6 +119,8 @@ describe('AuthService', () => {
         role: mockUser.role,
         permissions: [],
         organizationId: undefined,
+        sid: undefined,
+        pv: 1,
       })
     })
 

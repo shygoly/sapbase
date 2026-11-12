@@ -4,6 +4,7 @@ import {
   OidcSsoAdapter,
 } from '@sap/platform-core/identity/sso/oidc-sso.adapter'
 import { SsoError } from '@sap/platform-core/identity/sso/sso-adapter'
+import { Oauth2SsoAdapter } from '@sap/platform-core/identity/sso/oauth2-sso.adapter'
 import { SamlSsoAdapter } from '@sap/platform-core/identity/sso/saml-sso.adapter'
 
 describe('CasSsoAdapter', () => {
@@ -151,6 +152,71 @@ describe('OidcSsoAdapter', () => {
     const adapter = new OidcSsoAdapter(config, { fetcher, verifier })
     await expect(
       adapter.authenticate({ code: 'code-1', nonce: 'n1' }),
+    ).rejects.toBeInstanceOf(SsoError)
+  })
+})
+
+describe('Oauth2SsoAdapter', () => {
+  const config = {
+    authorizationEndpoint: 'https://idp.example.com/oauth/authorize',
+    tokenEndpoint: 'https://idp.example.com/oauth/token',
+    userinfoEndpoint: 'https://idp.example.com/oauth/userinfo',
+    clientId: 'client-1',
+    redirectUri: 'https://app.example.com/sso/oauth2',
+  }
+
+  it('生成授权 URL（code + state）', () => {
+    const adapter = new Oauth2SsoAdapter(config)
+    const url = adapter.authorizationUrl({ state: 's1' })
+    expect(url).toContain('response_type=code')
+    expect(url).toContain('client_id=client-1')
+    expect(url).toContain('state=s1')
+  })
+
+  it('token exchange + userinfo → externalId/attributes', async () => {
+    const fetcher = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ access_token: 'at-1' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ sub: 'ext-1', email: 'a@example.com', name: 'A' }),
+      }) as unknown as typeof fetch
+    const adapter = new Oauth2SsoAdapter(config, { fetcher })
+    await expect(adapter.authenticate({ code: 'c1' })).resolves.toEqual({
+      externalId: 'ext-1',
+      attributes: { sub: 'ext-1', email: 'a@example.com', name: 'A' },
+    })
+  })
+
+  it('缺少 access_token / userinfo 无 subject → SsoError', async () => {
+    const noToken = jest.fn(async () => ({
+      ok: false,
+      status: 400,
+      json: async () => ({ error: 'invalid_grant' }),
+    })) as unknown as typeof fetch
+    await expect(
+      new Oauth2SsoAdapter(config, { fetcher: noToken }).authenticate({ code: 'bad' }),
+    ).rejects.toBeInstanceOf(SsoError)
+
+    const noSubject = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ access_token: 'at-1' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ name: 'no-subject' }),
+      }) as unknown as typeof fetch
+    await expect(
+      new Oauth2SsoAdapter(config, { fetcher: noSubject }).authenticate({ code: 'c1' }),
     ).rejects.toBeInstanceOf(SsoError)
   })
 })

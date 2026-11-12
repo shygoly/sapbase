@@ -530,6 +530,37 @@ code_markers:
   - apps/api/src/integrations/integration-data-source.service.ts
 ```
 
+### D-25：身份联邦按组织配置 + 持久会话 + 服务令牌二次校验
+
+```yaml decision
+id: D-25
+title: 身份联邦按组织配置 + 持久会话 + 服务令牌二次校验
+status: accepted
+date: 2026-11
+context: |
+  单角色 users.roleId 无法表达组织内多角色；JWT 无 sid 时登出/强制下线无法立即生效；
+  SSO/身份源同步若信任调用方或源不可用时降级删除，会造成越权/数据丢失；服务令牌若携带
+  用户权限真相，会绕过平台功能与数据范围判定。
+decision: |
+  identity_providers 按组织配置 CAS/OAuth2/OIDC/SAML，secretRef 只存引用；JIT 只给默认角色，
+  高权限必须另行授予。organization_member_roles 表达组织内多角色，有效权限 = active 且未过期
+  角色并集 ∪ 直授，users.roleId 仅回退。auth_sessions 持久化 sid/refresh hash，JWT 带 sid+pv，
+  守卫校验会话 active 与权限版本；登出/强制下线/密码/角色/停用/离职立即吊销，缓存只加速、
+  DB 为真源。身份同步按 provider 隔离、失败重试、源不可用不降级删除，高风险离职可待人工确认。
+  服务令牌只证明客户端/组织/scope，代用户调用必须服务端重解析功能权限与数据范围，并限流/审计。
+references:
+  - INV-ID-01
+  - INV-ID-02
+  - INV-ID-03
+  - INV-ID-04
+  - INV-ID-05
+  - INV-ID-06
+code_markers:
+  - libs/platform-core/src/identity/auth-sessions.service.ts
+  - libs/platform-core/src/identity/identity-sync.service.ts
+  - libs/platform-core/src/identity/service-client-auth.guard.ts
+```
+
 ---
 
 ## 附录：命名空间约定

@@ -347,3 +347,41 @@ For API documentation issues:
 - `GET /api/integrations/external/records/:packageId/:entity` — 额外 `X-On-Behalf-Of`，
   服务端重新解析用户权限/数据范围
 - `GET /api/integrations/metrics` — 出站成功率/DLQ/同步行数/差异
+
+## Identity & Session Governance
+
+权限：`identity:read` / `identity:manage`。JWT 携带 `sid` 与 `pv`（权限版本）；`sid` 对应
+`auth_sessions`，`pv` 不匹配或账号停用返回 401。
+
+身份提供方：
+
+- `GET/POST /api/identity/providers`
+- `PATCH/DELETE /api/identity/providers/:id`
+- 支持 `cas` / `oauth2` / `oidc` / `saml`；`secretRef` 只存引用，响应不回显 secret。
+- 公开入口：`GET /api/identity/sso/providers?organizationId=...`、
+  `GET /api/identity/sso/:key/authorize`、`POST /api/auth/sso/:key/callback`。
+
+会话/登录事件：
+
+- `GET /api/identity/sessions?userId=...`
+- `POST /api/identity/sessions/revoke` — `{ sid }` 或 `{ userId, reason }`
+- `GET /api/identity/login-events?userId=&limit=`
+- 新设备/新 IP 成功登录会通知本人与组织管理员。
+
+服务客户端/委托：
+
+- `GET/POST /api/identity/service-clients`
+- `PATCH /api/identity/service-clients/:id`
+- `POST /api/identity/service-clients/:id/rotate` — secret 只返回一次
+- `POST /api/identity/delegation/resolve` — `{ userId }` 重解析角色/功能权限
+- `POST /api/identity/delegation/scope` — `{ userId, resourceKey, action }` 重解析数据范围
+- 服务令牌头：`X-Organization-Id` / `X-Service-Key` / `X-Service-Secret`；
+  默认每分钟 120 次限流，超限 429，拒绝/使用写审计。
+
+身份同步：
+
+- `POST /api/identity/sync/:providerKey/run`
+- `GET /api/identity/sync/runs?providerId=`
+- `POST /api/identity/sync/runs/:id/confirm` — 确认高风险离职差异
+- `provider.config.users` 支持静态身份源；`provider.config.confirmDeactivations=true`
+  时离职差异先进入 `pending`，人工确认后执行。

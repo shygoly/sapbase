@@ -1,9 +1,15 @@
-import { Injectable, Optional, UnauthorizedException } from '@nestjs/common'
+import { Inject, Injectable, Optional, UnauthorizedException } from '@nestjs/common'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import type { Cache } from 'cache-manager'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { MoreThan, Repository } from 'typeorm'
 import { createHash, randomUUID } from 'node:crypto'
 import { AuthSession } from './auth-session.entity'
+import {
+  SESSION_REVOCATION_BUS,
+  type SessionRevocationBus,
+} from './session-revocation.bus'
 
 export interface CreateSessionInput {
   organizationId: string
@@ -33,6 +39,10 @@ export class AuthSessionsService {
     @InjectRepository(AuthSession)
     private readonly repository: Repository<AuthSession>,
     @Optional() private readonly auditLogs?: AuditLogsService,
+    @Optional() @Inject(CACHE_MANAGER) private readonly cache?: Cache,
+    @Optional()
+    @Inject(SESSION_REVOCATION_BUS)
+    private readonly revocationBus?: SessionRevocationBus,
   ) {}
 
   async create(input: CreateSessionInput): Promise<AuthSession> {
@@ -69,9 +79,22 @@ export class AuthSessionsService {
   }
 
   async findActive(sid: string): Promise<AuthSession | null> {
-    return this.repository.findOne({
+    const cacheKey = this.cacheKey(sid)
+    const cached = await this.cache?.get<AuthSession>(cacheKey)
+    if (cached && new Date(cached.expiresAt).getTime() > Date.now()) {
+      return cached
+    }
+    const row = await this.repository.findOne({
       where: { sid, status: 'active', expiresAt: MoreThan(new Date()) },
     })
+    if (row) {
+      const ttl = Math.max(
+        1000,
+        Math.min(30_000, new Date(row.expiresAt).getTime() - Date.now()),
+      )
+      await this.cache?.set(cacheKey, row, ttl)
+    }
+    return row
   }
 
   async assertActive(sid: string): Promise<AuthSession> {
@@ -95,7 +118,14 @@ export class AuthSessionsService {
       { sid, status: 'active' },
       { status: 'revoked', revokedAt: new Date(), revokedReason: reason },
     )
+    await this.cache?.del(this.cacheKey(sid))
     if (row) {
+      this.revocationBus?.publish({
+        sid,
+        userId: row.userId,
+        organizationId: row.organizationId,
+        reason,
+      })
       await this.auditLogs?.create({
         organizationId: row.organizationId,
         action: 'auth.session.revoked',
@@ -115,11 +145,21 @@ export class AuthSessionsService {
     sid: string,
     reason = 'forced-offline',
   ): Promise<boolean> {
+    const row = await this.repository.findOne({
+      where: { organizationId, sid, status: 'active' },
+    })
     const result = await this.repository.update(
       { organizationId, sid, status: 'active' },
       { status: 'revoked', revokedAt: new Date(), revokedReason: reason },
     )
+    await this.cache?.del(this.cacheKey(sid))
     if ((result.affected ?? 0) > 0) {
+      this.revocationBus?.publish({
+        sid,
+        userId: row?.userId,
+        organizationId,
+        reason,
+      })
       await this.auditLogs?.create({
         organizationId,
         action: 'auth.session.revoked',
@@ -139,11 +179,16 @@ export class AuthSessionsService {
     userId: string,
     reason = 'forced-offline',
   ): Promise<number> {
+    const active = await this.repository.find({
+      where: { organizationId, userId, status: 'active' },
+    })
     const result = await this.repository.update(
       { organizationId, userId, status: 'active' },
       { status: 'revoked', revokedAt: new Date(), revokedReason: reason },
     )
+    await this.clearCache(active)
     if ((result.affected ?? 0) > 0) {
+      this.revocationBus?.publish({ userId, organizationId, reason })
       await this.auditLogs?.create({
         organizationId,
         action: 'auth.session.revoked',
@@ -156,6 +201,45 @@ export class AuthSessionsService {
       })
     }
     return result.affected ?? 0
+  }
+
+  /** 密码/角色/账号状态变化：跨组织吊销该用户全部会话。 */
+  async revokeAllForUser(userId: string, reason = 'security-change'): Promise<number> {
+    const active = await this.repository.find({
+      where: { userId, status: 'active' },
+    })
+    const result = await this.repository.update(
+      { userId, status: 'active' },
+      { status: 'revoked', revokedAt: new Date(), revokedReason: reason },
+    )
+    await this.clearCache(active)
+    if ((result.affected ?? 0) > 0) {
+      this.revocationBus?.publish({ userId, reason })
+      const organizations = [...new Set(active.map((row) => row.organizationId))]
+      for (const organizationId of organizations) {
+        await this.auditLogs?.create({
+          organizationId,
+          action: 'auth.session.revoked',
+          resource: 'session',
+          resourceId: userId,
+          actor: 'system:security',
+          status: 'success',
+          metadata: { reason, scope: 'user-all', revoked: active.length },
+          source: 'auth',
+        })
+      }
+    }
+    return result.affected ?? 0
+  }
+
+  private cacheKey(sid: string): string {
+    return `auth:session:${sid}`
+  }
+
+  private async clearCache(rows: AuthSession[]): Promise<void> {
+    for (const row of rows) {
+      await this.cache?.del(this.cacheKey(row.sid))
+    }
   }
 
   async list(organizationId: string, userId: string): Promise<AuthSession[]> {

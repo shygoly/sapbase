@@ -6,128 +6,478 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "memberRole": { "$ref": "#/$defs/memberRole" },
-    "session": { "$ref": "#/$defs/session" },
-    "provider": { "$ref": "#/$defs/provider" },
-    "link": { "$ref": "#/$defs/link" },
-    "loginEvent": { "$ref": "#/$defs/loginEvent" },
-    "syncRun": { "$ref": "#/$defs/syncRun" },
-    "serviceClient": { "$ref": "#/$defs/serviceClient" }
+    "memberRole": {
+      "$ref": "#/$defs/memberRole"
+    },
+    "session": {
+      "$ref": "#/$defs/session"
+    },
+    "provider": {
+      "$ref": "#/$defs/provider"
+    },
+    "link": {
+      "$ref": "#/$defs/link"
+    },
+    "loginEvent": {
+      "$ref": "#/$defs/loginEvent"
+    },
+    "syncRun": {
+      "$ref": "#/$defs/syncRun"
+    },
+    "serviceClient": {
+      "$ref": "#/$defs/serviceClient"
+    }
   },
   "$defs": {
-    "uuid": { "type": "string", "format": "uuid" },
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
     "memberRole": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["organizationId", "userId", "roleName", "status", "source"],
+      "required": [
+        "organizationId",
+        "userId",
+        "roleName",
+        "status",
+        "source"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/uuid" },
-        "organizationId": { "$ref": "#/$defs/uuid" },
-        "userId": { "$ref": "#/$defs/uuid" },
-        "roleId": { "type": ["string", "null"], "format": "uuid" },
-        "roleName": { "type": "string", "minLength": 1 },
-        "source": { "enum": ["manual", "legacy", "sso", "sync"] },
-        "status": { "enum": ["active", "inactive"] },
-        "validFrom": { "type": ["string", "null"], "format": "date-time" },
-        "validTo": { "type": ["string", "null"], "format": "date-time" },
-        "createdBy": { "type": ["string", "null"], "format": "uuid" }
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "organizationId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "userId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "roleId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "roleName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "enum": [
+            "manual",
+            "legacy",
+            "sso",
+            "sync"
+          ]
+        },
+        "status": {
+          "enum": [
+            "active",
+            "inactive"
+          ]
+        },
+        "validFrom": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "validTo": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        }
       }
     },
     "session": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["organizationId", "userId", "sid", "status", "expiresAt"],
+      "required": [
+        "organizationId",
+        "userId",
+        "sid",
+        "status",
+        "expiresAt"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/uuid" },
-        "organizationId": { "$ref": "#/$defs/uuid" },
-        "userId": { "$ref": "#/$defs/uuid" },
-        "sid": { "$ref": "#/$defs/uuid" },
-        "refreshTokenHash": { "type": ["string", "null"] },
-        "status": { "enum": ["active", "revoked", "expired"] },
-        "ip": { "type": ["string", "null"] },
-        "userAgent": { "type": ["string", "null"] },
-        "expiresAt": { "type": "string", "format": "date-time" },
-        "lastSeenAt": { "type": ["string", "null"], "format": "date-time" },
-        "revokedAt": { "type": ["string", "null"], "format": "date-time" },
-        "revokedReason": { "type": ["string", "null"] }
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "organizationId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "userId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "sid": {
+          "$ref": "#/$defs/uuid"
+        },
+        "refreshTokenHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "active",
+            "revoked",
+            "expired"
+          ]
+        },
+        "ip": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "userAgent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSeenAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "revokedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "revokedReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "provider": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["organizationId", "key", "name", "type", "status"],
+      "required": [
+        "organizationId",
+        "key",
+        "name",
+        "type",
+        "status"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/uuid" },
-        "organizationId": { "$ref": "#/$defs/uuid" },
-        "key": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-        "name": { "type": "string", "minLength": 1 },
-        "type": { "enum": ["cas", "oauth2", "oidc", "saml"] },
-        "config": { "type": ["object", "null"] },
-        "secretRef": { "type": ["string", "null"] },
-        "defaultRoleName": { "type": ["string", "null"] },
-        "status": { "enum": ["active", "inactive"] }
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "organizationId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "enum": [
+            "cas",
+            "oauth2",
+            "oidc",
+            "saml"
+          ]
+        },
+        "config": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "secretRef": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "defaultRoleName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "active",
+            "inactive"
+          ]
+        }
       }
     },
     "link": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["organizationId", "providerId", "externalId", "userId"],
+      "required": [
+        "organizationId",
+        "providerId",
+        "externalId",
+        "userId"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/uuid" },
-        "organizationId": { "$ref": "#/$defs/uuid" },
-        "providerId": { "$ref": "#/$defs/uuid" },
-        "externalId": { "type": "string", "minLength": 1 },
-        "userId": { "$ref": "#/$defs/uuid" },
-        "attributes": { "type": ["object", "null"] },
-        "lastLoginAt": { "type": ["string", "null"], "format": "date-time" }
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "organizationId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "providerId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "externalId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "userId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "attributes": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "lastLoginAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
       }
     },
     "loginEvent": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["organizationId", "email", "provider", "status"],
+      "required": [
+        "organizationId",
+        "email",
+        "provider",
+        "status"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/uuid" },
-        "organizationId": { "$ref": "#/$defs/uuid" },
-        "userId": { "type": ["string", "null"], "format": "uuid" },
-        "email": { "type": "string", "format": "email" },
-        "provider": { "type": "string" },
-        "status": { "enum": ["success", "failure"] },
-        "ip": { "type": ["string", "null"] },
-        "userAgent": { "type": ["string", "null"] },
-        "reason": { "type": ["string", "null"] },
-        "metadata": { "type": ["object", "null"] }
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "organizationId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "userId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "failure"
+          ]
+        },
+        "ip": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "userAgent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "metadata": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
       }
     },
     "syncRun": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["organizationId", "providerId", "status", "startedAt"],
+      "required": [
+        "organizationId",
+        "providerId",
+        "status",
+        "startedAt"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/uuid" },
-        "organizationId": { "$ref": "#/$defs/uuid" },
-        "providerId": { "$ref": "#/$defs/uuid" },
-        "status": { "enum": ["running", "succeeded", "failed", "partial"] },
-        "stats": { "type": ["object", "null"] },
-        "error": { "type": ["object", "null"] },
-        "startedAt": { "type": "string", "format": "date-time" },
-        "finishedAt": { "type": ["string", "null"], "format": "date-time" }
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "organizationId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "providerId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "status": {
+          "enum": [
+            "running",
+            "succeeded",
+            "failed",
+            "partial"
+          ]
+        },
+        "stats": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "diff": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "confirmationStatus": {
+          "enum": [
+            "none",
+            "pending",
+            "confirmed"
+          ]
+        },
+        "confirmedBy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "confirmedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
       }
     },
     "serviceClient": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["organizationId", "key", "name", "status"],
+      "required": [
+        "organizationId",
+        "key",
+        "name",
+        "status"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/uuid" },
-        "organizationId": { "$ref": "#/$defs/uuid" },
-        "key": { "type": "string", "minLength": 1 },
-        "name": { "type": "string", "minLength": 1 },
-        "scopes": { "type": ["array", "null"], "items": { "type": "string" } },
-        "status": { "enum": ["active", "inactive"] },
-        "expiresAt": { "type": ["string", "null"], "format": "date-time" },
-        "lastUsedAt": { "type": ["string", "null"], "format": "date-time" },
-        "ipAllowlist": { "type": ["array", "null"], "items": { "type": "string" } }
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "organizationId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scopes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "active",
+            "inactive"
+          ]
+        },
+        "expiresAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "lastUsedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "ipAllowlist": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
       }
     }
   }

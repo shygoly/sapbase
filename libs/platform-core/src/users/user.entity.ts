@@ -24,6 +24,10 @@ export class User extends BaseEntity {
   @Column({ type: 'simple-array', default: '' })
   permissions: string[]
 
+  /** 角色/直授权限变更时递增；JWT 带 pv，守卫据此拒绝旧权限令牌。 */
+  @Column({ type: 'int', default: 1 })
+  permissionVersion: number
+
   @Column({ type: 'uuid', nullable: true })
   departmentId?: string
 

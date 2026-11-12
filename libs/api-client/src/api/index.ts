@@ -159,3 +159,12 @@ export {
   type SyncRun,
   type IntegrationMetrics,
 } from './integrations.api'
+
+export {
+  identityApi,
+  type IdentityProviderRecord,
+  type AuthSessionRecord,
+  type LoginEventRecord,
+  type ServiceClientRecord,
+  type SyncRunRecord,
+} from './identity.api'

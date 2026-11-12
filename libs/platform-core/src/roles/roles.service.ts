@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, Optional } from '@nestjs/common'
-import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
+import { User } from '../users/user.entity'
 import { Role } from './role.entity'
 import { CreateRoleDto } from './dto/create-role.dto'
 import { UpdateRoleDto } from './dto/update-role.dto'
@@ -11,6 +12,9 @@ export class RolesService {
   constructor(
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    @Optional()
+    @InjectRepository(User)
+    private readonly usersRepository?: Repository<User>,
     @Optional() private readonly auditLogs?: AuditLogsService,
   ) {}
 
@@ -70,6 +74,7 @@ export class RolesService {
       metadata: { name: saved.name },
       source: 'role',
     })
+    await this.bumpUsersWithRole(saved.id)
     return saved
   }
 
@@ -86,5 +91,16 @@ export class RolesService {
       metadata: { name: role.name },
       source: 'role',
     })
+    await this.bumpUsersWithRole(id)
+  }
+
+  private async bumpUsersWithRole(roleId: string): Promise<void> {
+    if (!this.usersRepository) return
+    await this.usersRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({ permissionVersion: () => '"permissionVersion" + 1' })
+      .where('"roleId" = :roleId', { roleId })
+      .execute()
   }
 }

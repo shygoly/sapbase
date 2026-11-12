@@ -25,6 +25,7 @@
 | `review.sla_scan` | `*/10 * * * *`（每 10 分钟） | `apps/api/src/review/review-sla.service.ts#scan` | 审批到期提醒与超时升级（幂等） |
 | `notifications.publish_scheduled` | `*/5 * * * *`（每 5 分钟） | `apps/api/src/notifications/notification-retention.service.ts#runScheduledPublish` | 发布 `publishAt` 到期的定时公告 |
 | `notifications.cleanup_expired` | `15 3 * * *`（每日 03:15） | `apps/api/src/notifications/notification-retention.service.ts#runCleanup` | 软删除过期通知/公告/投递，写清理运行审计 |
+| `identity.sync_scan` | `0 * * * *`（每小时） | `apps/api/src/identity-jobs/identity-sync-job.service.ts#runAll` | 按组织扫描 active 身份提供方并增量同步/差异报告 |
 | `release.guardrail_check` | `30 * * * *`（每小时 :30） | `apps/api/src/release-automation/release-automation-jobs.service.ts#guardrailCheck` | 扫描 A2 策略并记录护栏检查 |
 | `release.review_due` | `0 9 * * *`（每日 09:00） | `apps/api/src/release-automation/release-automation-jobs.service.ts#reviewDue` | 24h 未复核的 A2 策略自动降回 A1 |
 
@@ -92,3 +93,24 @@ steps:
 ```
 
 **说明**：同步只读源库，按水位增量拉取；写入经通用导入适配器幂等落库，运行记录保存行数/差异。
+
+
+### 4. 身份源同步
+
+```yaml flow
+id: FLOW-IDENTITY-01
+name: 身份源增量同步
+trigger: identity.sync_scan
+steps:
+  - actor: apps/api/src/identity-jobs/identity-sync-job.service.ts#runAll
+    produces: [identity_sync_runs]
+    consumes: [identity_providers]
+  - actor: libs/platform-core/src/identity/identity-sync.service.ts#run
+    produces: [identity_links, identity_sync_runs, auth_sessions]
+    consumes: [identity_providers, users]
+dead_edge_check:
+  - producer: identity_sync_runs
+    consumer: identity_providers
+```
+
+**说明**：同步按 provider 隔离；源不可用只记 failed，不降级删除；高风险离职可配置待确认。

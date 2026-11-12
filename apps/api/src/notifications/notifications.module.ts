@@ -18,6 +18,7 @@ import { Announcement } from './announcement.entity'
 import { AnnouncementAudience } from './announcement-audience.entity'
 import { AnnouncementDelivery } from './announcement-delivery.entity'
 import { NotificationSubscriber } from './notification-subscriber'
+import { IdentityNotificationSubscriber } from './identity-notification.subscriber'
 import { NotificationsController } from './notifications.controller'
 import { NotificationPreferencesService } from './notification-preferences.service'
 import { NotificationCleanupRun } from './notification-cleanup-run.entity'
@@ -50,6 +51,7 @@ import { AnnouncementsController } from './announcements.controller'
   providers: [
     NotificationService,
     NotificationSubscriber,
+    IdentityNotificationSubscriber,
     InboxService,
     NotificationPreferencesService,
     AnnouncementsService,

@@ -933,7 +933,8 @@
         "role",
         "department",
         "status",
-        "permissions"
+        "permissions",
+        "permissionVersion"
       ]
     },
     "workflow_auto_suggestion_logs": {
@@ -1237,7 +1238,11 @@
         "stats",
         "error",
         "startedAt",
-        "finishedAt"
+        "finishedAt",
+        "diff",
+        "confirmationStatus",
+        "confirmedBy",
+        "confirmedAt"
       ]
     },
     "service_clients": {

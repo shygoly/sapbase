@@ -780,8 +780,10 @@ spec: tests/asset-media.e2e.js
 （manual/legacy/sso/sync）、状态与有效期；有效权限 = 本组织内 active 且未过期的角色并集
 ∪ 用户直授权限。`users.roleId` 保留为兼容回退，不删除。
 `auth_sessions` 是持久会话：JWT 只携带 `sid`，吊销/过期以本表为准；旧 token 无 `sid` 时保持兼容。
+`users.permissionVersion` 是权限版本，角色/直授变更时递增，JWT `pv` 不匹配即拒绝。
 `identity_providers`/`identity_links` 是 SSO 配置与外部身份映射；`auth_login_events` 记录登录成功/失败；
-`identity_sync_runs` 记录同步批次；`service_clients` 是服务令牌客户端（secretHash 只存哈希）。
+`identity_sync_runs` 记录同步批次、差异与高风险确认状态；`service_clients` 是服务令牌客户端
+（secretHash 只存哈希）。
 
 ### 关系
 
@@ -801,8 +803,8 @@ spec: tests/asset-media.e2e.js
 
 绑定状态使用 `active` / `inactive`；来源使用 `manual` / `legacy` / `sso` / `sync`。
 有效期用 `validFrom` / `validTo` 表达。会话状态使用 `active` / `revoked` / `expired`；provider 状态使用 `active` / `inactive`；
-登录事件状态使用 `success` / `failure`；同步状态使用 `running` / `succeeded` / `failed` / `partial`。
-禁止在 UI/API/DB 各造一套同义词。
+登录事件状态使用 `success` / `failure`；同步状态使用 `running` / `succeeded` / `failed` / `partial`；
+同步高风险确认状态使用 `none` / `pending` / `confirmed`。禁止在 UI/API/DB 各造一套同义词。
 
 ### 不变量
 
@@ -837,6 +839,42 @@ enforcement:
   - test:apps/api/src/identity/sso.spec.ts#CasSsoAdapter
 db: none
 spec: apps/api/src/identity/sso.spec.ts
+```
+
+```yaml invariant
+id: INV-ID-04
+tables: [service_clients]
+desc: 服务令牌只证明客户端/组织/scope；代用户调用必须服务端重解析功能权限与数据范围。
+trigger: ServiceClientAuthGuard / DelegatedIdentityService.resolve()
+enforcement:
+  - service:libs/platform-core/src/identity/service-client-auth.guard.ts#canActivate
+  - service:libs/platform-core/src/identity/delegated-identity.service.ts#resolve
+db: none
+spec: apps/api/src/identity/service-client-auth.guard.spec.ts
+```
+
+```yaml invariant
+id: INV-ID-05
+tables: [identity_providers, identity_links]
+desc: CAS/OAuth2/OIDC/SAML 适配器的签名/state/nonce/时间窗/默认角色任一失败必须拒绝；JIT 只给默认角色。
+trigger: IdentitySsoService.authenticate()
+enforcement:
+  - service:libs/platform-core/src/identity/identity-sso.service.ts#authenticate
+  - service:libs/platform-core/src/identity/sso/saml-xml-dsig.verifier.ts#createSamlXmlDsigVerifier
+db: none
+spec: apps/api/src/identity/sso.spec.ts
+```
+
+```yaml invariant
+id: INV-ID-06
+tables: [service_clients, auth_login_events]
+desc: 服务令牌限流/拒绝/使用写审计；代用户数据范围重新解析；异常登录通知本人与管理员。
+trigger: ServiceClientAuthGuard.canActivate() / AuthLoginEventsService.record()
+enforcement:
+  - service:libs/platform-core/src/identity/service-client-auth.guard.ts#assertRateLimit
+  - service:libs/platform-core/src/identity/auth-login-events.service.ts#record
+db: none
+spec: apps/api/src/identity/auth-login-events.service.spec.ts
 ```
 
 ---

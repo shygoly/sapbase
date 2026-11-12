@@ -15,6 +15,18 @@ export class IdentitySyncRun extends TenantAwareEntity {
   @Column({ type: 'jsonb', nullable: true })
   error: Record<string, unknown> | null
 
+  @Column({ type: 'jsonb', nullable: true })
+  diff: Record<string, unknown> | null
+
+  @Column({ type: 'varchar', length: 16, default: 'none' })
+  confirmationStatus: 'none' | 'pending' | 'confirmed'
+
+  @Column({ type: 'uuid', nullable: true })
+  confirmedBy: string | null
+
+  @Column({ type: 'timestamptz', nullable: true })
+  confirmedAt: Date | null
+
   @Column({ type: 'timestamptz', default: () => 'now()' })
   startedAt: Date
 

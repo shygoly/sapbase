@@ -143,6 +143,7 @@ export class LoginService {
       permissions,
       organizationId: selectedOrgId,
       sid,
+      pv: (user as { permissionVersion?: number }).permissionVersion ?? 1,
     }
 
     // Sign token

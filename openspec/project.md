@@ -52,6 +52,10 @@ ERP、CRM、HRO、MES 与后续垂直系统共用一套协议和 Runtime，而�
 - **多租户隔离**：`TenantAwareEntity` + 事务内 `app.organization_id/app.app_installation_id`
   上下文 + PostgreSQL RLS；应用层 Predicate 继续保留用于可解释错误。生产应用角色必须是
   非 owner、非 superuser、无 `BYPASSRLS`
+- **身份与会话**：身份提供方按组织配置（CAS/OAuth2/OIDC/SAML），JIT 只给默认角色；
+  组织内多角色走 `organization_member_roles`，有效权限为 active 角色并集 ∪ 直授；
+  JWT 携带 `sid`/`pv`，守卫校验持久会话与权限版本；登出/强制下线/密码/角色/停用/离职
+  立即吊销。服务令牌只证明客户端/组织/scope，代用户调用必须服务端重解析功能权限与数据范围
 - **应用安装边界**：`Organization` 与 `Blueprint` 之间由 `BusinessAppInstallation` 绑定；
   应用上下文由 `X-App-Id` 发起、平台重新校验，不能从请求体信任
 - **原子与模块分离**：原子是最小执行单元，模块是原子的组合；

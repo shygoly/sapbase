@@ -149,6 +149,24 @@ export class IdentityController {
     return this.delegated.resolve(organizationId, body.userId)
   }
 
+  @Post('delegation/scope')
+  @Auth('identity:manage')
+  @ApiOperation({ summary: '服务令牌代用户：重新解析数据范围（不信任调用方声明）' })
+  resolveDelegationScope(
+    @OrganizationId() organizationId: string,
+    @Body() body: { userId: string; resourceKey: string; action?: string },
+  ) {
+    if (!body?.userId || !body?.resourceKey) {
+      throw new BadRequestException('userId/resourceKey 必填')
+    }
+    return this.delegated.resolveDataScope(
+      organizationId,
+      body.userId,
+      body.resourceKey,
+      body.action ?? 'read',
+    )
+  }
+
   @Get('login-events')
   @Auth('identity:read')
   @ApiOperation({ summary: '登录事件（成功/失败）查询' })

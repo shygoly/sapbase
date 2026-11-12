@@ -6,6 +6,12 @@ export const SCHEDULED_JOBS = [
     idempotent: true,
   },
   {
+    jobKey: 'identity.sync_scan',
+    cron: '0 * * * *',
+    timeoutMs: 10 * 60_000,
+    idempotent: true,
+  },
+  {
     jobKey: 'release.guardrail_check',
     cron: '30 * * * *',
     timeoutMs: 60_000,

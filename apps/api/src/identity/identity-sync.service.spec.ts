@@ -16,22 +16,35 @@ function setup(options: {
   role?: any
   user?: any
   sourceError?: Error
+  provider?: Record<string, unknown>
+  failSaveOnce?: boolean
 }) {
-  const providers = { findOne: jest.fn(async () => PROVIDER) }
+  const provider = { ...PROVIDER, ...(options.provider ?? {}) }
+  const providers = { findOne: jest.fn(async () => provider) }
   const linkStore = [...(options.existing ?? [])]
+  let saveAttempts = 0
   const links = {
     find: jest.fn(async () => linkStore),
     create: jest.fn((row) => ({ id: 'link-new', ...row })),
     save: jest.fn(async (row) => {
+      saveAttempts += 1
+      if (options.failSaveOnce && saveAttempts === 1) {
+        throw new Error('transient')
+      }
       const index = linkStore.findIndex((item) => item.id === row.id)
       if (index >= 0) linkStore[index] = row
       else linkStore.push(row)
       return row
     }),
   }
+  let runRow: any = null
   const runs = {
     create: jest.fn((row) => ({ id: 'run-1', ...row })),
-    save: jest.fn(async (row) => row),
+    save: jest.fn(async (row) => {
+      runRow = row
+      return row
+    }),
+    findOne: jest.fn(async () => runRow),
   }
   const adapters = new IdentitySourceAdapterRegistry()
   adapters.register({
@@ -115,6 +128,46 @@ describe('IdentitySyncService', () => {
     const result = await service.run('org-1', 'sis')
     expect(result.status).toBe('failed')
     expect(users.update).not.toHaveBeenCalled()
+  })
+
+  it('高风险离职待确认：pending 不执行，confirm 后才停用', async () => {
+    const { service, users, sessions, runs } = setup({
+      external: [],
+      existing: [{ id: 'l1', externalId: 'gone', userId: 'u1', organizationId: 'org-1' }],
+      provider: { config: { confirmDeactivations: true } },
+    })
+    const result = await service.run('org-1', 'sis')
+    expect(result.confirmationStatus).toBe('pending')
+    expect(result.stats.deactivated).toBe(0)
+    expect(users.update).not.toHaveBeenCalled()
+    await expect(service.confirm('org-1', 'run-1', 'admin-1')).resolves.toMatchObject({
+      confirmationStatus: 'confirmed',
+      stats: expect.objectContaining({ deactivated: 1 }),
+    })
+    expect(users.update).toHaveBeenCalledWith('u1', { status: 'inactive' })
+    expect(sessions.revokeAll).toHaveBeenCalled()
+    expect(runs.save).toHaveBeenCalled()
+  })
+
+  it('幂等重跑：同一外部身份不重复建号', async () => {
+    const { service, users, links } = setup({
+      external: [{ externalId: 'ext-1', email: 'a@example.com', active: true }],
+    })
+    const first = await service.run('org-1', 'sis')
+    const second = await service.run('org-1', 'sis')
+    expect(first.stats.created).toBe(1)
+    expect(second.stats).toMatchObject({ created: 0, updated: 1 })
+    expect(users.create).toHaveBeenCalledTimes(1)
+    expect(links.find).toHaveBeenCalledTimes(2)
+  })
+
+  it('单条写入瞬时失败 → 重试成功', async () => {
+    const { service } = setup({
+      external: [{ externalId: 'ext-1', email: 'a@example.com', active: true }],
+      failSaveOnce: true,
+    })
+    const result = await service.run('org-1', 'sis')
+    expect(result.stats).toMatchObject({ created: 1, failed: 0 })
   })
 
   it('默认角色不存在 → 新增失败计入 failed，run partial', async () => {

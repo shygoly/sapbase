@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import type { IdentityProvider } from './identity-provider.entity'
 
 export interface ExternalIdentity {
   externalId: string
@@ -11,7 +12,7 @@ export interface ExternalIdentity {
 export interface IdentitySourceAdapter {
   /** 与 identity_providers.type 对应；同一类型可替换实现。 */
   readonly type: string
-  listUsers(): Promise<ExternalIdentity[]>
+  listUsers(provider?: IdentityProvider): Promise<ExternalIdentity[]>
 }
 
 export class IdentitySourceError extends Error {
@@ -31,7 +32,7 @@ export class IdentitySourceAdapterRegistry {
   }
 
   get(type: string): IdentitySourceAdapter {
-    const adapter = this.adapters.get(type)
+    const adapter = this.adapters.get(type) ?? this.adapters.get('static')
     if (!adapter) {
       throw new IdentitySourceError(`未注册身份源 adapter：${type}`, 'unknown-adapter')
     }

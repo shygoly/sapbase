@@ -100,6 +100,27 @@ describe('ServiceClientAuthGuard', () => {
     ).rejects.toBeInstanceOf(ForbiddenException)
   })
 
+  it('超过每分钟上限 → 429', async () => {
+    process.env.SERVICE_TOKEN_RATE_LIMIT_PER_MINUTE = '1'
+    try {
+      const { guard } = guardWith(CLIENT, ['student:read'])
+      const request = () => ({
+        headers: {
+          'x-organization-id': 'org-1',
+          'x-service-key': 'sis-sync',
+          'x-service-secret': 'ok',
+        },
+        ip: '127.0.0.1',
+      })
+      await expect(guard.canActivate(context(request()))).resolves.toBe(true)
+      await expect(guard.canActivate(context(request()))).rejects.toMatchObject({
+        status: 429,
+      })
+    } finally {
+      delete process.env.SERVICE_TOKEN_RATE_LIMIT_PER_MINUTE
+    }
+  })
+
   it('通过：注入 serviceClient 与 organizationId，不注入用户权限', async () => {
     const { guard, clients } = guardWith(CLIENT, ['student:read'])
     const request: Record<string, any> = {

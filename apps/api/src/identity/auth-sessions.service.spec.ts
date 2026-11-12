@@ -111,6 +111,58 @@ describe('AuthSessionsService', () => {
     await expect(service.revokeAll('org-1', 'u1')).resolves.toBe(2)
   })
 
+  it('会话缓存：多实例共享缓存，吊销后另一实例立即 miss', async () => {
+    const repo = repoWith([
+      {
+        id: 's1',
+        sid: 'sid-1',
+        status: 'active',
+        organizationId: 'org-1',
+        userId: 'u1',
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    ])
+    const store = new Map<string, unknown>()
+    const cache = {
+      get: jest.fn(async (key: string) => store.get(key)),
+      set: jest.fn(async (key: string, value: unknown) => {
+        store.set(key, value)
+      }),
+      del: jest.fn(async (key: string) => {
+        store.delete(key)
+      }),
+    }
+    const events: Array<Record<string, unknown>> = []
+    const bus = {
+      publish: (event: Record<string, unknown>) => events.push(event),
+      subscribe: () => () => undefined,
+    }
+    const first = new AuthSessionsService(repo as never, undefined, cache as never, bus as never)
+    const second = new AuthSessionsService(repo as never, undefined, cache as never, bus as never)
+    await expect(first.findActive('sid-1')).resolves.toMatchObject({ sid: 'sid-1' })
+    await expect(second.findActive('sid-1')).resolves.toMatchObject({ sid: 'sid-1' })
+    expect(cache.get).toHaveBeenCalledTimes(2)
+    await expect(first.revoke('sid-1')).resolves.toBe(true)
+    await expect(second.findActive('sid-1')).resolves.toBeNull()
+    expect(events[0]).toMatchObject({ sid: 'sid-1', reason: 'logout' })
+  })
+
+  it('revokeAllForUser：跨组织吊销并发布一次用户级事件', async () => {
+    const repo = repoWith([
+      { id: 's1', sid: 'sid-1', status: 'active', organizationId: 'org-1', userId: 'u1' },
+      { id: 's2', sid: 'sid-2', status: 'active', organizationId: 'org-2', userId: 'u1' },
+      { id: 's3', sid: 'sid-3', status: 'active', organizationId: 'org-1', userId: 'u2' },
+    ])
+    const events: Array<Record<string, unknown>> = []
+    const bus = {
+      publish: (event: Record<string, unknown>) => events.push(event),
+      subscribe: () => () => undefined,
+    }
+    const service = new AuthSessionsService(repo as never, undefined, undefined, bus as never)
+    await expect(service.revokeAllForUser('u1', 'password-changed')).resolves.toBe(2)
+    expect(events).toEqual([{ userId: 'u1', reason: 'password-changed' }])
+  })
+
   it('rotateRefresh：更新 refresh hash', async () => {
     const repo = repoWith([
       {

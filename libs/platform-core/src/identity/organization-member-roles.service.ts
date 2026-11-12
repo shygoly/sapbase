@@ -3,6 +3,9 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { OrganizationMemberRole, type RoleBindingSource } from './organization-member-role.entity'
+import { UsersService } from '../users/users.service'
+import { EventBusService } from '../common/events/event-bus.service'
+import { UserSecurityChangedEvent } from '../common/events/user-security-changed.event'
 
 export interface GrantRoleInput {
   roleName: string
@@ -25,6 +28,8 @@ export class OrganizationMemberRolesService {
     @InjectRepository(OrganizationMemberRole)
     private readonly repository: Repository<OrganizationMemberRole>,
     @Optional() private readonly auditLogs?: AuditLogsService,
+    @Optional() private readonly users?: UsersService,
+    @Optional() private readonly eventBus?: EventBusService,
   ) {}
 
   async grant(
@@ -53,6 +58,7 @@ export class OrganizationMemberRolesService {
         metadata: { userId, roleName: input.roleName, change: 'grant' },
         source: 'identity',
       })
+      await this.bump(userId, organizationId)
       return saved
     }
     const row = this.repository.create({
@@ -77,6 +83,7 @@ export class OrganizationMemberRolesService {
       metadata: { userId, roleName: input.roleName, change: 'grant' },
       source: 'identity',
     })
+    await this.bump(userId, organizationId)
     return saved
   }
 
@@ -100,8 +107,16 @@ export class OrganizationMemberRolesService {
         metadata: { userId, roleName, change: 'revoke' },
         source: 'identity',
       })
+      await this.bump(userId, organizationId)
     }
     return (result.affected ?? 0) > 0
+  }
+
+  private async bump(userId: string, organizationId: string): Promise<void> {
+    await this.users?.bumpPermissionVersion(userId).catch(() => undefined)
+    await this.eventBus?.publishSync(
+      new UserSecurityChangedEvent(userId, 'role-changed', organizationId),
+    )
   }
 
   async list(organizationId: string, userId?: string): Promise<OrganizationMemberRole[]> {
