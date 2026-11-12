@@ -41,6 +41,24 @@ export class AgentSessionCacheService implements OnModuleDestroy {
     this.memory.set(conversationId, payload)
   }
 
+  async rememberTurn(turnId: string, value: unknown): Promise<void> {
+    const payload = JSON.stringify(value)
+    const client = await this.ensureClient()
+    if (client) {
+      await client.set(`sap:agent:turn:${turnId}`, payload, { EX: 7 * 24 * 60 * 60 })
+      return
+    }
+    this.memory.set(`turn:${turnId}`, payload)
+  }
+
+  async recentTurn<T>(turnId: string): Promise<T | null> {
+    const client = await this.ensureClient()
+    const payload = client
+      ? await client.get(`sap:agent:turn:${turnId}`)
+      : this.memory.get(`turn:${turnId}`)
+    return payload ? (JSON.parse(payload) as T) : null
+  }
+
   async recent<T>(conversationId: string): Promise<T | null> {
     const client = await this.ensureClient()
     const payload = client

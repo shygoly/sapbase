@@ -140,7 +140,10 @@
         "tokensIn",
         "tokensOut",
         "latencyMs",
-        "status"
+        "status",
+        "tainted",
+        "taintSource",
+        "idempotencyKey"
       ]
     },
     "agent_confirmation_tokens": {

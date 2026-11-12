@@ -42,4 +42,8 @@ export class AgentTurn extends AgentSessionBaseEntity {
 
   @Column({ type: 'varchar', length: 128, nullable: true })
   taintSource: string | null
+
+  /** 幂等键：同组织内唯一；重试返回已有 turn，不重复执行。 */
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  idempotencyKey: string | null
 }

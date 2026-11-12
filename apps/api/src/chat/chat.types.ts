@@ -3,6 +3,7 @@
  * 不要改编排器；本轮只有确定性实现。
  */
 import type { BusinessAppExecutionContext } from '@speckit/shared-schemas'
+import type { Budget } from '@sap/agent-kernel'
 
 export const INTENT_PARSER = Symbol('INTENT_PARSER')
 
@@ -11,6 +12,8 @@ export interface ChatContext {
   actor: string
   grantedPermissions: readonly string[]
   appContext?: BusinessAppExecutionContext
+  /** 服务端预算；缺省由 kernel 默认值兜底，调用方不能放大上限。 */
+  budget?: Budget
 }
 
 export interface Intent {

@@ -1364,7 +1364,8 @@ spec: apps/api/src/releases/release-kernel.spec.ts
 覆盖表：agent_conversations, agent_turns, agent_tool_calls
 
 PiAgent 会话聚合。`agent_conversations` 是会话；`agent_turns` 是轮次；
-`agent_tool_calls` 是工具调用审计。所有表带 `organizationId`；会话正文按敏感策略脱敏。
+`agent_tool_calls` 是工具调用审计；`agent_turns.idempotencyKey` 支持同组织重试去重。
+所有表带 `organizationId`；会话正文按敏感策略脱敏。
 
 ### 关系
 
@@ -1391,12 +1392,13 @@ spec: apps/api/src/agent-sessions/agent-sessions.service.spec.ts
 ```yaml invariant
 id: INV-AGENT-10
 tables: [agent_turns]
-desc: 预算闭合：工具调用数、token、墙钟时间都有上限；超限拒绝而非继续。
-trigger: AgentSessionsService.chat()
+desc: 预算闭合：工具调用数、token、墙钟时间都有上限；超限拒绝。幂等键同组织唯一，重试返回原 turn；取消后不得写 completed；写工具必须确认令牌。
+trigger: AgentSessionsService.chat() / ChatOrchestrator.handleMessage()
 enforcement:
-  - none
+  - service:apps/api/src/agent-sessions/agent-sessions.service.ts#chat
+  - service:apps/api/src/chat/chat-orchestrator.ts#handleMessage
 db: none
-spec: TODO
+spec: apps/api/src/agent-sessions/agent-sessions.service.spec.ts
 ```
 
 ---

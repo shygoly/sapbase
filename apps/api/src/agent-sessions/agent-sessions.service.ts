@@ -21,6 +21,13 @@ function hash(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex')
 }
 
+function numberEnv(name: string, fallback: number): number {
+  const raw = process.env[name]
+  if (!raw) return fallback
+  const value = Number(raw)
+  return Number.isFinite(value) && value > 0 ? value : fallback
+}
+
 @Injectable()
 export class AgentSessionsService {
   constructor(
@@ -44,7 +51,15 @@ export class AgentSessionsService {
     conversationId?: string
     message: string
     screenContext?: Record<string, unknown>
+    idempotencyKey?: string
   }) {
+    if (input.idempotencyKey) {
+      const existing = await this.findIdempotentTurn(
+        input.organizationId,
+        input.idempotencyKey,
+      )
+      if (existing) return this.replayTurn(existing)
+    }
     const startedAt = Date.now()
     const conversation = await this.findOrCreateConversation(input)
     const release =
@@ -84,28 +99,53 @@ export class AgentSessionsService {
         confirmation: tool.confirmation,
         permission: tool.permission,
       })),
+      budget: {
+        maxToolCalls: numberEnv('AGENT_MAX_TOOL_CALLS', 8),
+        maxTokens: numberEnv('AGENT_MAX_TOKENS', 12_000),
+        deadlineMs: numberEnv('AGENT_DEADLINE_MS', 30_000),
+      },
     })
 
-    const turn = await this.turns.save(
-      this.turns.create({
-        organizationId: input.organizationId,
-        conversationId: conversation.id,
-        releaseId: release?.id ?? null,
-        modelId: process.env.AGENT_MODEL_ID ?? null,
-        promptHash: hash(input.message),
-        contextHash: hash(envelope),
-        knowledgeVersion: envelope.knowledge[0] ? `${envelope.knowledge[0].id}@${envelope.knowledge[0].version}` : null,
-        status: 'running',
-      }),
-    )
+    let turn: AgentTurn
+    try {
+      turn = await this.turns.save(
+        this.turns.create({
+          organizationId: input.organizationId,
+          conversationId: conversation.id,
+          releaseId: release?.id ?? null,
+          modelId: process.env.AGENT_MODEL_ID ?? null,
+          promptHash: hash(input.message),
+          contextHash: hash(envelope),
+          knowledgeVersion: envelope.knowledge[0] ? `${envelope.knowledge[0].id}@${envelope.knowledge[0].version}` : null,
+          status: 'running',
+          idempotencyKey: input.idempotencyKey ?? null,
+        }),
+      )
+    } catch (error) {
+      if (input.idempotencyKey && (error as { code?: string }).code === '23505') {
+        const existing = await this.findIdempotentTurn(
+          input.organizationId,
+          input.idempotencyKey,
+        )
+        if (existing) return this.replayTurn(existing)
+      }
+      throw error
+    }
 
     const events: ChatEvent[] = [{ type: 'turn.start', data: { turnId: turn.id, releaseId: release?.id ?? null } }]
+    if (await this.isTurnCancelled(turn)) {
+      return this.finishCancelled(turn, conversation, events, startedAt)
+    }
     try {
       const result = await this.orchestrator.handleMessage(input.message, {
         organizationId: input.organizationId,
         actor: input.actor,
         grantedPermissions: input.permissions,
+        budget: envelope.budget,
       })
+      if (await this.isTurnCancelled(turn)) {
+        return this.finishCancelled(turn, conversation, events, startedAt)
+      }
       if (result.modelId) turn.modelId = result.modelId
       if (envelope.knowledge.length > 0) {
         events.push({
@@ -142,6 +182,9 @@ export class AgentSessionsService {
       await this.turns.save(turn)
       events.push({ type: 'turn.end', data: { turnId: turn.id, usage: { latencyMs: turn.latencyMs } } })
     } catch (error) {
+      if (await this.isTurnCancelled(turn)) {
+        return this.finishCancelled(turn, conversation, events, startedAt)
+      }
       turn.status = 'failed'
       turn.latencyMs = Date.now() - startedAt
       await this.turns.save(turn)
@@ -150,7 +193,79 @@ export class AgentSessionsService {
     conversation.lastTurnAt = new Date()
     await this.conversations.save(conversation)
     await this.cache.remember(conversation.id, { turnId: turn.id, status: turn.status, events })
+    await this.cache.rememberTurn(turn.id, {
+      conversationId: conversation.id,
+      turnId: turn.id,
+      status: turn.status,
+      events,
+    })
     return { conversationId: conversation.id, turnId: turn.id, events }
+  }
+
+  private async findIdempotentTurn(
+    organizationId: string,
+    idempotencyKey: string,
+  ): Promise<AgentTurn | null> {
+    return this.turns.findOne({
+      where: { organizationId, idempotencyKey },
+    })
+  }
+
+  private async replayTurn(turn: AgentTurn) {
+    const cached = await this.cache.recentTurn<{
+      conversationId: string
+      turnId: string
+      status: string
+      events: ChatEvent[]
+    }>(turn.id)
+    return {
+      conversationId: turn.conversationId,
+      turnId: turn.id,
+      status: turn.status,
+      idempotent: true,
+      events:
+        cached?.events ??
+        [
+          { type: 'turn.start', data: { turnId: turn.id } },
+          { type: 'turn.end', data: { turnId: turn.id, status: turn.status } },
+        ],
+    }
+  }
+
+  private async isTurnCancelled(turn: AgentTurn): Promise<boolean> {
+    const latest = await this.turns.findOne({
+      where: { id: turn.id, organizationId: turn.organizationId },
+    })
+    return latest?.status === 'cancelled'
+  }
+
+  private async finishCancelled(
+    turn: AgentTurn,
+    conversation: AgentConversation,
+    events: ChatEvent[],
+    startedAt: number,
+  ) {
+    turn.status = 'cancelled'
+    turn.latencyMs = Date.now() - startedAt
+    await this.turns.save(turn)
+    events.push({
+      type: 'turn.end',
+      data: { turnId: turn.id, status: 'cancelled', usage: { latencyMs: turn.latencyMs } },
+    })
+    conversation.lastTurnAt = new Date()
+    await this.conversations.save(conversation)
+    await this.cache.remember(conversation.id, {
+      turnId: turn.id,
+      status: 'cancelled',
+      events,
+    })
+    await this.cache.rememberTurn(turn.id, {
+      conversationId: conversation.id,
+      turnId: turn.id,
+      status: 'cancelled',
+      events,
+    })
+    return { conversationId: conversation.id, turnId: turn.id, cancelled: true, events }
   }
 
   private async findOrCreateConversation(input: {

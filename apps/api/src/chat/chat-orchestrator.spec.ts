@@ -76,6 +76,36 @@ describe('ChatOrchestrator', () => {
     await expect(orch.handleMessage('列出已登记的蓝图包', CONTEXT)).rejects.toThrow(/缺少权限/)
   })
 
+  it('预算耗尽：不 invoke 工具，抛 BUDGET_EXCEEDED', async () => {
+    const invoke = jest.fn(async () => ({ ok: true, tool: 'erp_blueprint_list', result: [] }))
+    const orch = new ChatOrchestrator(
+      new RuleBasedIntentParser(),
+      fakeRegistry({ invoke }) as never,
+    )
+    await expect(
+      orch.handleMessage('列出已登记的蓝图包', {
+        ...CONTEXT,
+        budget: { maxToolCalls: 0, maxTokens: 1000, deadlineMs: 1000 },
+      }),
+    ).rejects.toThrow('BUDGET_EXCEEDED:toolCalls')
+    expect(invoke).not.toHaveBeenCalled()
+  })
+
+  it('deadline 耗尽：不解析意图、不 invoke', async () => {
+    const invoke = jest.fn()
+    const orch = new ChatOrchestrator(
+      new RuleBasedIntentParser(),
+      fakeRegistry({ invoke }) as never,
+    )
+    await expect(
+      orch.handleMessage('列出已登记的蓝图包', {
+        ...CONTEXT,
+        budget: { maxToolCalls: 8, maxTokens: 1000, deadlineMs: -1 },
+      }),
+    ).rejects.toThrow('BUDGET_EXCEEDED:deadline')
+    expect(invoke).not.toHaveBeenCalled()
+  })
+
   it('写工具在编排层绝不执行', async () => {
     const invoke = jest.fn(async () => {
       throw new Error('写工具不应在编排层被 invoke')

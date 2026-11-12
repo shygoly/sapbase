@@ -3,6 +3,7 @@
  * 写工具（confirmation=required）在本层绝不 invoke。
  */
 import { Inject, Injectable, Optional } from '@nestjs/common'
+import { BudgetGuard } from '@sap/agent-kernel'
 import { AgentToolRegistry } from '../agent-tools/agent-tool.registry'
 import { AgentToolMcpBridge } from '../agent-tools/mcp/agent-tool-mcp.bridge'
 import type { ChatContext, ChatResult, IntentParser } from './chat.types'
@@ -25,8 +26,16 @@ export class ChatOrchestrator {
     let observation = ''
     let lastIntentId = ''
     let lastResult: ChatResult | null = null
+    const guard = new BudgetGuard(
+      context.budget ?? {
+        maxToolCalls: 8,
+        maxTokens: 12_000,
+        deadlineMs: 30_000,
+      },
+    )
 
     for (let step = 0; step < 3; step += 1) {
+      guard.assertDeadline()
       const intent = await this.parser.parse({
         message: observation ? `${message}\n??: ${observation}` : message,
         context,
@@ -56,6 +65,8 @@ export class ChatOrchestrator {
         return { kind: 'plan', plan, intent: intent.label }
       }
 
+      guard.recordToolCall()
+      guard.assertDeadline()
       const invoked = this.bridge
         ? await this.bridge.invoke({
             name: tool.name,

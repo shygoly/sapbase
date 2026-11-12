@@ -30,6 +30,7 @@ export const AGENT_SESSIONS_DDL: string[] = [
     status character varying(32) DEFAULT 'running' NOT NULL,
     tainted boolean DEFAULT false NOT NULL,
     "taintSource" character varying(128),
+    "idempotencyKey" character varying(128),
     CONSTRAINT "PK_agent_turns" PRIMARY KEY (id),
     CONSTRAINT "CK_agent_turns_status" CHECK (status IN ('running','completed','cancelled','failed'))
   )`,
@@ -38,6 +39,9 @@ export const AGENT_SESSIONS_DDL: string[] = [
   `ALTER TABLE public.agent_turns ADD COLUMN IF NOT EXISTS "taintSource" character varying(128)`,
   `CREATE INDEX IF NOT EXISTS "IDX_agent_turns_conversation"
     ON public.agent_turns ("conversationId", "createdAt" DESC)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "UQ_agent_turns_org_idempotency"
+    ON public.agent_turns ("organizationId", "idempotencyKey")
+    WHERE "idempotencyKey" IS NOT NULL`,
   `CREATE TABLE IF NOT EXISTS public.agent_tool_calls (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     "createdAt" timestamp with time zone DEFAULT now() NOT NULL,

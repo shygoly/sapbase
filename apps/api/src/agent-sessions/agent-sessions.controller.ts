@@ -87,6 +87,7 @@ export class AgentSessionsController {
       screenContext?: Record<string, unknown>
       appKey?: string
       appInstallationId?: string
+      idempotencyKey?: string
     },
     @OrganizationId() organizationId: string,
     @CurrentUser() user: UserLike,
@@ -102,6 +103,7 @@ export class AgentSessionsController {
       conversationId: body.conversationId,
       message: body.message,
       screenContext: body.screenContext,
+      idempotencyKey: body.idempotencyKey,
     })
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache')

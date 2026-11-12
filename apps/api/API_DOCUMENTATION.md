@@ -510,3 +510,15 @@ Portal 页面：`/dashboard/operations`。
 
 `templates/erp` 是发布方示例（Customer/SalesOrder）；CRM 通过
 `customer.lookup` 消费 ERP 客户投影。
+
+## Agent Run Policy (4.6)
+
+- `POST /api/agent/chat` 支持 `idempotencyKey`：同组织内唯一，命中已有 turn 时直接返回
+  原 turn/缓存事件，不重复执行。
+- 预算由服务端控制：`AGENT_MAX_TOOL_CALLS`（默认 8）、`AGENT_MAX_TOKENS`
+  （默认 12000）、`AGENT_DEADLINE_MS`（默认 30000）；超限抛
+  `BUDGET_EXCEEDED:toolCalls|tokens|deadline`。
+- 取消：`POST /api/agent/conversations/:id/cancel` 将 running turn 置为 cancelled；
+  运行前/编排返回后都会复查，取消后不会写 completed。
+- 写确认：`confirmation=required` 的工具只生成 Interaction Plan，不在编排层 invoke；
+  真正执行必须走确认令牌。
