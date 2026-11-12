@@ -20,8 +20,8 @@
 - [x] 2.8b Add cross-app service-path negative tests（跨组织 app context / findForOrganization / listForOrganization）
 
 ## 3. App-scoped catalogs and frontend shell
-- [ ] 3.1 Compose platform tools, Blueprint tools, integrations, and shared data capabilities per app
-- [ ] 3.2 Namespace app tools and reject duplicate names in a composed catalog
+- [x] 3.1 Compose platform tools, Blueprint tools, integrations, and shared data capabilities per app（`composeAppToolCatalog` + `GET /api/agent-tools/app-catalog`）
+- [x] 3.2 Namespace app tools and reject duplicate names in a composed catalog（`${appKey}_` + 重名/非法契约整目录拒绝 + 测试）
 - [ ] 3.3 Add app-scoped roles, permissions, menus, branding, audit, and usage
 - [x] 3.4a Add application switcher and persist the active installation in the API client
 - [ ] 3.4b Resolve navigation and route metadata from the active installation

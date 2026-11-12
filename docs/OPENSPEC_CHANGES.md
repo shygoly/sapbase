@@ -11,7 +11,7 @@
 | 已完成未归档 | 0 |
 | 无任务/骨架 | 0 |
 | 已归档 | 72 |
-| 活跃任务 | 40/283 |
+| 活跃任务 | 42/283 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -19,7 +19,7 @@
 
 | Change | 标题 | 任务 | 规格 | 入口 | 最近更新 |
 | --- | --- | --- | --- | --- | --- |
-| [refactor-ai-native-business-app-platform](../openspec/changes/refactor-ai-native-business-app-platform/) | Refactor sapbase into an AI-native business app platform | 18/61 | 17 req / 3 文件 | [P](../openspec/changes/refactor-ai-native-business-app-platform/proposal.md) [D](../openspec/changes/refactor-ai-native-business-app-platform/design.md) [T](../openspec/changes/refactor-ai-native-business-app-platform/tasks.md) [S](../openspec/changes/refactor-ai-native-business-app-platform/specs) | 2026-11-12 |
+| [refactor-ai-native-business-app-platform](../openspec/changes/refactor-ai-native-business-app-platform/) | Refactor sapbase into an AI-native business app platform | 20/61 | 17 req / 3 文件 | [P](../openspec/changes/refactor-ai-native-business-app-platform/proposal.md) [D](../openspec/changes/refactor-ai-native-business-app-platform/design.md) [T](../openspec/changes/refactor-ai-native-business-app-platform/tasks.md) [S](../openspec/changes/refactor-ai-native-business-app-platform/specs) | 2026-11-12 |
 | [refactor-ai-native-control-plane-boundaries](../openspec/changes/refactor-ai-native-control-plane-boundaries/) | 冻结实际控制面边界与保留技术栈的架构契约 | 0/16 | 7 req / 1 文件 | [P](../openspec/changes/refactor-ai-native-control-plane-boundaries/proposal.md) [D](../openspec/changes/refactor-ai-native-control-plane-boundaries/design.md) [T](../openspec/changes/refactor-ai-native-control-plane-boundaries/tasks.md) [S](../openspec/changes/refactor-ai-native-control-plane-boundaries/specs) | 2026-11-12 |
 | [add-agent-host-and-instance-evolution](../openspec/changes/add-agent-host-and-instance-evolution/) | 增加 Agent Host 层与实例级自迭代闭环 | 22/23 | 12 req / 2 文件 | [P](../openspec/changes/add-agent-host-and-instance-evolution/proposal.md) [D](../openspec/changes/add-agent-host-and-instance-evolution/design.md) [T](../openspec/changes/add-agent-host-and-instance-evolution/tasks.md) [S](../openspec/changes/add-agent-host-and-instance-evolution/specs) | 2026-11-11 |
 | [add-evidence-governed-builder-and-limited-a2](../openspec/changes/add-evidence-governed-builder-and-limited-a2/) | 当前实例的可信 A1、有限 A2 与源码交付准入 | 0/18 | 7 req / 3 文件 | [P](../openspec/changes/add-evidence-governed-builder-and-limited-a2/proposal.md) [D](../openspec/changes/add-evidence-governed-builder-and-limited-a2/design.md) [T](../openspec/changes/add-evidence-governed-builder-and-limited-a2/tasks.md) [S](../openspec/changes/add-evidence-governed-builder-and-limited-a2/specs) | 2026-11-11 |

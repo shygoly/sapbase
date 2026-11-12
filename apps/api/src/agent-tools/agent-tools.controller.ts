@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -13,6 +14,8 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { AgentToolRegistry } from './agent-tool.registry'
 import { OptionalAppContextGuard } from '../business-apps/optional-app-context.guard'
+import { CurrentApp } from '../business-apps/current-app.decorator'
+import { composeAppToolCatalog } from '@sap/agent-tools/app-tool-catalog'
 import type { BusinessAppExecutionContext } from '@speckit/shared-schemas'
 
 interface AuthedRequest {
@@ -44,6 +47,19 @@ export class AgentToolsController {
   @ApiOperation({ summary: '返回工具契约原文' })
   list() {
     return this.registry.catalog()
+  }
+
+  @Get('app-catalog')
+  @ApiOperation({
+    summary: '组合当前应用的工具目录（平台内建 + 应用来源；重名/命名空间非法拒绝）',
+  })
+  appCatalog(@CurrentApp() context?: BusinessAppExecutionContext) {
+    if (!context) {
+      throw new BadRequestException('缺少应用上下文（X-App-Id）')
+    }
+    return composeAppToolCatalog(context, [
+      { kind: 'platform', label: 'platform', catalog: this.registry.catalog() },
+    ])
   }
 
   @Post(':name/invoke')
