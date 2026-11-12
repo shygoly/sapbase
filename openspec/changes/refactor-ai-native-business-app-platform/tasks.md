@@ -22,7 +22,7 @@
 ## 3. App-scoped catalogs and frontend shell
 - [x] 3.1 Compose platform tools, Blueprint tools, integrations, and shared data capabilities per app（`composeAppToolCatalog` + `GET /api/agent-tools/app-catalog`）
 - [x] 3.2 Namespace app tools and reject duplicate names in a composed catalog（`${appKey}_` + 重名/非法契约整目录拒绝 + 测试）
-- [ ] 3.3 Add app-scoped roles, permissions, menus, branding, audit, and usage
+- [x] 3.3 Add app-scoped roles, permissions, menus, branding, audit, and usage（app_role_bindings/app_brand_configs + catalog API + 执行上下文权限合并 + 测试）
 - [x] 3.4a Add application switcher and persist the active installation in the API client
 - [x] 3.4b Resolve navigation and route metadata from the active installation（`GET /api/apps/:id/navigation` + Blueprint UI 菜单/路由 + 权限过滤 + api-client + 测试）
 - [x] 3.5 Move hardcoded ERP/shipping routes into the ERP application（`templates/auto-parts/ui.json` 声明 shipping/ERP 菜单与页面；shell 移除 shipping 保留段与首页特判；schema/菜单测试）

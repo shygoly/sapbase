@@ -2008,6 +2008,36 @@
         "idempotencyKey",
         "metadata"
       ]
+    },
+    "app_role_bindings": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "name",
+        "permissions",
+        "source",
+        "status",
+        "createdById"
+      ]
+    },
+    "app_brand_configs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "logoUrl",
+        "faviconUrl",
+        "theme",
+        "customCss",
+        "appName",
+        "supportEmail",
+        "supportUrl"
+      ]
     }
   }
 }

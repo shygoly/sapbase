@@ -20,6 +20,7 @@ import type {
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { RecordLifecycleService } from '../record-lifecycle/record-lifecycle.service'
 import { EntitlementsService } from '@sap/platform-core/entitlements/entitlements.service'
+import { AppRoleBinding } from '../app-catalog/entities/app-role-binding.entity'
 import { checkAppUpgradeCompatibility } from './app-upgrade-compatibility'
 import { BlueprintService } from '../blueprint/blueprint.service'
 import { BusinessAppInstallationRevision } from './business-app-installation-revision.entity'
@@ -62,6 +63,9 @@ export class BusinessAppsService {
     @Optional() private readonly dataSource?: DataSource,
     @Optional() private readonly lifecycle?: RecordLifecycleService,
     @Optional() private readonly entitlements?: EntitlementsService,
+    @Optional()
+    @InjectRepository(AppRoleBinding)
+    private readonly appRoles?: Repository<AppRoleBinding>,
   ) {}
 
   async listForOrganization(organizationId: string): Promise<BusinessAppInstallation[]> {
@@ -755,12 +759,25 @@ export class BusinessAppsService {
       input.installationId,
       input.organizationId,
     )
+    const appRolePermissions = this.appRoles
+      ? (
+          await this.appRoles.find({
+            where: {
+              organizationId: installation.organizationId,
+              appKey: installation.appKey,
+              status: 'active',
+            },
+          })
+        ).flatMap((role) => role.permissions ?? [])
+      : []
     return {
       organizationId: installation.organizationId,
       appInstallationId: installation.id,
       appKey: installation.appKey,
       userId: input.userId,
-      grantedPermissions: [...input.grantedPermissions],
+      grantedPermissions: [
+        ...new Set([...input.grantedPermissions, ...appRolePermissions]),
+      ],
       runtimeProfile: installation.deploymentProfile,
       traceId: randomUUID(),
     }

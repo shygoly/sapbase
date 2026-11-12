@@ -34,6 +34,7 @@ function harness(
   dataSource?: { query: jest.Mock },
   lifecycle?: { snapshot: jest.Mock; restoreSnapshot: jest.Mock },
   entitlements?: Record<string, jest.Mock>,
+  appRoles?: { find: jest.Mock },
 ) {
   const appRows = existing ? [withEntityDefaults(existing)] : []
   const revisionRows: Array<Record<string, any>> = []
@@ -134,6 +135,7 @@ function harness(
       dataSource as never,
       lifecycle as never,
       entitlements as never,
+      appRoles as never,
     ),
     repository: appRepository,
     revisionRepository,
@@ -144,6 +146,7 @@ function harness(
     dataSource,
     lifecycle,
     entitlements,
+    appRoles,
   }
 }
 
@@ -277,6 +280,54 @@ describe('BusinessAppsService', () => {
         runtimeProfile: 'shared-saas',
       }),
     )
+  })
+
+  it('resolveExecutionContext 合并应用级角色权限，不覆盖调用方已有权限', async () => {
+    const row = {
+      id: APP_ID,
+      organizationId: ORG,
+      appKey: 'crm',
+      blueprintId: 'crm',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      deploymentProfile: 'shared-saas',
+      status: 'active',
+      config: {},
+      license: null,
+      currentRevisionId: null,
+      createdById: USER,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+    const appRoles = {
+      find: jest.fn(async () => [
+        { permissions: ['crm.customer.read', 'crm.opportunity.read'] },
+        { permissions: ['crm.customer.read'] },
+      ]),
+    }
+    const { service } = harness(
+      row,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      appRoles,
+    )
+    const context = await service.resolveExecutionContext({
+      installationId: APP_ID,
+      organizationId: ORG,
+      userId: USER,
+      grantedPermissions: ['base.permission'],
+    })
+    expect(context.grantedPermissions).toEqual([
+      'base.permission',
+      'crm.customer.read',
+      'crm.opportunity.read',
+    ])
+    expect(appRoles.find).toHaveBeenCalledWith({
+      where: { organizationId: ORG, appKey: 'crm', status: 'active' },
+    })
   })
 
   it('从 active installation 的 Blueprint UI 解析导航/路由并按权限过滤', async () => {

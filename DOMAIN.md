@@ -90,6 +90,8 @@
 | app_installation_revisions | 应用安装 |
 | app_entitlements | 订阅权益与用量 |
 | app_usage_records | 订阅权益与用量 |
+| app_role_bindings | 应用目录 |
+| app_brand_configs | 应用目录 |
 | agent_confirmation_tokens | 应用安装 |
 | blueprint_records | Blueprint 运行时 |
 | blueprint_journal_entries | Blueprint 运行时 |
@@ -984,6 +986,49 @@ enforcement:
   - service:libs/platform-core/src/entitlements/usage-metering.service.ts#record
 db: none
 spec: apps/api/src/entitlements/usage-metering.service.spec.ts
+```
+
+---
+
+## 应用目录
+
+覆盖表：app_role_bindings, app_brand_configs
+
+`app_role_bindings` 是应用级角色/权限：同一组织同一 `appKey` 下角色名唯一，`permissions`
+是该应用内的功能权限点并集；应用菜单来自 Blueprint `ui.json`，审计按 `appInstallationId`
+过滤，用量按 `appKey` 汇总。`app_brand_configs` 是应用级品牌覆盖（名称/logo/主题/CSS/支持信息），
+与组织级 `brand_configs` 分开，避免一个应用的品牌污染另一个应用。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| app_role_bindings.organizationId | organizations.id | 角色归属组织 | none | 组织删除时级联 |
+| app_role_bindings.createdById | users.id | 创建人 | none | 可空 |
+| app_brand_configs.organizationId | organizations.id | 品牌归属组织 | none | 组织删除时级联 |
+
+### 不变量
+
+```yaml invariant
+id: INV-APPCAT-01
+tables: [app_role_bindings]
+desc: 同组织同 appKey 下角色名唯一；权限变更写审计；删除不物理影响其他应用。
+trigger: AppCatalogService.upsertRole() / deleteRole()
+enforcement:
+  - service:apps/api/src/app-catalog/app-catalog.service.ts#upsertRole
+db: none
+spec: apps/api/src/app-catalog/app-catalog.service.spec.ts
+```
+
+```yaml invariant
+id: INV-APPCAT-02
+tables: [app_brand_configs]
+desc: 同组织同 appKey 只有一份品牌覆盖；读写都按 active installation 的 appKey 解析。
+trigger: AppCatalogService.getCatalog() / updateBranding()
+enforcement:
+  - service:apps/api/src/app-catalog/app-catalog.service.ts#getCatalog
+db: none
+spec: apps/api/src/app-catalog/app-catalog.service.spec.ts
 ```
 
 ---

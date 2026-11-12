@@ -6,6 +6,7 @@ import { EntitlementsModule } from '@sap/platform-core/entitlements/entitlements
 import { JobsModule } from '@sap/platform-core/jobs/jobs.module'
 import { BlueprintModule } from '../blueprint/blueprint.module'
 import { BusinessAppInstallation } from './business-app-installation.entity'
+import { AppRoleBinding } from '../app-catalog/entities/app-role-binding.entity'
 import { BusinessAppInstallationRevision } from './business-app-installation-revision.entity'
 import { BusinessAppsController } from './business-apps.controller'
 import { BusinessAppsService } from './business-apps.service'
@@ -16,7 +17,11 @@ import { OptionalAppContextGuard } from './optional-app-context.guard'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([BusinessAppInstallation, BusinessAppInstallationRevision]),
+    TypeOrmModule.forFeature([
+      BusinessAppInstallation,
+      BusinessAppInstallationRevision,
+      AppRoleBinding,
+    ]),
     BlueprintModule,
     AuditLogsModule,
     RecordLifecycleModule,

@@ -51,6 +51,8 @@ const DIRECT_TABLES = [
   'service_clients',
   'app_entitlements',
   'app_usage_records',
+  'app_role_bindings',
+  'app_brand_configs',
   'assets',
   'search_documents',
   'record_snapshots',

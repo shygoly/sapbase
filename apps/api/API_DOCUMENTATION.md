@@ -473,3 +473,22 @@ Portal 页面：`/dashboard/operations`。
   - 返回 `installation`、`source`（`blueprint-ui` / `none`）、`navigation`、`routes`
   - 菜单按用户功能权限过滤；`system:manage` / `system:admin` / `*` 视为通配
   - 不回落租户级 `menu_items`；没有 UI 层时返回空数组
+
+## App Catalog (3.3)
+
+应用级角色/权限/菜单/品牌/审计/用量统一从 active installation 解析：
+
+- `GET /api/apps/:id/catalog`
+  - `installation`、`roles`、权限并集 `permissions`
+  - `menus`/`routes`：来自当前 release 的 Blueprint UI 元数据
+  - `branding`：应用级品牌覆盖（`app_brand_configs`）
+  - `audit`：按 `appInstallationId` 过滤的最近审计事件 + 总数
+  - `usage`：按 appKey 汇总的本月用量
+  - `entitlement`：当前应用权益/配额
+- `PUT /api/apps/:id/catalog/roles/:name`（`system:manage`）
+  - `{ permissions, source?, status? }`；同组织同 appKey 角色名唯一
+- `DELETE /api/apps/:id/catalog/roles/:name`（`system:manage`）
+- `PUT /api/apps/:id/catalog/branding`（`system:manage`）
+  - 覆盖 appName/logo/favicon/theme/customCss/support 信息
+
+应用角色权限会在 `resolveExecutionContext()` 中与 JWT 权限合并，供工具/菜单判定使用。

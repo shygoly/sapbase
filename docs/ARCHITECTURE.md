@@ -482,3 +482,11 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
   平台 shell 不包含 CRM 路由或菜单硬编码。
 - `GET /api/apps/:id/navigation` 对 CRM active installation 返回同样的
   Blueprint UI 导航，证明新应用不需要改 shell。
+
+## 应用级目录
+
+- `app_role_bindings` 保存应用级角色与权限点，唯一键为组织 + appKey + 角色名；
+  执行上下文解析时与 JWT 权限合并。
+- `app_brand_configs` 保存应用级品牌覆盖，与组织级 `brand_configs` 分离。
+- `GET /api/apps/:id/catalog` 聚合应用角色/权限/菜单/品牌/审计/用量/权益；
+  菜单来自 Blueprint UI 元数据，审计按 appInstallationId，用量按 appKey。

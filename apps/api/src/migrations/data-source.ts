@@ -56,6 +56,7 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1795600000000-AddIdentityGovernance.ts'),
     path.join(__dirname, '1795700000000-ExtendOrganizationRls.ts'),
     path.join(__dirname, '1795800000000-AddEntitlementsAndUsage.ts'),
+    path.join(__dirname, '1795900000000-AddAppCatalog.ts'),
   ],
   synchronize: false,
   logging: true,
