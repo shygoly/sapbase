@@ -3,11 +3,12 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { randomUUID } from 'node:crypto'
 import semverGt = require('semver/functions/gt')
-import { EntityManager, In, Repository } from 'typeorm'
+import { DataSource, EntityManager, In, Repository } from 'typeorm'
 import type {
   BusinessAppDeploymentProfile,
   BusinessAppExecutionContext,
@@ -29,7 +30,7 @@ export interface InstallBusinessAppInput {
   deploymentProfile?: BusinessAppDeploymentProfile
 }
 
-interface LoadedAppRelease {
+export interface LoadedAppRelease {
   packageId: string
   appKey: string
   version: string
@@ -55,6 +56,7 @@ export class BusinessAppsService {
     private readonly revisions: Repository<BusinessAppInstallationRevision>,
     private readonly blueprints: BlueprintService,
     private readonly auditLogs: AuditLogsService,
+    @Optional() private readonly dataSource?: DataSource,
   ) {}
 
   async listForOrganization(organizationId: string): Promise<BusinessAppInstallation[]> {
@@ -92,12 +94,16 @@ export class BusinessAppsService {
     return installation
   }
 
-  async install(input: InstallBusinessAppInput): Promise<BusinessAppInstallation> {
+  async install(
+    input: InstallBusinessAppInput,
+    preloadedRelease?: LoadedAppRelease,
+  ): Promise<BusinessAppInstallation> {
     this.requireOrganization(input.organizationId)
     if (!input.packageId) throw new BadRequestException('缺少 Blueprint 包 id')
     if (!input.userId) throw new BadRequestException('缺少安装用户身份')
 
-    const release = await this.loadRelease(input.packageId, input.organizationId)
+    const release =
+      preloadedRelease ?? (await this.loadRelease(input.packageId, input.organizationId))
     const existing = await this.installations.findOne({
       where: { organizationId: input.organizationId, appKey: release.appKey },
     })
@@ -166,6 +172,96 @@ export class BusinessAppsService {
       deploymentProfile: saved.deploymentProfile,
     })
     return saved
+  }
+
+  /**
+   * 2.7 默认 ERP 安装幂等 backfill：
+   * - 只处理已有指定 blueprint 记录的组织
+   * - 已有同 appKey 安装直接复用，不静默升级
+   * - dryRun 只报告 wouldCreate，不写库
+   */
+  async backfillDefaultInstallation(input: {
+    organizationId: string
+    packageId: string
+    blueprintId?: string
+    userId: string
+    actor: string
+    deploymentProfile?: BusinessAppDeploymentProfile
+    dryRun?: boolean
+  }): Promise<{
+    organizationId: string
+    created: boolean
+    skipped: boolean
+    reason?: string
+    wouldCreate?: boolean
+    needsUpgrade?: boolean
+    installation?: BusinessAppInstallation
+    release?: LoadedAppRelease
+  }> {
+    this.requireOrganization(input.organizationId)
+    if (!input.packageId) throw new BadRequestException('缺少 Blueprint 包 id')
+    if (!input.userId) throw new BadRequestException('缺少安装用户身份')
+    if (!this.dataSource) {
+      throw new BadRequestException('未配置 DataSource，无法执行默认安装 backfill')
+    }
+    const blueprintId = input.blueprintId ?? 'auto-parts'
+    const rows = (await this.dataSource.query(
+      `SELECT count(*)::int AS count
+         FROM public.blueprint_records
+        WHERE "organizationId" = $1 AND "blueprintId" = $2`,
+      [input.organizationId, blueprintId],
+    )) as Array<{ count: number | string }>
+    const recordCount = Number(rows[0]?.count ?? 0)
+    if (recordCount === 0) {
+      return {
+        organizationId: input.organizationId,
+        created: false,
+        skipped: true,
+        reason: 'no-blueprint-records',
+      }
+    }
+
+    const release = await this.loadRelease(input.packageId, input.organizationId)
+    const existing = await this.installations.findOne({
+      where: { organizationId: input.organizationId, appKey: release.appKey },
+    })
+    if (existing) {
+      return {
+        organizationId: input.organizationId,
+        created: false,
+        skipped: false,
+        needsUpgrade: existing.blueprintVersion !== release.version,
+        installation: existing,
+        release,
+      }
+    }
+    if (input.dryRun) {
+      return {
+        organizationId: input.organizationId,
+        created: false,
+        skipped: false,
+        wouldCreate: true,
+        release,
+      }
+    }
+
+    const installation = await this.install(
+      {
+        organizationId: input.organizationId,
+        packageId: input.packageId,
+        userId: input.userId,
+        actor: input.actor,
+        deploymentProfile: input.deploymentProfile,
+      },
+      release,
+    )
+    return {
+      organizationId: input.organizationId,
+      created: true,
+      skipped: false,
+      installation,
+      release,
+    }
   }
 
   async upgrade(input: {

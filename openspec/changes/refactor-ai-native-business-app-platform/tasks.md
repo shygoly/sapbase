@@ -15,7 +15,7 @@
 - [x] 2.5a Add PostgreSQL RLS policies for tenant business/app tables and their child tables
 - [ ] 2.5b Extend RLS to organization membership and organization onboarding/control-plane writes
 - [x] 2.6 Retire pass-through `DataIsolationInterceptor`; require transaction context + RLS
-- [ ] 2.7 Map existing records to a default ERP installation with an idempotent backfill
+- [x] 2.7 Map existing records to a default ERP installation with an idempotent backfill（service + admin endpoint + dryRun/幂等测试 + runbook）
 - [x] 2.8a Add cross-tenant raw-SQL RLS negative tests with a non-owner role
 - [x] 2.8b Add cross-app service-path negative tests（跨组织 app context / findForOrganization / listForOrganization）
 

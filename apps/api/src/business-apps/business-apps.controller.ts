@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -52,6 +53,29 @@ export class BusinessAppsController {
       deploymentProfile: body.deploymentProfile,
     })
     return this.apps.toView(saved)
+  }
+
+  @Post('backfill-default')
+  @Auth('system:manage')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '把已有 Blueprint 记录的组织幂等映射到默认 ERP 安装（可 dryRun）',
+  })
+  async backfillDefault(
+    @Body()
+    body: { packageId?: string; blueprintId?: string; dryRun?: boolean },
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: { id?: string; email?: string },
+  ) {
+    if (!body?.packageId) throw new BadRequestException('packageId 必填')
+    return this.apps.backfillDefaultInstallation({
+      organizationId,
+      packageId: body.packageId,
+      blueprintId: body.blueprintId,
+      userId: user.id ?? '',
+      actor: user.email ?? user.id ?? 'unknown',
+      dryRun: body.dryRun === true,
+    })
   }
 
   @Get(':id/context')

@@ -31,6 +31,7 @@ function harness(
   releases: Array<{ packageId: string; loaded: ReturnType<typeof loadedBlueprint> }> = [
     { packageId: 'erp-1.0.0', loaded: loadedBlueprint() },
   ],
+  dataSource?: { query: jest.Mock },
 ) {
   const appRows = existing ? [withEntityDefaults(existing)] : []
   const revisionRows: Array<Record<string, any>> = []
@@ -127,6 +128,7 @@ function harness(
       revisionRepository as never,
       blueprints as never,
       auditLogs as never,
+      dataSource as never,
     ),
     repository: appRepository,
     revisionRepository,
@@ -134,6 +136,7 @@ function harness(
     revisionRows,
     blueprints,
     auditLogs,
+    dataSource,
   }
 }
 
@@ -267,6 +270,99 @@ describe('BusinessAppsService', () => {
         runtimeProfile: 'shared-saas',
       }),
     )
+  })
+
+  it('默认安装 backfill：无记录跳过，不加载包', async () => {
+    const dataSource = { query: jest.fn(async () => [{ count: 0 }]) }
+    const { service, blueprints } = harness(undefined, undefined, dataSource)
+    await expect(
+      service.backfillDefaultInstallation({
+        organizationId: ORG,
+        packageId: 'erp-1.0.0',
+        blueprintId: 'erp',
+        userId: USER,
+        actor: 'system:backfill',
+      }),
+    ).resolves.toMatchObject({ skipped: true, reason: 'no-blueprint-records', created: false })
+    expect(blueprints.load).not.toHaveBeenCalled()
+  })
+
+  it('默认安装 backfill：有记录且无安装 → 幂等创建', async () => {
+    const dataSource = { query: jest.fn(async () => [{ count: 2 }]) }
+    const { service, appRows, revisionRows, blueprints } = harness(undefined, undefined, dataSource)
+    const result = await service.backfillDefaultInstallation({
+      organizationId: ORG,
+      packageId: 'erp-1.0.0',
+      blueprintId: 'erp',
+      userId: USER,
+      actor: 'system:backfill',
+    })
+    expect(result).toMatchObject({ created: true, skipped: false })
+    expect(appRows).toHaveLength(1)
+    expect(appRows[0]).toMatchObject({ appKey: 'erp', blueprintVersion: '1.0.0' })
+    expect(revisionRows[0]).toMatchObject({ action: 'installed' })
+    expect(blueprints.load).toHaveBeenCalledTimes(1)
+
+    const rerun = await service.backfillDefaultInstallation({
+      organizationId: ORG,
+      packageId: 'erp-1.0.0',
+      blueprintId: 'erp',
+      userId: USER,
+      actor: 'system:backfill',
+    })
+    expect(rerun).toMatchObject({ created: false, needsUpgrade: false })
+    expect(appRows).toHaveLength(1)
+  })
+
+  it('默认安装 backfill：已有旧版本只报告 needsUpgrade，不静默升级', async () => {
+    const row = {
+      id: APP_ID,
+      organizationId: ORG,
+      appKey: 'erp',
+      blueprintId: 'erp',
+      blueprintVersion: '0.9.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      deploymentProfile: 'shared-saas',
+      status: 'active',
+      config: {},
+      license: null,
+      currentRevisionId: null,
+      createdById: USER,
+      createdAt: new Date('2026-10-18T00:00:00Z'),
+      updatedAt: new Date('2026-10-18T00:00:00Z'),
+    }
+    const dataSource = { query: jest.fn(async () => [{ count: 2 }]) }
+    const { service, appRows, revisionRows } = harness(
+      row,
+      [{ packageId: 'erp-1.1.0', loaded: loadedBlueprint('1.1.0') }],
+      dataSource,
+    )
+    const result = await service.backfillDefaultInstallation({
+      organizationId: ORG,
+      packageId: 'erp-1.1.0',
+      blueprintId: 'erp',
+      userId: USER,
+      actor: 'system:backfill',
+    })
+    expect(result).toMatchObject({ created: false, needsUpgrade: true })
+    expect(appRows).toHaveLength(1)
+    expect(revisionRows).toHaveLength(0)
+  })
+
+  it('默认安装 backfill：dryRun 不写库', async () => {
+    const dataSource = { query: jest.fn(async () => [{ count: 2 }]) }
+    const { service, appRows } = harness(undefined, undefined, dataSource)
+    const result = await service.backfillDefaultInstallation({
+      organizationId: ORG,
+      packageId: 'erp-1.0.0',
+      blueprintId: 'erp',
+      userId: USER,
+      actor: 'system:backfill',
+      dryRun: true,
+    })
+    expect(result).toMatchObject({ created: false, wouldCreate: true })
+    expect(appRows).toHaveLength(0)
   })
 
   it('卸载进入 uninstalling 并按保留期清理；上下文立即拒绝', async () => {
