@@ -82,6 +82,21 @@ export class BusinessAppsController {
     })
   }
 
+  @Get(':id/navigation')
+  @Auth()
+  @ApiOperation({ summary: '从 active installation 的 Blueprint UI 解析导航/路由元数据' })
+  navigation(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: { permissions?: string[] },
+  ) {
+    return this.apps.navigationForInstallation(
+      id,
+      organizationId,
+      user?.permissions ?? [],
+    )
+  }
+
   @Get(':id/context')
   @UseGuards(JwtAuthGuard, AppContextGuard)
   @ApiBearerAuth()

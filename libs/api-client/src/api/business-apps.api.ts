@@ -46,7 +46,7 @@ export interface BusinessAppInstallationRevision {
   blueprintVersion: string
   releaseDigest: string
   runtimeRequirement: string
-  action: 'installed' | 'upgraded' | 'rollback'
+  action: 'installed' | 'upgraded' | 'rollback' | 'uninstalled'
   config: Record<string, unknown>
   license?: {
     issuer: string
@@ -54,6 +54,36 @@ export interface BusinessAppInstallationRevision {
   } | null
   createdById?: string | null
   createdAt: string
+}
+
+export interface BusinessAppNavigation {
+  installation: {
+    id: string
+    appKey: string
+    blueprintId: string
+    blueprintVersion: string
+    releaseDigest: string
+    status: BusinessAppStatus
+    deploymentProfile: BusinessAppDeploymentProfile
+  }
+  source: 'blueprint-ui' | 'none'
+  navigation: Array<{
+    identifier: string
+    label: string
+    path: string
+    icon?: string
+    order: number
+    permissions: string[]
+  }>
+  routes: Array<{
+    identifier: string
+    label?: string
+    type: 'list' | 'form' | 'detail'
+    entity: string
+    route?: string
+    fields: string[]
+  }>
+  effectivePermissions: string[]
 }
 
 export const businessAppsApi = {
@@ -75,6 +105,11 @@ export const businessAppsApi = {
       packageId,
       deploymentProfile,
     })
+    return response.data.data || response.data
+  },
+
+  async navigation(id: string): Promise<BusinessAppNavigation> {
+    const response = await httpClient.get<any>(`/api/apps/${id}/navigation`)
     return response.data.data || response.data
   },
 

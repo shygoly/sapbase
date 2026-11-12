@@ -24,7 +24,7 @@
 - [x] 3.2 Namespace app tools and reject duplicate names in a composed catalog（`${appKey}_` + 重名/非法契约整目录拒绝 + 测试）
 - [ ] 3.3 Add app-scoped roles, permissions, menus, branding, audit, and usage
 - [x] 3.4a Add application switcher and persist the active installation in the API client
-- [ ] 3.4b Resolve navigation and route metadata from the active installation
+- [x] 3.4b Resolve navigation and route metadata from the active installation（`GET /api/apps/:id/navigation` + Blueprint UI 菜单/路由 + 权限过滤 + api-client + 测试）
 - [ ] 3.5 Move hardcoded ERP/shipping routes into the ERP application
 - [ ] 3.6 Add a CRM application without hardcoded shell routes
 - [ ] 3.7 Publish one explicit ERP-owned customer capability and consume it from CRM

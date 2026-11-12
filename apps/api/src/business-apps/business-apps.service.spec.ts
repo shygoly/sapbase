@@ -279,6 +279,142 @@ describe('BusinessAppsService', () => {
     )
   })
 
+  it('从 active installation 的 Blueprint UI 解析导航/路由并按权限过滤', async () => {
+    const row = {
+      id: APP_ID,
+      organizationId: ORG,
+      appKey: 'education',
+      blueprintId: 'education',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      deploymentProfile: 'shared-saas',
+      status: 'active',
+      config: {},
+      license: null,
+      currentRevisionId: null,
+      createdById: USER,
+      createdAt: new Date('2026-10-18T00:00:00Z'),
+      updatedAt: new Date('2026-10-18T00:00:00Z'),
+    }
+    const ui = {
+      ui: 'blueprint-ui/v1',
+      pages: [
+        {
+          identifier: 'CourseList',
+          type: 'list',
+          entity: 'Course',
+          label: '课程',
+          route: '/education/courses',
+          fields: ['title'],
+        },
+        {
+          identifier: 'StudentList',
+          type: 'list',
+          entity: 'Student',
+          route: '/education/students',
+          fields: ['name'],
+        },
+      ],
+      menus: [
+        {
+          identifier: 'courses',
+          label: '课程',
+          path: '/education/courses',
+          icon: 'book',
+          order: 2,
+          permissions: ['education.course.read'],
+        },
+        {
+          identifier: 'students',
+          label: '学生',
+          path: '/education/students',
+          order: 1,
+          permissions: ['education.student.read'],
+        },
+        {
+          identifier: 'public',
+          label: '公开',
+          path: '/education/public',
+          order: 0,
+        },
+      ],
+    }
+    const { service, blueprints } = harness(
+      row,
+      [
+        {
+          packageId: 'education-1.0.0',
+          loaded: { ...loadedBlueprint('1.0.0'), compiled: { ui } },
+        },
+      ],
+    )
+    const result = await service.navigationForInstallation(
+      APP_ID,
+      ORG,
+      ['education.course.read'],
+    )
+    expect(blueprints.load).toHaveBeenCalledWith('education-1.0.0', {
+      tenantId: ORG,
+    })
+    expect(result).toMatchObject({
+      installation: {
+        id: APP_ID,
+        appKey: 'education',
+        blueprintVersion: '1.0.0',
+        status: 'active',
+      },
+      source: 'blueprint-ui',
+    })
+    expect(result.navigation.map((item) => item.identifier)).toEqual([
+      'public',
+      'courses',
+    ])
+    expect(result.routes).toHaveLength(2)
+    expect(result.routes[0]).toMatchObject({
+      identifier: 'CourseList',
+      entity: 'Course',
+      route: '/education/courses',
+      fields: ['title'],
+    })
+
+    const wildcard = await service.navigationForInstallation(APP_ID, ORG, [
+      'system:manage',
+    ])
+    expect(wildcard.navigation.map((item) => item.identifier)).toEqual([
+      'public',
+      'students',
+      'courses',
+    ])
+  })
+
+  it('Blueprint 没有 UI 层时返回空导航，不回落租户菜单', async () => {
+    const row = {
+      id: APP_ID,
+      organizationId: ORG,
+      appKey: 'erp',
+      blueprintId: 'erp',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      deploymentProfile: 'shared-saas',
+      status: 'active',
+      config: {},
+      license: null,
+      currentRevisionId: null,
+      createdById: USER,
+      createdAt: new Date('2026-10-18T00:00:00Z'),
+      updatedAt: new Date('2026-10-18T00:00:00Z'),
+    }
+    const { service } = harness(row)
+    const result = await service.navigationForInstallation(APP_ID, ORG, [])
+    expect(result).toMatchObject({
+      source: 'none',
+      navigation: [],
+      routes: [],
+    })
+  })
+
   it('已启用权益控制：未授权应用安装 → 拒绝且不落库', async () => {
     const entitlements = {
       hasAny: jest.fn(async () => true),

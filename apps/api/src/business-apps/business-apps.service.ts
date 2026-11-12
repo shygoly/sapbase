@@ -652,6 +652,99 @@ export class BusinessAppsService {
     return { removed }
   }
 
+  /**
+   * 从 active installation 解析导航/路由元数据（3.4b）。
+   *
+   * 真源是该安装当前 release 的 `ui.json`（编译后的 `compiled.ui`），
+   * 不是租户级 menu_items；菜单按用户功能权限过滤，路由返回页面声明。
+   */
+  async navigationForInstallation(
+    id: string,
+    organizationId: string,
+    grantedPermissions: readonly string[],
+  ): Promise<{
+    installation: {
+      id: string
+      appKey: string
+      blueprintId: string
+      blueprintVersion: string
+      releaseDigest: string
+      status: string
+      deploymentProfile: string
+    }
+    source: 'blueprint-ui' | 'none'
+    navigation: Array<{
+      identifier: string
+      label: string
+      path: string
+      icon?: string
+      order: number
+      permissions: string[]
+    }>
+    routes: Array<{
+      identifier: string
+      label?: string
+      type: 'list' | 'form' | 'detail'
+      entity: string
+      route?: string
+      fields: string[]
+    }>
+    effectivePermissions: string[]
+  }> {
+    const installation = await this.resolveActiveForOrganization(id, organizationId)
+    const currentRevision = await this.findCurrentRevision(installation)
+    const packageId =
+      currentRevision?.packageId ??
+      `${installation.blueprintId}-${installation.blueprintVersion}`
+    const loaded = await this.blueprints.load(packageId, {
+      tenantId: organizationId,
+    })
+    const ui = loaded.compiled?.ui
+    const permissions = [...new Set(grantedPermissions)]
+    const wildcard =
+      permissions.includes('*') ||
+      permissions.includes('system:manage') ||
+      permissions.includes('system:admin')
+    const visibleMenus = (ui?.menus ?? [])
+      .filter(
+        (menu) =>
+          wildcard ||
+          !menu.permissions ||
+          menu.permissions.length === 0 ||
+          menu.permissions.some((permission) => permissions.includes(permission)),
+      )
+      .sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
+    return {
+      installation: {
+        id: installation.id,
+        appKey: installation.appKey,
+        blueprintId: installation.blueprintId,
+        blueprintVersion: installation.blueprintVersion,
+        releaseDigest: installation.releaseDigest,
+        status: installation.status,
+        deploymentProfile: installation.deploymentProfile,
+      },
+      source: ui ? 'blueprint-ui' : 'none',
+      navigation: visibleMenus.map((menu) => ({
+        identifier: menu.identifier,
+        label: menu.label,
+        path: menu.path,
+        icon: menu.icon,
+        order: menu.order ?? 0,
+        permissions: menu.permissions ?? [],
+      })),
+      routes: (ui?.pages ?? []).map((page) => ({
+        identifier: page.identifier,
+        label: page.label,
+        type: page.type,
+        entity: page.entity,
+        route: page.route,
+        fields: page.fields ?? [],
+      })),
+      effectivePermissions: permissions,
+    }
+  }
+
   async resolveExecutionContext(input: {
     installationId: string
     organizationId: string

@@ -464,3 +464,12 @@ Portal 页面：`/dashboard/operations`。
 - `GET /api/apps/upgrade-jobs/:jobId`
 - job 类型：`app.upgrade`；操作人来自 job.createdBy，升级前的兼容检查、
   记录快照与修订仍由 `BusinessAppsService.upgrade()` 执行。
+
+## App Navigation Metadata (3.4b)
+
+- `GET /api/apps/:id/navigation`
+  - 只接受当前组织的 active installation
+  - 从该安装当前 release 的 Blueprint `ui.json`（`compiled.ui`）解析
+  - 返回 `installation`、`source`（`blueprint-ui` / `none`）、`navigation`、`routes`
+  - 菜单按用户功能权限过滤；`system:manage` / `system:admin` / `*` 视为通配
+  - 不回落租户级 `menu_items`；没有 UI 层时返回空数组
