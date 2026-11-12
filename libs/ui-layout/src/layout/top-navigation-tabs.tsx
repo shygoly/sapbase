@@ -34,7 +34,8 @@ export function TopNavigationTabs() {
     openTab({
       path: normalizedPath,
       label: getRouteLabel(normalizedPath),
-      closable: normalizedPath !== '/dashboard/shipping/reports/home-overview',
+      // shell 不再识别具体业务首页；固定首页由应用元数据/路由自行决定。
+      closable: true,
     })
   }, [normalizedPath, openTab])
 

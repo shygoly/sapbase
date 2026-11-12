@@ -1,6 +1,8 @@
 import { locales } from '../../i18n/config'
 
-const RESERVED_SEGMENTS = new Set(['dashboard', 'shipping', 'reports', 'admin', 'system-settings'])
+// 路由显示只保留平台级通用段；业务段（shipping 等）由应用元数据声明，
+// 不在 shell 里硬编码。
+const RESERVED_SEGMENTS = new Set(['dashboard', 'reports', 'admin', 'system-settings'])
 
 export function stripLocaleFromPath(pathname: string): string {
   const segments = pathname.split('/').filter(Boolean)

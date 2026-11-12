@@ -466,3 +466,11 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
 - 服务令牌只证明客户端/组织/scope；代用户调用必须服务端重新解析功能权限与数据范围，
   并受限流/审计约束。
 - 身份同步按 provider 隔离，源不可用不降级删除；高风险离职可配置人工确认。
+
+## ERP 应用导航元数据
+
+- `templates/auto-parts/ui.json` 声明 ERP 应用页面与菜单（含 shipping 稳定路由）。
+- `GET /api/apps/:id/navigation` 从 active installation 当前 release 的
+  `compiled.ui` 解析菜单/路由，并可按用户权限过滤。
+- 平台 shell 只保留通用路由段（dashboard/reports/admin/system-settings）；
+  `shipping` 等业务段由应用元数据声明，不在 `route-display`/tab 逻辑里硬编码。

@@ -25,7 +25,7 @@
 - [ ] 3.3 Add app-scoped roles, permissions, menus, branding, audit, and usage
 - [x] 3.4a Add application switcher and persist the active installation in the API client
 - [x] 3.4b Resolve navigation and route metadata from the active installation（`GET /api/apps/:id/navigation` + Blueprint UI 菜单/路由 + 权限过滤 + api-client + 测试）
-- [ ] 3.5 Move hardcoded ERP/shipping routes into the ERP application
+- [x] 3.5 Move hardcoded ERP/shipping routes into the ERP application（`templates/auto-parts/ui.json` 声明 shipping/ERP 菜单与页面；shell 移除 shipping 保留段与首页特判；schema/菜单测试）
 - [ ] 3.6 Add a CRM application without hardcoded shell routes
 - [ ] 3.7 Publish one explicit ERP-owned customer capability and consume it from CRM
 - [ ] 3.8 Add E2E: one user switches ERP/CRM and private records remain isolated

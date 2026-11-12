@@ -1,0 +1,127 @@
+{
+  "ui": "blueprint-ui/v1",
+  "pages": [
+    {
+      "identifier": "PartList",
+      "type": "list",
+      "entity": "Part",
+      "label": "配件",
+      "route": "/dashboard/auto-parts/parts",
+      "fields": ["partNo", "name", "unit", "unitCost"]
+    },
+    {
+      "identifier": "PartForm",
+      "type": "form",
+      "entity": "Part",
+      "label": "配件编辑",
+      "route": "/dashboard/auto-parts/parts/new",
+      "fields": ["partNo", "name", "unit", "packSize", "countryOfOrigin"]
+    },
+    {
+      "identifier": "SupplierList",
+      "type": "list",
+      "entity": "Supplier",
+      "label": "供应商",
+      "route": "/dashboard/auto-parts/suppliers",
+      "fields": ["name", "creditDays"]
+    },
+    {
+      "identifier": "CustomerList",
+      "type": "list",
+      "entity": "Customer",
+      "label": "客户",
+      "route": "/dashboard/auto-parts/customers",
+      "fields": ["name", "creditLimit"]
+    },
+    {
+      "identifier": "SalesOrderList",
+      "type": "list",
+      "entity": "SalesOrder",
+      "label": "销售订单",
+      "route": "/dashboard/auto-parts/sales-orders",
+      "fields": ["number", "customer", "totalAmount", "owner"]
+    },
+    {
+      "identifier": "StockItemList",
+      "type": "list",
+      "entity": "StockItem",
+      "label": "库存",
+      "route": "/dashboard/auto-parts/stock",
+      "fields": ["part", "quantity", "reserved", "inTransit"]
+    }
+  ],
+  "menus": [
+    {
+      "identifier": "erp-parts",
+      "label": "配件",
+      "path": "/dashboard/auto-parts/parts",
+      "icon": "package",
+      "order": 1,
+      "permissions": ["inventory.part.read"]
+    },
+    {
+      "identifier": "erp-suppliers",
+      "label": "供应商",
+      "path": "/dashboard/auto-parts/suppliers",
+      "icon": "building",
+      "order": 2,
+      "permissions": ["purchase.supplier.read"]
+    },
+    {
+      "identifier": "erp-customers",
+      "label": "客户",
+      "path": "/dashboard/auto-parts/customers",
+      "icon": "users",
+      "order": 3,
+      "permissions": ["crm.customer.read"]
+    },
+    {
+      "identifier": "erp-sales-orders",
+      "label": "销售订单",
+      "path": "/dashboard/auto-parts/sales-orders",
+      "icon": "shopping",
+      "order": 4,
+      "permissions": ["sales.order.read"]
+    },
+    {
+      "identifier": "erp-stock",
+      "label": "库存",
+      "path": "/dashboard/auto-parts/stock",
+      "icon": "package",
+      "order": 5,
+      "permissions": ["inventory.stock.read"]
+    },
+    {
+      "identifier": "erp-ships",
+      "label": "船舶",
+      "path": "/dashboard/shipping/ships",
+      "icon": "ship",
+      "order": 10,
+      "permissions": ["shipping.ship.read"]
+    },
+    {
+      "identifier": "erp-voyages",
+      "label": "航次",
+      "path": "/dashboard/shipping/voyages",
+      "icon": "route",
+      "order": 11,
+      "permissions": ["shipping.voyage.read"]
+    },
+    {
+      "identifier": "erp-charters",
+      "label": "租船",
+      "path": "/dashboard/shipping/charters",
+      "icon": "scroll-text",
+      "order": 12,
+      "permissions": ["shipping.charter.read"]
+    },
+    {
+      "identifier": "erp-report-center",
+      "label": "报表中心",
+      "path": "/dashboard/shipping/report-center",
+      "icon": "chart",
+      "order": 13,
+      "permissions": ["shipping.report.read"]
+    }
+  ]
+}
