@@ -78,7 +78,19 @@ describe('async consumers job types', () => {
         events: [{ type: 'turn.end', data: {} }],
       })),
     }
-    const service = new AgentLongTaskJobService(reg as never, sessions as never)
+    const jobs = { get: jest.fn(async () => ({ createdBy: 'u1' })) }
+    const delegated = {
+      resolve: jest.fn(async () => ({
+        userId: 'u1',
+        permissions: ['tool:blueprint:read'],
+      })),
+    }
+    const service = new AgentLongTaskJobService(
+      reg as never,
+      jobs as never,
+      delegated as never,
+      sessions as never,
+    )
     service.onModuleInit()
     const definition = reg.register.mock.calls[0][0]
     const result = await definition.handler(
@@ -90,15 +102,17 @@ describe('async consumers job types', () => {
       },
       {
         agentRunId: 'run-1',
-        userId: 'u1',
         message: 'long task',
-        permissions: [],
       },
     )
+    expect(jobs.get).toHaveBeenCalledWith('org-1', 'job-1')
+    expect(delegated.resolve).toHaveBeenCalledWith('org-1', 'u1')
     expect(sessions.chat).toHaveBeenCalledWith(
       expect.objectContaining({
         organizationId: 'org-1',
         userId: 'u1',
+        actor: 'u1',
+        permissions: ['tool:blueprint:read'],
         message: 'long task',
       }),
     )
@@ -107,6 +121,70 @@ describe('async consumers job types', () => {
       conversationId: 'conv-1',
       turnId: 'turn-1',
     })
+  })
+
+  it('agent.long_task 忽略入队 payload 伪造的权限/用户，缺少创建人拒绝', async () => {
+    const reg = registry()
+    const sessions = {
+      chat: jest.fn(async () => ({ conversationId: 'c', turnId: 't', events: [] })),
+    }
+    const jobs = { get: jest.fn(async () => ({ createdBy: 'real-user' })) }
+    const delegated = {
+      resolve: jest.fn(async () => ({
+        userId: 'real-user',
+        permissions: ['tool:blueprint:read'],
+      })),
+    }
+    const service = new AgentLongTaskJobService(
+      reg as never,
+      jobs as never,
+      delegated as never,
+      sessions as never,
+    )
+    service.onModuleInit()
+    const definition = reg.register.mock.calls[0][0]
+    await definition.handler(
+      {
+        organizationId: 'org-1',
+        jobId: 'job-1',
+        stage: jest.fn(),
+        progress: jest.fn(),
+      },
+      {
+        agentRunId: 'run-1',
+        message: 'long task',
+        userId: 'attacker',
+        permissions: ['tool:god'],
+      },
+    )
+    expect(delegated.resolve).toHaveBeenCalledWith('org-1', 'real-user')
+    expect(sessions.chat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'real-user',
+        permissions: ['tool:blueprint:read'],
+      }),
+    )
+
+    const missingReg = registry()
+    const missingCreator = new AgentLongTaskJobService(
+      missingReg as never,
+      { get: jest.fn(async () => ({ createdBy: null })) } as never,
+      delegated as never,
+      sessions as never,
+    )
+    missingCreator.onModuleInit()
+    const missingDefinition = missingReg.register.mock.calls[0][0]
+    await expect(
+      missingDefinition.handler(
+        {
+          organizationId: 'org-1',
+          jobId: 'job-2',
+          stage: jest.fn(),
+          progress: jest.fn(),
+        },
+        { agentRunId: 'run-2', message: 'x' },
+      ),
+    ).rejects.toThrow(/可信创建人/)
   })
 
   it('data.export 只读当前组织记录并限制行数', async () => {

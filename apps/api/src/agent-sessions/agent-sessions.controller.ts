@@ -1,10 +1,21 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Res } from '@nestjs/common'
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Res,
+} from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import type { Response } from 'express'
 import { Auth } from '../common/decorators/auth.decorator'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import { AgentSessionsService } from './agent-sessions.service'
+import { AgentRunsService } from './agent-runs.service'
 
 type UserLike = {
   id?: string
@@ -16,7 +27,52 @@ type UserLike = {
 @ApiTags('PiAgent Sessions')
 @Controller('agent')
 export class AgentSessionsController {
-  constructor(private readonly sessions: AgentSessionsService) {}
+  constructor(
+    private readonly sessions: AgentSessionsService,
+    private readonly runs: AgentRunsService,
+  ) {}
+
+  @Post('runs')
+  @Auth()
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: '入队长时 Agent 运行并立即返回 jobId（不占用 HTTP 请求）' })
+  startRun(
+    @Body()
+    body: {
+      message?: string
+      conversationId?: string
+      screenContext?: Record<string, unknown>
+      appKey?: string
+      appInstallationId?: string
+      idempotencyKey?: string
+    },
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: UserLike,
+  ) {
+    if (typeof body?.message !== 'string' || body.message.trim().length === 0) {
+      throw new BadRequestException('message 不能为空或只含空白')
+    }
+    return this.runs.start({
+      organizationId,
+      userId: user?.id ?? user?.userId ?? 'unknown',
+      message: body.message,
+      conversationId: body.conversationId,
+      screenContext: body.screenContext,
+      appKey: body.appKey,
+      appInstallationId: body.appInstallationId,
+      idempotencyKey: body.idempotencyKey ?? null,
+    })
+  }
+
+  @Get('runs/:jobId')
+  @Auth()
+  @ApiOperation({ summary: '查询长时 Agent 运行的 job 状态/进度/结果' })
+  run(
+    @Param('jobId') jobId: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.runs.get(organizationId, jobId)
+  }
 
   @Post('chat')
   @Auth()

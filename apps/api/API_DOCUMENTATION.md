@@ -441,3 +441,26 @@ For API documentation issues:
 覆盖，默认 0.001 / 0.002 USD；估算值不替代账单真源。
 
 Portal 页面：`/dashboard/operations`。
+
+## Async Agent Runs & App Upgrades (4.8)
+
+长任务不再占用一个 HTTP 请求：入队后立即返回 jobId，worker 执行，状态/结果按 jobId 查询。
+
+### Agent 长运行
+
+- `POST /api/agent/runs`（202）
+  - body：`{ message, conversationId?, appKey?, appInstallationId?, screenContext?, idempotencyKey? }`
+  - 返回：`{ jobId, agentRunId, conversationId, status, created }`
+- `GET /api/agent/runs/:jobId`
+  - 返回 job 状态/进度/结果；只接受 `agent.long_task` 类型
+- 权限：执行时经 `DelegatedIdentityService` 重新解析组织成员/角色/权限；
+  入队 payload 不携带 userId/permissions，伪造值被忽略。
+- 相同 `idempotencyKey` 重试复用原 job/agentRunId。
+
+### 应用升级
+
+- `POST /api/apps/:id/upgrade-async`（202，`system:manage`）
+  - body：`{ packageId, idempotencyKey? }`
+- `GET /api/apps/upgrade-jobs/:jobId`
+- job 类型：`app.upgrade`；操作人来自 job.createdBy，升级前的兼容检查、
+  记录快照与修订仍由 `BusinessAppsService.upgrade()` 执行。

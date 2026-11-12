@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { AssetsModule } from '@sap/platform-core/assets/assets.module'
 import { JobsModule } from '@sap/platform-core/jobs/jobs.module'
 import { AuditLogsModule } from '@sap/platform-core/audit-logs/audit-logs.module'
+import { IdentityModule } from '@sap/platform-core/identity/identity.module'
 import { AgentSessionsModule } from '../agent-sessions/agent-sessions.module'
 import { AIModelsModule } from '../ai-models/ai-models.module'
 import { SemanticRuntimeModule } from '../semantic-runtime/semantic-runtime.module'
@@ -21,6 +22,7 @@ import { DocumentParseJobService } from './document-parse-job.service'
   imports: [
     JobsModule,
     AuditLogsModule,
+    IdentityModule,
     AssetsModule,
     AIModelsModule,
     AgentSessionsModule,

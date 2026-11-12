@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import { AppContextGuard } from './app-context.guard'
 import { BusinessAppsService } from './business-apps.service'
+import { BusinessAppsRunsService } from './business-apps-runs.service'
 import { CurrentApp } from './current-app.decorator'
 import { InstallBusinessAppDto } from './dto/install-business-app.dto'
 import { RollbackBusinessAppDto } from './dto/rollback-business-app.dto'
@@ -25,7 +26,10 @@ import { UpgradeBusinessAppDto } from './dto/upgrade-business-app.dto'
 @ApiTags('Business Apps')
 @Controller('apps')
 export class BusinessAppsController {
-  constructor(private readonly apps: BusinessAppsService) {}
+  constructor(
+    private readonly apps: BusinessAppsService,
+    private readonly runs: BusinessAppsRunsService,
+  ) {}
 
   @Get()
   @Auth()
@@ -126,6 +130,36 @@ export class BusinessAppsController {
       backup: body.backup,
     })
     return this.apps.toView(saved)
+  }
+
+  @Post(':id/upgrade-async')
+  @Auth('system:manage')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: '入队应用升级长任务并立即返回 jobId' })
+  async upgradeAsync(
+    @Param('id') id: string,
+    @Body() body: { packageId?: string; idempotencyKey?: string },
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: { id?: string; email?: string },
+  ) {
+    if (!body?.packageId) throw new BadRequestException('packageId 必填')
+    return this.runs.startUpgrade({
+      organizationId,
+      installationId: id,
+      packageId: body.packageId,
+      userId: user.id ?? '',
+      idempotencyKey: body.idempotencyKey ?? null,
+    })
+  }
+
+  @Get('upgrade-jobs/:jobId')
+  @Auth('system:manage')
+  @ApiOperation({ summary: '查询应用升级 job 的状态/进度/结果' })
+  upgradeJob(
+    @Param('jobId') jobId: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.runs.getUpgrade(organizationId, jobId)
   }
 
   @Get(':id/upgrade-backups')

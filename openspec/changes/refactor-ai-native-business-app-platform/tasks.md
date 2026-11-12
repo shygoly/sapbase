@@ -40,7 +40,7 @@
 - [x] 4.5 Enforce `allowedAgents` from trusted runtime identity（HTTP/chat 固定 runtime；MCP 只从受控 env 解析；`invokeAs/confirmAs` + 未知 profile 拒绝 + 负例）
 - [ ] 4.6 Enforce run budgets, idempotency, cancellation, and write confirmation
 - [ ] 4.7 Wrap untrusted tool results with source/nonce boundaries and redact audit arguments
-- [ ] 4.8 Move long-running work to jobs/Outbox; do not hold one HTTP request for a full Agent run
+- [x] 4.8 Move long-running work to jobs/Outbox; do not hold one HTTP request for a full Agent run（`agent.long_task` / `app.upgrade` + 202 入队/查询 API + 可信 createdBy/权限重解析 + 测试）
 - [ ] 4.9 Migrate current chat to an app-scoped Agent session
 - [x] 4.10 Add negative tests for forged identity, cross-app tools, over-budget runs, and unconfirmed writes（4 类负例已覆盖）
 
