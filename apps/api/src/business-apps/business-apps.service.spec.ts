@@ -47,6 +47,14 @@ function harness(
       )
     }),
     find: jest.fn(async () => appRows),
+    delete: jest.fn(async (where: Record<string, unknown>) => {
+      for (let index = appRows.length - 1; index >= 0; index -= 1) {
+        if (Object.entries(where).every(([key, value]) => appRows[index][key] === value)) {
+          appRows.splice(index, 1)
+        }
+      }
+      return { affected: 1 }
+    }),
     create: jest.fn((row: Record<string, unknown>) => ({ ...row })),
     save: jest.fn(async (row: Record<string, any>) => {
       const saved = {
@@ -86,6 +94,14 @@ function harness(
       )
     }),
     find: jest.fn(async () => revisionRows),
+    delete: jest.fn(async (where: Record<string, unknown>) => {
+      for (let index = revisionRows.length - 1; index >= 0; index -= 1) {
+        if (Object.entries(where).every(([key, value]) => revisionRows[index][key] === value)) {
+          revisionRows.splice(index, 1)
+        }
+      }
+      return { affected: 1 }
+    }),
   }
   appRepository.manager = {
     transaction: async <T>(run: (manager: any) => Promise<T>) =>
@@ -251,6 +267,87 @@ describe('BusinessAppsService', () => {
         runtimeProfile: 'shared-saas',
       }),
     )
+  })
+
+  it('卸载进入 uninstalling 并按保留期清理；上下文立即拒绝', async () => {
+    const row = {
+      id: APP_ID,
+      organizationId: ORG,
+      appKey: 'erp',
+      blueprintId: 'erp',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      deploymentProfile: 'shared-saas',
+      status: 'active',
+      config: {},
+      license: null,
+      currentRevisionId: null,
+      createdById: USER,
+      createdAt: new Date('2026-10-18T00:00:00Z'),
+      updatedAt: new Date('2026-10-18T00:00:00Z'),
+    }
+    const { service, revisionRows, appRows, auditLogs } = harness(row)
+    const saved = await service.uninstall({
+      id: APP_ID,
+      organizationId: ORG,
+      userId: USER,
+      actor: 'admin@example.com',
+      retentionDays: 7,
+    })
+    expect(saved.status).toBe('uninstalling')
+    expect(saved.config.retentionUntil).toBeTruthy()
+    expect(revisionRows.some((item) => item.action === 'uninstalled')).toBe(true)
+    expect(auditLogs.create).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'business_app.uninstall' }),
+    )
+    await expect(
+      service.resolveExecutionContext({
+        installationId: APP_ID,
+        organizationId: ORG,
+        userId: USER,
+        grantedPermissions: [],
+      }),
+    ).rejects.toThrow(/不存在|停用|尚未/)
+
+    // 保留期到期后清理
+    appRows[0].config = {
+      ...appRows[0].config,
+      retentionUntil: new Date(Date.now() - 60_000).toISOString(),
+    }
+    await expect(service.cleanupRemoved(ORG)).resolves.toEqual({ removed: 1 })
+    expect(appRows).toHaveLength(0)
+    expect(revisionRows).toHaveLength(0)
+  })
+
+  it('卸载 purge=true 立即标记 removed，仍等待 retention cleanup 物理删除', async () => {
+    const row = {
+      id: APP_ID,
+      organizationId: ORG,
+      appKey: 'erp',
+      blueprintId: 'erp',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      deploymentProfile: 'shared-saas',
+      status: 'active',
+      config: {},
+      license: null,
+      currentRevisionId: null,
+      createdById: USER,
+      createdAt: new Date('2026-10-18T00:00:00Z'),
+      updatedAt: new Date('2026-10-18T00:00:00Z'),
+    }
+    const { service, appRows } = harness(row)
+    const saved = await service.uninstall({
+      id: APP_ID,
+      organizationId: ORG,
+      userId: USER,
+      actor: 'admin@example.com',
+      purge: true,
+    })
+    expect(saved.status).toBe('removed')
+    expect(appRows).toHaveLength(1)
   })
 
   it('升级追加修订并更新 currentRevisionId；降级必须走 rollback', async () => {

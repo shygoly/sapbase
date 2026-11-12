@@ -42,7 +42,7 @@
       "pattern": "^sha256:[0-9a-f]{64}$"
     },
     "runtimeRequirement": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "action": { "enum": ["installed", "upgraded", "rollback"] },
+    "action": { "enum": ["installed", "upgraded", "rollback", "uninstalled"] },
     "config": { "type": "object" },
     "license": {
       "type": ["object", "null"],

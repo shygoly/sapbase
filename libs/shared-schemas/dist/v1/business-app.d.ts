@@ -32,7 +32,7 @@ export interface BusinessAppInstallation {
     createdAt: string;
     updatedAt: string;
 }
-export type BusinessAppRevisionAction = 'installed' | 'upgraded' | 'rollback';
+export type BusinessAppRevisionAction = 'installed' | 'upgraded' | 'rollback' | 'uninstalled';
 export interface BusinessAppInstallationRevision {
     id: string;
     organizationId: string;

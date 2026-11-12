@@ -137,6 +137,37 @@ export class BusinessAppsController {
     return this.apps.suspend(id, organizationId, user.email ?? user.id ?? 'unknown')
   }
 
+  @Post(':id/uninstall')
+  @Auth('system:manage')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '卸载应用：进入 uninstalling 并按保留期清理' })
+  async uninstall(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: { id?: string; email?: string },
+    @Body() body: { retentionDays?: number; purge?: boolean },
+  ) {
+    const saved = await this.apps.uninstall({
+      id,
+      organizationId,
+      userId: user.id ?? '',
+      actor: user.email ?? user.id ?? 'unknown',
+      retentionDays: body?.retentionDays,
+      purge: body?.purge,
+    })
+    return this.apps.toView(saved)
+  }
+
+  @Post('retention/cleanup')
+  @Auth('system:manage')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '清理已到期卸载应用及修订（保留期策略）' })
+  async cleanupRetention(
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.apps.cleanupRemoved(organizationId)
+  }
+
   @Post(':id/activate')
   @Auth('system:manage')
   @HttpCode(HttpStatus.OK)

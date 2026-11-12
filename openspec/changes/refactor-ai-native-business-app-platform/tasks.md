@@ -59,7 +59,7 @@
 - [ ] 6.2 Package shared SaaS, dedicated SaaS, and standalone profiles from one Runtime artifact
 - [ ] 6.3 Make full-system source generation an optional licensed export path
 - [x] 6.4a Add installation upgrade, rollback, and suspension workflows
-- [ ] 6.4b Add uninstall workflow and retention policy
+- [x] 6.4b Add uninstall workflow and retention policy（uninstalling/removed + retentionUntil + cleanup + audit + tests）
 - [ ] 6.5 Add backup/restore and data-compatibility checks for app upgrades
 - [ ] 6.6 Add audit, SLO, cost, and failure dashboards for installment and Agent runs
 - [ ] 6.7 Benchmark `blueprint_records`; add tenant/app partitioning and retention when metrics justify it
@@ -70,7 +70,7 @@
 - [x] 7.2 Update `openspec/project.md` product definition from ERP-only to business-app platform
 - [ ] 7.3 Update `docs/ERP_Space_Platform_设计方案_v3.md` with the approved multi-app architecture
 - [ ] 7.4 Reconcile `add-full-system-generation-and-deploy` with the optional export decision
-- [ ] 7.5 Reconcile `migrate-to-saas-architecture` with RLS and app-aware tenancy
+- [x] 7.5 Reconcile `migrate-to-saas-architecture` with RLS and app-aware tenancy（已归档；`docs/guides/saas-migration.md` / DOMAIN 对账）
 - [ ] 7.6 Document the OpenClaw/Agent Host adapter boundary and non-goals
 
 ## Implementation Evidence

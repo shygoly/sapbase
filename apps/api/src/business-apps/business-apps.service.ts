@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm'
 import { randomUUID } from 'node:crypto'
 import semverGt = require('semver/functions/gt')
-import { EntityManager, Repository } from 'typeorm'
+import { EntityManager, In, Repository } from 'typeorm'
 import type {
   BusinessAppDeploymentProfile,
   BusinessAppExecutionContext,
@@ -265,6 +265,99 @@ export class BusinessAppsService {
     actor: string,
   ): Promise<BusinessAppInstallation> {
     return this.changeStatus(id, organizationId, actor, 'active', 'business_app.activate')
+  }
+
+  /**
+   * 卸载：默认进入 uninstalling 并保留 retentionDays；purge=true 时立即标记 removed，
+   * 仍保留行供审计，retention cleanup 再物理删除。
+   */
+  async uninstall(input: {
+    id: string
+    organizationId: string
+    actor: string
+    userId: string
+    retentionDays?: number
+    purge?: boolean
+  }): Promise<BusinessAppInstallation> {
+    const current = await this.findForOrganization(input.id, input.organizationId)
+    if (current.status === 'removed' || current.status === 'uninstalling') return current
+
+    const now = new Date()
+    const retentionDays = Math.max(0, Number(input.retentionDays ?? 30))
+    const retentionUntil = new Date(
+      now.getTime() + (input.purge ? 0 : retentionDays * 24 * 60 * 60 * 1000),
+    )
+    const release: LoadedAppRelease = {
+      packageId: `${current.blueprintId}-${current.blueprintVersion}`,
+      appKey: current.appKey,
+      version: current.blueprintVersion,
+      releaseDigest: current.releaseDigest,
+      runtimeRequirement: current.runtimeRequirement,
+      license: current.license,
+    }
+
+    const saved = await this.installations.manager.transaction(async (manager) => {
+      const appRepo = manager.getRepository(BusinessAppInstallation)
+      const revisionRepo = manager.getRepository(BusinessAppInstallationRevision)
+      const locked = await appRepo.findOne({
+        where: { id: current.id, organizationId: current.organizationId },
+        lock: { mode: 'pessimistic_write' },
+      })
+      if (!locked) throw new NotFoundException('应用不存在')
+      const previous = await this.ensureCurrentRevision(manager, locked)
+      const revision = await revisionRepo.save(
+        revisionRepo.create(
+          this.revisionData(locked, release, 'uninstalled', previous?.id ?? null, input.userId),
+        ),
+      )
+      locked.status = input.purge ? 'removed' : 'uninstalling'
+      locked.config = {
+        ...(locked.config ?? {}),
+        uninstalledAt: now.toISOString(),
+        retentionUntil: retentionUntil.toISOString(),
+        purgeOnUninstall: input.purge === true,
+      }
+      locked.currentRevisionId = revision.id
+      return appRepo.save(locked)
+    })
+    await this.audit(input.organizationId, input.actor, 'business_app.uninstall', saved, {
+      retentionDays,
+      purge: input.purge === true,
+      retentionUntil: retentionUntil.toISOString(),
+    })
+    return saved
+  }
+
+  /** 保留期清理：删除已到期的 uninstalling/removed 安装及修订。 */
+  async cleanupRemoved(
+    organizationId: string,
+    now: Date = new Date(),
+  ): Promise<{ removed: number }> {
+    this.requireOrganization(organizationId)
+    const rows = await this.installations.find({
+      where: { organizationId, status: In(['uninstalling', 'removed']) },
+    })
+    let removed = 0
+    for (const row of rows) {
+      const until = row.config?.retentionUntil
+      if (typeof until === 'string' && new Date(until).getTime() > now.getTime()) continue
+      await this.installations.manager.transaction(async (manager) => {
+        await manager.getRepository(BusinessAppInstallationRevision).delete({
+          organizationId,
+          appInstallationId: row.id,
+        })
+        await manager.getRepository(BusinessAppInstallation).delete({
+          id: row.id,
+          organizationId,
+        })
+      })
+      await this.audit(organizationId, 'system:retention', 'business_app.retention_purge', row, {
+        appKey: row.appKey,
+        retentionUntil: until ?? null,
+      })
+      removed += 1
+    }
+    return { removed }
   }
 
   async resolveExecutionContext(input: {
