@@ -19,6 +19,7 @@ import type {
 } from '@speckit/shared-schemas'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { RecordLifecycleService } from '../record-lifecycle/record-lifecycle.service'
+import { EntitlementsService } from '@sap/platform-core/entitlements/entitlements.service'
 import { checkAppUpgradeCompatibility } from './app-upgrade-compatibility'
 import { BlueprintService } from '../blueprint/blueprint.service'
 import { BusinessAppInstallationRevision } from './business-app-installation-revision.entity'
@@ -60,6 +61,7 @@ export class BusinessAppsService {
     private readonly auditLogs: AuditLogsService,
     @Optional() private readonly dataSource?: DataSource,
     @Optional() private readonly lifecycle?: RecordLifecycleService,
+    @Optional() private readonly entitlements?: EntitlementsService,
   ) {}
 
   async listForOrganization(organizationId: string): Promise<BusinessAppInstallation[]> {
@@ -120,6 +122,28 @@ export class BusinessAppsService {
       throw new ConflictException(
         `应用 ${release.appKey} 已安装为 ${existing.blueprintVersion}；升级或回滚必须走独立生命周期流程`,
       )
+    }
+
+    if (this.entitlements && (await this.entitlements.hasAny(input.organizationId))) {
+      const entitlement = await this.entitlements.assertEntitled(
+        input.organizationId,
+        release.appKey,
+      )
+      const installed = await this.installations.count({
+        where: {
+          organizationId: input.organizationId,
+          appKey: release.appKey,
+          status: In(['installing', 'active', 'suspended']),
+        },
+      })
+      await this.entitlements.assertWithinQuota({
+        organizationId: input.organizationId,
+        appKey: release.appKey,
+        metric: 'maxInstallations',
+        amount: 1,
+        used: installed,
+        entitlement,
+      })
     }
 
     const installation = this.installations.create({

@@ -1976,6 +1976,38 @@
         "startedAt",
         "finishedAt"
       ]
+    },
+    "app_entitlements": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "planName",
+        "status",
+        "source",
+        "limits",
+        "validFrom",
+        "validTo",
+        "createdById"
+      ]
+    },
+    "app_usage_records": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "metric",
+        "quantity",
+        "periodStart",
+        "periodEnd",
+        "source",
+        "idempotencyKey",
+        "metadata"
+      ]
     }
   }
 }

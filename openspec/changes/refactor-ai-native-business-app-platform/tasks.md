@@ -55,7 +55,7 @@
 - [ ] 5.8 Add prompt-injection and cross-tenant context-leak negative tests
 
 ## 6. Delivery profiles and operations
-- [ ] 6.1 Add entitlements, plan-to-app mapping, quotas, and usage metering
+- [x] 6.1 Add entitlements, plan-to-app mapping, quotas, and usage metering（plan catalog + app_entitlements/app_usage_records + sync-plan/配额/计量 API + 安装/工具调用准入 + 测试）
 - [ ] 6.2 Package shared SaaS, dedicated SaaS, and standalone profiles from one Runtime artifact
 - [ ] 6.3 Make full-system source generation an optional licensed export path
 - [x] 6.4a Add installation upgrade, rollback, and suspension workflows

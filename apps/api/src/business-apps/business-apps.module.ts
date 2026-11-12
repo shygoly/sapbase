@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 import { RecordLifecycleModule } from '../record-lifecycle/record-lifecycle.module'
+import { EntitlementsModule } from '@sap/platform-core/entitlements/entitlements.module'
 import { BlueprintModule } from '../blueprint/blueprint.module'
 import { BusinessAppInstallation } from './business-app-installation.entity'
 import { BusinessAppInstallationRevision } from './business-app-installation-revision.entity'
@@ -16,6 +17,7 @@ import { OptionalAppContextGuard } from './optional-app-context.guard'
     BlueprintModule,
     AuditLogsModule,
     RecordLifecycleModule,
+    EntitlementsModule,
   ],
   controllers: [BusinessAppsController],
   providers: [BusinessAppsService, AppContextGuard, OptionalAppContextGuard],

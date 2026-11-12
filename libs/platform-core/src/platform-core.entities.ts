@@ -26,6 +26,8 @@ import { IdentityLink } from './identity/identity-link.entity'
 import { AuthLoginEvent } from './identity/auth-login-event.entity'
 import { IdentitySyncRun } from './identity/identity-sync-run.entity'
 import { ServiceClient } from './identity/service-client.entity'
+import { AppEntitlement } from './entitlements/app-entitlement.entity'
+import { AppUsageRecord } from './entitlements/app-usage-record.entity'
 import { Asset } from './assets/asset.entity'
 import { AssetVariant } from './assets/asset-variant.entity'
 import { AssetUploadSession } from './assets/asset-upload-session.entity'
@@ -60,6 +62,8 @@ export const PLATFORM_CORE_ENTITIES = [
   AuthLoginEvent,
   IdentitySyncRun,
   ServiceClient,
+  AppEntitlement,
+  AppUsageRecord,
   Asset,
   AssetVariant,
   AssetUploadSession,

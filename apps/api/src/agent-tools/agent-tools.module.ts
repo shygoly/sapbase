@@ -11,6 +11,7 @@ import { AgentToolsController } from './agent-tools.controller'
 import { AgentConfirmationToken } from './confirmation-token.entity'
 import { ConfirmationTokenService } from './confirmation-token.service'
 import { BusinessAppsModule } from '../business-apps/business-apps.module'
+import { EntitlementsModule } from '@sap/platform-core/entitlements/entitlements.module'
 import { AgentFeedbackModule } from '../agent-feedback/agent-feedback.module'
 import { ReleasesModule } from '../releases/releases.module'
 import { ModuleRegistryService } from '../module-registry/module-registry.service'
@@ -33,6 +34,7 @@ import { DataScopeGuard } from '../data-scope/data-scope.guard'
     AtomicRegistryModule,
     AuditLogsModule,
     BusinessAppsModule,
+    EntitlementsModule,
     AgentFeedbackModule,
     ReleasesModule,
     DataScopeModule,

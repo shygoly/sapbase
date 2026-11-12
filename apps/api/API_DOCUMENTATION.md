@@ -409,3 +409,20 @@ For API documentation issues:
 
 用户列表/详情已按组织过滤；跨组织用户返回 404。订阅未配置时 status 返回
 `configured=false`，checkout/portal 返回 400。
+
+## Entitlements & Usage (6.1)
+
+计划 → 应用/配额映射由平台维护（starter/pro/enterprise）；组织级权益由计划同步物化，
+手工权益（source=manual）不会被计划同步覆盖。没有权益记录的组织保持迁移期兼容；
+一旦同步过计划，安装与工具调用按权益/配额 fail-closed。
+
+- `GET /api/entitlements/plans` — 计划 → 应用/配额映射
+- `GET /api/entitlements` — 当前组织权益 + 本月用量汇总
+- `POST /api/entitlements/sync-plan` — `{ planName? }`，幂等物化计划权益
+- `GET /api/entitlements/check?appKey=&metric=&amount=&used=` — 配额检查（不写用量）
+- `POST /api/entitlements/usage` — `{ appKey, metric, quantity, source, idempotencyKey? }`
+- `GET /api/entitlements/usage?appKey=` — 本月用量
+
+配额键：`maxInstallations` / `maxRecords` / `maxStorageBytes` /
+`maxMonthlyToolCalls` / `maxMonthlyAgentRuns` / `maxMonthlyApiCalls`。
+安装时按 `maxInstallations` 校验；工具调用按 `maxMonthlyToolCalls` 校验并计量。

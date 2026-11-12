@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  Optional,
   Controller,
   Get,
   HttpCode,
@@ -21,6 +22,8 @@ import {
   filterAppToolCatalog,
 } from '@sap/agent-tools/app-tool-catalog'
 import type { BusinessAppExecutionContext } from '@speckit/shared-schemas'
+import { EntitlementsService } from '@sap/platform-core/entitlements/entitlements.service'
+import { UsageMeteringService } from '@sap/platform-core/entitlements/usage-metering.service'
 
 interface AuthedRequest {
   user?: {
@@ -45,7 +48,11 @@ interface AuthedRequest {
 @UseGuards(JwtAuthGuard, OptionalAppContextGuard)
 @ApiBearerAuth()
 export class AgentToolsController {
-  constructor(private readonly registry: AgentToolRegistry) {}
+  constructor(
+    private readonly registry: AgentToolRegistry,
+    @Optional() private readonly entitlements?: EntitlementsService,
+    @Optional() private readonly usage?: UsageMeteringService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: '返回工具契约原文' })
@@ -80,20 +87,46 @@ export class AgentToolsController {
   @Post(':name/invoke')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '调用契约内的工具（计算，不是创建资源）' })
-  invoke(
+  async invoke(
     @Param('name') name: string,
     @Body() body: { args?: Record<string, unknown>; confirmationToken?: string },
     @Request() req: AuthedRequest,
   ) {
-    return this.registry.invoke({
+    const organizationId = req.user?.organizationId
+    const appKey = req.appContext?.appKey
+    let metered = false
+    if (organizationId && appKey && this.entitlements) {
+      const entitlement = await this.entitlements.findActive(organizationId, appKey)
+      if (entitlement) {
+        await this.entitlements.assertWithinQuota({
+          organizationId,
+          appKey,
+          metric: 'maxMonthlyToolCalls',
+          amount: 1,
+          entitlement,
+        })
+        metered = true
+      }
+    }
+    const result = await this.registry.invoke({
       name,
       args: body?.args ?? {},
       confirmationToken: body?.confirmationToken,
-      organizationId: req.user?.organizationId,
+      organizationId,
       actor: req.user?.email ?? req.user?.userId ?? 'unknown',
       grantedPermissions: req.user?.permissions ?? [],
       appContext: req.appContext,
     })
+    if (metered && organizationId && appKey && this.usage) {
+      await this.usage.record({
+        organizationId,
+        appKey,
+        metric: 'maxMonthlyToolCalls',
+        quantity: 1,
+        source: 'agent-tools',
+      })
+    }
+    return result
   }
 
   @Post(':name/confirm')

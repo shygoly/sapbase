@@ -88,6 +88,8 @@
 | job_events | 异步任务 |
 | app_installations | 应用安装 |
 | app_installation_revisions | 应用安装 |
+| app_entitlements | 订阅权益与用量 |
+| app_usage_records | 订阅权益与用量 |
 | agent_confirmation_tokens | 应用安装 |
 | blueprint_records | Blueprint 运行时 |
 | blueprint_journal_entries | Blueprint 运行时 |
@@ -932,6 +934,56 @@ enforcement:
   - service:libs/agent-tools/src/confirmation-token.service.ts#consume
 db: none
 spec: apps/api/src/agent-tools/confirmation-token.service.spec.ts
+```
+
+---
+
+## 订阅权益与用量
+
+覆盖表：app_entitlements, app_usage_records
+
+`app_entitlements` 是组织级应用授权：计划（starter/pro/enterprise）映射到应用与配额，
+`limits` 保存配额快照；`source=manual` 的手工权益不被计划同步覆盖。`app_usage_records`
+是只追加的用量计量，按 UTC 自然月聚合；`idempotencyKey` 同组织内唯一，用于重试去重。
+没有 entitlement 的组织保持迁移期兼容；一旦同步过计划，安装与工具调用按权益/配额 fail-closed。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| app_entitlements.organizationId | organizations.id | 权益归属组织 | none | 组织删除时级联 |
+| app_entitlements.createdById | users.id | 授予人 | none | 计划同步可为空 |
+| app_usage_records.organizationId | organizations.id | 用量归属组织 | none | 组织删除时级联 |
+
+### 状态词
+
+权益状态使用 `active` / `suspended` / `expired`；来源使用 `plan` / `manual`。
+计划同步只挂起 `source=plan` 且不再包含的应用，不删除手工权益。
+
+### 不变量
+
+```yaml invariant
+id: INV-ENT-01
+tables: [app_entitlements]
+desc: 同组织同 appKey 只有一条权益；计划同步幂等，手工权益不被覆盖或删除。
+trigger: EntitlementsService.syncPlan()
+enforcement:
+  - service:libs/platform-core/src/entitlements/entitlements.service.ts#syncPlan
+db: none
+spec: apps/api/src/entitlements/entitlements.service.spec.ts
+```
+
+```yaml invariant
+id: INV-ENT-02
+tables: [app_entitlements, app_usage_records]
+desc: 已启用权益控制时，无有效权益不得安装；配额超限拒绝；用量只追加且 idempotencyKey 去重。
+trigger: BusinessAppsService.install() / EntitlementsService.assertWithinQuota() / UsageMeteringService.record()
+enforcement:
+  - service:apps/api/src/business-apps/business-apps.service.ts#install
+  - service:libs/platform-core/src/entitlements/entitlements.service.ts#assertWithinQuota
+  - service:libs/platform-core/src/entitlements/usage-metering.service.ts#record
+db: none
+spec: apps/api/src/entitlements/usage-metering.service.spec.ts
 ```
 
 ---

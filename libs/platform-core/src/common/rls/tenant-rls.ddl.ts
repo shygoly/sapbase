@@ -49,6 +49,8 @@ const DIRECT_TABLES = [
   'auth_login_events',
   'identity_sync_runs',
   'service_clients',
+  'app_entitlements',
+  'app_usage_records',
   'assets',
   'search_documents',
   'record_snapshots',

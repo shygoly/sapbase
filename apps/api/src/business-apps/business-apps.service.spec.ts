@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common'
+import { ConflictException, ForbiddenException } from '@nestjs/common'
 import { Validator } from 'jsonschema'
 import { BUSINESS_APP_INSTALLATION_PROTOCOL } from '@speckit/shared-schemas'
 import { loadSchema } from '../common/protocol/schema-loader'
@@ -33,6 +33,7 @@ function harness(
   ],
   dataSource?: { query: jest.Mock },
   lifecycle?: { snapshot: jest.Mock; restoreSnapshot: jest.Mock },
+  entitlements?: Record<string, jest.Mock>,
 ) {
   const appRows = existing ? [withEntityDefaults(existing)] : []
   const revisionRows: Array<Record<string, any>> = []
@@ -49,6 +50,7 @@ function harness(
       )
     }),
     find: jest.fn(async () => appRows),
+    count: jest.fn(async () => appRows.length),
     delete: jest.fn(async (where: Record<string, unknown>) => {
       for (let index = appRows.length - 1; index >= 0; index -= 1) {
         if (Object.entries(where).every(([key, value]) => appRows[index][key] === value)) {
@@ -131,6 +133,7 @@ function harness(
       auditLogs as never,
       dataSource as never,
       lifecycle as never,
+      entitlements as never,
     ),
     repository: appRepository,
     revisionRepository,
@@ -140,6 +143,7 @@ function harness(
     auditLogs,
     dataSource,
     lifecycle,
+    entitlements,
   }
 }
 
@@ -273,6 +277,50 @@ describe('BusinessAppsService', () => {
         runtimeProfile: 'shared-saas',
       }),
     )
+  })
+
+  it('已启用权益控制：未授权应用安装 → 拒绝且不落库', async () => {
+    const entitlements = {
+      hasAny: jest.fn(async () => true),
+      assertEntitled: jest.fn(async () => {
+        throw new ForbiddenException('组织未获得应用 erp 的有效授权')
+      }),
+      assertWithinQuota: jest.fn(),
+    }
+    const { service, appRows } = harness(undefined, undefined, undefined, undefined, entitlements)
+    await expect(
+      service.install({
+        organizationId: ORG,
+        packageId: 'erp-1.0.0',
+        userId: USER,
+        actor: 'admin@example.com',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException)
+    expect(entitlements.assertEntitled).toHaveBeenCalledWith(ORG, 'erp')
+    expect(appRows).toHaveLength(0)
+  })
+
+  it('已启用权益控制：安装配额超限 → 拒绝且不落库', async () => {
+    const entitlements = {
+      hasAny: jest.fn(async () => true),
+      assertEntitled: jest.fn(async () => ({ appKey: 'erp', limits: { maxInstallations: 1 } })),
+      assertWithinQuota: jest.fn(async () => {
+        throw new ForbiddenException('应用 erp 的 maxInstallations 配额已用尽（1/1）')
+      }),
+    }
+    const { service, appRows } = harness(undefined, undefined, undefined, undefined, entitlements)
+    await expect(
+      service.install({
+        organizationId: ORG,
+        packageId: 'erp-1.0.0',
+        userId: USER,
+        actor: 'admin@example.com',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException)
+    expect(entitlements.assertWithinQuota).toHaveBeenCalledWith(
+      expect.objectContaining({ metric: 'maxInstallations', amount: 1 }),
+    )
+    expect(appRows).toHaveLength(0)
   })
 
   it('默认安装 backfill：无记录跳过，不加载包', async () => {
