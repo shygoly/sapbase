@@ -74,6 +74,14 @@ describe('composeAppToolCatalog', () => {
     }
   })
 
+  it('跨应用工具使用错误命名空间 → 拒绝', () => {
+    expect(() =>
+      composeAppToolCatalog(context, [
+        { kind: 'blueprint', label: 'erp', catalog: { version: 1, tools: [tool('erp_customer_lookup')] } },
+      ]),
+    ).toThrow(/应用命名空间/)
+  })
+
   it('平台内建保留平台命名空间（crm 应用仍可见 erp_* 内建）', () => {
     const result = composeAppToolCatalog(context, [
       { kind: 'platform', catalog: { version: 1, tools: [tool('erp_blueprint_list')] } },

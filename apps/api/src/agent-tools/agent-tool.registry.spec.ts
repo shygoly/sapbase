@@ -478,6 +478,30 @@ describe('AgentToolRegistry trusted agent profile', () => {
     ).resolves.toMatchObject({ ok: true, tool: 'builder_changelog_draft' })
   })
 
+  it('调用方伪造 agentProfile 字段不被信任（仍按 runtime 拒绝 builder 工具）', async () => {
+    const { registry } = createRegistry()
+    await expect(
+      registry.invoke({
+        ...builderActor,
+        name: 'builder_changelog_draft',
+        args: { title: 't', summary: 's' },
+        agentProfile: 'piagent-builder',
+      } as never),
+    ).rejects.toBeInstanceOf(ForbiddenException)
+  })
+
+  it('builder 写工具未确认 → 拒绝且不消费令牌', async () => {
+    const { registry, tokens } = createRegistry()
+    await expect(
+      registry.invokeAs('piagent-builder', {
+        ...builderActor,
+        name: 'builder_changelog_draft',
+        args: { title: 't', summary: 's' },
+      }),
+    ).rejects.toThrow(/确认令牌/)
+    expect(tokens.consume).not.toHaveBeenCalled()
+  })
+
   it('confirm 同样按可信 profile 判定；未知 profile 拒绝', async () => {
     const { registry, tokens } = createRegistry()
     await expect(

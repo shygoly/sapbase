@@ -42,7 +42,7 @@
 - [ ] 4.7 Wrap untrusted tool results with source/nonce boundaries and redact audit arguments
 - [ ] 4.8 Move long-running work to jobs/Outbox; do not hold one HTTP request for a full Agent run
 - [ ] 4.9 Migrate current chat to an app-scoped Agent session
-- [ ] 4.10 Add negative tests for forged identity, cross-app tools, over-budget runs, and unconfirmed writes
+- [x] 4.10 Add negative tests for forged identity, cross-app tools, over-budget runs, and unconfirmed writes（4 类负例已覆盖）
 
 ## 5. AI-native authoring pipeline
 - [ ] 5.1 Replace direct provider calls with a provider-neutral `ModelGateway`

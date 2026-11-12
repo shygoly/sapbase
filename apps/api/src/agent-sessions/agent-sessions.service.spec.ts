@@ -29,6 +29,13 @@ describe('agent-sessions contract', () => {
     guard.recordToolCall()
     expect(() => guard.recordToolCall()).toThrow('BUDGET_EXCEEDED')
   })
+
+  it('over-budget runs：token 与 deadline 超限拒绝', () => {
+    const tokens = new BudgetGuard({ maxToolCalls: 10, maxTokens: 10, deadlineMs: 1000 })
+    expect(() => tokens.recordTokens(11)).toThrow('BUDGET_EXCEEDED:tokens')
+    const deadline = new BudgetGuard({ maxToolCalls: 10, maxTokens: 10, deadlineMs: -1 })
+    expect(() => deadline.assertDeadline()).toThrow('BUDGET_EXCEEDED:deadline')
+  })
 })
 
 import { AgentSessionsService } from './agent-sessions.service'
