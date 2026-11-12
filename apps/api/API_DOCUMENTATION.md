@@ -426,3 +426,18 @@ For API documentation issues:
 配额键：`maxInstallations` / `maxRecords` / `maxStorageBytes` /
 `maxMonthlyToolCalls` / `maxMonthlyAgentRuns` / `maxMonthlyApiCalls`。
 安装时按 `maxInstallations` 校验；工具调用按 `maxMonthlyToolCalls` 校验并计量。
+
+## Operations Dashboard (6.6)
+
+只读聚合既有真源，不新增第二套事实表：
+
+- `GET /api/operations/dashboard?hours=24`（1–720）
+  - `audit`：安装/Agent 审计事件总数、按 action 聚合、最近 20 条
+  - `slo`：Agent 成功率、工具成功率、P95 延迟、应用可用率与目标达标状态
+  - `cost`：输入/输出 token、按模型估算成本、本月应用用量
+  - `failures`：失败/取消的 Agent turn、失败工具调用、失败/停用安装及最近记录
+
+成本单价可用 `AGENT_COST_INPUT_PER_1K` / `AGENT_COST_OUTPUT_PER_1K`
+覆盖，默认 0.001 / 0.002 USD；估算值不替代账单真源。
+
+Portal 页面：`/dashboard/operations`。

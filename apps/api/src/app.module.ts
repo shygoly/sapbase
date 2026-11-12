@@ -53,6 +53,7 @@ import { BusinessAppsModule } from './business-apps/business-apps.module'
 import { EntitlementsModule } from '@sap/platform-core/entitlements/entitlements.module'
 import { ReleasesModule } from './releases/releases.module'
 import { DashboardModule } from './dashboard/dashboard.module'
+import { OperationsDashboardModule } from './operations-dashboard/operations-dashboard.module'
 import { AgentSessionsModule } from './agent-sessions/agent-sessions.module'
 import { AgentKnowledgeModule } from './agent-knowledge/agent-knowledge.module'
 import { AgentEvalModule } from './agent-eval/agent-eval.module'
@@ -167,6 +168,7 @@ try {
     AgentFeedbackModule,
     ReleaseAutomationModule,
     DashboardModule,
+    OperationsDashboardModule,
   ],
   controllers: [],
   providers: [PlatformEntityRegistrationCheck],

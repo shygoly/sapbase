@@ -175,3 +175,12 @@ export {
   type OrganizationMember,
   type Invitation,
 } from './organizations.api'
+
+export {
+  operationsApi,
+  type OperationsDashboard,
+  type OperationsAuditPanel,
+  type OperationsSloPanel,
+  type OperationsCostPanel,
+  type OperationsFailurePanel,
+} from './operations.api'
