@@ -499,3 +499,12 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
   平台校验双方安装、权限与 owner 范围，只返回声明投影。
 - `templates/erp` 发布 `customer.lookup`，`templates/crm` 通过该能力读取客户，
   不直接访问 ERP 私有 `blueprint_records`。
+
+## 应用切换与私有记录隔离
+
+- `X-App-Id` 消费方上下文与 package id 必须一致：CRM 安装不能访问 ERP package；
+  无 `X-App-Id` 的旧租户调用保持兼容。
+- ERP/CRM 各自 `blueprint_records.Customer` 按 `blueprintId` 隔离；
+  CRM 只能通过 `app_capabilities` 的 `customer.lookup` 读取 ERP 声明投影。
+- e2e：`tests/app-switch-isolation.e2e.js` 覆盖安装、导航、私有记录隔离、
+  跨 package 403 与能力投影。

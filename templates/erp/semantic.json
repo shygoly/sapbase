@@ -7,6 +7,7 @@
         { "name": "industry", "type": "text" },
         { "name": "level", "type": "enum", "values": ["A", "B", "C"] },
         { "name": "creditLimit", "type": "decimal" },
+        { "name": "internalNote", "type": "text" },
         { "name": "ownerId", "type": "text" }
       ],
       "states": [

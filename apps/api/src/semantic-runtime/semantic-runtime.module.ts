@@ -12,6 +12,7 @@ import { DataScopeModule } from '../data-scope/data-scope.module'
 import { AssetsModule } from '@sap/platform-core/assets/assets.module'
 import { SemanticRuntimeController } from './semantic-runtime.controller'
 import { SemanticRuntimeService } from './semantic-runtime.service'
+import { AppPackageGuard } from '../business-apps/app-package.guard'
 import { BlueprintSuggestionLog } from './suggestion-log.entity'
 import { SuggestionCronJob } from './suggestion-cron'
 
@@ -32,7 +33,7 @@ import { SuggestionCronJob } from './suggestion-cron'
     ]),
   ],
   controllers: [SemanticRuntimeController],
-  providers: [SemanticRuntimeService, SuggestionCronJob],
+  providers: [SemanticRuntimeService, AppPackageGuard, SuggestionCronJob],
   exports: [SemanticRuntimeService],
 })
 export class SemanticRuntimeModule {}

@@ -14,6 +14,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { SemanticRuntimeService, toHttpException } from './semantic-runtime.service'
+import { AppPackageGuard } from '../business-apps/app-package.guard'
 
 type RuntimeUser = {
   id?: string
@@ -25,7 +26,7 @@ type RuntimeUser = {
 
 @ApiTags('Blueprints')
 @Controller('blueprints')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AppPackageGuard)
 @ApiBearerAuth()
 export class SemanticRuntimeController {
   constructor(private readonly runtime: SemanticRuntimeService) {}

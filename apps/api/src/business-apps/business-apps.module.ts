@@ -14,6 +14,7 @@ import { BusinessAppsJobService } from './business-apps-job.service'
 import { BusinessAppsRunsService } from './business-apps-runs.service'
 import { AppContextGuard } from './app-context.guard'
 import { OptionalAppContextGuard } from './optional-app-context.guard'
+import { AppPackageGuard } from './app-package.guard'
 
 @Module({
   imports: [
@@ -35,12 +36,14 @@ import { OptionalAppContextGuard } from './optional-app-context.guard'
     BusinessAppsRunsService,
     AppContextGuard,
     OptionalAppContextGuard,
+    AppPackageGuard,
   ],
   exports: [
     BusinessAppsService,
     BusinessAppsRunsService,
     AppContextGuard,
     OptionalAppContextGuard,
+    AppPackageGuard,
   ],
 })
 export class BusinessAppsModule {}
