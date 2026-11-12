@@ -20,11 +20,11 @@ function sql(statement) {
   return execFileSync('psql', ['-d', DB, '-tAc', statement], { encoding: 'utf8' }).trim()
 }
 
-async function login() {
+async function login(email = 'admin@example.com', password = '123456') {
   const response = await fetch(`${API}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'admin@example.com', password: '123456' }),
+    body: JSON.stringify({ email, password }),
   })
   return (await response.json()).data
 }
@@ -282,6 +282,27 @@ async function main() {
       body: JSON.stringify({ taskId: task.data.id, classId: educationClass.data.id }),
     })
     assert.equal(taskClass.status, 201, JSON.stringify(taskClass.data))
+    const taskApproval = await call(
+      `/api/blueprints/${packageId}/records/TeachingTask/${task.data.id}/approvals/task-publish/approve`,
+      { method: 'POST', body: JSON.stringify({ role: 'admin' }) },
+    )
+    assert.equal(taskApproval.status, 200, JSON.stringify(taskApproval.data))
+    const taskTransition = await call(
+      `/api/blueprints/${packageId}/records/TeachingTask/${task.data.id}/transition`,
+      { method: 'POST', body: JSON.stringify({ to: 'published' }) },
+    )
+    assert.equal(taskTransition.status, 200, JSON.stringify(taskTransition.data))
+    let notified = false
+    for (let index = 0; index < 30; index += 1) {
+      const inbox = await call('/api/notifications?all=true')
+      const list = inbox.data?.notifications ?? inbox.data ?? []
+      if (Array.isArray(list) && list.some((item) => item.data?.entity === 'TeachingTask')) {
+        notified = true
+        break
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+    assert.ok(notified, 'task transition notification missing')
     const learning = await call(`/api/blueprints/${packageId}/records/LearningRecord`, {
       method: 'POST',
       body: JSON.stringify({
@@ -334,6 +355,15 @@ async function main() {
       }),
     })
     assert.equal(attempt.status, 201, JSON.stringify(attempt.data))
+    for (const to of ['submitted', 'aiScored', 'teacherConfirmed', 'final']) {
+      const moved = await call(
+        `/api/blueprints/${packageId}/records/Attempt/${attempt.data.id}/transition`,
+        { method: 'POST', body: JSON.stringify({ to }) },
+      )
+      assert.equal(moved.status, 200, JSON.stringify(moved.data))
+      const after = await call(`/api/blueprints/${packageId}/records/Attempt/${attempt.data.id}`)
+      assert.equal(after.data.state, to)
+    }
     aiContentIds.push(attempt.data.id)
     const aiScore = await call('/api/ai-governance/scores', {
       method: 'POST',
@@ -469,6 +499,32 @@ async function main() {
     })
     assert.equal(metricQuery.status, 200, JSON.stringify(metricQuery.data))
     assert.ok(metricQuery.data.items.reduce((sum, item) => sum + item.value, 0) >= 501)
+    const dimensionMetric = await call('/api/metrics/definitions', {
+      method: 'POST',
+      body: JSON.stringify({
+        key: `${metricPrefix}.students_by_class`,
+        name: '按班级学生数',
+        period: 'day',
+        aggregation: 'count',
+        sourceType: 'blueprint',
+        sourceConfig: { entity: 'Student', blueprintId: 'education' },
+        dimensions: ['classId'],
+        permissions: ['metrics:read'],
+      }),
+    })
+    assert.equal(dimensionMetric.status, 201, JSON.stringify(dimensionMetric.data))
+    const dimensionQuery = await call('/api/metrics/query', {
+      method: 'POST',
+      body: JSON.stringify({
+        metricKey: `${metricPrefix}.students_by_class`,
+        from,
+        to,
+        dimensions: ['classId'],
+      }),
+    })
+    assert.equal(dimensionQuery.status, 200, JSON.stringify(dimensionQuery.data))
+    assert.ok(dimensionQuery.data.items.some((item) => item.dimensions.classId))
+
     const dashboard = await call('/api/metrics/dashboards', {
       method: 'POST',
       body: JSON.stringify({
@@ -488,6 +544,20 @@ async function main() {
     })
     assert.equal(dashboardQuery.status, 200, JSON.stringify(dashboardQuery.data))
     assert.equal(dashboardQuery.data.widgets.length, 2)
+    for (const role of ['teacher', 'student']) {
+      const personal = await call('/api/metrics/dashboards', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: `${metricPrefix}.${role}`,
+          name: `${role} 个人看板`,
+          visibility: { roles: [role] },
+          widgets: [
+            { key: 'students', type: 'number', metricKey: `${metricPrefix}.students`, config: {} },
+          ],
+        }),
+      })
+      assert.equal(personal.status, 201, JSON.stringify(personal.data))
+    }
     const alert = await call('/api/metrics/alerts', {
       method: 'POST',
       body: JSON.stringify({
@@ -503,6 +573,23 @@ async function main() {
     assert.equal(alert.status, 201, JSON.stringify(alert.data))
     const evaluated = await call('/api/metrics/alerts/evaluate', { method: 'POST', body: '{}' })
     assert.ok(evaluated.data.firing >= 1)
+
+    // 数据范围负例：Manager 无教育范围策略 → 空/拒绝
+    const managerSession = await login('manager@example.com', '123456')
+    const managerCall = await fetch(
+      `${API}/api/blueprints/${packageId}/records/EducationClass`,
+      {
+        headers: {
+          Authorization: `Bearer ${managerSession.access_token}`,
+          'X-Organization-Id': managerSession.currentOrganizationId,
+        },
+      },
+    )
+    assert.ok([200, 403, 404].includes(managerCall.status), `manager scope ${managerCall.status}`)
+    if (managerCall.status === 200) {
+      const body = await managerCall.json()
+      assert.equal((body.data ?? body).length, 0)
+    }
 
     // 跨租户负例
     const cross = await call(`/api/blueprints/${packageId}/records/Course/${course.data.id}`, {
