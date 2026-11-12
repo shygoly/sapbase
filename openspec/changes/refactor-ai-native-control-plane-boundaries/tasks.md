@@ -4,7 +4,7 @@
 
 ## 1. 契约与 ADR（无新增前置）
 
-- [ ] 1.1 架构/安全负责人批准七条要求、真实 apps/libs owner 和分层 DI 矩阵；确认物理拆分、三库显式 build 与 error 级规则是已存在资产，删除旧重做任务。
+- [ ] 1.1 架构/安全负责人批准七条要求、真实 apps/libs owner 和分层 DI 矩阵；确认物理拆分、三库显式 build 与 error 级规则是已存在资产，删除旧重做任务。（批准包已起草：`docs/architecture/ai-native-control-plane-approval.md`；待 owner 签字）
 - [ ] 1.2 与 01/06/07/10 冻结可信主体视图及每次调用 profile 来源，复用既有身份和 BusinessAppExecutionContext；明确 runtimeProfile 是部署模式、actor 文本不是稳定主体 ID，body.role 不成为可信职责。
 - [ ] 1.3 与 04/07 冻结 Kernel/Host/IntentParser/Registry/共享应用用例边界；保留 Host 会话仓储，禁止业务仓储及模型影响业务提交，不新增金额或命令算法。
 - [ ] 1.4 与 05/06/09 冻结 candidateDigest、真实证据、审批、签名未公开工件、最终 GateDecision 与有效 ReleaseContext 的生产者/消费者/主版本/拒绝契约；签认无先 published 才评测的依赖循环。
