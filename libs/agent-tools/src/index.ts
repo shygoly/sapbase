@@ -1,3 +1,4 @@
+export * from './agent-profile'
 // agent-tools 公共入口（子路径导入同样可用）
 export * from './agent-tools.ports'
 export * from './agent-tool.registry'

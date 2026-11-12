@@ -26,10 +26,11 @@ import {
 import { ReleasesService } from '@sap/platform-release/releases/releases.service'
 import type { DataScopeGuard } from '@sap/platform-core/data-scope/data-scope.guard'
 import { wrapUntrustedData } from '@sap/agent-kernel'
+import { assertAgentProfile, type AgentProfile } from './agent-profile'
 
 const ALLOWED_ATOMIC_KINDS = new Set(['calculation', 'query'])
 
-export type AgentProfile = 'piagent-runtime' | 'piagent-builder'
+export type { AgentProfile } from './agent-profile'
 
 export function isAgentAllowed(tool: { allowedAgents?: string[] }, profile: AgentProfile): boolean {
   const allowed = tool.allowedAgents
@@ -45,7 +46,6 @@ export interface AgentToolInvokeInput {
   actor: string
   grantedPermissions: readonly string[]
   appContext?: BusinessAppExecutionContext
-  agentProfile?: AgentProfile
   idempotencyKey?: string
 }
 
@@ -55,7 +55,6 @@ export interface AgentToolConfirmInput {
   organizationId?: string
   actor: string
   appContext?: BusinessAppExecutionContext
-  agentProfile?: AgentProfile
 }
 
 /**
@@ -93,9 +92,18 @@ export class AgentToolRegistry {
   }
 
   async confirm(input: AgentToolConfirmInput) {
+    return this.confirmWithProfile('piagent-runtime', input)
+  }
+
+  /** 仅供受控 MCP/宿主桥使用；profile 必须来自服务端可信来源。 */
+  async confirmAs(profile: AgentProfile, input: AgentToolConfirmInput) {
+    return this.confirmWithProfile(assertAgentProfile(profile), input)
+  }
+
+  private async confirmWithProfile(profile: AgentProfile, input: AgentToolConfirmInput) {
     const organizationId = this.requireOrganizationId(input.organizationId)
     const tool = this.requireTool(input.name, this.catalog())
-    this.assertAgent(tool, input.agentProfile ?? 'piagent-runtime')
+    this.assertAgent(tool, profile)
     if (tool.confirmation !== 'required') {
       throw new BadRequestException(
         `工具 ${tool.name} 不需要确认令牌（confirmation=${tool.confirmation}）`,
@@ -116,9 +124,26 @@ export class AgentToolRegistry {
     input: AgentToolInvokeInput,
     catalog: ToolCatalog = loadToolCatalog(),
   ): Promise<{ ok: true; tool: string; result: unknown }> {
+    return this.invokeWithProfile('piagent-runtime', input, catalog)
+  }
+
+  /** 仅供受控 MCP/宿主桥使用；profile 必须来自服务端可信来源。 */
+  async invokeAs(
+    profile: AgentProfile,
+    input: AgentToolInvokeInput,
+    catalog: ToolCatalog = loadToolCatalog(),
+  ): Promise<{ ok: true; tool: string; result: unknown }> {
+    return this.invokeWithProfile(assertAgentProfile(profile), input, catalog)
+  }
+
+  private async invokeWithProfile(
+    profile: AgentProfile,
+    input: AgentToolInvokeInput,
+    catalog: ToolCatalog,
+  ): Promise<{ ok: true; tool: string; result: unknown }> {
     const organizationId = this.requireOrganizationId(input.organizationId)
     const tool = this.requireTool(input.name, catalog)
-    this.assertAgent(tool, input.agentProfile ?? 'piagent-runtime')
+    this.assertAgent(tool, profile)
     this.assertArgs(tool, input.args)
     this.assertAppContext(input.appContext, organizationId)
 

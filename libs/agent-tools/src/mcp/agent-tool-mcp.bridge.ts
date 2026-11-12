@@ -8,6 +8,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import { AgentToolRegistry, type AgentToolInvokeInput } from '../agent-tool.registry'
 import { resolveContractsDir } from '../contracts-loader'
+import { resolveAgentProfile, type AgentProfile } from '../agent-profile'
 
 /**
  * 内嵌通道（Web SSE / chat）的工具调用桥。
@@ -70,6 +71,7 @@ export class AgentToolMcpBridge implements OnModuleInit {
   private readonly pending = new Map<string, AgentToolInvokeInput>()
   private client?: Client
   private tools: McpToolDefinition[] = []
+  private profile: AgentProfile = 'piagent-runtime'
 
   constructor(private readonly registry: AgentToolRegistry) {}
 
@@ -84,6 +86,7 @@ export class AgentToolMcpBridge implements OnModuleInit {
 
   async start(): Promise<void> {
     if (this.client) return
+    this.profile = resolveAgentProfile(process.env[AGENT_HOST_PROFILE_ENV])
     this.tools = this.loadTools()
     this.assertProfileAllowlistSubset()
 
@@ -103,7 +106,7 @@ export class AgentToolMcpBridge implements OnModuleInit {
         }
       }
       try {
-        const result = await this.registry.invoke({
+        const result = await this.registry.invokeAs(this.profile, {
           ...context,
           name: request.params.name,
           args: (request.params.arguments ?? {}) as Record<string, unknown>,
@@ -142,7 +145,7 @@ export class AgentToolMcpBridge implements OnModuleInit {
    * transport=mcp 时经 MCP 客户端 → 内嵌 server → 同一个网关。
    */
   async invoke(input: AgentToolInvokeInput) {
-    if (!this.enabled) return this.registry.invoke(input)
+    if (!this.enabled) return this.registry.invokeAs(this.profile, input)
     if (!this.client) await this.start()
 
     const contextId = randomUUID()
@@ -205,8 +208,7 @@ export class AgentToolMcpBridge implements OnModuleInit {
    * - 不满足直接拒绝启动，不静默隐藏或降级。
    */
   private assertProfileAllowlistSubset(): void {
-    const profile = process.env[AGENT_HOST_PROFILE_ENV] ?? 'piagent-runtime'
-    assertMcpToolsSubset(this.tools, this.registry.catalog(), profile)
+    assertMcpToolsSubset(this.tools, this.registry.catalog(), this.profile)
   }
 
   /**
@@ -216,7 +218,6 @@ export class AgentToolMcpBridge implements OnModuleInit {
   private visibleToProfile(tool: McpToolDefinition): boolean {
     const allowed = tool._meta?.['sapbase/allowedAgents']
     if (!Array.isArray(allowed) || allowed.length === 0) return true
-    const profile = process.env[AGENT_HOST_PROFILE_ENV] ?? 'piagent-runtime'
-    return allowed.includes('*') || allowed.includes(profile)
+    return allowed.includes('*') || allowed.includes(this.profile)
   }
 }

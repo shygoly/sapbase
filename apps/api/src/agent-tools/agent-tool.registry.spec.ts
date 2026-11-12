@@ -449,6 +449,61 @@ describe('AgentToolRegistry 数据范围执行点', () => {
   })
 })
 
+describe('AgentToolRegistry trusted agent profile', () => {
+  const builderActor = {
+    ...ACTOR,
+    grantedPermissions: [...ACTOR.grantedPermissions, 'tool:builder:write'],
+  }
+
+  it('builder-only 工具：runtime 拒绝，invokeAs(builder) 允许', async () => {
+    const { registry } = createRegistry()
+    const catalog = loadToolCatalog()
+    await expect(
+      registry.invoke(
+        { ...builderActor, name: 'builder_changelog_draft', args: { title: 't', summary: 's' } },
+        catalog,
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException)
+    await expect(
+      registry.invokeAs(
+        'piagent-builder',
+        {
+          ...builderActor,
+          name: 'builder_changelog_draft',
+          args: { title: 't', summary: 's' },
+          confirmationToken: 'token-1',
+        },
+        catalog,
+      ),
+    ).resolves.toMatchObject({ ok: true, tool: 'builder_changelog_draft' })
+  })
+
+  it('confirm 同样按可信 profile 判定；未知 profile 拒绝', async () => {
+    const { registry, tokens } = createRegistry()
+    await expect(
+      registry.confirm({
+        ...builderActor,
+        name: 'builder_changelog_draft',
+        args: { title: 't', summary: 's' },
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException)
+    await expect(
+      registry.confirmAs('piagent-builder', {
+        ...builderActor,
+        name: 'builder_changelog_draft',
+        args: { title: 't', summary: 's' },
+      }),
+    ).resolves.toBeUndefined()
+    expect(tokens.issue).toHaveBeenCalled()
+    await expect(
+      registry.invokeAs(
+        'unknown' as never,
+        { ...builderActor, name: 'erp_blueprint_list', args: {} },
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException)
+  })
+})
+
 describe('isAgentAllowed', () => {
   const { isAgentAllowed } = require('./agent-tool.registry')
   it('enforces allowedAgents', () => {

@@ -9,8 +9,13 @@ function stubRegistry() {
     tool: input.name,
     result: { echo: input.args },
   }))
+  const invokeAs = jest.fn(async (_profile: string, input: AgentToolInvokeInput) => invoke(input))
   const catalog = loadToolCatalog()
-  return { registry: { invoke, catalog: () => catalog } as unknown as AgentToolRegistry, invoke }
+  return {
+    registry: { invoke, invokeAs, catalog: () => catalog } as unknown as AgentToolRegistry,
+    invoke,
+    invokeAs,
+  }
 }
 
 describe('AgentToolMcpBridge', () => {
@@ -36,6 +41,20 @@ describe('AgentToolMcpBridge', () => {
 
     expect(invoke).toHaveBeenCalledTimes(1)
     expect(result.ok).toBe(true)
+  })
+
+  it('direct 调用使用服务端 runtime profile，不接受调用方 profile', async () => {
+    delete process.env[AGENT_TOOL_TRANSPORT_ENV]
+    const { registry, invokeAs } = stubRegistry()
+    const bridge = new AgentToolMcpBridge(registry)
+    await bridge.invoke({
+      name: 'erp_blueprint_list',
+      args: {},
+      organizationId: 'org-1',
+      actor: 'u-1',
+      grantedPermissions: ['tool:blueprint:read'],
+    })
+    expect(invokeAs).toHaveBeenCalledWith('piagent-runtime', expect.anything())
   })
 
   it('transport=mcp 时经 MCP 客户端调用，且上下文不被 arguments 伪造', async () => {
@@ -66,7 +85,8 @@ describe('AgentToolMcpBridge', () => {
   it('网关拒绝时经 MCP 回传为错误，不吞掉原因', async () => {
     process.env[AGENT_TOOL_TRANSPORT_ENV] = 'mcp'
     const registry = {
-      invoke: jest.fn(async () => {
+      invoke: jest.fn(),
+      invokeAs: jest.fn(async () => {
         throw new BadRequestException('缺少工具权限：tool:blueprint:read')
       }),
       catalog: () => loadToolCatalog(),
@@ -95,6 +115,15 @@ describe('AgentToolMcpBridge', () => {
 
     expect(names).toContain('erp_blueprint_list')
     expect(names.some((name) => name.startsWith('builder_'))).toBe(false)
+    delete process.env.AGENT_HOST_PROFILE
+  })
+
+  it('未知 AGENT_HOST_PROFILE → 启动失败，不静默回退 runtime', async () => {
+    process.env[AGENT_TOOL_TRANSPORT_ENV] = 'mcp'
+    process.env.AGENT_HOST_PROFILE = 'unknown-profile'
+    const { registry } = stubRegistry()
+    const bridge = new AgentToolMcpBridge(registry)
+    await expect(bridge.start()).rejects.toThrow(/未知 Agent profile/)
     delete process.env.AGENT_HOST_PROFILE
   })
 
