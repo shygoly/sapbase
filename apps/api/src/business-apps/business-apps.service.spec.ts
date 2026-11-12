@@ -28,10 +28,11 @@ function loadedBlueprint(version = '1.0.0', digest = DIGEST) {
 
 function harness(
   existing?: Record<string, any> | null,
-  releases: Array<{ packageId: string; loaded: ReturnType<typeof loadedBlueprint> }> = [
+  releases: Array<{ packageId: string; loaded: any }> = [
     { packageId: 'erp-1.0.0', loaded: loadedBlueprint() },
   ],
   dataSource?: { query: jest.Mock },
+  lifecycle?: { snapshot: jest.Mock; restoreSnapshot: jest.Mock },
 ) {
   const appRows = existing ? [withEntityDefaults(existing)] : []
   const revisionRows: Array<Record<string, any>> = []
@@ -129,6 +130,7 @@ function harness(
       blueprints as never,
       auditLogs as never,
       dataSource as never,
+      lifecycle as never,
     ),
     repository: appRepository,
     revisionRepository,
@@ -137,6 +139,7 @@ function harness(
     blueprints,
     auditLogs,
     dataSource,
+    lifecycle,
   }
 }
 
@@ -363,6 +366,166 @@ describe('BusinessAppsService', () => {
     })
     expect(result).toMatchObject({ created: false, wouldCreate: true })
     expect(appRows).toHaveLength(0)
+  })
+
+  it('升级数据不兼容 → 阻断，不创建备份/不提交', async () => {
+    const currentEntity = {
+      name: 'Customer',
+      fields: [{ name: 'name', type: 'text' }, { name: 'legacy', type: 'text' }],
+      states: [{ name: 'active', initial: true }, { name: 'done', final: true }],
+      transitions: [],
+    }
+    const targetEntity = {
+      name: 'Customer',
+      fields: [{ name: 'name', type: 'text' }],
+      states: [{ name: 'active', initial: true }, { name: 'done', final: true }],
+      transitions: [],
+    }
+    const row = {
+      id: APP_ID,
+      organizationId: ORG,
+      appKey: 'erp',
+      blueprintId: 'erp',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      deploymentProfile: 'shared-saas',
+      status: 'active',
+      config: {},
+      license: null,
+      currentRevisionId: 'revision-current',
+      createdById: USER,
+      createdAt: new Date('2026-10-18T00:00:00Z'),
+      updatedAt: new Date('2026-10-18T00:00:00Z'),
+    }
+    const dataSource = {
+      query: jest.fn(async () => [
+        { id: 'record-1', entity: 'Customer', data: { name: 'Acme', legacy: 'x' }, state: 'active' },
+      ]),
+    }
+    const lifecycle = { snapshot: jest.fn(), restoreSnapshot: jest.fn() }
+    const { service, revisionRows, appRows } = harness(
+      row,
+      [
+        { packageId: 'erp-1.0.0', loaded: { ...loadedBlueprint('1.0.0'), compiled: { template: { entities: [currentEntity] } } } },
+        { packageId: 'erp-1.1.0', loaded: { ...loadedBlueprint('1.1.0'), compiled: { template: { entities: [targetEntity] } } } },
+      ],
+      dataSource,
+      lifecycle,
+    )
+    revisionRows.push({
+      id: 'revision-current',
+      organizationId: ORG,
+      appInstallationId: APP_ID,
+      packageId: 'erp-1.0.0',
+      blueprintId: 'erp',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      action: 'installed',
+      config: {},
+      license: null,
+      previousRevisionId: null,
+      createdAt: new Date('2026-10-18T00:00:00Z'),
+      updatedAt: new Date('2026-10-18T00:00:00Z'),
+    })
+    await expect(
+      service.upgrade({
+        id: APP_ID,
+        organizationId: ORG,
+        packageId: 'erp-1.1.0',
+        userId: USER,
+        actor: 'admin@example.com',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException)
+    expect(lifecycle.snapshot).not.toHaveBeenCalled()
+    expect(appRows[0].blueprintVersion).toBe('1.0.0')
+  })
+
+  it('升级前创建记录快照备份；可从备份恢复', async () => {
+    const entity = {
+      name: 'Customer',
+      fields: [{ name: 'name', type: 'text' }],
+      states: [{ name: 'active', initial: true }, { name: 'done', final: true }],
+      transitions: [],
+    }
+    const row = {
+      id: APP_ID,
+      organizationId: ORG,
+      appKey: 'erp',
+      blueprintId: 'erp',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      deploymentProfile: 'shared-saas',
+      status: 'active',
+      config: {},
+      license: null,
+      currentRevisionId: 'revision-current',
+      createdById: USER,
+      createdAt: new Date('2026-10-18T00:00:00Z'),
+      updatedAt: new Date('2026-10-18T00:00:00Z'),
+    }
+    const dataSource = {
+      query: jest.fn(async () => [
+        { id: 'record-1', entity: 'Customer', data: { name: 'Acme' }, state: 'active' },
+      ]),
+    }
+    const lifecycle = {
+      snapshot: jest.fn(async () => ({ id: 'snapshot-1' })),
+      restoreSnapshot: jest.fn(async () => ({ restoredFrom: 1, newVersion: 2 })),
+    }
+    const { service, revisionRows, appRows } = harness(
+      row,
+      [
+        { packageId: 'erp-1.0.0', loaded: { ...loadedBlueprint('1.0.0'), compiled: { template: { entities: [entity] } } } },
+        { packageId: 'erp-1.1.0', loaded: { ...loadedBlueprint('1.1.0'), compiled: { template: { entities: [entity] } } } },
+      ],
+      dataSource,
+      lifecycle,
+    )
+    revisionRows.push({
+      id: 'revision-current',
+      organizationId: ORG,
+      appInstallationId: APP_ID,
+      packageId: 'erp-1.0.0',
+      blueprintId: 'erp',
+      blueprintVersion: '1.0.0',
+      releaseDigest: DIGEST,
+      runtimeRequirement: '>=1.0.0 <2.0.0',
+      action: 'installed',
+      config: {},
+      license: null,
+      previousRevisionId: null,
+      createdAt: new Date('2026-10-18T00:00:00Z'),
+      updatedAt: new Date('2026-10-18T00:00:00Z'),
+    })
+    const upgraded = await service.upgrade({
+      id: APP_ID,
+      organizationId: ORG,
+      packageId: 'erp-1.1.0',
+      userId: USER,
+      actor: 'admin@example.com',
+    })
+    expect(upgraded.blueprintVersion).toBe('1.1.0')
+    expect(lifecycle.snapshot).toHaveBeenCalledWith(
+      expect.objectContaining({ recordId: 'record-1', label: 'app-upgrade:1.0.0->1.1.0' }),
+    )
+    const backups = await service.listUpgradeBackups(APP_ID, ORG)
+    expect(backups).toHaveLength(1)
+    expect(backups[0]).toMatchObject({ recordCount: 1 })
+
+    const restored = await service.restoreUpgradeBackup({
+      id: APP_ID,
+      organizationId: ORG,
+      backupId: backups[0].id,
+      userId: USER,
+      actor: 'admin@example.com',
+    })
+    expect(restored).toMatchObject({ restored: 1 })
+    expect(lifecycle.restoreSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({ snapshotId: 'snapshot-1' }),
+    )
   })
 
   it('卸载进入 uninstalling 并按保留期清理；上下文立即拒绝', async () => {

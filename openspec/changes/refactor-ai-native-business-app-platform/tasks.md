@@ -60,7 +60,7 @@
 - [ ] 6.3 Make full-system source generation an optional licensed export path
 - [x] 6.4a Add installation upgrade, rollback, and suspension workflows
 - [x] 6.4b Add uninstall workflow and retention policy（uninstalling/removed + retentionUntil + cleanup + audit + tests）
-- [ ] 6.5 Add backup/restore and data-compatibility checks for app upgrades
+- [x] 6.5 Add backup/restore and data-compatibility checks for app upgrades（兼容检查器 + 升级前记录快照 + restore API + 测试）
 - [ ] 6.6 Add audit, SLO, cost, and failure dashboards for installment and Agent runs
 - [ ] 6.7 Benchmark `blueprint_records`; add tenant/app partitioning and retention when metrics justify it
 

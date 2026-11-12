@@ -18,6 +18,8 @@ import type {
   BusinessAppRevisionAction,
 } from '@speckit/shared-schemas'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
+import { RecordLifecycleService } from '../record-lifecycle/record-lifecycle.service'
+import { checkAppUpgradeCompatibility } from './app-upgrade-compatibility'
 import { BlueprintService } from '../blueprint/blueprint.service'
 import { BusinessAppInstallationRevision } from './business-app-installation-revision.entity'
 import { BusinessAppInstallation } from './business-app-installation.entity'
@@ -57,6 +59,7 @@ export class BusinessAppsService {
     private readonly blueprints: BlueprintService,
     private readonly auditLogs: AuditLogsService,
     @Optional() private readonly dataSource?: DataSource,
+    @Optional() private readonly lifecycle?: RecordLifecycleService,
   ) {}
 
   async listForOrganization(organizationId: string): Promise<BusinessAppInstallation[]> {
@@ -270,6 +273,7 @@ export class BusinessAppsService {
     packageId: string
     userId: string
     actor: string
+    backup?: boolean
   }): Promise<BusinessAppInstallation> {
     const current = await this.findForOrganization(input.id, input.organizationId)
     if (current.status !== 'active') {
@@ -286,6 +290,34 @@ export class BusinessAppsService {
       throw new ConflictException(
         `升级版本 ${release.version} 必须高于当前版本 ${current.blueprintVersion}；回退请走 rollback`,
       )
+    }
+
+    if (this.dataSource && this.lifecycle) {
+      const currentRevision = await this.findCurrentRevision(current)
+      const currentPackageId =
+        currentRevision?.packageId ??
+        `${current.blueprintId}-${current.blueprintVersion}`
+      const compatibility = await this.checkUpgradeCompatibility({
+        organizationId: input.organizationId,
+        blueprintId: current.blueprintId,
+        currentPackageId,
+        targetPackageId: input.packageId,
+      })
+      if (!compatibility.ok) {
+        throw new ConflictException(
+          `升级数据不兼容：${compatibility.errors.join('；')}`,
+        )
+      }
+      if (input.backup !== false) {
+        await this.createUpgradeBackup({
+          installation: current,
+          fromPackageId: currentPackageId,
+          toPackageId: input.packageId,
+          fromVersion: current.blueprintVersion,
+          toVersion: release.version,
+          userId: input.userId,
+        })
+      }
     }
 
     const saved = await this.commitReleaseChange({
@@ -334,6 +366,146 @@ export class BusinessAppsService {
       previousReleaseDigest: current.releaseDigest,
     })
     return saved
+  }
+
+  async listUpgradeBackups(id: string, organizationId: string) {
+    const installation = await this.findForOrganization(id, organizationId)
+    const backups = installation.config?.upgradeBackups
+    return Array.isArray(backups) ? backups : []
+  }
+
+  async restoreUpgradeBackup(input: {
+    id: string
+    organizationId: string
+    backupId: string
+    userId: string
+    actor: string
+  }) {
+    if (!this.lifecycle) {
+      throw new BadRequestException('未配置 RecordLifecycleService，无法恢复升级备份')
+    }
+    const installation = await this.findForOrganization(input.id, input.organizationId)
+    const backups = Array.isArray(installation.config?.upgradeBackups)
+      ? (installation.config.upgradeBackups as Array<Record<string, unknown>>)
+      : []
+    const backup = backups.find((item) => item.id === input.backupId)
+    if (!backup) throw new NotFoundException('升级备份不存在')
+    const snapshots = Array.isArray(backup.snapshots)
+      ? (backup.snapshots as Array<{ snapshotId: string }>)
+      : []
+    for (const snapshot of snapshots) {
+      await this.lifecycle.restoreSnapshot({
+        snapshotId: snapshot.snapshotId,
+        organizationId: input.organizationId,
+        actor: { id: input.userId, permissions: ['record:snapshot'] },
+      })
+    }
+    backup.restoredAt = new Date().toISOString()
+    backup.restoredBy = input.userId
+    installation.config = {
+      ...(installation.config ?? {}),
+      upgradeBackups: backups,
+    }
+    await this.installations.save(installation)
+    await this.audit(
+      input.organizationId,
+      input.actor,
+      'business_app.upgrade_restore',
+      installation,
+      { backupId: input.backupId, restored: snapshots.length },
+    )
+    return { backup, restored: snapshots.length }
+  }
+
+  private async findCurrentRevision(
+    installation: BusinessAppInstallation,
+  ): Promise<BusinessAppInstallationRevision | null> {
+    if (!installation.currentRevisionId) return null
+    return this.revisions.findOne({
+      where: {
+        id: installation.currentRevisionId,
+        organizationId: installation.organizationId,
+        appInstallationId: installation.id,
+      },
+    })
+  }
+
+  private async checkUpgradeCompatibility(input: {
+    organizationId: string
+    blueprintId: string
+    currentPackageId: string
+    targetPackageId: string
+  }) {
+    const current = await this.blueprints.load(input.currentPackageId, {
+      tenantId: input.organizationId,
+    })
+    const target = await this.blueprints.load(input.targetPackageId, {
+      tenantId: input.organizationId,
+    })
+    const records = (await this.dataSource!.query(
+      `SELECT entity, data, state
+         FROM public.blueprint_records
+        WHERE "organizationId" = $1 AND "blueprintId" = $2 AND "archivedAt" IS NULL`,
+      [input.organizationId, input.blueprintId],
+    )) as Array<{ entity: string; data: Record<string, unknown>; state: string | null }>
+    return checkAppUpgradeCompatibility({
+      current: current.compiled.template.entities,
+      target: target.compiled.template.entities,
+      records,
+    })
+  }
+
+  private async createUpgradeBackup(input: {
+    installation: BusinessAppInstallation
+    fromPackageId: string
+    toPackageId: string
+    fromVersion: string
+    toVersion: string
+    userId: string
+  }) {
+    const records = (await this.dataSource!.query(
+      `SELECT id, entity
+         FROM public.blueprint_records
+        WHERE "organizationId" = $1 AND "blueprintId" = $2 AND "archivedAt" IS NULL
+        ORDER BY entity, id`,
+      [input.installation.organizationId, input.installation.blueprintId],
+    )) as Array<{ id: string; entity: string }>
+    const snapshots: Array<{ recordId: string; entity: string; snapshotId: string }> = []
+    for (const record of records) {
+      const snapshot = await this.lifecycle!.snapshot({
+        packageId: input.fromPackageId,
+        entity: record.entity,
+        recordId: record.id,
+        organizationId: input.installation.organizationId,
+        actor: { id: input.userId, permissions: ['record:snapshot'] },
+        label: `app-upgrade:${input.fromVersion}->${input.toVersion}`,
+        reason: 'app-upgrade-backup',
+      })
+      snapshots.push({
+        recordId: record.id,
+        entity: record.entity,
+        snapshotId: snapshot.id,
+      })
+    }
+    const backup = {
+      id: randomUUID(),
+      fromVersion: input.fromVersion,
+      toVersion: input.toVersion,
+      fromPackageId: input.fromPackageId,
+      toPackageId: input.toPackageId,
+      createdAt: new Date().toISOString(),
+      recordCount: snapshots.length,
+      snapshots,
+    }
+    const existing = Array.isArray(input.installation.config?.upgradeBackups)
+      ? (input.installation.config.upgradeBackups as unknown[])
+      : []
+    input.installation.config = {
+      ...(input.installation.config ?? {}),
+      upgradeBackups: [...existing.slice(-4), backup],
+    }
+    await this.installations.save(input.installation)
+    return backup
   }
 
   async listRevisions(

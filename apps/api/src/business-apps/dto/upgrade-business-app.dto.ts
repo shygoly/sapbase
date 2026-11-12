@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator'
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator'
 
 export class UpgradeBusinessAppDto {
   @IsString()
@@ -8,4 +8,8 @@ export class UpgradeBusinessAppDto {
     message: 'packageId 只能包含小写字母、数字、点、下划线和连字符',
   })
   packageId: string
+
+  @IsOptional()
+  @IsBoolean()
+  backup?: boolean
 }

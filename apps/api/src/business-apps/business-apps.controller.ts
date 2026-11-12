@@ -123,8 +123,38 @@ export class BusinessAppsController {
       packageId: body.packageId,
       userId: user.id ?? '',
       actor: user.email ?? user.id ?? 'unknown',
+      backup: body.backup,
     })
     return this.apps.toView(saved)
+  }
+
+  @Get(':id/upgrade-backups')
+  @Auth()
+  @ApiOperation({ summary: '读取应用升级前的记录快照备份' })
+  upgradeBackups(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.apps.listUpgradeBackups(id, organizationId)
+  }
+
+  @Post(':id/upgrade-backups/:backupId/restore')
+  @Auth('system:manage')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '从升级备份恢复记录（逐记录快照恢复）' })
+  restoreUpgradeBackup(
+    @Param('id') id: string,
+    @Param('backupId') backupId: string,
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user: { id?: string; email?: string },
+  ) {
+    return this.apps.restoreUpgradeBackup({
+      id,
+      organizationId,
+      backupId,
+      userId: user.id ?? '',
+      actor: user.email ?? user.id ?? 'unknown',
+    })
   }
 
   @Post(':id/rollback')
