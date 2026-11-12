@@ -9,6 +9,7 @@ import { PLATFORM_CORE_ENTITIES } from './platform-core.entities'
 import { AgentConfirmationToken } from './agent-tools/confirmation-token.entity'
 import { AppRoleBinding } from './app-catalog/entities/app-role-binding.entity'
 import { AppBrandConfig } from './app-catalog/entities/app-brand-config.entity'
+import { AppCapability } from './app-capabilities/entities/app-capability.entity'
 import { AgentEvalCase } from './agent-eval/entities/agent-eval-case.entity'
 import { AgentEvalRun } from './agent-eval/entities/agent-eval-run.entity'
 import { AgentFeedback } from './agent-feedback/entities/agent-feedback.entity'
@@ -144,6 +145,7 @@ export const APP_ENTITIES = [
   AgentConfirmationToken,
   AppRoleBinding,
   AppBrandConfig,
+  AppCapability,
   BusinessAppInstallation,
   BusinessAppInstallationRevision,
   AppDraft,

@@ -53,6 +53,7 @@ const DIRECT_TABLES = [
   'app_usage_records',
   'app_role_bindings',
   'app_brand_configs',
+  'app_capabilities',
   'assets',
   'search_documents',
   'record_snapshots',

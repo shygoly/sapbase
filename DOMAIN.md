@@ -92,6 +92,7 @@
 | app_usage_records | 订阅权益与用量 |
 | app_role_bindings | 应用目录 |
 | app_brand_configs | 应用目录 |
+| app_capabilities | 应用能力 |
 | agent_confirmation_tokens | 应用安装 |
 | blueprint_records | Blueprint 运行时 |
 | blueprint_journal_entries | Blueprint 运行时 |
@@ -1029,6 +1030,48 @@ enforcement:
   - service:apps/api/src/app-catalog/app-catalog.service.ts#getCatalog
 db: none
 spec: apps/api/src/app-catalog/app-catalog.service.spec.ts
+```
+
+---
+
+## 应用能力
+
+覆盖表：app_capabilities
+
+`app_capabilities` 是显式跨应用数据能力：发布方 appKey（如 ERP）声明能力名、实体、投影字段、
+消费方权限、owner 字段与 read-all 权限。消费方只能通过能力调用读取发布方的
+`blueprint_records` 投影，不能直接查询对方私有表；同一组织内发布方必须已安装且 active。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| app_capabilities.organizationId | organizations.id | 能力归属组织 | none | 组织删除时级联 |
+| app_capabilities.createdById | users.id | 发布人 | none | 可空 |
+| app_capabilities.publisherAppKey | app_installations.appKey | 发布方应用 | none | 调用时校验 active 安装 |
+
+### 不变量
+
+```yaml invariant
+id: INV-APPCAP-01
+tables: [app_capabilities]
+desc: 跨应用读取只能走显式能力；校验消费方应用、功能权限、owner 范围；返回仅包含声明投影。
+trigger: AppCapabilitiesService.invoke()
+enforcement:
+  - service:apps/api/src/app-capabilities/app-capabilities.service.ts#invoke
+db: none
+spec: apps/api/src/app-capabilities/app-capabilities.service.spec.ts
+```
+
+```yaml invariant
+id: INV-APPCAP-02
+tables: [app_capabilities]
+desc: 同组织同发布方同能力名唯一；发布/更新写审计；同名跨发布方必须显式指定 publisherAppKey。
+trigger: AppCapabilitiesService.publish() / findCapability()
+enforcement:
+  - service:apps/api/src/app-capabilities/app-capabilities.service.ts#publish
+db: none
+spec: apps/api/src/app-capabilities/app-capabilities.service.spec.ts
 ```
 
 ---

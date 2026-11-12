@@ -27,7 +27,7 @@
 - [x] 3.4b Resolve navigation and route metadata from the active installation（`GET /api/apps/:id/navigation` + Blueprint UI 菜单/路由 + 权限过滤 + api-client + 测试）
 - [x] 3.5 Move hardcoded ERP/shipping routes into the ERP application（`templates/auto-parts/ui.json` 声明 shipping/ERP 菜单与页面；shell 移除 shipping 保留段与首页特判；schema/菜单测试）
 - [x] 3.6 Add a CRM application without hardcoded shell routes（`templates/crm` + UI 菜单/页面 + 打包/编译/导航测试；shell 零 CRM 硬编码）
-- [ ] 3.7 Publish one explicit ERP-owned customer capability and consume it from CRM
+- [x] 3.7 Publish one explicit ERP-owned customer capability and consume it from CRM（`app_capabilities` + `customer.lookup` invoke + ERP 模板 + 投影/权限/owner 测试）
 - [ ] 3.8 Add E2E: one user switches ERP/CRM and private records remain isolated
 
 ## 4. Durable Agent Runtime

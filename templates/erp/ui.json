@@ -1,0 +1,47 @@
+{
+  "ui": "blueprint-ui/v1",
+  "pages": [
+    {
+      "identifier": "CustomerList",
+      "type": "list",
+      "entity": "Customer",
+      "label": "客户",
+      "route": "/dashboard/erp/customers",
+      "fields": ["name", "industry", "level", "creditLimit"]
+    },
+    {
+      "identifier": "CustomerDetail",
+      "type": "detail",
+      "entity": "Customer",
+      "label": "客户详情",
+      "route": "/dashboard/erp/customers/:id",
+      "fields": ["name", "industry", "level", "creditLimit"]
+    },
+    {
+      "identifier": "SalesOrderList",
+      "type": "list",
+      "entity": "SalesOrder",
+      "label": "销售订单",
+      "route": "/dashboard/erp/sales-orders",
+      "fields": ["number", "customer", "amount"]
+    }
+  ],
+  "menus": [
+    {
+      "identifier": "erp-customers",
+      "label": "客户",
+      "path": "/dashboard/erp/customers",
+      "icon": "users",
+      "order": 1,
+      "permissions": ["customer.read"]
+    },
+    {
+      "identifier": "erp-sales-orders",
+      "label": "销售订单",
+      "path": "/dashboard/erp/sales-orders",
+      "icon": "shopping",
+      "order": 2,
+      "permissions": ["sales.order.read"]
+    }
+  ]
+}

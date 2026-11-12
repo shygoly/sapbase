@@ -51,6 +51,7 @@ import { AsyncConsumersModule } from './async-consumers/async-consumers.module'
 import { ChatModule } from './chat/chat.module'
 import { BusinessAppsModule } from './business-apps/business-apps.module'
 import { AppCatalogModule } from './app-catalog/app-catalog.module'
+import { AppCapabilitiesModule } from './app-capabilities/app-capabilities.module'
 import { EntitlementsModule } from '@sap/platform-core/entitlements/entitlements.module'
 import { ReleasesModule } from './releases/releases.module'
 import { DashboardModule } from './dashboard/dashboard.module'
@@ -162,6 +163,7 @@ try {
     ChatModule,
     BusinessAppsModule,
     AppCatalogModule,
+    AppCapabilitiesModule,
     EntitlementsModule,
     ReleasesModule,
     AgentSessionsModule,

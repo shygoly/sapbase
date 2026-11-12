@@ -490,3 +490,12 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
 - `app_brand_configs` 保存应用级品牌覆盖，与组织级 `brand_configs` 分离。
 - `GET /api/apps/:id/catalog` 聚合应用角色/权限/菜单/品牌/审计/用量/权益；
   菜单来自 Blueprint UI 元数据，审计按 appInstallationId，用量按 appKey。
+
+## 跨应用数据能力
+
+- `app_capabilities` 声明发布方 appKey、能力名、实体、投影字段、消费权限、
+  owner 字段与 read-all 权限。
+- `POST /api/app-capabilities/:name/invoke` 由消费方 `X-App-Id` 发起；
+  平台校验双方安装、权限与 owner 范围，只返回声明投影。
+- `templates/erp` 发布 `customer.lookup`，`templates/crm` 通过该能力读取客户，
+  不直接访问 ERP 私有 `blueprint_records`。

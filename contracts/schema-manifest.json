@@ -2038,6 +2038,24 @@
         "supportEmail",
         "supportUrl"
       ]
+    },
+    "app_capabilities": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "publisherAppKey",
+        "name",
+        "entity",
+        "fields",
+        "permission",
+        "ownerField",
+        "readAllPermission",
+        "status",
+        "version",
+        "createdById"
+      ]
     }
   }
 }

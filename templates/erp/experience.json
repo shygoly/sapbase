@@ -1,0 +1,16 @@
+{
+  "experience": "blueprint-experience/v1",
+  "priority": [
+    {
+      "entity": "Customer",
+      "fields": ["name", "industry", "level"]
+    },
+    {
+      "entity": "SalesOrder",
+      "fields": ["number", "customer", "amount"]
+    }
+  ],
+  "confirm": [],
+  "automate": [],
+  "surfaces": []
+}

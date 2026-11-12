@@ -492,3 +492,21 @@ Portal 页面：`/dashboard/operations`。
   - 覆盖 appName/logo/favicon/theme/customCss/support 信息
 
 应用角色权限会在 `resolveExecutionContext()` 中与 JWT 权限合并，供工具/菜单判定使用。
+
+## Cross-App Data Capabilities (3.7)
+
+跨应用数据只能通过发布方显式声明的能力读取，消费方不能直接查询对方 `blueprint_records`。
+
+- `POST /api/app-capabilities`（`system:manage`）
+  - `{ publisherAppKey, name, entity, fields, permission, ownerField?, readAllPermission? }`
+  - 能力名形如 `customer.lookup` / `customer.read`
+- `GET /api/app-capabilities?publisherAppKey=` — 当前组织已发布能力
+- `POST /api/app-capabilities/:name/invoke`（需要 `X-App-Id` 消费方安装）
+  - `{ publisherAppKey?, limit? }`
+  - 校验：消费方 active installation、发布方已安装且 active、调用方功能权限、
+    owner 范围（除非具备 readAllPermission）
+  - 返回只含声明 `fields` 的投影，额外字段不会泄露
+  - 同名能力由多个应用发布时必须显式指定 `publisherAppKey`
+
+`templates/erp` 是发布方示例（Customer/SalesOrder）；CRM 通过
+`customer.lookup` 消费 ERP 客户投影。

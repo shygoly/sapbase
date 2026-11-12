@@ -1,0 +1,50 @@
+{
+  "entities": [
+    {
+      "name": "Customer",
+      "fields": [
+        { "name": "name", "type": "text", "required": true },
+        { "name": "industry", "type": "text" },
+        { "name": "level", "type": "enum", "values": ["A", "B", "C"] },
+        { "name": "creditLimit", "type": "decimal" },
+        { "name": "ownerId", "type": "text" }
+      ],
+      "states": [
+        { "name": "active", "initial": true },
+        { "name": "inactive" },
+        { "name": "archived", "final": true }
+      ],
+      "transitions": [
+        { "from": "active", "to": "inactive" },
+        { "from": "inactive", "to": "active" },
+        { "from": "active", "to": "archived" },
+        { "from": "inactive", "to": "archived" }
+      ],
+      "ownership": { "field": "ownerId", "readAllPermission": "customer.read.all" }
+    },
+    {
+      "name": "SalesOrder",
+      "fields": [
+        { "name": "number", "type": "text", "required": true },
+        {
+          "name": "customer",
+          "type": "reference",
+          "reference": "Customer",
+          "required": true
+        },
+        { "name": "amount", "type": "decimal" },
+        { "name": "ownerId", "type": "text" }
+      ],
+      "states": [
+        { "name": "draft", "initial": true },
+        { "name": "confirmed" },
+        { "name": "closed", "final": true }
+      ],
+      "transitions": [
+        { "from": "draft", "to": "confirmed" },
+        { "from": "confirmed", "to": "closed" }
+      ],
+      "ownership": { "field": "ownerId", "readAllPermission": "sales.order.read.all" }
+    }
+  ]
+}
