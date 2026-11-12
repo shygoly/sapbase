@@ -747,3 +747,42 @@ describe('rules / experience 编译期判据', () => {
     expect(second.irDigest).not.toBe(first.irDigest)
   })
 })
+
+describe('asset 字段（P5）', () => {
+  const entity = (field: Record<string, unknown>) => ({
+    entities: [
+      {
+        name: 'Course',
+        fields: [{ name: 'title', type: 'text' }, field],
+        states: [{ name: 'draft', initial: true }, { name: 'published', final: true }],
+        transitions: [{ from: 'draft', to: 'published' }],
+      },
+    ],
+  })
+
+  it('asset + assetKind 编译通过', async () => {
+    const result = await compileBlueprint(
+      unpacked({
+        'semantic.json': entity({
+          name: 'cover',
+          type: 'asset',
+          assetKind: 'image',
+        }),
+      }),
+      registry(),
+    )
+    expect(result.ir.entities[0].fieldCount).toBe(2)
+  })
+
+  it('缺 assetKind / unique / default 拒绝', async () => {
+    const conflictsOf = (field: Record<string, unknown>) =>
+      detectConflicts(entity(field) as never, { flows: [] }, [], {}).join('\n')
+    expect(conflictsOf({ name: 'cover', type: 'asset' })).toContain('assetKind')
+    expect(
+      conflictsOf({ name: 'cover', type: 'asset', assetKind: 'image', unique: true }),
+    ).toContain('unique')
+    expect(
+      conflictsOf({ name: 'cover', type: 'asset', assetKind: 'image', default: 'x' }),
+    ).toContain('default')
+  })
+})

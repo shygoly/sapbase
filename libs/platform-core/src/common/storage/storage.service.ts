@@ -1,5 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common'
+import { BadRequestException, Inject, Injectable, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { AssetsService } from '../../assets/assets.service'
+import { OBJECT_STORAGE, type ObjectStorage } from '../../assets/object-storage'
 import * as fs from 'fs'
 import * as path from 'path'
 import { v4 as uuidv4 } from 'uuid'
@@ -18,7 +20,11 @@ export class StorageService {
   private readonly uploadDir: string
   private readonly publicUrl: string
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional() private readonly assets?: AssetsService,
+    @Optional() @Inject(OBJECT_STORAGE) private readonly objectStorage?: ObjectStorage,
+  ) {
     // Get upload directory from config or use default
     this.uploadDir = this.configService.get<string>(
       'UPLOAD_DIR',
@@ -40,7 +46,8 @@ export class StorageService {
   async uploadFile(
     file: Express.Multer.File,
     subfolder: string = 'brand',
-  ): Promise<UploadedFile> {
+    organizationId?: string,
+  ): Promise<UploadedFile & { assetId?: string }> {
     if (!file) {
       throw new BadRequestException('No file provided')
     }
@@ -69,6 +76,28 @@ export class StorageService {
 
     // Generate public URL
     const url = `${this.publicUrl}/uploads/${subfolder}/${filename}`
+    let assetId: string | undefined
+    if (organizationId && this.assets && this.objectStorage) {
+      try {
+        const objectKey = `org/${organizationId}/legacy-uploads/${subfolder}/${filename}`
+        await this.objectStorage.put(objectKey, file.buffer, { contentType: file.mimetype })
+        const asset = await this.assets.create(organizationId, {
+          objectKey,
+          originalName: file.originalname,
+          mimeType: file.mimetype,
+          size: file.size,
+          kind: 'image',
+          status: 'ready',
+          scanStatus: 'skipped',
+          isPublic: true,
+          metadata: { legacyUrl: url, source: 'brand' },
+          createdBy: null,
+        })
+        assetId = asset.id
+      } catch {
+        // 资产登记失败不破坏旧品牌上传；旧 URL 仍可用。
+      }
+    }
 
     return {
       filename,
@@ -77,6 +106,7 @@ export class StorageService {
       size: file.size,
       path: uploadPath,
       url,
+      assetId,
     }
   }
 

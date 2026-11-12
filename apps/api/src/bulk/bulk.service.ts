@@ -55,6 +55,7 @@ export type { BulkActor }
 export interface BulkUser {
   id?: string
   email?: string
+  role?: string | null
   permissions?: string[]
 }
 
@@ -62,6 +63,7 @@ export function actorOf(user?: BulkUser): BulkActor {
   return {
     id: user?.id ?? user?.email ?? 'unknown',
     email: user?.email,
+    role: user?.role ?? null,
     permissions: Array.isArray(user?.permissions) ? user.permissions : [],
   }
 }
@@ -107,6 +109,7 @@ export interface RunCancelled {
 interface ImportRunOptions {
   format?: 'csv' | 'json' | 'xlsx'
   actorId?: string
+  actorRole?: string | null
   actorPermissions?: string[]
   filename?: string
   unknownColumns?: 'reject' | 'ignore'
@@ -120,6 +123,7 @@ interface ImportRunOptions {
 
 interface ExportRunFilters {
   actorId?: string
+  actorRole?: string | null
   actorPermissions?: string[]
   filter?: Record<string, unknown>
   sort?: string
@@ -282,6 +286,7 @@ export class BulkService {
         uploaded: source.uploaded,
         mimeType: source.mimeType,
         actorId: actor.id,
+        actorRole: actor.role ?? null,
         actorPermissions: actor.permissions,
       } satisfies ImportRunOptions,
       createdBy: actor.id,
@@ -427,6 +432,7 @@ export class BulkService {
     const options = run.options as ImportRunOptions
     return {
       id: options.actorId ?? run.createdBy ?? 'system',
+      role: (options as ImportRunOptions & { actorRole?: string }).actorRole ?? null,
       permissions: Array.isArray(options.actorPermissions) ? options.actorPermissions : [],
     }
   }
@@ -436,6 +442,7 @@ export class BulkService {
     const filters = run.filters as ExportRunFilters
     return {
       id: filters.actorId ?? run.createdBy ?? 'system',
+      role: (filters as ExportRunFilters & { actorRole?: string }).actorRole ?? null,
       permissions: Array.isArray(filters.actorPermissions) ? filters.actorPermissions : [],
     }
   }
@@ -655,6 +662,7 @@ export class BulkService {
     run.options = {
       ...(run.options as ImportRunOptions),
       actorId: actor.id,
+      actorRole: actor.role ?? null,
       actorPermissions: actor.permissions,
     }
     await this.imports.save(run)
@@ -686,6 +694,7 @@ export class BulkService {
       status: 'queued',
       filters: {
         actorId: actor.id,
+        actorRole: actor.role ?? null,
         actorPermissions: actor.permissions,
         filter: input.filter ?? {},
         sort: input.sort,

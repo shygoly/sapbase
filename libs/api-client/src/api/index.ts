@@ -138,3 +138,24 @@ export {
   type ExportRunStatus,
   type BulkExportFormat,
 } from './bulk.api'
+
+export {
+  assetsApi,
+  type AssetRecord,
+  type AssetVariantRecord,
+  type UploadSession,
+  type AssetKind,
+  type AssetStatus,
+} from './assets.api'
+
+export {
+  integrationsApi,
+  type IntegrationConnector,
+  type OutboundMessage,
+  type WebhookEndpoint,
+  type WebhookEvent,
+  type DataSource,
+  type SyncJob,
+  type SyncRun,
+  type IntegrationMetrics,
+} from './integrations.api'

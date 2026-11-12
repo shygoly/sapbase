@@ -22,6 +22,7 @@ const FILE_SCHEMAS: Record<string, string> = {
   'experience.json': 'blueprint-experience.schema.json',
   'ui.json': 'blueprint-ui.schema.json',
   'permissions.json': 'blueprint-permissions.schema.json',
+  'agents.json': 'blueprint-agents.schema.json',
   'license.json': 'blueprint-license.schema.json',
 }
 
@@ -78,6 +79,7 @@ export interface SemanticField {
   type: string
   required?: boolean
   reference?: string
+  assetKind?: 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other'
   money?: boolean
   currency?: string
   permissions?: SemanticFieldPermissions
@@ -426,6 +428,19 @@ export function detectConflicts(
         conflicts.push(
           `悬空引用：${entity.name}.${field.name} 指向不存在的实体 ${field.reference}`,
         )
+      }
+      if (field.type === 'asset') {
+        if (!field.assetKind) {
+          conflicts.push(`资产字段非法：${entity.name}.${field.name} 必须声明 assetKind`)
+        } else if (!['image','video','audio','document','archive','other'].includes(field.assetKind)) {
+          conflicts.push(`资产字段非法：${entity.name}.${field.name} 的 assetKind=${field.assetKind}`)
+        }
+        if (field.default !== undefined) {
+          conflicts.push(`资产字段非法：${entity.name}.${field.name} 不能声明 default`)
+        }
+        if (field.unique === true) {
+          conflicts.push(`资产字段非法：${entity.name}.${field.name} 不能声明 unique`)
+        }
       }
     }
 

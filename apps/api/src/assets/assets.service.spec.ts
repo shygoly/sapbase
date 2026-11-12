@@ -33,7 +33,7 @@ function storage() {
 describe('AssetsService', () => {
   it('create → ready，size 存字符串', async () => {
     const { repository } = repo()
-    const service = new AssetsService(repository as never, repository as never, storage() as never)
+    const service = new AssetsService(repository as never, repository as never, repository as never, repository as never, storage() as never)
     const asset = await service.create('org-1', {
       objectKey: 'org/org-1/a.png',
       originalName: 'a.png',
@@ -46,7 +46,7 @@ describe('AssetsService', () => {
 
   it('get：跨组织/不存在 → 404', async () => {
     const { repository } = repo()
-    const service = new AssetsService(repository as never, repository as never)
+    const service = new AssetsService(repository as never, repository as never, repository as never, repository as never)
     await expect(service.get('org-1', 'missing')).rejects.toBeInstanceOf(NotFoundException)
   })
 
@@ -54,7 +54,7 @@ describe('AssetsService', () => {
     const { repository } = repo([
       { id: 'a1', organizationId: 'org-1', checksum: 'c1', size: '10', status: 'ready' },
     ])
-    const service = new AssetsService(repository as never, repository as never)
+    const service = new AssetsService(repository as never, repository as never, repository as never, repository as never)
     await expect(service.findDuplicate('org-1', 'c1', 10)).resolves.toMatchObject({ id: 'a1' })
     await expect(service.findDuplicate('org-2', 'c1', 10)).resolves.toBeNull()
   })
@@ -65,7 +65,7 @@ describe('AssetsService', () => {
       { id: 'a2', organizationId: 'org-1', objectKey: 'org/org-1/b', status: 'quarantined' },
     ])
     const store = storage()
-    const service = new AssetsService(repository as never, repository as never, store as never)
+    const service = new AssetsService(repository as never, repository as never, repository as never, repository as never, store as never)
     await expect(service.downloadUrl('org-1', 'a1')).resolves.toMatchObject({
       url: 'https://storage.example/signed',
     })
@@ -76,7 +76,7 @@ describe('AssetsService', () => {
     const { repository } = repo([
       { id: 'a1', organizationId: 'org-1', status: 'ready', deletedAt: null },
     ])
-    const service = new AssetsService(repository as never, repository as never)
+    const service = new AssetsService(repository as never, repository as never, repository as never, repository as never)
     const asset = await service.softDelete('org-1', 'a1')
     expect(asset.status).toBe('deleted')
     expect(asset.deletedAt).toBeInstanceOf(Date)

@@ -1,0 +1,52 @@
+{
+  "flows": [
+    {
+      "id": "CourseFlow",
+      "entity": "Course",
+      "steps": [
+        {
+          "id": "submit",
+          "on": "submitted",
+          "actions": [
+            {
+              "kind": "require-approval",
+              "rule": "course-publish"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TeachingTaskFlow",
+      "entity": "TeachingTask",
+      "steps": [
+        {
+          "id": "publish",
+          "on": "published",
+          "actions": [
+            {
+              "kind": "require-approval",
+              "rule": "task-publish"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "AssessmentFlow",
+      "entity": "Assessment",
+      "steps": [
+        {
+          "id": "publish",
+          "on": "published",
+          "actions": [
+            {
+              "kind": "require-approval",
+              "rule": "assessment-publish"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

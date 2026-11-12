@@ -29,6 +29,21 @@ export interface CompiledIndexPlanItem {
   sqlType: CompiledIndexSqlType
 }
 
+export interface AgentsFile {
+  agents: 'blueprint-agents/v1' | string
+  items: Array<{
+    key: string
+    name: string
+    description?: string
+    prompt: string
+    model?: string
+    tools: string[]
+    roles: string[]
+    confirmWrites?: boolean
+    dataScope?: string
+  }>
+}
+
 export interface CompiledTemplate {
   entities: SemanticEntity[]
   validation: ValidationRule[]
@@ -48,6 +63,8 @@ export interface CompiledBlueprint {
   ui?: UiFile
   /** 角色/资源/数据范围发布层（可选） */
   permissions?: PermissionsFile
+  /** Agent 定义（可选） */
+  agents?: AgentsFile
 }
 
 const NUMERIC_TYPES = new Set(['number', 'decimal', 'i32'])
@@ -161,6 +178,16 @@ export function buildCompiledBlueprint(
     }
   }
 
+  let agents: AgentsFile | undefined
+  const agentBytes = input.files.get('agents.json')
+  if (agentBytes) {
+    try {
+      agents = JSON.parse(agentBytes.toString('utf8')) as AgentsFile
+    } catch (error) {
+      throw new CompileError(`agents.json 不是合法 JSON：${(error as Error).message}`, 'schema-invalid')
+    }
+  }
+
   return {
     format: COMPILED_BLUEPRINT_FORMAT,
     blueprint: input.blueprint,
@@ -176,5 +203,6 @@ export function buildCompiledBlueprint(
     indexPlan: buildIndexPlan(semantic.entities),
     ...(ui ? { ui } : {}),
     ...(permissions ? { permissions } : {}),
+    ...(agents ? { agents } : {}),
   }
 }

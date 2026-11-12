@@ -78,7 +78,7 @@ export class BrandConfigController {
       throw new BadRequestException('No file provided')
     }
 
-    const uploadedFile = await this.storageService.uploadFile(file, 'brand')
+    const uploadedFile = await this.storageService.uploadFile(file, 'brand', organizationId)
 
     // Update brand config with new logo URL
     const config = await this.updateBrandConfigService.execute({
@@ -116,7 +116,7 @@ export class BrandConfigController {
       throw new BadRequestException('No file provided')
     }
 
-    const uploadedFile = await this.storageService.uploadFile(file, 'brand')
+    const uploadedFile = await this.storageService.uploadFile(file, 'brand', organizationId)
 
     // Update brand config with new favicon URL
     const config = await this.updateBrandConfigService.execute({

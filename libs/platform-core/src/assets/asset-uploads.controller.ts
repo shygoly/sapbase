@@ -26,6 +26,13 @@ export class AssetUploadsController {
     return this.uploads.init(organizationId, user?.userId ?? user?.id ?? 'anonymous', body)
   }
 
+  @Post('cleanup')
+  @Auth('assets:write')
+  @ApiOperation({ summary: '清理过期上传会话与未完成对象' })
+  cleanup(@OrganizationId() organizationId: string) {
+    return this.uploads.cleanupExpired(organizationId)
+  }
+
   @Get(':id')
   @Auth('assets:read')
   @ApiOperation({ summary: '上传会话状态/已上传分片' })

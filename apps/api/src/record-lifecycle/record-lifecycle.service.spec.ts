@@ -75,8 +75,8 @@ describe('RecordLifecycleService', () => {
       String(call[0]).includes('INSERT INTO public.blueprint_records'),
     )
     expect(inserts).toHaveLength(2)
-    const childData = JSON.parse((inserts[1] as any[])[1][4])
-    const rootData = JSON.parse((inserts[0] as any[])[1][4])
+    const childData = JSON.parse((inserts[1] as any[])[1][5])
+    const rootData = JSON.parse((inserts[0] as any[])[1][5])
     expect(childData.parentId).toBe(result.rootId)
     expect(result.ids).toContain(rootData.childRef)
     expect(auditLogs.create).toHaveBeenCalledWith(

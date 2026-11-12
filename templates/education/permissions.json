@@ -1,0 +1,128 @@
+{
+  "permissions": "blueprint-permissions/v1",
+  "rules": [
+    {
+      "role": "Manager",
+      "scope": "all",
+      "resources": [
+        "*"
+      ],
+      "actions": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "role": "Admin",
+      "scope": "all",
+      "resources": [
+        "*"
+      ],
+      "actions": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "role": "education_admin",
+      "scope": "all",
+      "resources": [
+        "*"
+      ],
+      "actions": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "role": "teacher",
+      "scope": "policy",
+      "resources": [
+        "Course",
+        "Chapter",
+        "KnowledgePoint",
+        "Material",
+        "EducationClass",
+        "Student",
+        "TeachingTask",
+        "TaskClass",
+        "LearningRecord",
+        "Question",
+        "Assessment",
+        "AssessmentClass",
+        "AssessmentQuestion",
+        "Attempt",
+        "WrongAnswer",
+        "Recommendation",
+        "Badge",
+        "StudentBadge",
+        "CourseReview"
+      ],
+      "actions": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ],
+      "dataScope": {
+        "dimension": "course",
+        "depth": "subtree"
+      }
+    },
+    {
+      "role": "student",
+      "scope": "policy",
+      "resources": [
+        "Course",
+        "Chapter",
+        "KnowledgePoint",
+        "Material",
+        "LearningRecord",
+        "Assessment",
+        "Attempt",
+        "WrongAnswer",
+        "Recommendation",
+        "StudentBadge",
+        "CourseReview"
+      ],
+      "actions": [
+        "read",
+        "list",
+        "create"
+      ],
+      "dataScope": {
+        "dimension": "self",
+        "depth": "exact"
+      }
+    },
+    {
+      "role": "reviewer",
+      "scope": "policy",
+      "resources": [
+        "Course",
+        "Question",
+        "Assessment",
+        "CourseReview"
+      ],
+      "actions": [
+        "read",
+        "list",
+        "update"
+      ],
+      "dataScope": {
+        "dimension": "course",
+        "depth": "subtree"
+      }
+    }
+  ]
+}

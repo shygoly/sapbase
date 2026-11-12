@@ -22,6 +22,8 @@ export type SignedOperation = 'read' | 'write'
 export interface ObjectStorage {
   put(key: string, body: Buffer, options?: PutObjectOptions): Promise<StoredObject>
   get(key: string): Promise<Buffer>
+  /** 读取字节区间；用于 MIME 嗅探与 Range 串流。 */
+  getRange?(key: string, start: number, end: number): Promise<Buffer>
   head(key: string): Promise<StoredObject | null>
   delete(key: string): Promise<void>
   signedUrl(key: string, operation: SignedOperation, ttlSeconds: number): Promise<string>

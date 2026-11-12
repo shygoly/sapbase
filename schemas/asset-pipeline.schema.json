@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/asset-pipeline.schema.json",
+  "title": "Asset Pipeline",
+  "type": "object",
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "required": ["organizationId", "kind", "status", "objectKey", "originalName", "mimeType", "size"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "appInstallationId": { "type": ["string", "null"], "format": "uuid" },
+        "ownerId": { "type": ["string", "null"], "format": "uuid" },
+        "kind": { "enum": ["image", "video", "audio", "document", "archive", "other"] },
+        "status": {
+          "enum": ["uploading", "scanning", "processing", "ready", "failed", "quarantined", "deleted"]
+        },
+        "scanStatus": { "enum": ["pending", "clean", "infected", "error", "skipped"] },
+        "provider": { "type": "string" },
+        "objectKey": { "type": "string", "maxLength": 512 },
+        "originalName": { "type": "string", "maxLength": 255 },
+        "mimeType": { "type": "string", "maxLength": 128 },
+        "size": { "type": "string", "pattern": "^[0-9]+$" },
+        "checksum": { "type": ["string", "null"] },
+        "width": { "type": ["integer", "null"], "minimum": 0 },
+        "height": { "type": ["integer", "null"], "minimum": 0 },
+        "durationMs": { "type": ["integer", "null"], "minimum": 0 },
+        "pageCount": { "type": ["integer", "null"], "minimum": 0 },
+        "metadata": { "type": ["object", "null"] },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "isPublic": { "type": "boolean" },
+        "retentionUntil": { "type": ["string", "null"], "format": "date-time" },
+        "deletedAt": { "type": ["string", "null"], "format": "date-time" },
+        "createdBy": { "type": ["string", "null"], "format": "uuid" }
+      },
+      "additionalProperties": false
+    },
+    "assetVariant": {
+      "type": "object",
+      "required": ["assetId", "kind", "objectKey", "mimeType", "size"],
+      "properties": {
+        "assetId": { "type": "string", "format": "uuid" },
+        "kind": { "enum": ["thumbnail", "preview", "crop", "mp4", "hls", "subtitle", "waveform"] },
+        "provider": { "type": "string" },
+        "status": { "type": "string" },
+        "objectKey": { "type": "string", "maxLength": 512 },
+        "mimeType": { "type": "string" },
+        "size": { "type": "string", "pattern": "^[0-9]+$" },
+        "width": { "type": ["integer", "null"] },
+        "height": { "type": ["integer", "null"] },
+        "bitrate": { "type": ["integer", "null"] },
+        "metadata": { "type": ["object", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "uploadSession": {
+      "type": "object",
+      "required": ["organizationId", "userId", "objectKey", "originalName", "mimeType", "expectedSize", "status"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "userId": { "type": "string", "format": "uuid" },
+        "objectKey": { "type": "string", "maxLength": 512 },
+        "originalName": { "type": "string", "maxLength": 255 },
+        "mimeType": { "type": "string", "maxLength": 128 },
+        "expectedSize": { "type": "string", "pattern": "^[0-9]+$" },
+        "checksum": { "type": ["string", "null"] },
+        "status": { "enum": ["uploading", "completed", "aborted", "expired"] },
+        "parts": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "required": ["partNumber", "etag", "size"],
+            "properties": {
+              "partNumber": { "type": "integer", "minimum": 1 },
+              "etag": { "type": "string" },
+              "size": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "metadata": { "type": ["object", "null"] },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "asset": { "$ref": "#/$defs/asset" },
+    "variant": { "$ref": "#/$defs/assetVariant" },
+    "uploadSession": { "$ref": "#/$defs/uploadSession" }
+  },
+  "additionalProperties": false
+}

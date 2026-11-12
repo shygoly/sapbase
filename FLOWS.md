@@ -78,3 +78,17 @@ steps:
 - 新增 cron 必须三处同步：本表 + registry + 对应 job service 的装饰器
 - 推送类错峰；日任务集中在低峰
 - 每个 job 必须：可重入、幂等、有超时、失败可见、可手动重放
+
+### 3. 外部集成增量同步
+
+```yaml flow
+id: FLOW-EXTERNAL-01
+name: 外部数据源增量同步
+trigger: integration.sync
+steps:
+  - actor: apps/api/src/integrations/integration-data-source.service.ts#processRun
+    produces: [data_sync_runs, import_runs, blueprint_records]
+    consumes: [data_sync_jobs, data_sources]
+```
+
+**说明**：同步只读源库，按水位增量拉取；写入经通用导入适配器幂等落库，运行记录保存行数/差异。

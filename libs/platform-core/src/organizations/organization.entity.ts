@@ -35,6 +35,9 @@ export class Organization extends BaseEntity {
   @Column({ type: 'varchar', length: 50, default: SubscriptionStatus.INCOMPLETE })
   subscriptionStatus: SubscriptionStatus
 
+  @Column({ type: 'bigint', nullable: true })
+  assetQuotaBytes: string | null
+
   @OneToMany(() => OrganizationMember, (member) => member.organization)
   members: OrganizationMember[]
 }

@@ -37,7 +37,7 @@ describe('LocalObjectStorage', () => {
 
   it('signedUrl 带操作与过期时间；非法 key 拒绝', async () => {
     const url = await storage.signedUrl('org/org-1/a.txt', 'read', 60)
-    expect(url).toContain('/local-storage/')
+    expect(url).toContain('/api/local-storage/')
     expect(url).toContain('op=read')
     expect(url).toContain('expires=')
     await expect(storage.signedUrl('../x', 'read', 60)).rejects.toBeInstanceOf(

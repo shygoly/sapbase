@@ -1,0 +1,62 @@
+{
+  "rules": "blueprint-rules/v1",
+  "validation": [
+    {
+      "id": "assessment-total-nonneg",
+      "entity": "Assessment",
+      "field": "totalScore",
+      "rule": "greaterOrEqual",
+      "value": 0,
+      "message": "总分不能为负"
+    },
+    {
+      "id": "attempt-ai-score-nonneg",
+      "entity": "Attempt",
+      "field": "aiScore",
+      "rule": "greaterOrEqual",
+      "value": 0,
+      "message": "AI 分不能为负"
+    },
+    {
+      "id": "review-content-score-range",
+      "entity": "CourseReview",
+      "field": "contentScore",
+      "rule": "greaterOrEqual",
+      "value": 0,
+      "message": "内容评分不能为负"
+    }
+  ],
+  "approval": [
+    {
+      "id": "course-publish",
+      "entity": "Course",
+      "when": "title != ''",
+      "steps": [
+        {
+          "role": "admin"
+        }
+      ]
+    },
+    {
+      "id": "task-publish",
+      "entity": "TeachingTask",
+      "when": "title != ''",
+      "steps": [
+        {
+          "role": "admin"
+        }
+      ]
+    },
+    {
+      "id": "assessment-publish",
+      "entity": "Assessment",
+      "when": "title != ''",
+      "steps": [
+        {
+          "role": "admin"
+        }
+      ]
+    }
+  ],
+  "accounting": []
+}

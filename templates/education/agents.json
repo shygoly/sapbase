@@ -1,0 +1,110 @@
+{
+  "agents": "blueprint-agents/v1",
+  "items": [
+    {
+      "key": "edu-outline",
+      "name": "课程大纲生成",
+      "description": "根据课程目标生成章节/知识点大纲草稿",
+      "prompt": "你是教育课程设计助手。只输出结构化草稿，不直接发布；引用已发布知识库。",
+      "tools": [
+        "erp_blueprint_list",
+        "erp_blueprint_manifest",
+        "builder_proposal_create"
+      ],
+      "roles": [
+        "teacher",
+        "education_admin"
+      ],
+      "confirmWrites": true
+    },
+    {
+      "key": "edu-knowledge-extract",
+      "name": "知识点提取",
+      "description": "从文档候选提取知识点",
+      "prompt": "从文档智能候选中提取知识点，保留页/行/quote 锚点；写入前需人工确认。",
+      "tools": [
+        "erp_blueprint_list",
+        "builder_proposal_create"
+      ],
+      "roles": [
+        "teacher"
+      ],
+      "confirmWrites": true
+    },
+    {
+      "key": "edu-question-gen",
+      "name": "题目生成",
+      "description": "按知识点/难度出题",
+      "prompt": "按知识点与难度生成客观题，附答案与解析；不得直接发布测评。",
+      "tools": [
+        "erp_blueprint_list",
+        "builder_proposal_create"
+      ],
+      "roles": [
+        "teacher"
+      ],
+      "confirmWrites": true
+    },
+    {
+      "key": "edu-script-storyboard",
+      "name": "脚本/分镜",
+      "description": "生成课程脚本、分镜与旁白",
+      "prompt": "生成脚本/分镜草稿，素材使用 assetId 引用；不生成/发布媒体成品。",
+      "tools": [
+        "erp_blueprint_list",
+        "builder_proposal_create"
+      ],
+      "roles": [
+        "teacher"
+      ],
+      "confirmWrites": true
+    },
+    {
+      "key": "edu-tutoring",
+      "name": "学习答疑",
+      "description": "基于已发布课程知识答疑",
+      "prompt": "只基于当前课程已发布知识回答；不确定时说明；不跨课程/租户。",
+      "tools": [
+        "erp_blueprint_list",
+        "erp_blueprint_manifest"
+      ],
+      "roles": [
+        "student",
+        "teacher"
+      ],
+      "confirmWrites": false,
+      "dataScope": "course"
+    },
+    {
+      "key": "edu-teaching-advice",
+      "name": "教学建议",
+      "description": "根据学情指标给教师建议",
+      "prompt": "只读指标/学情，输出可执行教学建议；不修改学生数据。",
+      "tools": [
+        "erp_blueprint_list",
+        "erp_blueprint_manifest"
+      ],
+      "roles": [
+        "teacher",
+        "education_admin"
+      ],
+      "confirmWrites": false,
+      "dataScope": "course"
+    },
+    {
+      "key": "edu-review",
+      "name": "内容机器初审",
+      "description": "内容安全/规则机器初审",
+      "prompt": "执行内容安全与规则初审，输出 pass/warn/fail 与理由；warn 必须人工确认。",
+      "tools": [
+        "erp_blueprint_manifest",
+        "builder_proposal_validate"
+      ],
+      "roles": [
+        "reviewer",
+        "education_admin"
+      ],
+      "confirmWrites": false
+    }
+  ]
+}

@@ -475,6 +475,61 @@ code_markers:
   - apps/api/src/bulk/bulk-formats.ts
 ```
 
+### D-23：资产走统一对象存储 + 状态机处理管道，业务只存 assetId
+
+```yaml decision
+id: D-23
+title: 资产走统一对象存储 + 状态机处理管道，业务只存 assetId
+status: accepted
+date: 2026-11
+context: |
+  旧 StorageService 只支持图片/5MB/本地 URL，业务实体存 URL 文本；无法支持教育视频、分片上传、
+  病毒扫描、缩略图/转码、签名 URL、配额与保留，也无法保证跨租户与业务记录权限一致。
+decision: |
+  统一 ObjectStorage（local/S3 兼容）与 Asset 状态机；上传会话校验分片/大小/校验和，
+  处理管道按 fail-closed 执行扫描与图片/文档/音视频变体；业务实体只存 assetId，
+  运行时解析摘要/签名 URL/variants。访问同时满足组织、业务记录权限/数据范围与 ready；
+  配额/保留期在资产层执行，仍被引用的资产不静默删除。
+references:
+  - INV-AS-01
+  - INV-AS-02
+  - INV-AS-03
+  - INV-AS-04
+  - INV-AS-05
+code_markers:
+  - libs/platform-core/src/assets/assets.service.ts
+  - libs/platform-core/src/assets/asset-processing.service.ts
+  - libs/platform-core/src/assets/s3-object-storage.ts
+```
+
+### D-24：外部集成走连接器注册表 + 幂等投递/只读同步，不做任意 SQL/ESB
+
+```yaml decision
+id: D-24
+title: 外部集成走连接器注册表 + 幂等投递/只读同步，不做任意 SQL/ESB
+status: accepted
+date: 2026-11
+context: |
+  教务/客户系统需要 REST/Webhook/数据库同步；若允许任意 URL/SQL 或把凭证明文入库，会引入 SSRF、
+  注入、越权与不可审计的外部副作用。
+decision: |
+  连接器按组织注册，凭证只存 secretRef；出站消息按组织+幂等键去重，4xx 不重试进 DLQ，
+  5xx/超时按退避重试并熔断/限流；入站 Webhook HMAC + 时间戳 + eventId 去重；数据库连接器
+  只读事务 + 查询模板白名单 + 参数化 + allowlist；同步按水位增量、经通用导入适配器幂等写入，
+  运行记录源/目标计数/校验和/差异。外部系统用服务令牌 scope + 代用户身份重解析权限。
+references:
+  - INV-EX-01
+  - INV-EX-02
+  - INV-EX-03
+  - INV-EX-04
+  - INV-EX-05
+  - INV-EX-06
+code_markers:
+  - apps/api/src/integrations/integration-outbound.service.ts
+  - apps/api/src/integrations/integration-webhook.service.ts
+  - apps/api/src/integrations/integration-data-source.service.ts
+```
+
 ---
 
 ## 附录：命名空间约定

@@ -2,6 +2,7 @@ import { Column, Entity, Index } from 'typeorm'
 import { TenantAwareEntity } from '../common/entities/tenant-aware.entity'
 
 export type AssetKind = 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other'
+export type AssetScanStatus = 'pending' | 'clean' | 'infected' | 'error' | 'skipped'
 export type AssetStatus =
   | 'uploading'
   | 'scanning'
@@ -27,6 +28,12 @@ export class Asset extends TenantAwareEntity {
 
   @Column({ type: 'varchar', length: 32, default: 'uploading' })
   status: AssetStatus
+
+  @Column({ type: 'varchar', length: 32, default: 'local' })
+  provider: string
+
+  @Column({ type: 'varchar', length: 32, default: 'pending' })
+  scanStatus: AssetScanStatus
 
   @Column({ type: 'varchar', length: 512 })
   objectKey: string
@@ -57,6 +64,9 @@ export class Asset extends TenantAwareEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, unknown> | null
+
+  @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
+  tags: string[]
 
   @Column({ type: 'boolean', default: false })
   isPublic: boolean

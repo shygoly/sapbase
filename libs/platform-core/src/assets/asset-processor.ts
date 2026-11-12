@@ -16,6 +16,11 @@ export interface AssetProcessResult {
   metadata?: Record<string, unknown> | null
   variants?: AssetVariantResult[]
   reason?: string
+  width?: number | null
+  height?: number | null
+  durationMs?: number | null
+  pageCount?: number | null
+  size?: number
 }
 
 export interface AssetProcessor {

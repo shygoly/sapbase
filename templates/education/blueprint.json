@@ -1,0 +1,6 @@
+{
+  "blueprint": "education",
+  "version": "1.0.0",
+  "runtime": ">=1.0.0 <2.0.0",
+  "dependencies": []
+}

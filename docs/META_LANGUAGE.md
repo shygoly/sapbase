@@ -597,6 +597,17 @@ manifest/资产篡改拒绝
 79. **atomic 全回滚**：atomic 任一行失败整批不落库；partial 仅成功行落库，错误必须带行/列/字段/原因（INV-IE-03）。
 80. **导出不绕过权限**：字段读权限、数据范围、租户隔离逐页生效；敏感/禁止导出字段按策略省略或拒绝并审计（INV-IE-04）。
 81. **不可信文件**：xlsx 宏/外链/超限解压拒绝；导出单元格公式前缀转义；大文件走异步与配额（INV-IE-05）。
+82. **资产租户隔离**：对象 key 在 `org/<organizationId>/...` 内，跨租户 assetId/签名 URL 拒绝（INV-AS-01）。
+83. **上传可验证**：分片连续/总大小/校验和匹配；重复 complete 幂等，不产生重复资产（INV-AS-02）。
+84. **处理 fail-closed**：扫描/处理异常不得降级 ready；infected/quarantined 不可下载（INV-AS-03）。
+85. **访问双闸**：资产访问同时满足组织、业务记录权限/数据范围、状态 ready；签名 URL 短时有效（INV-AS-04）。
+86. **配额与保留**：超配额拒绝上传；到期资产仍被业务引用时顺延，不静默删除（INV-AS-05）。
+87. **连接器凭证隔离**：secretRef 解析，DB/日志/响应不回显明文；连接器变更审计（INV-EX-01）。
+88. **出站可靠投递**：幂等键去重；5xx/408/429/超时重试，4xx 不重试进 DLQ；熔断与限流（INV-EX-02）。
+89. **入站签名/幂等**：HMAC + 时间戳 + eventId 去重；签名错/过期/超大 payload 拒绝（INV-EX-03）。
+90. **只读数据库**：只读事务 + 查询模板白名单 + 参数化；allowlist/SSRF 防护，禁止任意 SQL（INV-EX-04）。
+91. **增量与对账**：游标水位增量、唯一键/导入适配器幂等、源/目标计数/校验和/差异报告（INV-EX-05）。
+92. **外部身份二次校验**：服务令牌 scope + 组织绑定；代用户调用重新解析功能权限与数据范围（INV-EX-06）。
 
 ---
 
@@ -639,6 +650,8 @@ workspaces：shared-schemas / speckit / backend / wasm-modules
 | 旧工作流退场 / 只读归档 | [`protocols/workflow-consolidation.md`](./protocols/workflow-consolidation.md) | 410 墓碑、逐条退场理由、四表归档、净损失与回归时机 |
 | Outbox（跨进程事件） | [`protocols/outbox.md`](./protocols/outbox.md) | 事件形状 / 幂等键 / 投递语义 / 重试；进程内总线不走此协议 |
 | 最小可观测（结构化日志） | [`protocols/observability.md`](./protocols/observability.md) | 不做 OTel/Prometheus；N3 只做结构化日志 + 投递失败可定位 |
+| 外部集成连接器 | [`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md) | 连接器、出站/入站、只读 DB 同步、SSRF/secretRef；`INV-EX-01..06` |
+| 资产/媒体管道 | [`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md) | 存储抽象、分片上传、扫描/转码、签名 URL、资产字段；`INV-AS-01..05` |
 | 批量导入/导出 | [`protocols/blueprint-delivery.md`](./protocols/blueprint-delivery.md) | 资源适配器、atomic/partial、公式注入、异步导出；`INV-IE-01..05` |
 | 通知 / 审批待办 | [`protocols/notifications.md`](./protocols/notifications.md) | 持久化通知、两层去重、角色→用户、`GET /inbox` |
 | 变更提案与任务清单 | `openspec/changes/<change-id>/` | 按 OpenSpec 流程 |
@@ -717,6 +730,19 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 资源适配器 | Resource Adapter | `ImportAdapter` / `ExportAdapter`；`BulkAdapterRegistry` | ✅ |
 | 列映射 | Column Mapping | `ImportMapping`；`import_mappings`；别名/未知列策略 | ✅ |
 | 部分成功 | Partial Success | `mode=partial`；逐行事务 + 错误报告 | ✅ |
+| 资产 | Asset | `Asset`；`assets`；`apps/api/src/assets/` | ✅ |
+| 资产变体 | Asset Variant | `AssetVariant`；`asset_variants` | ✅ |
+| 上传会话 | Upload Session | `AssetUploadSession`；`asset_upload_sessions` | ✅ |
+| 资产类型 | Asset Kind | `image/video/audio/document/archive/other` | ✅ |
+| 扫描状态 | Scan Status | `pending/clean/infected/error/skipped` | ✅ |
+| 短时签名 URL | Signed URL | `ObjectStorage.signedUrl()`；TTL + 组织绑定 | ✅ |
+| 连接器 | Integration Connector | `IntegrationConnector`；`integration_connectors` | ✅ |
+| 出站消息 | Outbound Message | `OutboundMessage`；`outbound_messages` | ✅ |
+| 入站 Webhook | Webhook Endpoint/Event | `webhook_endpoints` / `webhook_events` | ✅ |
+| 数据源 | Data Source | `DataSource`；`data_sources` | ✅ |
+| 同步任务/运行 | Sync Job/Run | `data_sync_jobs` / `data_sync_runs` | ✅ |
+| 水位 | Watermark | `data_sync_jobs.watermark` | ✅ |
+| 死信 | DLQ | `outbound_messages.status=dead`；可重放 | ✅ |
 
 ---
 
@@ -738,6 +764,8 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.17 | 2026-11-12 | 新增外部集成术语与 INV-EX-01..06：连接器凭证、出站/入站、只读 DB、增量对账、外部身份 |
+| 1.16 | 2026-11-12 | 新增资产/媒体术语与 INV-AS-01..05：租户隔离、上传校验、处理 fail-closed、访问双闸、配额/保留 |
 | 1.15 | 2026-11-11 | 新增批量导入/导出术语与 INV-IE-01..05：适配器白名单、运行幂等、atomic/partial、导出权限、不可信文件与公式注入防护 |
 | 1.14 | 2026-10-18 | 新增 §3.10「Business App Installation」：在 Organization 与 Blueprint 之间建立租户内应用运行边界；$C$ 补应用实例；术语表补业务应用安装与应用执行上下文；租户请求改用事务上下文 + PostgreSQL RLS |
 | 1.13 | 2026-09-27 | 新增 §3.9「Interaction Surface（临时交互面）」：一次意图的可视化投影，确认或取消后即消失。真源见 `protocols/chat-erp.md` |

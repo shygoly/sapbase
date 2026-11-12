@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { randomUUID } from 'node:crypto'
 import { DataSource, EntityManager, In, IsNull, Repository } from 'typeorm'
@@ -61,6 +61,7 @@ import {
 import { materializeDefaults, type SemanticEntity, type ValidationRule } from './record-validator'
 import { mapConstraintError, RecordWriteError } from './record-write-error'
 import { DataScopeService } from '../data-scope/data-scope.service'
+import { AssetsService } from '@sap/platform-core/assets/assets.service'
 import { compileScopeExpr } from '../data-scope/scope-sql-compiler'
 import type { ScopeBindingView, ScopeSpec } from '../data-scope/data-scope.types'
 import { applyUniqueIndexes } from './unique-index'
@@ -232,6 +233,7 @@ export class SemanticRuntimeService {
     private readonly auditLogs: AuditLogsService,
     private readonly outbox: OutboxService,
     private readonly dataScope: DataScopeService,
+    @Optional() private readonly assets?: AssetsService,
   ) {}
 
   async write(
@@ -256,6 +258,7 @@ export class SemanticRuntimeService {
     }
     this.assertEntityAccess(loaded, entity, 'create', actor)
     this.assertWritablePayload(template.entities, entity, data, actor)
+    await this.assertAssetFields(declared, data, organizationId)
     await this.assertCreateInDataScope(
       loaded.manifest.blueprint,
       declared,
@@ -354,6 +357,7 @@ export class SemanticRuntimeService {
     let validated = 0
 
     const writeOne = async (manager: EntityManager, row: BatchImportRow): Promise<void> => {
+      await this.assertAssetFields(declared, row.data, organizationId)
       await this.assertCreateInDataScope(
         loaded.manifest.blueprint,
         declared,
@@ -872,11 +876,14 @@ export class SemanticRuntimeService {
 
     if (!hasQueryParams(query)) {
       if (declared.dataScope) {
-        return this.listAllWithDataScope(
+        const rows = await this.listAllWithDataScope(
           loaded.manifest.blueprint,
           declared,
           organizationId,
           actor,
+        )
+        return Promise.all(
+          rows.map((row) => this.resolveAssetFields(row, declared, organizationId)),
         )
       }
       const rows = await this.records.find({
@@ -888,12 +895,28 @@ export class SemanticRuntimeService {
         },
         order: { createdAt: 'ASC' },
       })
-      return filterOwnedRows(declared, rows, actor).map((row) =>
-        this.withResolvedState(row, declared, actor),
+      return Promise.all(
+        filterOwnedRows(declared, rows, actor).map((row) =>
+          this.resolveAssetFields(
+            this.withResolvedState(row, declared, actor),
+            declared,
+            organizationId,
+          ),
+        ),
       )
     }
 
-    return this.listEnvelope(loaded.manifest.blueprint, declared, organizationId, query ?? {}, actor)
+    const envelope = await this.listEnvelope(
+      loaded.manifest.blueprint,
+      declared,
+      organizationId,
+      query ?? {},
+      actor,
+    )
+    envelope.items = await Promise.all(
+      envelope.items.map((row) => this.resolveAssetFields(row, declared, organizationId)),
+    )
+    return envelope
   }
 
   /**
@@ -969,7 +992,11 @@ export class SemanticRuntimeService {
       actor,
       'read',
     )
-    return this.withResolvedState(row, declared, actor)
+    return this.resolveAssetFields(
+      this.withResolvedState(row, declared, actor),
+      declared,
+      organizationId,
+    )
   }
 
   async viewStock(packageId: string, organizationId: string, actor?: RuntimeActor) {
@@ -1851,6 +1878,93 @@ export class SemanticRuntimeService {
     return result
   }
 
+  private async assertAssetFields(
+    entity: SemanticEntity,
+    data: Record<string, unknown>,
+    organizationId: string,
+  ): Promise<void> {
+    const fields = entity.fields.filter((field) => field.type === 'asset')
+    if (fields.length === 0) return
+    if (!this.assets) {
+      throw new RecordWriteError('未配置资产服务，拒绝写入 asset 字段', 'asset-unavailable')
+    }
+    for (const field of fields) {
+      const value = data[field.name]
+      if (value === undefined || value === null || value === '') continue
+      if (typeof value !== 'string') {
+        throw new RecordWriteError(
+          `字段 ${entity.name}.${field.name} 期望 assetId 字符串`,
+          'type-mismatch',
+          field.name,
+        )
+      }
+      let asset
+      try {
+        asset = await this.assets.get(organizationId, value)
+      } catch {
+        throw new RecordWriteError(
+          `资产不存在或不属于当前组织：${value}`,
+          'dangling-reference',
+          field.name,
+        )
+      }
+      if (field.assetKind && asset.kind !== field.assetKind) {
+        throw new RecordWriteError(
+          `资产类型不符：${field.name} 需要 ${field.assetKind}，实际 ${asset.kind}`,
+          'asset-kind-mismatch',
+          field.name,
+        )
+      }
+      if (asset.status !== 'ready') {
+        throw new RecordWriteError(
+          `资产状态 ${asset.status} 不可引用：${value}`,
+          'asset-not-ready',
+          field.name,
+        )
+      }
+    }
+  }
+
+  private async resolveAssetFields(
+    row: BlueprintRecord,
+    entity: SemanticEntity,
+    organizationId: string,
+  ): Promise<BlueprintRecord> {
+    const fields = entity.fields.filter((field) => field.type === 'asset')
+    if (fields.length === 0 || !this.assets) return row
+    for (const field of fields) {
+      const value = row.data?.[field.name]
+      if (typeof value !== 'string' || value.length === 0) continue
+      try {
+        const asset = await this.assets.get(organizationId, value)
+        const url =
+          asset.status === 'ready'
+            ? (await this.assets.downloadUrl(organizationId, asset.id, 300)).url
+            : null
+        const variants =
+          asset.status === 'ready'
+            ? await this.assets.signedVariantUrls(organizationId, asset.id, 300)
+            : []
+        row.data[field.name] = {
+          id: asset.id,
+          kind: asset.kind,
+          status: asset.status,
+          mimeType: asset.mimeType,
+          size: asset.size,
+          width: asset.width,
+          height: asset.height,
+          durationMs: asset.durationMs,
+          pageCount: asset.pageCount,
+          url,
+          variants,
+        }
+      } catch {
+        row.data[field.name] = { id: value, status: 'missing', url: null, variants: [] }
+      }
+    }
+    return row
+  }
+
   private withResolvedState(
     row: BlueprintRecord,
     entity: SemanticEntity,
@@ -2057,7 +2171,7 @@ export class SemanticRuntimeService {
       field: binding.field ?? null,
       relation: binding.relation ?? null,
     }))
-    const loaded = await this.loadOrThrow(blueprintId, organizationId)
+    const loaded = await this.loadOrThrow(this.packageIdForManifest(blueprintId), organizationId)
     const packageCap = this.permissionCapFor(
       loaded.compiled?.permissions,
       entity,
@@ -2078,6 +2192,16 @@ export class SemanticRuntimeService {
       bindings,
       packageCap,
     })
+  }
+
+  private packageIdForManifest(manifestBlueprintId: string): string {
+    if (typeof this.blueprints.list !== 'function') return manifestBlueprintId
+    return (
+      this.blueprints
+        .list()
+        .find((pkg) => pkg.manifest.blueprint === manifestBlueprintId)?.id ??
+      manifestBlueprintId
+    )
   }
 
   private permissionCapFor(

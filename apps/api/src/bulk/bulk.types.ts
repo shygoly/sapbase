@@ -55,6 +55,7 @@ export interface BulkActor {
   id: string
   permissions: string[]
   email?: string
+  role?: string | null
 }
 
 export interface ImportWriteOptions {

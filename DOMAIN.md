@@ -57,6 +57,13 @@
 | import_runs | 批量导入导出 |
 | export_runs | 批量导入导出 |
 | import_mappings | 批量导入导出 |
+| integration_connectors | 外部集成 |
+| outbound_messages | 外部集成 |
+| webhook_endpoints | 外部集成 |
+| webhook_events | 外部集成 |
+| data_sources | 外部集成 |
+| data_sync_jobs | 外部集成 |
+| data_sync_runs | 外部集成 |
 | ai_content_labels | AI 内容治理 |
 | ai_score_records | AI 内容治理 |
 | assets | 资产 |
@@ -701,6 +708,7 @@ spec: apps/api/src/search/search.service.spec.ts
 ### 状态词
 
 资产状态使用 `uploading` / `scanning` / `processing` / `ready` / `failed` / `quarantined` / `deleted`；
+扫描状态使用 `pending` / `clean` / `infected` / `error` / `skipped`；
 上传会话状态使用 `uploading` / `completed` / `aborted` / `expired`。禁止同义词。
 
 ### 不变量
@@ -714,6 +722,52 @@ enforcement:
   - test:apps/api/src/assets/assets.ddl.spec.ts#ASSET_DDL
 db: rls:assets
 spec: apps/api/src/assets/assets.ddl.spec.ts
+```
+
+```yaml invariant
+id: INV-AS-02
+tables: [asset_upload_sessions, assets]
+desc: 分片必须连续且总大小/校验和匹配；重复 complete 幂等，不产生重复资产。
+trigger: AssetUploadService.complete()
+enforcement:
+  - service:libs/platform-core/src/assets/asset-upload.service.ts#complete
+db: UQ_asset_upload_object_key
+spec: apps/api/src/assets/asset-mime.spec.ts
+```
+
+```yaml invariant
+id: INV-AS-03
+tables: [assets]
+desc: 扫描/处理异常 fail-closed；infected/quarantined 不可下载，不得降级为 ready。
+trigger: AssetProcessingService.process()
+enforcement:
+  - service:libs/platform-core/src/assets/asset-processing.service.ts#process
+db: none
+spec: apps/api/src/assets/asset-processing.service.spec.ts
+```
+
+```yaml invariant
+id: INV-AS-04
+tables: [assets, asset_variants]
+desc: 访问同时满足组织、业务记录权限/数据范围与 ready；签名 URL 短时有效，跨租户拒绝。
+trigger: AssetsService.downloadUrl() / readRange()
+enforcement:
+  - service:libs/platform-core/src/assets/assets.service.ts#downloadUrl
+  - service:libs/platform-core/src/assets/assets.service.ts#readRange
+db: rls:assets
+spec: tests/asset-media.e2e.js
+```
+
+```yaml invariant
+id: INV-AS-05
+tables: [assets]
+desc: 超配额拒绝上传；到期资产仍被业务记录引用时顺延，不静默删除。
+trigger: AssetsService.assertUploadAllowed() / cleanupExpired()
+enforcement:
+  - service:libs/platform-core/src/assets/assets.service.ts#assertUploadAllowed
+  - service:libs/platform-core/src/assets/assets.service.ts#cleanupExpired
+db: none
+spec: tests/asset-media.e2e.js
 ```
 
 ---
@@ -1331,6 +1385,98 @@ enforcement:
   - service:apps/api/src/bulk/bulk-formats.ts#renderExport
 db: none
 spec: apps/api/src/bulk/bulk-formats.spec.ts
+```
+
+---
+
+## 外部集成
+
+覆盖表：integration_connectors, outbound_messages, webhook_endpoints, webhook_events, data_sources, data_sync_jobs, data_sync_runs
+
+连接器按组织隔离，凭证只存 `secretRef`；出站消息幂等/重试/DLQ；入站 Webhook
+HMAC + 时间戳 + eventId 去重；数据库连接器只读、查询模板白名单；同步按水位增量
+并写运行/差异。
+
+### 关系
+
+| 源列 | 目标 | 语义 | 强制点 | 备注 |
+|---|---|---|---|---|
+| integration_connectors.organizationId | organizations.id | 连接器归属组织 | none | RLS 隔离 |
+| outbound_messages.connectorId | integration_connectors.id | 消息归属连接器 | none | 幂等键按组织唯一 |
+| webhook_events.endpointId | webhook_endpoints.id | 事件归属端点 | none | endpoint+eventId 唯一 |
+| data_sync_jobs.dataSourceId | data_sources.id | 同步任务归属数据源 | none | 只读源 |
+| data_sync_runs.jobId | data_sync_jobs.id | 运行归属任务 | none | 水位/差异可追溯 |
+
+### 不变量
+
+```yaml invariant
+id: INV-EX-01
+tables: [integration_connectors, webhook_endpoints, data_sources]
+desc: 连接器/端点/数据源凭证只存 secretRef；响应/日志脱敏，变更写审计。
+trigger: IntegrationConnectorService.create() / update()
+enforcement:
+  - service:apps/api/src/integrations/integration-connector.service.ts#create
+  - service:apps/api/src/integrations/integration-connector.service.ts#update
+db: none
+spec: apps/api/src/integrations/integrations.security.spec.ts
+```
+
+```yaml invariant
+id: INV-EX-02
+tables: [outbound_messages]
+desc: 出站消息按组织+幂等键唯一；5xx/408/429/超时重试，4xx 不重试进 DLQ；熔断/限流。
+trigger: IntegrationOutboundService.enqueue() / send()
+enforcement:
+  - service:apps/api/src/integrations/integration-outbound.service.ts#enqueue
+  - service:apps/api/src/integrations/integration-outbound.service.ts#send
+db: UQ_outbound_message_org_idempotency
+spec: tests/external-integration.e2e.js
+```
+
+```yaml invariant
+id: INV-EX-03
+tables: [webhook_endpoints, webhook_events]
+desc: Webhook 必须 HMAC + 时间戳 + eventId 去重；签名错/过期/超大 payload 拒绝。
+trigger: IntegrationWebhookService.receive()
+enforcement:
+  - service:apps/api/src/integrations/integration-webhook.service.ts#receive
+db: UQ_webhook_event_endpoint_event
+spec: tests/external-integration.e2e.js
+```
+
+```yaml invariant
+id: INV-EX-04
+tables: [data_sources, data_sync_jobs]
+desc: 数据库连接器只读事务 + 查询模板白名单 + 参数化；allowlist/SSRF 防护。
+trigger: IntegrationDataSourceService.processRun()
+enforcement:
+  - service:apps/api/src/integrations/integration-data-source.service.ts#processRun
+db: none
+spec: tests/external-integration.e2e.js
+```
+
+```yaml invariant
+id: INV-EX-05
+tables: [data_sync_jobs, data_sync_runs]
+desc: 增量按游标水位；重复同步不重复写；运行记录源/目标计数/校验和/差异。
+trigger: IntegrationDataSourceService.runJob() / processRun()
+enforcement:
+  - service:apps/api/src/integrations/integration-data-source.service.ts#runJob
+  - service:apps/api/src/integrations/integration-data-source.service.ts#processRun
+db: none
+spec: tests/external-integration.e2e.js
+```
+
+```yaml invariant
+id: INV-EX-06
+tables: [integration_connectors]
+desc: 外部服务令牌 scope + 组织绑定；代用户调用重新解析功能权限与数据范围。
+trigger: ServiceClientAuthGuard / DelegatedIdentityService.resolve()
+enforcement:
+  - service:libs/platform-core/src/identity/service-client-auth.guard.ts#canActivate
+  - service:libs/platform-core/src/identity/delegated-identity.service.ts#resolve
+db: none
+spec: tests/external-integration.e2e.js
 ```
 
 ---

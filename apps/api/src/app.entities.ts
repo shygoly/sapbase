@@ -48,6 +48,7 @@ import { MetricDefinition, MetricValue, Dashboard, DashboardWidget, MetricAlert,
 import { OfflinePackage, OfflineEntitlement, OfflineDevice } from './offline/offline.entities'
 import { DocumentParseRun, DocumentSection, DocumentCandidate } from './document-intelligence/document.entities'
 import { ImportRun, ExportRun, ImportMapping } from './bulk/bulk.entities'
+import { IntegrationConnector, OutboundMessage, WebhookEndpoint, WebhookEvent, DataSource, DataSyncJob, DataSyncRun } from './integrations/integrations.entities'
 import { OutboxDelivery } from './outbox/outbox-delivery.entity'
 import { OutboxEvent } from './outbox/outbox-event.entity'
 import { Plugin as PluginOrm } from './plugins/infrastructure/persistence/plugin.entity'
@@ -131,6 +132,13 @@ export const APP_ENTITIES = [
   ImportRun,
   ExportRun,
   ImportMapping,
+  IntegrationConnector,
+  OutboundMessage,
+  WebhookEndpoint,
+  WebhookEvent,
+  DataSource,
+  DataSyncJob,
+  DataSyncRun,
   AgentConfirmationToken,
   BusinessAppInstallation,
   BusinessAppInstallationRevision,

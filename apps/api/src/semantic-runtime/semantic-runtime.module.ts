@@ -9,6 +9,7 @@ import { BlueprintJournalEntry } from './blueprint-journal-entry.entity'
 import { BlueprintRecord } from './blueprint-record.entity'
 import { OutboxModule } from '../outbox/outbox.module'
 import { DataScopeModule } from '../data-scope/data-scope.module'
+import { AssetsModule } from '@sap/platform-core/assets/assets.module'
 import { SemanticRuntimeController } from './semantic-runtime.controller'
 import { SemanticRuntimeService } from './semantic-runtime.service'
 import { BlueprintSuggestionLog } from './suggestion-log.entity'
@@ -21,6 +22,7 @@ import { SuggestionCronJob } from './suggestion-cron'
     AuditLogsModule,
     OutboxModule,
     DataScopeModule,
+    AssetsModule,
     TypeOrmModule.forFeature([
       BlueprintRecord,
       BlueprintDocCounter,

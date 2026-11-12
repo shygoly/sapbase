@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, open, readFile, stat, unlink, writeFile } from 'node:fs/promises'
 import { dirname, resolve, sep } from 'node:path'
 import {
   assertSafeObjectKey,
@@ -22,7 +22,7 @@ export class LocalObjectStorage implements ObjectStorage {
 
   constructor(options: { rootDir: string; baseUrl?: string }) {
     this.rootDir = resolve(options.rootDir)
-    this.baseUrl = options.baseUrl ?? '/local-storage'
+    this.baseUrl = options.baseUrl ?? '/api/local-storage'
   }
 
   async put(key: string, body: Buffer, options: PutObjectOptions = {}): Promise<StoredObject> {
@@ -56,6 +56,23 @@ export class LocalObjectStorage implements ObjectStorage {
         `本地存储读取失败：${(error as Error).message}`,
         'io-error',
       )
+    }
+  }
+
+  async getRange(key: string, start: number, end: number): Promise<Buffer> {
+    const path = this.pathOf(key)
+    const info = await stat(path).catch(() => null)
+    if (!info) throw new ObjectStorageError(`对象不存在：${key}`, 'not-found')
+    const from = Math.max(0, Math.min(start, info.size))
+    const to = Math.max(from, Math.min(end, info.size))
+    const length = Math.max(0, to - from)
+    const handle = await open(path, 'r')
+    try {
+      const buffer = Buffer.alloc(length)
+      await handle.read(buffer, 0, length, from)
+      return buffer
+    } finally {
+      await handle.close()
     }
   }
 

@@ -8,15 +8,16 @@ import {
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { AssetUploadSession } from './asset-upload-session.entity'
 import { AssetsService } from './assets.service'
 import { OBJECT_STORAGE, type ObjectStorage } from './object-storage'
 import {
-  kindFromAssetNameOrMime,
   resolveAssetPolicy,
   validateAssetMetadata,
 } from './asset-policy'
+import { assertAssetFile, AssetMimeError } from './asset-mime'
+import { JobsService } from '../jobs/jobs.service'
 
 export interface InitUploadInput {
   originalName: string
@@ -25,6 +26,7 @@ export interface InitUploadInput {
   checksum?: string | null
   kind?: 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other'
   metadata?: Record<string, unknown> | null
+  multipart?: boolean
 }
 
 export interface UploadPartInput {
@@ -48,6 +50,8 @@ export class AssetUploadService {
     @Optional()
     @Inject(OBJECT_STORAGE)
     private readonly storage?: ObjectStorage,
+    @Optional()
+    private readonly jobs?: JobsService,
   ) {}
 
   async init(
@@ -56,7 +60,13 @@ export class AssetUploadService {
     input: InitUploadInput,
   ): Promise<{ session: AssetUploadSession; uploadUrl: string | null }> {
     const limits = resolveAssetPolicy()
-    const policyError = validateAssetMetadata(input, limits)
+    const maxBytes = input.multipart
+      ? Number(process.env.ASSET_MAX_MULTIPART_BYTES ?? 5 * 1024 * 1024 * 1024)
+      : limits.maxFileBytes
+    const policyError = validateAssetMetadata(input, {
+      ...limits,
+      maxFileBytes: maxBytes,
+    })
     if (policyError) throw new BadRequestException(policyError)
 
     const active = await this.sessions.count({
@@ -80,6 +90,7 @@ export class AssetUploadService {
       throw new BadRequestException(`组织存储配额超限（上限 ${limits.maxOrgBytes} bytes）`)
     }
 
+    await this.assets.assertUploadAllowed(organizationId, input.size)
     const id = randomUUID()
     const safeName = input.originalName.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 200)
     const objectKey = `org/${organizationId}/uploads/${id}/${safeName}`
@@ -95,6 +106,7 @@ export class AssetUploadService {
         checksum: input.checksum ?? null,
         status: 'uploading',
         parts: null,
+        metadata: { ...(input.metadata ?? {}), multipart: input.multipart === true },
         expiresAt: new Date(Date.now() + ttlMs),
         completedAt: null,
       }),
@@ -120,8 +132,11 @@ export class AssetUploadService {
     if (session.status !== 'uploading') {
       throw new ConflictException(`上传会话状态 ${session.status} 不允许写分片`)
     }
-    if (part.partNumber < 1 || part.size < 0) {
+    if (part.partNumber < 1 || part.partNumber > 10_000 || part.size < 0) {
       throw new BadRequestException('分片参数非法')
+    }
+    if (part.size > Number(session.expectedSize)) {
+      throw new BadRequestException('分片大小超过文件总大小')
     }
     const parts = (session.parts ?? []).filter(
       (item) => item.partNumber !== part.partNumber,
@@ -159,19 +174,90 @@ export class AssetUploadService {
         `对象大小不符：期望 ${session.expectedSize}，实际 ${object.size}`,
       )
     }
+    const parts = (session.parts ?? []).slice().sort((a, b) => a.partNumber - b.partNumber)
+    if (parts.length > 0) {
+      const contiguous = parts.every((part, index) => part.partNumber === index + 1)
+      const total = parts.reduce((sum, part) => sum + part.size, 0)
+      if (!contiguous || total !== Number(session.expectedSize)) {
+        throw new BadRequestException('分片不连续或总大小不符')
+      }
+    }
+    let header: Buffer
+    if (this.storage.getRange) {
+      header = await this.storage.getRange(session.objectKey, 0, 4096)
+    } else {
+      header = (await this.storage.get(session.objectKey)).subarray(0, 4096)
+    }
+    let sniffed: ReturnType<typeof assertAssetFile>
+    try {
+      sniffed = assertAssetFile({
+        buffer: header,
+        filename: session.originalName,
+        declaredMime: session.mimeType,
+        size: object.size,
+        maxBytes: session.metadata?.multipart
+          ? Number(process.env.ASSET_MAX_MULTIPART_BYTES ?? 5 * 1024 * 1024 * 1024)
+          : undefined,
+      })
+    } catch (error) {
+      if (error instanceof AssetMimeError) throw new BadRequestException(error.message)
+      throw error
+    }
+    if (session.checksum) {
+      const full = await this.storage.get(session.objectKey)
+      const actual = `sha256:${createHash('sha256').update(full).digest('hex')}`
+      const expected = session.checksum.includes(':')
+        ? session.checksum
+        : `sha256:${session.checksum}`
+      if (actual.toLowerCase() !== expected.toLowerCase()) {
+        throw new BadRequestException('上传校验和不符')
+      }
+    }
     const asset = await this.assets.create(organizationId, {
       objectKey: session.objectKey,
       originalName: session.originalName,
-      mimeType: session.mimeType,
+      mimeType: sniffed.mimeType,
       size: object.size,
       checksum: session.checksum ?? object.checksum ?? null,
-      kind: kindFromAssetNameOrMime(session.originalName, session.mimeType),
+      kind: sniffed.kind,
+      status: 'scanning',
+      scanStatus: 'pending',
+      metadata: session.metadata ?? null,
+      provider: process.env.ASSET_STORAGE_PROVIDER ?? 'local',
       createdBy: session.userId,
     })
     session.status = 'completed'
     session.completedAt = new Date()
     await this.sessions.save(session)
+    if (this.jobs) {
+      await this.jobs
+        .create(
+          organizationId,
+          { userId: session.userId, permissions: ['jobs:manage'] },
+          {
+            type: 'asset.process',
+            payload: { assetId: asset.id },
+            idempotencyKey: `asset.process:${asset.id}`,
+          },
+        )
+        .catch(() => undefined)
+    }
     return { session, assetId: asset.id, deduplicated: false }
+  }
+
+  async cleanupExpired(organizationId: string): Promise<number> {
+    const expired = await this.sessions.find({
+      where: { organizationId, status: 'uploading' },
+    })
+    let cleaned = 0
+    for (const session of expired) {
+      if (session.expiresAt.getTime() > Date.now()) continue
+      if (this.storage) await this.storage.delete(session.objectKey).catch(() => undefined)
+      session.status = 'expired'
+      await this.sessions.save(session)
+      cleaned += 1
+    }
+    return cleaned
   }
 
   async abort(organizationId: string, id: string): Promise<AssetUploadSession> {

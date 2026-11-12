@@ -1,0 +1,40 @@
+{
+  "experience": "blueprint-experience/v1",
+  "priority": [
+    {
+      "entity": "Course",
+      "fields": [
+        "title",
+        "intro",
+        "cover"
+      ]
+    },
+    {
+      "entity": "KnowledgePoint",
+      "fields": [
+        "title",
+        "summary",
+        "difficulty"
+      ]
+    },
+    {
+      "entity": "Student",
+      "fields": [
+        "name",
+        "studentNo",
+        "classId"
+      ]
+    },
+    {
+      "entity": "Assessment",
+      "fields": [
+        "title",
+        "startAt",
+        "endAt"
+      ]
+    }
+  ],
+  "confirm": [],
+  "automate": [],
+  "surfaces": []
+}

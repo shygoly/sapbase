@@ -11,6 +11,12 @@ export class AssetVariant extends TenantAwareEntity {
   @Column({ type: 'varchar', length: 32 })
   kind: string
 
+  @Column({ type: 'varchar', length: 32, default: 'local' })
+  provider: string
+
+  @Column({ type: 'varchar', length: 16, default: 'ready' })
+  status: string
+
   @Column({ type: 'varchar', length: 512 })
   objectKey: string
 
@@ -25,6 +31,9 @@ export class AssetVariant extends TenantAwareEntity {
 
   @Column({ type: 'int', nullable: true })
   height: number | null
+
+  @Column({ type: 'int', nullable: true })
+  bitrate: number | null
 
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, unknown> | null

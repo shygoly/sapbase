@@ -1,0 +1,1140 @@
+{
+  "entities": [
+    {
+      "name": "Course",
+      "fields": [
+        {
+          "name": "title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "intro",
+          "type": "text"
+        },
+        {
+          "name": "cover",
+          "type": "asset",
+          "assetKind": "image"
+        },
+        {
+          "name": "major",
+          "type": "text"
+        },
+        {
+          "name": "tags",
+          "type": "text"
+        },
+        {
+          "name": "versionNo",
+          "type": "i32",
+          "default": 1
+        },
+        {
+          "name": "ownerId",
+          "type": "text",
+          "permissions": {
+            "write": "education.course.write"
+          }
+        }
+      ],
+      "states": [
+        {
+          "name": "draft",
+          "initial": true
+        },
+        {
+          "name": "submitted"
+        },
+        {
+          "name": "published"
+        },
+        {
+          "name": "unpublished"
+        },
+        {
+          "name": "archived",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "draft",
+          "to": "submitted"
+        },
+        {
+          "from": "submitted",
+          "to": "published"
+        },
+        {
+          "from": "published",
+          "to": "unpublished"
+        },
+        {
+          "from": "unpublished",
+          "to": "published"
+        },
+        {
+          "from": "unpublished",
+          "to": "archived"
+        }
+      ],
+      "ownership": {
+        "field": "ownerId",
+        "readAllPermission": "education.admin"
+      }
+    },
+    {
+      "name": "Chapter",
+      "fields": [
+        {
+          "name": "courseId",
+          "type": "reference",
+          "reference": "Course",
+          "required": true
+        },
+        {
+          "name": "parentId",
+          "type": "text"
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "sortOrder",
+          "type": "i32"
+        }
+      ],
+      "states": [
+        {
+          "name": "draft",
+          "initial": true
+        },
+        {
+          "name": "published"
+        },
+        {
+          "name": "archived",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "draft",
+          "to": "published"
+        },
+        {
+          "from": "published",
+          "to": "archived"
+        }
+      ],
+      "tree": {
+        "parentField": "parentId",
+        "orderField": "sortOrder"
+      }
+    },
+    {
+      "name": "KnowledgePoint",
+      "fields": [
+        {
+          "name": "chapterId",
+          "type": "reference",
+          "reference": "Chapter",
+          "required": true
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "summary",
+          "type": "text"
+        },
+        {
+          "name": "difficulty",
+          "type": "enum",
+          "values": [
+            "easy",
+            "medium",
+            "hard"
+          ]
+        },
+        {
+          "name": "tags",
+          "type": "text"
+        },
+        {
+          "name": "sortOrder",
+          "type": "i32"
+        }
+      ],
+      "states": [
+        {
+          "name": "draft",
+          "initial": true
+        },
+        {
+          "name": "published"
+        },
+        {
+          "name": "archived",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "draft",
+          "to": "published"
+        },
+        {
+          "from": "published",
+          "to": "archived"
+        }
+      ]
+    },
+    {
+      "name": "Material",
+      "fields": [
+        {
+          "name": "courseId",
+          "type": "reference",
+          "reference": "Course",
+          "required": true
+        },
+        {
+          "name": "knowledgePointId",
+          "type": "reference",
+          "reference": "KnowledgePoint"
+        },
+        {
+          "name": "assetId",
+          "type": "asset",
+          "assetKind": "other"
+        },
+        {
+          "name": "materialKind",
+          "type": "enum",
+          "values": [
+            "video",
+            "image",
+            "document",
+            "audio",
+            "link"
+          ]
+        },
+        {
+          "name": "title",
+          "type": "text"
+        },
+        {
+          "name": "tags",
+          "type": "text"
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "archived",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "archived"
+        }
+      ]
+    },
+    {
+      "name": "EducationClass",
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "campusNodeId",
+          "type": "text"
+        },
+        {
+          "name": "gradeNodeId",
+          "type": "text"
+        },
+        {
+          "name": "major",
+          "type": "text"
+        },
+        {
+          "name": "studentCount",
+          "type": "i32"
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "archived",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "archived"
+        }
+      ],
+      "dataScope": {
+        "bindings": [
+          {
+            "dimension": "grade",
+            "kind": "field",
+            "field": "gradeNodeId"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Student",
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "studentNo",
+          "type": "text",
+          "required": true,
+          "unique": true
+        },
+        {
+          "name": "classId",
+          "type": "reference",
+          "reference": "EducationClass",
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "values": [
+            "active",
+            "inactive",
+            "graduated"
+          ]
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "graduated",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "graduated"
+        }
+      ],
+      "dataScope": {
+        "bindings": [
+          {
+            "dimension": "class",
+            "kind": "field",
+            "field": "classId"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TeachingAssignment",
+      "fields": [
+        {
+          "name": "courseId",
+          "type": "reference",
+          "reference": "Course",
+          "required": true
+        },
+        {
+          "name": "teacherId",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "classId",
+          "type": "reference",
+          "reference": "EducationClass"
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "ended",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "ended"
+        }
+      ]
+    },
+    {
+      "name": "CourseEnrollment",
+      "fields": [
+        {
+          "name": "courseId",
+          "type": "reference",
+          "reference": "Course",
+          "required": true
+        },
+        {
+          "name": "studentId",
+          "type": "reference",
+          "reference": "Student",
+          "required": true
+        },
+        {
+          "name": "classId",
+          "type": "reference",
+          "reference": "EducationClass"
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "completed",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "completed"
+        }
+      ]
+    },
+    {
+      "name": "TeachingTask",
+      "fields": [
+        {
+          "name": "title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "type",
+          "type": "enum",
+          "values": [
+            "homework",
+            "exam",
+            "activity"
+          ]
+        },
+        {
+          "name": "courseId",
+          "type": "reference",
+          "reference": "Course",
+          "required": true
+        },
+        {
+          "name": "startAt",
+          "type": "datetime"
+        },
+        {
+          "name": "endAt",
+          "type": "datetime"
+        },
+        {
+          "name": "versionNo",
+          "type": "i32",
+          "default": 0
+        }
+      ],
+      "states": [
+        {
+          "name": "draft",
+          "initial": true
+        },
+        {
+          "name": "published"
+        },
+        {
+          "name": "inProgress"
+        },
+        {
+          "name": "completed"
+        },
+        {
+          "name": "cancelled",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "draft",
+          "to": "published"
+        },
+        {
+          "from": "published",
+          "to": "inProgress"
+        },
+        {
+          "from": "inProgress",
+          "to": "completed"
+        },
+        {
+          "from": "published",
+          "to": "cancelled"
+        }
+      ]
+    },
+    {
+      "name": "TaskClass",
+      "fields": [
+        {
+          "name": "taskId",
+          "type": "reference",
+          "reference": "TeachingTask",
+          "required": true
+        },
+        {
+          "name": "classId",
+          "type": "reference",
+          "reference": "EducationClass",
+          "required": true
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "archived",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "archived"
+        }
+      ]
+    },
+    {
+      "name": "LearningRecord",
+      "fields": [
+        {
+          "name": "studentId",
+          "type": "text",
+          "reference": "Student",
+          "required": true
+        },
+        {
+          "name": "courseId",
+          "type": "reference",
+          "reference": "Course",
+          "required": true
+        },
+        {
+          "name": "knowledgePointId",
+          "type": "reference",
+          "reference": "KnowledgePoint"
+        },
+        {
+          "name": "duration",
+          "type": "i32"
+        },
+        {
+          "name": "progress",
+          "type": "i32"
+        },
+        {
+          "name": "completedAt",
+          "type": "datetime"
+        }
+      ],
+      "states": [
+        {
+          "name": "started",
+          "initial": true
+        },
+        {
+          "name": "completed",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "started",
+          "to": "completed"
+        }
+      ],
+      "ownership": {
+        "field": "studentId",
+        "readAllPermission": "education.admin"
+      }
+    },
+    {
+      "name": "Question",
+      "fields": [
+        {
+          "name": "knowledgePointId",
+          "type": "reference",
+          "reference": "KnowledgePoint",
+          "required": true
+        },
+        {
+          "name": "type",
+          "type": "enum",
+          "values": [
+            "single",
+            "multiple",
+            "boolean"
+          ]
+        },
+        {
+          "name": "difficulty",
+          "type": "enum",
+          "values": [
+            "easy",
+            "medium",
+            "hard"
+          ]
+        },
+        {
+          "name": "stem",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "options",
+          "type": "text"
+        },
+        {
+          "name": "answer",
+          "type": "text"
+        },
+        {
+          "name": "explanation",
+          "type": "text"
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "archived",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "archived"
+        }
+      ]
+    },
+    {
+      "name": "Assessment",
+      "fields": [
+        {
+          "name": "courseId",
+          "type": "reference",
+          "reference": "Course",
+          "required": true
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "startAt",
+          "type": "datetime"
+        },
+        {
+          "name": "endAt",
+          "type": "datetime"
+        },
+        {
+          "name": "totalScore",
+          "type": "i32"
+        },
+        {
+          "name": "versionNo",
+          "type": "i32",
+          "default": 0
+        }
+      ],
+      "states": [
+        {
+          "name": "draft",
+          "initial": true
+        },
+        {
+          "name": "published"
+        },
+        {
+          "name": "inProgress"
+        },
+        {
+          "name": "closed"
+        },
+        {
+          "name": "graded",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "draft",
+          "to": "published"
+        },
+        {
+          "from": "published",
+          "to": "inProgress"
+        },
+        {
+          "from": "inProgress",
+          "to": "closed"
+        },
+        {
+          "from": "closed",
+          "to": "graded"
+        }
+      ]
+    },
+    {
+      "name": "AssessmentClass",
+      "fields": [
+        {
+          "name": "assessmentId",
+          "type": "reference",
+          "reference": "Assessment",
+          "required": true
+        },
+        {
+          "name": "classId",
+          "type": "reference",
+          "reference": "EducationClass",
+          "required": true
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "archived",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "archived"
+        }
+      ]
+    },
+    {
+      "name": "AssessmentQuestion",
+      "fields": [
+        {
+          "name": "assessmentId",
+          "type": "reference",
+          "reference": "Assessment",
+          "required": true
+        },
+        {
+          "name": "questionId",
+          "type": "reference",
+          "reference": "Question",
+          "required": true
+        },
+        {
+          "name": "score",
+          "type": "i32"
+        },
+        {
+          "name": "order",
+          "type": "i32"
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "archived",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "archived"
+        }
+      ]
+    },
+    {
+      "name": "Attempt",
+      "fields": [
+        {
+          "name": "assessmentId",
+          "type": "reference",
+          "reference": "Assessment",
+          "required": true
+        },
+        {
+          "name": "studentId",
+          "type": "text",
+          "reference": "Student",
+          "required": true
+        },
+        {
+          "name": "answers",
+          "type": "text"
+        },
+        {
+          "name": "aiScore",
+          "type": "decimal",
+          "precision": 6,
+          "scale": 2
+        },
+        {
+          "name": "humanScore",
+          "type": "decimal",
+          "precision": 6,
+          "scale": 2
+        }
+      ],
+      "states": [
+        {
+          "name": "inProgress",
+          "initial": true
+        },
+        {
+          "name": "submitted"
+        },
+        {
+          "name": "aiScored"
+        },
+        {
+          "name": "teacherConfirmed"
+        },
+        {
+          "name": "appealed"
+        },
+        {
+          "name": "final",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "inProgress",
+          "to": "submitted"
+        },
+        {
+          "from": "submitted",
+          "to": "aiScored"
+        },
+        {
+          "from": "aiScored",
+          "to": "teacherConfirmed"
+        },
+        {
+          "from": "teacherConfirmed",
+          "to": "appealed"
+        },
+        {
+          "from": "appealed",
+          "to": "final"
+        },
+        {
+          "from": "teacherConfirmed",
+          "to": "final"
+        }
+      ],
+      "ownership": {
+        "field": "studentId",
+        "readAllPermission": "education.admin"
+      }
+    },
+    {
+      "name": "WrongAnswer",
+      "fields": [
+        {
+          "name": "studentId",
+          "type": "text",
+          "reference": "Student",
+          "required": true
+        },
+        {
+          "name": "questionId",
+          "type": "reference",
+          "reference": "Question",
+          "required": true
+        },
+        {
+          "name": "attempts",
+          "type": "i32"
+        },
+        {
+          "name": "lastWrongAt",
+          "type": "datetime"
+        },
+        {
+          "name": "mastered",
+          "type": "boolean"
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "mastered",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "mastered"
+        }
+      ],
+      "ownership": {
+        "field": "studentId",
+        "readAllPermission": "education.admin"
+      }
+    },
+    {
+      "name": "Recommendation",
+      "fields": [
+        {
+          "name": "studentId",
+          "type": "text",
+          "reference": "Student",
+          "required": true
+        },
+        {
+          "name": "resourceKey",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "resourceId",
+          "type": "text"
+        },
+        {
+          "name": "reason",
+          "type": "text"
+        },
+        {
+          "name": "score",
+          "type": "decimal",
+          "precision": 6,
+          "scale": 2
+        },
+        {
+          "name": "source",
+          "type": "enum",
+          "values": [
+            "rule",
+            "tag",
+            "ai"
+          ]
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "dismissed",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "dismissed"
+        }
+      ],
+      "ownership": {
+        "field": "studentId",
+        "readAllPermission": "education.admin"
+      }
+    },
+    {
+      "name": "Badge",
+      "fields": [
+        {
+          "name": "key",
+          "type": "text",
+          "required": true,
+          "unique": true
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "criteria",
+          "type": "text"
+        },
+        {
+          "name": "icon",
+          "type": "asset",
+          "assetKind": "image"
+        }
+      ],
+      "states": [
+        {
+          "name": "active",
+          "initial": true
+        },
+        {
+          "name": "archived",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "to": "archived"
+        }
+      ]
+    },
+    {
+      "name": "StudentBadge",
+      "fields": [
+        {
+          "name": "studentId",
+          "type": "text",
+          "reference": "Student",
+          "required": true
+        },
+        {
+          "name": "badgeId",
+          "type": "reference",
+          "reference": "Badge",
+          "required": true
+        },
+        {
+          "name": "awardedAt",
+          "type": "datetime"
+        }
+      ],
+      "states": [
+        {
+          "name": "awarded",
+          "initial": true
+        },
+        {
+          "name": "revoked",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "awarded",
+          "to": "revoked"
+        }
+      ],
+      "ownership": {
+        "field": "studentId",
+        "readAllPermission": "education.admin"
+      }
+    },
+    {
+      "name": "CourseReview",
+      "fields": [
+        {
+          "name": "courseId",
+          "type": "reference",
+          "reference": "Course",
+          "required": true
+        },
+        {
+          "name": "studentId",
+          "type": "text",
+          "reference": "Student",
+          "required": true
+        },
+        {
+          "name": "contentScore",
+          "type": "i32"
+        },
+        {
+          "name": "videoScore",
+          "type": "i32"
+        },
+        {
+          "name": "clarityScore",
+          "type": "i32"
+        },
+        {
+          "name": "comment",
+          "type": "text"
+        }
+      ],
+      "states": [
+        {
+          "name": "pending",
+          "initial": true
+        },
+        {
+          "name": "published"
+        },
+        {
+          "name": "hidden",
+          "final": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "pending",
+          "to": "published"
+        },
+        {
+          "from": "published",
+          "to": "hidden"
+        }
+      ],
+      "ownership": {
+        "field": "studentId",
+        "readAllPermission": "education.admin"
+      }
+    }
+  ]
+}

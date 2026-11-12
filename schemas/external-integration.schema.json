@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapbase.local/schemas/external-integration.schema.json",
+  "title": "External Integration Connector",
+  "type": "object",
+  "$defs": {
+    "connector": {
+      "type": "object",
+      "required": ["organizationId", "key", "name", "type", "config"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "appInstallationId": { "type": ["string", "null"], "format": "uuid" },
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9._-]*$" },
+        "name": { "type": "string" },
+        "type": { "enum": ["rest", "webhook", "database"] },
+        "config": { "type": "object" },
+        "secretRef": { "type": ["string", "null"] },
+        "status": { "enum": ["active", "disabled"] },
+        "version": { "type": "integer", "minimum": 1 },
+        "createdBy": { "type": ["string", "null"], "format": "uuid" }
+      },
+      "additionalProperties": false
+    },
+    "outboundMessage": {
+      "type": "object",
+      "required": ["organizationId", "connectorId", "eventType", "payload", "idempotencyKey"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "connectorId": { "type": "string", "format": "uuid" },
+        "eventType": { "type": "string" },
+        "payload": { "type": "object" },
+        "idempotencyKey": { "type": "string", "maxLength": 128 },
+        "status": { "enum": ["queued", "sending", "succeeded", "failed", "dead"] },
+        "attempts": { "type": "integer", "minimum": 0 },
+        "maxAttempts": { "type": "integer", "minimum": 1 },
+        "lastError": { "type": ["string", "null"] },
+        "responseStatus": { "type": ["integer", "null"] },
+        "responseBody": { "type": ["string", "null"] },
+        "nextAttemptAt": { "type": ["string", "null"], "format": "date-time" },
+        "deadAt": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "webhookEndpoint": {
+      "type": "object",
+      "required": ["organizationId", "key", "name", "secretRef"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "key": { "type": "string" },
+        "name": { "type": "string" },
+        "secretRef": { "type": "string" },
+        "eventType": { "type": "string" },
+        "mapping": { "type": "object" },
+        "allowedIps": { "type": "array", "items": { "type": "string" } },
+        "status": { "enum": ["active", "disabled"] }
+      },
+      "additionalProperties": false
+    },
+    "webhookEvent": {
+      "type": "object",
+      "required": ["organizationId", "endpointId", "eventId", "payloadHash", "payload"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "endpointId": { "type": "string", "format": "uuid" },
+        "eventId": { "type": "string", "maxLength": 128 },
+        "payloadHash": { "type": "string" },
+        "payload": { "type": "object" },
+        "status": { "enum": ["received", "processed", "failed", "duplicate", "dead"] },
+        "error": { "type": ["string", "null"] },
+        "receivedAt": { "type": "string", "format": "date-time" },
+        "processedAt": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "dataSource": {
+      "type": "object",
+      "required": ["organizationId", "key", "name", "dbType", "host", "database", "secretRef"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "key": { "type": "string" },
+        "name": { "type": "string" },
+        "dbType": { "enum": ["postgres", "mysql", "mssql", "oracle"] },
+        "host": { "type": "string" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "database": { "type": "string" },
+        "ssl": { "type": "boolean" },
+        "secretRef": { "type": "string" },
+        "allowlist": { "type": "array", "items": { "type": "string" } },
+        "status": { "enum": ["active", "disabled"] }
+      },
+      "additionalProperties": false
+    },
+    "syncJob": {
+      "type": "object",
+      "required": ["organizationId", "dataSourceId", "key", "name", "queryTemplate", "targetResourceKey"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "dataSourceId": { "type": "string", "format": "uuid" },
+        "key": { "type": "string" },
+        "name": { "type": "string" },
+        "queryTemplate": { "type": "string" },
+        "queryParams": { "type": "object" },
+        "fieldMapping": { "type": "object" },
+        "targetResourceKey": { "type": "string" },
+        "mode": { "enum": ["full", "incremental"] },
+        "cursorField": { "type": ["string", "null"] },
+        "watermark": { "type": ["string", "null"] },
+        "batchSize": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "schedule": { "type": ["string", "null"] },
+        "status": { "enum": ["active", "disabled"] }
+      },
+      "additionalProperties": false
+    },
+    "syncRun": {
+      "type": "object",
+      "required": ["organizationId", "jobId", "status"],
+      "properties": {
+        "organizationId": { "type": "string", "format": "uuid" },
+        "jobId": { "type": "string", "format": "uuid" },
+        "status": { "enum": ["queued", "running", "succeeded", "partial", "failed", "cancelled"] },
+        "rowsRead": { "type": "integer", "minimum": 0 },
+        "rowsWritten": { "type": "integer", "minimum": 0 },
+        "rowsFailed": { "type": "integer", "minimum": 0 },
+        "watermarkBefore": { "type": ["string", "null"] },
+        "watermarkAfter": { "type": ["string", "null"] },
+        "diff": { "type": ["object", "null"] },
+        "error": { "type": ["string", "null"] },
+        "importRunId": { "type": ["string", "null"], "format": "uuid" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "connector": { "$ref": "#/$defs/connector" },
+    "outboundMessage": { "$ref": "#/$defs/outboundMessage" },
+    "webhookEndpoint": { "$ref": "#/$defs/webhookEndpoint" },
+    "webhookEvent": { "$ref": "#/$defs/webhookEvent" },
+    "dataSource": { "$ref": "#/$defs/dataSource" },
+    "syncJob": { "$ref": "#/$defs/syncJob" },
+    "syncRun": { "$ref": "#/$defs/syncRun" }
+  },
+  "additionalProperties": false
+}

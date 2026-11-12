@@ -70,6 +70,13 @@ const DIRECT_TABLES = [
   'import_runs',
   'export_runs',
   'import_mappings',
+  'integration_connectors',
+  'outbound_messages',
+  'webhook_endpoints',
+  'webhook_events',
+  'data_sources',
+  'data_sync_jobs',
+  'data_sync_runs',
   'asset_variants',
   'asset_upload_sessions',
 ] as const

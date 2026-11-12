@@ -311,3 +311,39 @@ For API documentation issues:
 
 权限：`imports:read|manage`、`exports:read|manage`；异步任务需要
 `job:bulk.import:create` / `job:bulk.export:create`（或 `jobs:manage`）。
+
+## External Integration
+
+权限：`integrations:read` / `integrations:manage`；凭证只存 `secretRef`（如 `env:MY_SECRET`），
+响应脱敏。
+
+连接器：
+
+- `GET/POST /api/integrations/connectors`
+- `PATCH/DELETE /api/integrations/connectors/:id`
+- `POST /api/integrations/connectors/:id/test`
+- `POST /api/integrations/connectors/:id/messages` — `{ eventType, payload, idempotencyKey }`
+
+出站/Webhook：
+
+- `GET /api/integrations/outbound` / `GET /api/integrations/outbound/:id`
+- `POST /api/integrations/outbound/:id/replay`
+- `GET/POST /api/integrations/webhooks`
+- `POST /api/integrations/webhooks/:organizationId/:key` — 公共入站，HMAC 头
+  `x-signature`/`x-timestamp`/`x-event-id`
+- `GET /api/integrations/webhook-events` / `POST /api/integrations/webhook-events/:id/replay`
+
+数据库同步：
+
+- `GET/POST /api/integrations/data-sources` / `POST /api/integrations/data-sources/:id/test`
+- `GET/POST /api/integrations/sync-jobs` / `POST /api/integrations/sync-jobs/:id/run`
+- `GET /api/integrations/sync-runs?jobId=...`
+- 查询模板白名单：`students_incremental` / `students_count` / `departments_incremental`
+
+外部身份：
+
+- `GET /api/integrations/external/whoami` — 服务令牌头
+  `X-Organization-Id` / `X-Service-Key` / `X-Service-Secret`，scope `integrations.read`
+- `GET /api/integrations/external/records/:packageId/:entity` — 额外 `X-On-Behalf-Of`，
+  服务端重新解析用户权限/数据范围
+- `GET /api/integrations/metrics` — 出站成功率/DLQ/同步行数/差异

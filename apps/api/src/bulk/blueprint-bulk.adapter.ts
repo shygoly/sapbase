@@ -161,7 +161,11 @@ export class BlueprintBulkAdapter implements ImportAdapter, ExportAdapter {
   ): Promise<ImportWriteResult> {
     const parsed = parseResourceKey(ctx.resourceKey)
     if (!parsed) throw new BadRequestException(`非法 Blueprint 资源键：${ctx.resourceKey}`)
-    const actor: RuntimeActor = { id: ctx.actor.id, permissions: ctx.actor.permissions }
+    const actor: RuntimeActor = {
+      id: ctx.actor.id,
+      role: ctx.actor.role ?? null,
+      permissions: ctx.actor.permissions,
+    }
     const result = await this.runtime.importBatch(
       parsed.packageId,
       parsed.entity,
@@ -190,7 +194,11 @@ export class BlueprintBulkAdapter implements ImportAdapter, ExportAdapter {
   async exportPage(ctx: AdapterContext, query: ExportQuery): Promise<ExportPage> {
     const parsed = parseResourceKey(ctx.resourceKey)
     if (!parsed) throw new BadRequestException(`非法 Blueprint 资源键：${ctx.resourceKey}`)
-    const actor: RuntimeActor = { id: ctx.actor.id, permissions: ctx.actor.permissions }
+    const actor: RuntimeActor = {
+      id: ctx.actor.id,
+      role: ctx.actor.role ?? null,
+      permissions: ctx.actor.permissions,
+    }
     const state =
       query.filter && typeof query.filter.state === 'string'
         ? String(query.filter.state)

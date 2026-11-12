@@ -926,3 +926,36 @@ P2 的 `required` → DB `CHECK (… IS NOT NULL)` 会在「升级加了一个�
   新框架独立入口，迁移逐步进行。
 
 真源：`apps/api/src/bulk/`、`DOMAIN.md`「批量导入导出」、`INV-IE-01..05`。
+
+## 16. 资产字段（`asset`）
+
+语义层字段类型新增 `asset`，用于课程封面、素材、作业附件等：
+
+```json
+{ "name": "cover", "type": "asset", "assetKind": "image", "required": false }
+```
+
+- `assetKind` 必须是 `image|video|audio|document|archive|other` 之一；编译器拒绝缺失/非法值。
+- 写入只接受同组织、`status=ready` 且 kind 匹配的 assetId；跨组织/未 ready/kind 不符拒绝。
+- 读取把 assetId 解析为 `{id,kind,status,mimeType,size,width,height,durationMs,pageCount,url,variants}`；
+  缺失资产返回 `status=missing`，不让整条记录 500。
+- 字段读权限与业务记录权限/数据范围仍先生效；签名 URL 短时有效。
+- 旧 `text` URL 字段保持可读；新实体优先使用 `asset`。
+
+真源：`libs/platform-core/src/assets/`、`schemas/asset-pipeline.schema.json`、`INV-AS-01..05`。
+
+## 17. 教育参考蓝图（Education Reference Blueprint）
+
+`templates/education/` 是首个垂直参考包，只使用平台通用能力，不新增教育专用平台表：
+
+- `semantic.json`：课程/章节/知识点/素材、班级/学生、教学任务/学习记录、
+  题库/测评/作答/错题、推荐/徽章/评价；`Chapter` 声明 tree，`Student/Class` 声明 dataScope。
+- `flows.json` / `rules.json`：课程/任务/测评发布审批；课程、测评、AI 分校验。
+- `ui.json` / `permissions.json`：教师/学生/管理员页面、菜单、角色/资源/动作。
+- `agents.json`：`edu-outline`、`edu-knowledge-extract`、`edu-question-gen`、
+  `edu-script-storyboard`、`edu-tutoring`、`edu-teaching-advice`、`edu-review`；
+  写操作 `confirmWrites=true`，工具只经平台工具面。
+- 导入/导出/指标/看板/预警/AI 治理复用平台通用模块；客户定制只改 Config 层。
+
+安装：`POST /api/blueprints/education/deliver`（授权租户+签名）→
+`POST /api/blueprints/education-<version>/load`。开发期可用未签名豁免，生产必须验签。

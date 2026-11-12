@@ -1,0 +1,284 @@
+{
+  "ui": "blueprint-ui/v1",
+  "pages": [
+    {
+      "identifier": "CourseList",
+      "type": "list",
+      "entity": "Course",
+      "label": "课程建设",
+      "route": "/education/courses",
+      "fields": [
+        "title",
+        "major",
+        "versionNo"
+      ]
+    },
+    {
+      "identifier": "CourseForm",
+      "type": "form",
+      "entity": "Course",
+      "label": "课程编辑",
+      "route": "/education/courses/new",
+      "fields": [
+        "title",
+        "intro",
+        "cover",
+        "major",
+        "tags"
+      ]
+    },
+    {
+      "identifier": "CourseDetail",
+      "type": "detail",
+      "entity": "Course",
+      "label": "课程详情",
+      "route": "/education/courses/:id",
+      "fields": [
+        "title",
+        "intro",
+        "cover",
+        "major",
+        "tags",
+        "versionNo"
+      ]
+    },
+    {
+      "identifier": "ChapterList",
+      "type": "list",
+      "entity": "Chapter",
+      "label": "章节",
+      "route": "/education/chapters",
+      "fields": [
+        "title",
+        "sortOrder"
+      ]
+    },
+    {
+      "identifier": "KnowledgePointList",
+      "type": "list",
+      "entity": "KnowledgePoint",
+      "label": "知识点",
+      "route": "/education/knowledge-points",
+      "fields": [
+        "title",
+        "difficulty",
+        "sortOrder"
+      ]
+    },
+    {
+      "identifier": "MaterialList",
+      "type": "list",
+      "entity": "Material",
+      "label": "素材",
+      "route": "/education/materials",
+      "fields": [
+        "title",
+        "materialKind",
+        "assetId"
+      ]
+    },
+    {
+      "identifier": "ClassList",
+      "type": "list",
+      "entity": "EducationClass",
+      "label": "班级",
+      "route": "/education/classes",
+      "fields": [
+        "name",
+        "major",
+        "studentCount"
+      ]
+    },
+    {
+      "identifier": "StudentList",
+      "type": "list",
+      "entity": "Student",
+      "label": "学生",
+      "route": "/education/students",
+      "fields": [
+        "name",
+        "studentNo",
+        "classId",
+        "status"
+      ]
+    },
+    {
+      "identifier": "TeachingTaskList",
+      "type": "list",
+      "entity": "TeachingTask",
+      "label": "教学任务",
+      "route": "/education/tasks",
+      "fields": [
+        "title",
+        "type",
+        "startAt",
+        "endAt"
+      ]
+    },
+    {
+      "identifier": "LearningRecordList",
+      "type": "list",
+      "entity": "LearningRecord",
+      "label": "学习记录",
+      "route": "/education/learning-records",
+      "fields": [
+        "studentId",
+        "courseId",
+        "duration",
+        "progress"
+      ]
+    },
+    {
+      "identifier": "QuestionList",
+      "type": "list",
+      "entity": "Question",
+      "label": "题库",
+      "route": "/education/questions",
+      "fields": [
+        "stem",
+        "type",
+        "difficulty"
+      ]
+    },
+    {
+      "identifier": "AssessmentList",
+      "type": "list",
+      "entity": "Assessment",
+      "label": "测评",
+      "route": "/education/assessments",
+      "fields": [
+        "title",
+        "startAt",
+        "endAt",
+        "totalScore"
+      ]
+    },
+    {
+      "identifier": "AttemptList",
+      "type": "list",
+      "entity": "Attempt",
+      "label": "作答",
+      "route": "/education/attempts",
+      "fields": [
+        "assessmentId",
+        "studentId",
+        "aiScore",
+        "humanScore"
+      ]
+    },
+    {
+      "identifier": "WrongAnswerList",
+      "type": "list",
+      "entity": "WrongAnswer",
+      "label": "错题本",
+      "route": "/education/wrong-answers",
+      "fields": [
+        "studentId",
+        "questionId",
+        "attempts",
+        "mastered"
+      ]
+    },
+    {
+      "identifier": "RecommendationList",
+      "type": "list",
+      "entity": "Recommendation",
+      "label": "推荐",
+      "route": "/education/recommendations",
+      "fields": [
+        "studentId",
+        "resourceKey",
+        "reason",
+        "score"
+      ]
+    },
+    {
+      "identifier": "BadgeList",
+      "type": "list",
+      "entity": "Badge",
+      "label": "徽章",
+      "route": "/education/badges",
+      "fields": [
+        "key",
+        "name",
+        "criteria"
+      ]
+    },
+    {
+      "identifier": "CourseReviewList",
+      "type": "list",
+      "entity": "CourseReview",
+      "label": "课程评价",
+      "route": "/education/reviews",
+      "fields": [
+        "courseId",
+        "studentId",
+        "contentScore",
+        "videoScore",
+        "clarityScore"
+      ]
+    }
+  ],
+  "menus": [
+    {
+      "identifier": "education-teacher",
+      "label": "教师工作台",
+      "path": "/education/teacher",
+      "icon": "book",
+      "order": 1,
+      "permissions": [
+        "education.course.read"
+      ]
+    },
+    {
+      "identifier": "education-courses",
+      "label": "课程建设",
+      "path": "/education/courses",
+      "icon": "book",
+      "order": 2,
+      "permissions": [
+        "education.course.read"
+      ]
+    },
+    {
+      "identifier": "education-classes",
+      "label": "教学运营",
+      "path": "/education/classes",
+      "icon": "users",
+      "order": 3,
+      "permissions": [
+        "education.class.read"
+      ]
+    },
+    {
+      "identifier": "education-assessments",
+      "label": "测评",
+      "path": "/education/assessments",
+      "icon": "clipboard",
+      "order": 4,
+      "permissions": [
+        "education.assessment.read"
+      ]
+    },
+    {
+      "identifier": "education-analytics",
+      "label": "学情看板",
+      "path": "/education/analytics",
+      "icon": "chart",
+      "order": 5,
+      "permissions": [
+        "education.analytics.read"
+      ]
+    },
+    {
+      "identifier": "education-student",
+      "label": "学习中心",
+      "path": "/education/student",
+      "icon": "graduation",
+      "order": 6,
+      "permissions": [
+        "education.course.read"
+      ]
+    }
+  ]
+}

@@ -1280,7 +1280,10 @@
         "isPublic",
         "retentionUntil",
         "deletedAt",
-        "createdBy"
+        "createdBy",
+        "provider",
+        "scanStatus",
+        "tags"
       ]
     },
     "asset_variants": {
@@ -1296,7 +1299,10 @@
         "size",
         "width",
         "height",
-        "metadata"
+        "metadata",
+        "provider",
+        "status",
+        "bitrate"
       ]
     },
     "asset_upload_sessions": {
@@ -1314,7 +1320,8 @@
         "status",
         "parts",
         "expiresAt",
-        "completedAt"
+        "completedAt",
+        "metadata"
       ]
     },
     "notification_preferences": {
@@ -1826,6 +1833,143 @@
         "name",
         "mapping",
         "createdBy"
+      ]
+    },
+    "integration_connectors": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appInstallationId",
+        "key",
+        "name",
+        "type",
+        "config",
+        "secretRef",
+        "status",
+        "version",
+        "lastTestedAt",
+        "lastTestStatus",
+        "metadata",
+        "createdBy"
+      ]
+    },
+    "outbound_messages": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "connectorId",
+        "eventType",
+        "payload",
+        "idempotencyKey",
+        "status",
+        "attempts",
+        "maxAttempts",
+        "lastError",
+        "responseStatus",
+        "responseBody",
+        "nextAttemptAt",
+        "deadAt",
+        "createdBy"
+      ]
+    },
+    "webhook_endpoints": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "key",
+        "name",
+        "secretRef",
+        "eventType",
+        "mapping",
+        "allowedIps",
+        "status",
+        "createdBy"
+      ]
+    },
+    "webhook_events": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "endpointId",
+        "eventId",
+        "payloadHash",
+        "payload",
+        "status",
+        "error",
+        "receivedAt",
+        "processedAt"
+      ]
+    },
+    "data_sources": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "key",
+        "name",
+        "dbType",
+        "host",
+        "port",
+        "database",
+        "ssl",
+        "secretRef",
+        "allowlist",
+        "status",
+        "lastTestedAt",
+        "lastTestStatus",
+        "createdBy"
+      ]
+    },
+    "data_sync_jobs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "dataSourceId",
+        "key",
+        "name",
+        "queryTemplate",
+        "queryParams",
+        "fieldMapping",
+        "targetResourceKey",
+        "mode",
+        "cursorField",
+        "watermark",
+        "batchSize",
+        "schedule",
+        "status",
+        "lastRunAt",
+        "createdBy"
+      ]
+    },
+    "data_sync_runs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "jobId",
+        "status",
+        "rowsRead",
+        "rowsWritten",
+        "rowsFailed",
+        "watermarkBefore",
+        "watermarkAfter",
+        "diff",
+        "error",
+        "importRunId",
+        "startedAt",
+        "finishedAt"
       ]
     }
   }

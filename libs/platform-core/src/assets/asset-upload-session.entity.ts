@@ -29,6 +29,9 @@ export class AssetUploadSession extends TenantAwareEntity {
   @Column({ type: 'jsonb', nullable: true })
   parts: Array<{ partNumber: number; etag: string; size: number }> | null
 
+  @Column({ type: 'jsonb', nullable: true })
+  metadata: Record<string, unknown> | null
+
   @Column({ type: 'timestamptz' })
   expiresAt: Date
 

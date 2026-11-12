@@ -12,6 +12,7 @@ export interface SemanticField {
   type: string
   required?: boolean
   reference?: string
+  assetKind?: 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other'
   unique?: boolean
   /** 声明式查询索引候选；不改变校验语义。 */
   indexed?: boolean
@@ -144,6 +145,7 @@ function typeMatches(field: SemanticField, value: unknown): boolean {
     case 'i32':
       return Number.isInteger(value) && (value as number) >= I32_MIN && (value as number) <= I32_MAX
     case 'reference':
+    case 'asset':
       return typeof value === 'string' && value.length > 0
     default:
       return false

@@ -20,6 +20,7 @@ export interface RecordRow {
   id: string
   organizationId: string
   blueprintId: string
+  blueprintVersion: string
   entity: string
   data: Record<string, unknown>
   state: string | null
@@ -117,12 +118,13 @@ export class RecordLifecycleService {
         const newId = idMap.get(row.id) as string
         await manager.query(
           `INSERT INTO public.blueprint_records
-             (id, "createdAt", "updatedAt", "organizationId", "blueprintId", entity, data, state, version)
-           VALUES ($1, now(), now(), $2, $3, $4, $5::jsonb, $6, 1)`,
+             (id, "createdAt", "updatedAt", "organizationId", "blueprintId", "blueprintVersion", entity, data, state, version)
+           VALUES ($1, now(), now(), $2, $3, $4, $5, $6::jsonb, $7, 1)`,
           [
             newId,
             input.organizationId,
             root.blueprintId,
+            root.blueprintVersion,
             input.entity,
             JSON.stringify(data),
             row.state,

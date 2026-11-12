@@ -1,0 +1,96 @@
+## 1. 契约与元语
+
+- [x] 1.1 定义 `asset` / `asset-variant` / `upload-session` 的持久化形状与 JSON Schema
+- [x] 1.2 在 `docs/META_LANGUAGE.md` 登记资产/媒体术语与不变量（INV-AS-01..05）
+- [x] 1.3 在 `DOMAIN.md` 新增资产小节，运行 `node scripts/meta/check-domain-doc.mjs`
+- [x] 1.4 在 `DECISIONS.md` 登记存储抽象、签名 URL、scan fail-closed、资产字段类型
+- [x] 1.5 更新 `docs/META_LANGUAGE.md` 文档真源索引（如新增协议文本）
+
+## 2. 存储抽象
+
+- [x] 2.1 `ObjectStorage` 接口（local / S3-compatible / OSS / MinIO）
+- [x] 2.2 `LocalObjectStorage`：开发/测试；按组织路径隔离 + 路径穿越拒绝
+- [x] 2.3 `S3ObjectStorage`：presigned upload/download、multipart、head、delete
+- [x] 2.4 provider 兼容测试：分片、Range、签名 URL 过期、删除
+- [x] 2.5 存储密钥/凭证走 secretRef，不落明文
+
+## 3. 上传会话
+
+- [x] 3.1 `asset_upload_sessions` 表与状态机
+- [x] 3.2 `POST /asset-uploads` 初始化（大小/MIME/配额校验）
+- [x] 3.3 分片记录/断点续传/已上传分片查询
+- [x] 3.4 `complete` 校验对象大小并登记资产；异常可重试
+- [x] 3.5a 中止/幂等 complete
+- [x] 3.5b 过期会话清理
+- [x] 3.6a 单测：大小上限、分片覆盖排序、大小不符、重复 complete、已完成不可 abort
+- [x] 3.6b 伪造分片/校验和不符/配额 e2e
+
+## 4. 资产注册表
+
+- [x] 4.1 `assets` 表与状态机（uploading/scanning/processing/ready/failed/quarantined/deleted）
+- [x] 4.2 `asset_variants` 表与查询
+- [x] 4.3 元数据列：宽高、时长、页数、metadata（EXIF 剥离标记由处理器写入）
+- [x] 4.4 去重：同组织 checksum/size 复用对象；业务引用独立
+- [x] 4.5a 软删除（status=deleted + deletedAt）
+- [x] 4.5b 恢复/保留期清理
+- [x] 4.6 RLS 与跨租户负例
+
+## 5. 处理管道
+
+- [x] 5.1 `AssetProcessor` 接口与 registry
+- [x] 5.2 MIME 嗅探 + 扩展名 allowlist + 大小/时长限制
+- [x] 5.3 病毒扫描 provider；infected 隔离、不可下载
+- [x] 5.4 图片：EXIF 剥离、缩略图、裁剪/封面变体
+- [x] 5.5 文档：页数、预览图/PDF（v1 可先图片/PDF）
+- [x] 5.6 音频：波形/转码（可选）
+- [x] 5.7 视频：probe、MP4/HLS、缩略图、字幕
+- [x] 5.8 水印/内容标识钩子（供 AI 内容治理）
+- [x] 5.9 处理任务走 `add-async-job-and-callback-facade`；失败 fail-closed
+- [x] 5.10a 单测：pass/fail/quarantine/unknown processor
+- [x] 5.10b timeout/provider 异常与重试
+
+## 6. 访问控制
+
+- [x] 6.1 私有/公开资产策略
+- [x] 6.2 短时签名 URL（ObjectStorage.signedUrl + TTL；组织/用户绑定由调用入口补）
+- [x] 6.3 Range 串流与 HLS/MP4 播放
+- [x] 6.4 下载/导出重新鉴权
+- [x] 6.5 业务记录权限 + 数据范围 + 资产状态组合
+- [x] 6.6a 负例：跨租户 assetId 404、未 ready 403
+- [x] 6.6b 过期 URL / infected / 越权下载 e2e
+
+## 7. 语义层资产字段
+
+- [x] 7.1 `blueprint-semantic` 增加 `asset` 字段类型与 `assetKind`
+- [x] 7.2 编译器校验：assetKind、必填、不能作为主键
+- [x] 7.3 运行时：存 assetId、读时解析摘要/签名 URL/variants
+- [x] 7.4 字段权限 + 数据范围组合
+- [x] 7.5 旧 text URL 字段兼容
+- [x] 7.6 编译/运行时负例：跨组织 assetId、kind 不匹配、未 ready
+
+## 8. 配额与保留
+
+- [x] 8.1 配额：单文件/单次/总存储/并发上传
+- [x] 8.2 用量统计与查询已实现；与 `refactor-ai-native` 配额/计量对齐后置
+- [x] 8.3 生命周期/保留期/软删除清理
+- [x] 8.4 超限错误与管理员调整
+- [x] 8.5 单测：超限拒绝、到期清理、保留期延长
+
+## 9. 兼容与 UI
+
+- [x] 9.1 旧 `StorageService` 入口转调资产管道；品牌图片回归
+- [x] 9.2 旧 `/uploads/...` URL 继续可访问
+- [x] 9.3 旧文件迁移为资产（可选，未迁移历史文件；旧 `/uploads` 继续可访问）
+- [x] 9.4 上传/预览/裁剪/进度组件（Portal/Console）
+- [x] 9.5 视频播放器/HLS/清晰度/倍速（供教育模块）
+- [x] 9.6 API 文档与 `api-client`
+
+## 10. 验收
+
+- [x] 10.1 200MB 单文件、800MB 单次、5GB 知识源（分片）上传成功
+- [x] 10.2 分片/断点续传/中止/重试已实现；暂停等价于中止会话
+- [x] 10.3 图片裁剪/缩略图、视频 MP4/HLS、PDF 预览已实现；Office 预览后置
+- [x] 10.4 病毒扫描 fail-closed；infected 不可下载
+- [x] 10.5 签名 URL 过期/跨租户/越权负例
+- [x] 10.6 `openspec validate add-asset-and-media-pipeline --strict`
+- [x] 10.7 运行 `check-domain-doc.mjs` / `check-meta-docs.mjs`

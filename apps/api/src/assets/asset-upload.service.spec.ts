@@ -29,6 +29,7 @@ function repo(rows: any[] = []) {
 function assets(existing: any = null) {
   return {
     findByObjectKey: jest.fn(async () => existing),
+    assertUploadAllowed: jest.fn(async () => undefined),
     create: jest.fn(async (_org, input) => ({ id: 'asset-1', ...input })),
     totalSize: jest.fn(async () => 0),
   }
@@ -38,6 +39,8 @@ function storage(head: any = { size: 5, checksum: 'c1' }) {
   return {
     signedUrl: jest.fn(async () => 'https://storage/upload'),
     head: jest.fn(async () => head),
+    getRange: jest.fn(async () => Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
+    get: jest.fn(async () => Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
   }
 }
 
@@ -76,7 +79,7 @@ describe('AssetUploadService', () => {
         id: 's1',
         organizationId: 'org-1',
         objectKey: 'org/org-1/a',
-        originalName: 'a',
+        originalName: 'a.png',
         mimeType: 'image/png',
         expectedSize: '5',
         status: 'uploading',
@@ -98,7 +101,7 @@ describe('AssetUploadService', () => {
         id: 's1',
         organizationId: 'org-1',
         objectKey: 'org/org-1/a',
-        originalName: 'a',
+        originalName: 'a.png',
         mimeType: 'image/png',
         expectedSize: '5',
         status: 'uploading',
