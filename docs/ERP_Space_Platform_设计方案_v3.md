@@ -1094,8 +1094,8 @@ Template Signature Verify
 | AI 模块定义（≈Space Orchestrator 雏形） | `apps/api/src/ai-modules/{ai-module,ai-module-definition,ai-module-review,definition-step-prompts,step3-stateflow.schema,step3-normalizer}` | 固定步骤生成，非 Delta 闭环 |
 | Workflow Engine | `apps/api/src/workflows/{transition-engine,workflow-guard-ai,workflow-history,workflow-auto-transition.job,entity-state-updater.registry}`、`openspec/changes/add-workflow-engine` | 较成熟 |
 | 审计 | `apps/api/src/audit-logs/*`、`shared-schemas/src/v1/audit-log.ts` | 有审计，非不可篡改事件溯源 |
-| 多租户 | `openspec/changes/migrate-to-saas-architecture`（45/75） | 进行中 |
-| 全系统生成与部署 | `openspec/changes/add-full-system-generation-and-deploy` | 进行中，是 Blueprint → 运行的最近路径 |
+| 多租户 | `openspec/changes/archive/2026-11-12-migrate-to-saas-architecture` | 已归档（组织/成员/邀请/RLS/活动日志；Stripe 真实密钥待现场） |
+| 全系统生成与部署 | `docs/architecture/full-system-export-decision.md` | 已收敛为可选 licensed source export；默认是签名 Blueprint Release + Runtime |
 
 ### 14.2 差距与建议动作
 
@@ -1133,6 +1133,28 @@ Template Signature Verify
 ```
 
 三条路径可以并行，但**路径 A 必须先于 B、C 冻结**，否则后续全部返工。
+
+---
+
+### 14.4 多应用平台对齐（2026-11 批准方向）
+
+原 v3 的“单 ERP + 模块”模型升级为**组织 → 应用安装**：
+
+```text
+Organization（客户/计费/成员边界）
+  └─ AppInstallation（erp / crm / education / ...）
+       ├─ Blueprint release digest + deployment profile
+       ├─ app-scoped roles / permissions / menus / branding
+       ├─ entitlement + usage metering
+       └─ 显式跨应用 data capability（如 ERP customer.lookup → CRM）
+```
+
+- 应用导航/路由由安装的 Blueprint `ui.json` 解析，shell 不再硬编码业务路由。
+- 私有 `blueprint_records` 按应用隔离；跨应用读取只能走发布方的
+  `app_capabilities`，返回声明投影。
+- 同一 Runtime artifact 支持 shared SaaS / dedicated SaaS / standalone 三种剖面。
+- 源码生成不是默认交付；见 [full-system-export-decision.md](./architecture/full-system-export-decision.md)。
+- 现有 ERP/shipping 页面作为第一个应用迁移，不是平台 shell 的一部分。
 
 ---
 

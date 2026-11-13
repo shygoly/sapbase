@@ -68,10 +68,10 @@
 - [x] 7.1a Update `docs/META_LANGUAGE.md` with Business App and app-context terms
 - [ ] 7.1b Add Agent Runtime terms after that runtime contract is implemented
 - [x] 7.2 Update `openspec/project.md` product definition from ERP-only to business-app platform
-- [ ] 7.3 Update `docs/ERP_Space_Platform_设计方案_v3.md` with the approved multi-app architecture
-- [ ] 7.4 Reconcile `add-full-system-generation-and-deploy` with the optional export decision
+- [x] 7.3 Update `docs/ERP_Space_Platform_设计方案_v3.md` with the approved multi-app architecture（新增 14.4 + 更新多租户/源码导出状态）
+- [x] 7.4 Reconcile `add-full-system-generation-and-deploy` with the optional export decision（归档 change 加 reconciliation；新增 full-system-export-decision.md）
 - [x] 7.5 Reconcile `migrate-to-saas-architecture` with RLS and app-aware tenancy（已归档；`docs/guides/saas-migration.md` / DOMAIN 对账）
-- [ ] 7.6 Document the OpenClaw/Agent Host adapter boundary and non-goals
+- [x] 7.6 Document the OpenClaw/Agent Host adapter boundary and non-goals（`docs/agent-host.md` 增加 Non-goals；piagent 14.2 已存在）
 
 ## Implementation Evidence
 

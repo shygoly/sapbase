@@ -53,3 +53,15 @@ Agent Host 是可选的外置/内嵌执行宿主（如 OpenClaw）。它只提�
 - [ ] `contracts/mcp-tools.json` 由契约生成，CI 三方对拍通过。
 - [ ] `AGENT_SKILL_ALLOWLIST` 已配置，digest 校验生效。
 - [ ] 宿主不可用时 Web SSE 可用。
+
+## 7. Non-goals
+
+Agent Host **不拥有**以下能力，也不应尝试实现：
+
+- 工具白名单、确认令牌签发/消费、审计裁决权（归平台 Registry/Policy）。
+- 业务事实、金额计算、状态迁移、审批结论（归确定性业务 Runtime）。
+- 直接访问业务数据库、任意 SQL、任意 shell/文件系统。
+- 跨租户/跨应用旁路；宿主上下文只经平台 `_meta.contextId` 按引用传递。
+- 运行时自动安装/激活 skill，或把 untrusted 外部内容写入可信知识。
+- 取代 Web SSE/内嵌 direct 通道；宿主不可用时必须降级而不是停摆。
+- 自建第二份 MCP 工具清单；`contracts/mcp-tools.json` 是唯一投影。

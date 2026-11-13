@@ -1,5 +1,10 @@
 # Change: Full System Generation and Deploy
 
+> **Reconciliation 2026-11（7.4）**：本 change 不再是 Blueprint → 运行的主路径。
+> 默认交付改为签名 Blueprint Release + Runtime；源码生成只保留为**可选、受许可约束**的
+> source export。权限/审计边界保留，但真实生成器与部署流水线仍需独立授权。
+> 决策见 [`docs/architecture/full-system-export-decision.md`](../../../docs/architecture/full-system-export-decision.md)。
+>
 > Status: SUPERSEDED by add-dsl-management-and-display on 2026-11-10. Do not apply.
 > Historical: code generation and `generate-system` were removed; DSL viewing/management is the current direction.
 
