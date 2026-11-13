@@ -40,6 +40,7 @@ export class AgentLongTaskJobService implements OnModuleInit {
           conversationId: { type: 'string' },
           appKey: { type: 'string' },
           appInstallationId: { type: 'string' },
+          agentInstanceId: { type: 'string' },
           screenContext: { type: 'object' },
         },
         additionalProperties: false,
@@ -66,6 +67,9 @@ export class AgentLongTaskJobService implements OnModuleInit {
           appKey: payload.appKey ? String(payload.appKey) : undefined,
           appInstallationId: payload.appInstallationId
             ? String(payload.appInstallationId)
+            : undefined,
+          agentInstanceId: payload.agentInstanceId
+            ? String(payload.agentInstanceId)
             : undefined,
           conversationId: payload.conversationId
             ? String(payload.conversationId)

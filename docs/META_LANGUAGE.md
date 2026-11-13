@@ -509,6 +509,30 @@ manifest/资产篡改拒绝
 实现落点：`apps/api/src/document-intelligence/`；契约：`schemas/document-intelligence.schema.json`；
 领域表：`DOMAIN.md`「文档智能」；决策：`DECISIONS.md` D-21。
 
+### 3.23 Agent Runtime（可恢复运行）
+
+Agent 运行是**服务端拥有的持久状态机**，不是一次 HTTP 请求：
+
+- **Agent Definition**：版本化角色/指令/策略/工具范围，`draft → published → retired`。
+- **Agent Instance**：组织 + app + 用户 + definition 绑定；实例可 active/suspended。
+- **Agent Session**：`agent_conversations`，可绑定 `agentInstanceId`，记录 app/release/user。
+- **Agent Run**：一次执行尝试，状态 `queued → running → waiting_user|waiting_external → queued → completed|failed|cancelled`。
+- **Agent Step**：`agent_steps.seq` 单调递增的事件/步骤记录，支持 `after` 重放。
+- **Agent Wait**：`waiting_user` / `waiting_external` 的等待记录，resume 后回到 queued。
+
+执行语义：
+
+```text
+状态迁移只由服务端白名单裁决，模型/客户端不能自行 complete/confirm
+每个 run 的 step seq 单调；断线后用 after seq 重放
+waiting_* 必须由 wait/resume 驱动，不能直接跳 completed
+取消 run 时 pending wait 置 cancelled，旧事件仍可重放
+预算（工具数/token/墙钟）与 run 绑定，超限拒绝
+```
+
+实现落点：`apps/api/src/agent-sessions/agent-runtime.service.ts`；
+领域表：`DOMAIN.md`「PiAgent 会话」；不变量：`INV-AGENT-13`。
+
 ---
 
 ## 4. 不变量（Invariants）
@@ -553,6 +577,8 @@ manifest/资产篡改拒绝
 33. **富文本不执行原始 HTML**：只渲染安全 Markdown 子集，链接协议白名单 http/https（INV-NT-05）。
 34. **搜索组织隔离**：只返回同组织文档；跨租户查询为空或拒绝（INV-SE-01）。
 35. **索引可重建**：索引是派生物，按 `(organizationId, resourceKey, resourceId)` 幂等 upsert（INV-SE-02）。
+36. **Agent 状态机服务端裁决**：run 只能在白名单迁移间变化，模型/客户端不能自行完成或确认（INV-AGENT-13）。
+37. **Agent 事件可重放**：`agent_steps.seq` 单调递增，断线后按 after seq 恢复；waiting_* 必须由 wait/resume 驱动（INV-AGENT-13）。
 36. **索引只存可展示字段**：敏感字段不进入 `search_documents`（INV-SE-03）。
 37. **索引失败不阻塞业务**：写入失败可重试/重建，业务事务不回滚（INV-SE-04）。
 38. **无命中不等于无权限**：全文无命中时走 trigram 兜底，权限拒绝单独表达（INV-SE-05）。
@@ -743,6 +769,12 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 | 持久会话 | Auth Session | `AuthSession`；`auth_sessions`；JWT `sid` | ✅ |
 | 权限版本 | Permission Version | `users.permissionVersion`；JWT `pv` | ✅ |
 | 服务客户端 | Service Client | `ServiceClient`；`service_clients` | ✅ |
+| Agent 定义 | Agent Definition | `AgentDefinition`；`agent_definitions` | ✅ |
+| Agent 实例 | Agent Instance | `AgentInstance`；`agent_instances` | ✅ |
+| Agent 运行 | Agent Run | `AgentRun`；`agent_runs`；服务端状态机 | ✅ |
+| Agent 步骤 | Agent Step | `AgentStep`；`agent_steps.seq`；事件重放 | ✅ |
+| Agent 等待 | Agent Wait | `AgentWait`；`agent_waits`；user/external | ✅ |
+| 事件重放 | Event Replay | `GET /api/agent/runtime/runs/:id/events?after=` | ✅ |
 | 连接器 | Integration Connector | `IntegrationConnector`；`integration_connectors` | ✅ |
 | 出站消息 | Outbound Message | `OutboundMessage`；`outbound_messages` | ✅ |
 | 入站 Webhook | Webhook Endpoint/Event | `webhook_endpoints` / `webhook_events` | ✅ |
@@ -771,6 +803,7 @@ docs/META_LANGUAGE.md（定义层） + openspec/project.md（上下文） + open
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
+| 1.19 | 2026-11-13 | 新增 Agent Runtime 术语与 INV-AGENT-13：Definition/Instance/Run/Step/Wait、状态机、事件重放 |
 | 1.18 | 2026-11-12 | 补齐身份联邦/会话治理术语与 INV-ID-05/06：SSO fail-closed、服务令牌限流/审计/数据范围 |
 | 1.17 | 2026-11-12 | 新增外部集成术语与 INV-EX-01..06：连接器凭证、出站/入站、只读 DB、增量对账、外部身份 |
 | 1.16 | 2026-11-12 | 新增资产/媒体术语与 INV-AS-01..05：租户隔离、上传校验、处理 fail-closed、访问双闸、配额/保留 |

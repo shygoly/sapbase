@@ -60,6 +60,7 @@ export const MigrationDataSource = new DataSource({
     path.join(__dirname, '1796000000000-AddAppCapabilities.ts'),
     path.join(__dirname, '1796100000000-AddAgentTurnIdempotency.ts'),
     path.join(__dirname, '1796200000000-AddBlueprintRecordRetentionIndexes.ts'),
+    path.join(__dirname, '1796300000000-AddAgentRuntime.ts'),
   ],
   synchronize: false,
   logging: true,

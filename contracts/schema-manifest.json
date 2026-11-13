@@ -106,7 +106,8 @@
         "appInstallationId",
         "userId",
         "releaseId",
-        "lastTurnAt"
+        "lastTurnAt",
+        "agentInstanceId"
       ]
     },
     "agent_tool_calls": {
@@ -2058,6 +2059,86 @@
         "status",
         "version",
         "createdById"
+      ]
+    },
+    "agent_definitions": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "key",
+        "version",
+        "name",
+        "role",
+        "instructions",
+        "policy",
+        "toolScopes",
+        "status",
+        "createdById"
+      ]
+    },
+    "agent_instances": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "appKey",
+        "appInstallationId",
+        "userId",
+        "definitionId",
+        "profile",
+        "status"
+      ]
+    },
+    "agent_runs": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "conversationId",
+        "agentInstanceId",
+        "definitionId",
+        "releaseId",
+        "status",
+        "input",
+        "output",
+        "error",
+        "budget",
+        "usage",
+        "startedAt",
+        "finishedAt",
+        "createdById"
+      ]
+    },
+    "agent_steps": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "runId",
+        "seq",
+        "type",
+        "status",
+        "payload"
+      ]
+    },
+    "agent_waits": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "runId",
+        "kind",
+        "status",
+        "prompt",
+        "payload",
+        "resolution",
+        "resolvedAt"
       ]
     }
   }

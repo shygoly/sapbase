@@ -9,6 +9,7 @@ export interface StartAgentRunInput {
   conversationId?: string
   appKey?: string
   appInstallationId?: string
+  agentInstanceId?: string
   screenContext?: Record<string, unknown>
   idempotencyKey?: string | null
 }
@@ -62,6 +63,9 @@ export class AgentRunsService {
           ...(input.appKey ? { appKey: input.appKey } : {}),
           ...(input.appInstallationId
             ? { appInstallationId: input.appInstallationId }
+            : {}),
+          ...(input.agentInstanceId
+            ? { agentInstanceId: input.agentInstanceId }
             : {}),
           ...(input.screenContext ? { screenContext: input.screenContext } : {}),
         },

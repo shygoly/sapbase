@@ -31,17 +31,17 @@
 - [x] 3.8 Add E2E: one user switches ERP/CRM and private records remain isolated（`tests/app-switch-isolation.e2e.js` + AppPackageGuard 跨 package 403）
 
 ## 4. Durable Agent Runtime
-- [ ] 4.1 Add Agent Definition/Instance/Session/Run/Step/Wait entities and migrations
-- [ ] 4.2 Implement queued/running/waiting/completed/failed/cancelled state transitions
-- [ ] 4.3 Implement resumable event stream and replay after disconnect
-- [ ] 4.4 Filter the tool catalog by app, Agent, user permission, entitlement, and runtime profile
+- [x] 4.1 Add Agent Definition/Instance/Session/Run/Step/Wait entities and migrations（5 张新表 + agent_conversations.agentInstanceId + migration/RLS）
+- [x] 4.2 Implement queued/running/waiting/completed/failed/cancelled state transitions（服务端白名单 + wait/resume/cancel + 非法迁移拒绝）
+- [x] 4.3 Implement resumable event stream and replay after disconnect（`agent_steps.seq` 单调 + `GET /events?after=`）
+- [x] 4.4 Filter the tool catalog by app, Agent, user permission, entitlement, and runtime profile（4.4a/4.4b + app-catalog/entitlement/profile 过滤）
 - [x] 4.4a Resolve app context for chat/tool calls and bind confirmation tokens to the app
 - [x] 4.4b Compose and filter the actual tool catalog by app entitlement and Agent identity（filterAppToolCatalog + profile/permission/entitlement + 隐藏原因 + 测试）
 - [x] 4.5 Enforce `allowedAgents` from trusted runtime identity（HTTP/chat 固定 runtime；MCP 只从受控 env 解析；`invokeAs/confirmAs` + 未知 profile 拒绝 + 负例）
 - [x] 4.6 Enforce run budgets, idempotency, cancellation, and write confirmation（服务端预算 + turn 幂等键 + 取消复查 + 写工具只出计划 + 测试）
 - [x] 4.7 Wrap untrusted tool results with source/nonce boundaries and redact audit arguments（untrusted source/nonce 包裹 + 递归审计脱敏 + 测试）
 - [x] 4.8 Move long-running work to jobs/Outbox; do not hold one HTTP request for a full Agent run（`agent.long_task` / `app.upgrade` + 202 入队/查询 API + 可信 createdBy/权限重解析 + 测试）
-- [ ] 4.9 Migrate current chat to an app-scoped Agent session
+- [x] 4.9 Migrate current chat to an app-scoped Agent session（conversation 持久化 agentInstanceId；sync/async chat 透传；旧会话可空兼容）
 - [x] 4.10 Add negative tests for forged identity, cross-app tools, over-budget runs, and unconfirmed writes（4 类负例已覆盖）
 
 ## 5. AI-native authoring pipeline
@@ -66,7 +66,7 @@
 
 ## 7. Documentation and truth-source updates
 - [x] 7.1a Update `docs/META_LANGUAGE.md` with Business App and app-context terms
-- [ ] 7.1b Add Agent Runtime terms after that runtime contract is implemented
+- [x] 7.1b Add Agent Runtime terms after that runtime contract is implemented（META_LANGUAGE 3.23 + Agent Definition/Instance/Run/Step/Wait/事件重放术语 + INV-AGENT-13）
 - [x] 7.2 Update `openspec/project.md` product definition from ERP-only to business-app platform
 - [x] 7.3 Update `docs/ERP_Space_Platform_设计方案_v3.md` with the approved multi-app architecture（新增 14.4 + 更新多租户/源码导出状态）
 - [x] 7.4 Reconcile `add-full-system-generation-and-deploy` with the optional export decision（归档 change 加 reconciliation；新增 full-system-export-decision.md）

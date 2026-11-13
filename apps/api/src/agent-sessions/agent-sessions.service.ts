@@ -48,6 +48,7 @@ export class AgentSessionsService {
     permissions: string[]
     appKey?: string
     appInstallationId?: string
+    agentInstanceId?: string
     conversationId?: string
     message: string
     screenContext?: Record<string, unknown>
@@ -273,6 +274,7 @@ export class AgentSessionsService {
     userId: string
     appKey?: string
     appInstallationId?: string
+    agentInstanceId?: string
     conversationId?: string
   }): Promise<AgentConversation> {
     if (input.conversationId) {
@@ -288,6 +290,7 @@ export class AgentSessionsService {
         userId: input.userId,
         appKey: input.appKey ?? 'default',
         appInstallationId: input.appInstallationId ?? null,
+        agentInstanceId: input.agentInstanceId ?? null,
         lastTurnAt: new Date(),
       }),
     )

@@ -132,6 +132,11 @@
 | agent_conversations | PiAgent 会话 |
 | agent_turns | PiAgent 会话 |
 | agent_tool_calls | PiAgent 会话 |
+| agent_definitions | PiAgent 会话 |
+| agent_instances | PiAgent 会话 |
+| agent_runs | PiAgent 会话 |
+| agent_steps | PiAgent 会话 |
+| agent_waits | PiAgent 会话 |
 | agent_knowledge_entries | Agent 知识与评测 |
 | agent_skill_versions | Agent 知识与评测 |
 | agent_eval_cases | Agent 知识与评测 |
@@ -1362,10 +1367,13 @@ spec: apps/api/src/releases/release-kernel.spec.ts
 
 ## PiAgent 会话
 
-覆盖表：agent_conversations, agent_turns, agent_tool_calls
+覆盖表：agent_conversations, agent_turns, agent_tool_calls, agent_definitions, agent_instances, agent_runs, agent_steps, agent_waits
 
 PiAgent 会话聚合。`agent_conversations` 是会话；`agent_turns` 是轮次；
 `agent_tool_calls` 是工具调用审计；`agent_turns.idempotencyKey` 支持同组织重试去重。
+`agent_definitions` 是版本化角色/指令/工具范围；`agent_instances` 绑定组织+app+用户；
+`agent_runs` 是服务端裁决的状态机（queued/running/waiting_user/waiting_external/completed/failed/cancelled）；
+`agent_steps.seq` 单调递增支持事件重放；`agent_waits` 记录用户/外部等待与恢复。
 所有表带 `organizationId`；会话正文按敏感策略脱敏。
 
 ### 关系
@@ -1376,6 +1384,12 @@ PiAgent 会话聚合。`agent_conversations` 是会话；`agent_turns` 是轮次
 | agent_turns.conversationId | agent_conversations.id | 轮次归属会话 | none | 只追加 |
 | agent_turns.releaseId | app_releases.id | 轮次绑定发布 | none | 允许为空表示无应用上下文 |
 | agent_tool_calls.turnId | agent_turns.id | 工具调用归属轮次 | none | 成功/失败都写 |
+| agent_conversations.agentInstanceId | agent_instances.id | 会话绑定实例 | none | 可空兼容旧会话 |
+| agent_instances.definitionId | agent_definitions.id | 实例绑定定义 | none | 只允许 published definition |
+| agent_runs.agentInstanceId | agent_instances.id | run 绑定实例 | none | 可为空兼容旧路径 |
+| agent_runs.conversationId | agent_conversations.id | run 绑定会话 | none | 可为空 |
+| agent_steps.runId | agent_runs.id | 步骤归属 run | none | 删除 run 级联 |
+| agent_waits.runId | agent_runs.id | 等待归属 run | none | 删除 run 级联 |
 
 ### 不变量
 
@@ -1424,6 +1438,18 @@ enforcement:
   - service:libs/agent-kernel/src/index.ts#wrapUntrustedData
 db: none
 spec: apps/api/src/agent-sessions/agent-sessions.service.spec.ts
+```
+
+```yaml invariant
+id: INV-AGENT-13
+tables: [agent_runs, agent_steps, agent_waits]
+desc: run 状态迁移只能由服务端按白名单裁决；steps.seq 单调递增可 after 重放；waiting_* 必须由 wait/resume 驱动；取消后 pending wait 置 cancelled。
+trigger: AgentRuntimeService.startRun()/transition()/wait()/resume()/cancel()
+enforcement:
+  - service:apps/api/src/agent-sessions/agent-runtime.service.ts#transition
+  - service:apps/api/src/agent-sessions/agent-runtime.service.ts#appendEvent
+db: none
+spec: apps/api/src/agent-sessions/agent-runtime.service.spec.ts
 ```
 
 ---

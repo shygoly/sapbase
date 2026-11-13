@@ -17,6 +17,11 @@ import { AgentFeedbackTopic } from './agent-feedback/entities/agent-feedback-top
 import { AgentKnowledgeEntry } from './agent-knowledge/entities/agent-knowledge-entry.entity'
 import { AgentSkillVersion } from './agent-knowledge/entities/agent-skill-version.entity'
 import { AgentConversation } from './agent-sessions/entities/agent-conversation.entity'
+import { AgentDefinition } from './agent-sessions/entities/agent-definition.entity'
+import { AgentInstance } from './agent-sessions/entities/agent-instance.entity'
+import { AgentRun } from './agent-sessions/entities/agent-run.entity'
+import { AgentStep } from './agent-sessions/entities/agent-step.entity'
+import { AgentWait } from './agent-sessions/entities/agent-wait.entity'
 import { AgentToolCall } from './agent-sessions/entities/agent-tool-call.entity'
 import { AgentTurn } from './agent-sessions/entities/agent-turn.entity'
 import { AIModel } from './ai-models/ai-model.entity'
@@ -158,6 +163,11 @@ export const APP_ENTITIES = [
   AppUserReleaseView,
   AppReleaseTestEvidence,
   AgentConversation,
+  AgentDefinition,
+  AgentInstance,
+  AgentRun,
+  AgentStep,
+  AgentWait,
   AgentTurn,
   AgentToolCall,
   AgentKnowledgeEntry,

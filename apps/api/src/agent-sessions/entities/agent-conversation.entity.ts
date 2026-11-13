@@ -18,6 +18,9 @@ export class AgentConversation extends AgentSessionBaseEntity {
   @Column({ type: 'uuid', nullable: true })
   releaseId: string | null
 
+  @Column({ type: 'uuid', nullable: true })
+  agentInstanceId: string | null
+
   @Column({ type: 'timestamptz', default: () => 'now()' })
   lastTurnAt: Date
 }
