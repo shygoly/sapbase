@@ -2,7 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { createHash, randomUUID } from 'node:crypto'
 import { Repository } from 'typeorm'
-import { compileContextEnvelope, filterKnowledge, wrapUntrustedData } from '@sap/agent-kernel'
+import {
+  compileContext,
+  compileContextEnvelope,
+  filterKnowledge,
+  wrapUntrustedData,
+} from '@sap/agent-kernel'
 import { AgentToolRegistry } from '../agent-tools/agent-tool.registry'
 import { ChatOrchestrator } from '../chat/chat-orchestrator'
 import { ReleasesService } from '../releases/releases.service'
@@ -71,6 +76,29 @@ export class AgentSessionsService {
     const publishedKnowledge = release
       ? await this.knowledge.listPublished({ organizationId: input.organizationId, releaseId: release.id })
       : await this.knowledge.listPublished({ organizationId: input.organizationId })
+    const filteredKnowledge = filterKnowledge(publishedKnowledge as never, {
+      organizationId: input.organizationId,
+      userId: input.userId,
+      releaseId: release?.id ?? null,
+    })
+    const budget = {
+      maxToolCalls: numberEnv('AGENT_MAX_TOOL_CALLS', 8),
+      maxTokens: numberEnv('AGENT_MAX_TOKENS', 12_000),
+      deadlineMs: numberEnv('AGENT_DEADLINE_MS', 30_000),
+    }
+    const compiled = compileContext({
+      nodes: filteredKnowledge.map((entry) => ({
+        id: entry.id,
+        kind: 'knowledge' as const,
+        title: entry.title,
+        content: entry.snippet,
+        tokens: Math.max(1, Math.ceil((entry.snippet ?? '').length / 4)),
+      })),
+      requested: filteredKnowledge.map((entry) => entry.id),
+      permissions: input.permissions,
+      budget: { maxTokens: budget.maxTokens, maxNodes: 8 },
+    })
+    const allowedKnowledge = new Set(compiled.nodes.map((node) => node.id))
     const envelope = compileContextEnvelope({
       turnId: randomUUID(),
       user: { id: input.userId, roles: [] },
@@ -88,11 +116,9 @@ export class AgentSessionsService {
         : {}),
       permissions: input.permissions,
       ...(input.screenContext ? { screen: input.screenContext as never } : {}),
-      knowledge: filterKnowledge(publishedKnowledge as never, {
-        organizationId: input.organizationId,
-        userId: input.userId,
-        releaseId: release?.id ?? null,
-      }),
+      knowledge: filteredKnowledge.filter((entry) =>
+        allowedKnowledge.has(entry.id),
+      ),
       tools: catalog.tools.map((tool) => ({
         name: tool.name,
         description: tool.description,
@@ -100,11 +126,7 @@ export class AgentSessionsService {
         confirmation: tool.confirmation,
         permission: tool.permission,
       })),
-      budget: {
-        maxToolCalls: numberEnv('AGENT_MAX_TOOL_CALLS', 8),
-        maxTokens: numberEnv('AGENT_MAX_TOKENS', 12_000),
-        deadlineMs: numberEnv('AGENT_DEADLINE_MS', 30_000),
-      },
+      budget,
     })
 
     let turn: AgentTurn

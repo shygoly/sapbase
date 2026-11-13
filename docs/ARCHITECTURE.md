@@ -548,3 +548,10 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
 - 旧 `apiKey` 仅作兼容读取，API 响应永不回显。
 - `ai_model_calls` 记录 requested/resolved 模型、provider、credentialSource、耗时与错误，
   用于追踪“请求了哪个模型、实际用了哪个模型、凭据来自哪里”。
+
+## Context Compiler
+
+- `compileContext` 从 requested 节点解析 `dependsOn` 闭包，再按权限（all-of）过滤，
+  最后在 `maxTokens` / `maxNodes` 预算内按 score 降序、id 升序确定性选择。
+- 丢弃原因显式返回：`missing` / `permission` / `budget` / `cycle`，调用方不再二次猜裁剪。
+- `AgentSessionsService` 已用编译器裁剪发布知识；预算与 ContextEnvelope 共用。

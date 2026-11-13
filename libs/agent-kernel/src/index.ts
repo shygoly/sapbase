@@ -1,3 +1,4 @@
+export * from './context-compiler'
 export type AgentProfile = 'piagent-runtime' | 'piagent-builder'
 
 export type SseEventType =
