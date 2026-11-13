@@ -522,3 +522,13 @@ Portal 页面：`/dashboard/operations`。
   运行前/编排返回后都会复查，取消后不会写 completed。
 - 写确认：`confirmation=required` 的工具只生成 Interaction Plan，不在编排层 invoke；
   真正执行必须走确认令牌。
+
+## Blueprint Release Registry (2.2)
+
+- `GET /api/blueprint-releases?blueprintId=` — 当前组织的不可变发布登记
+- `GET /api/blueprint-releases/:id`
+- `POST /api/blueprint-releases`（`system:manage`）
+  - `{ blueprintId, version, packageId, releaseDigest, runtimeRequirement, trustStatus?, layers? }`
+  - 同组织 + blueprintId + version 只允许一个摘要；同摘要重试幂等，不同摘要返回 409
+- `app_installations.releaseId` 绑定登记记录；install/upgrade/rollback 自动登记并绑定。
+- 迁移会从存量安装回填 `trustStatus=legacy` 的 release。

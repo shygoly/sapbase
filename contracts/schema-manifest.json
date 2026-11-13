@@ -380,6 +380,7 @@
         "status",
         "config",
         "license",
+        "releaseId",
         "currentRevisionId",
         "createdById"
       ]
@@ -2139,6 +2140,23 @@
         "payload",
         "resolution",
         "resolvedAt"
+      ]
+    },
+    "blueprint_releases": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "blueprintId",
+        "version",
+        "packageId",
+        "releaseDigest",
+        "runtimeRequirement",
+        "trustStatus",
+        "layers",
+        "metadata",
+        "createdById"
       ]
     }
   }

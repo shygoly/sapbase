@@ -31,6 +31,9 @@ export class BusinessAppInstallation extends TenantAwareEntity {
   @Column({ type: 'varchar', length: 71 })
   releaseDigest: string
 
+  @Column({ type: 'uuid', nullable: true })
+  releaseId: string | null
+
   @Column({ type: 'varchar', length: 128 })
   runtimeRequirement: string
 

@@ -50,6 +50,7 @@ import { AgentHostModule } from './agent-host/agent-host.module'
 import { AsyncConsumersModule } from './async-consumers/async-consumers.module'
 import { ChatModule } from './chat/chat.module'
 import { BusinessAppsModule } from './business-apps/business-apps.module'
+import { BlueprintReleasesModule } from './blueprint-releases/blueprint-releases.module'
 import { AppCatalogModule } from './app-catalog/app-catalog.module'
 import { AppCapabilitiesModule } from './app-capabilities/app-capabilities.module'
 import { EntitlementsModule } from '@sap/platform-core/entitlements/entitlements.module'
@@ -162,6 +163,7 @@ try {
     AsyncConsumersModule,
     ChatModule,
     BusinessAppsModule,
+    BlueprintReleasesModule,
     AppCatalogModule,
     AppCapabilitiesModule,
     EntitlementsModule,

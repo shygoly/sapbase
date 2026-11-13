@@ -8,7 +8,7 @@
 
 ## 2. Tenant and application foundation
 - [x] 2.1 Add `app_installations` with organization, app key, release digest, profile, and lifecycle
-- [ ] 2.2 Add immutable Blueprint release registry and installation-to-release binding
+- [x] 2.2 Add immutable Blueprint release registry and installation-to-release binding（`blueprint_releases` + app.releaseId + 注册/替换拒绝 + 存量回填 + 测试）
 - [x] 2.3a Implement AsyncLocalStorage execution context for HTTP requests
 - [x] 2.3b Add equivalent transaction context to cron jobs and Outbox consumers
 - [x] 2.4 Add trusted installation resolution from user, organization, and request

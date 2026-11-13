@@ -21,6 +21,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { RecordLifecycleService } from '../record-lifecycle/record-lifecycle.service'
 import { EntitlementsService } from '@sap/platform-core/entitlements/entitlements.service'
 import { AppRoleBinding } from '../app-catalog/entities/app-role-binding.entity'
+import { BlueprintReleasesService } from '../blueprint-releases/blueprint-releases.service'
 import { checkAppUpgradeCompatibility } from './app-upgrade-compatibility'
 import { BlueprintService } from '../blueprint/blueprint.service'
 import { BusinessAppInstallationRevision } from './business-app-installation-revision.entity'
@@ -41,6 +42,7 @@ export interface LoadedAppRelease {
   releaseDigest: string
   runtimeRequirement: string
   license: BusinessAppLicenseBinding | null
+  releaseId?: string | null
 }
 
 /**
@@ -66,6 +68,7 @@ export class BusinessAppsService {
     @Optional()
     @InjectRepository(AppRoleBinding)
     private readonly appRoles?: Repository<AppRoleBinding>,
+    @Optional() private readonly blueprintReleases?: BlueprintReleasesService,
   ) {}
 
   async listForOrganization(organizationId: string): Promise<BusinessAppInstallation[]> {
@@ -113,6 +116,7 @@ export class BusinessAppsService {
 
     const release =
       preloadedRelease ?? (await this.loadRelease(input.packageId, input.organizationId))
+    await this.registerRelease(release, input.organizationId, input.userId)
     const existing = await this.installations.findOne({
       where: { organizationId: input.organizationId, appKey: release.appKey },
     })
@@ -163,6 +167,7 @@ export class BusinessAppsService {
       status: 'active',
       config: {},
       license: release.license,
+      releaseId: release.releaseId ?? null,
       currentRevisionId: null,
       createdById: input.userId,
     })
@@ -309,6 +314,7 @@ export class BusinessAppsService {
     }
 
     const release = await this.loadRelease(input.packageId, input.organizationId)
+    await this.registerRelease(release, input.organizationId, input.userId)
     if (release.appKey !== current.appKey) {
       throw new BadRequestException(
         `发布属于应用 ${release.appKey}，不能升级应用 ${current.appKey}`,
@@ -380,6 +386,7 @@ export class BusinessAppsService {
     }
 
     const release = await this.loadRelease(target.packageId, input.organizationId)
+    await this.registerRelease(release, input.organizationId, input.userId)
     assertReleaseMatches(target, release)
     const saved = await this.commitReleaseChange({
       current,
@@ -798,6 +805,7 @@ export class BusinessAppsService {
       status: installation.status,
       config: installation.config ?? {},
       license: installation.license ?? null,
+      releaseId: installation.releaseId ?? null,
       currentRevisionId: installation.currentRevisionId ?? null,
       createdById: installation.createdById ?? null,
       createdAt: installation.createdAt.toISOString(),
@@ -824,6 +832,26 @@ export class BusinessAppsService {
       createdById: revision.createdById ?? null,
       createdAt: revision.createdAt.toISOString(),
     }
+  }
+
+  private async registerRelease(
+    release: LoadedAppRelease,
+    organizationId: string,
+    userId: string,
+  ): Promise<void> {
+    if (!this.blueprintReleases || release.releaseId) return
+    const registered = await this.blueprintReleases.register({
+      organizationId,
+      blueprintId: release.appKey,
+      version: release.version,
+      packageId: release.packageId,
+      releaseDigest: release.releaseDigest,
+      runtimeRequirement: release.runtimeRequirement,
+      trustStatus: release.license ? 'verified' : 'unsigned-dev',
+      createdById: userId,
+      actor: `user:${userId}`,
+    })
+    release.releaseId = registered.id
   }
 
   private async loadRelease(
@@ -925,6 +953,7 @@ export class BusinessAppsService {
       locked.releaseDigest = input.release.releaseDigest
       locked.runtimeRequirement = input.release.runtimeRequirement
       locked.license = input.release.license
+      if (input.release.releaseId) locked.releaseId = input.release.releaseId
       locked.currentRevisionId = revision.id
       return appRepo.save(locked)
     })

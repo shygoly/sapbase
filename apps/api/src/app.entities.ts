@@ -31,6 +31,7 @@ import { AIModuleReview } from './ai-modules/ai-module-review.entity'
 import { AIModuleVersion } from './ai-modules/ai-module-version.entity'
 import { AIModuleTest } from './ai-modules/ai-module-test.entity'
 import { BusinessAppInstallation } from './business-apps/business-app-installation.entity'
+import { BlueprintRelease } from './blueprint-releases/blueprint-release.entity'
 import { BusinessAppInstallationRevision } from './business-apps/business-app-installation-revision.entity'
 import { MenuItem } from './menu/menu.entity'
 import { ModuleCapability } from './module-registry/module-capability.entity'
@@ -152,6 +153,7 @@ export const APP_ENTITIES = [
   AppBrandConfig,
   AppCapability,
   BusinessAppInstallation,
+  BlueprintRelease,
   BusinessAppInstallationRevision,
   AppDraft,
   AppChangeProposal,

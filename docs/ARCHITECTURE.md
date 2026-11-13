@@ -525,3 +525,10 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
 - untrusted 内容里的伪造 `SAP_UNTRUSTED_DATA` 边界标记会被中性化，
   只保留平台生成的一对 source/nonce 边界。
 - 负例覆盖：注入文本、伪造结束 marker、跨租户知识、未授权工具。
+
+## Blueprint Release Registry
+
+- `blueprint_releases` 是不可变发布登记：同组织 + blueprintId + version 唯一；
+  同摘要幂等返回，不同摘要拒绝替换。
+- `app_installations.releaseId` 绑定具体 release；安装/升级/回滚都先登记再绑定。
+- 存量安装由迁移回填 `trustStatus=legacy`，不影响现有安装 digest。

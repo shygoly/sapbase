@@ -35,6 +35,7 @@ function harness(
   lifecycle?: { snapshot: jest.Mock; restoreSnapshot: jest.Mock },
   entitlements?: Record<string, jest.Mock>,
   appRoles?: { find: jest.Mock },
+  blueprintReleases?: { register: jest.Mock },
 ) {
   const appRows = existing ? [withEntityDefaults(existing)] : []
   const revisionRows: Array<Record<string, any>> = []
@@ -136,6 +137,7 @@ function harness(
       lifecycle as never,
       entitlements as never,
       appRoles as never,
+      blueprintReleases as never,
     ),
     repository: appRepository,
     revisionRepository,
@@ -147,6 +149,7 @@ function harness(
     lifecycle,
     entitlements,
     appRoles,
+    blueprintReleases,
   }
 }
 
@@ -163,6 +166,38 @@ function withEntityDefaults(row: Record<string, any>): Record<string, any> {
 }
 
 describe('BusinessAppsService', () => {
+  it('安装登记不可变 release 并绑定 releaseId', async () => {
+    const blueprintReleases = {
+      register: jest.fn(async () => ({ id: 'release-1' })),
+    }
+    const { service, appRows } = harness(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      blueprintReleases,
+    )
+    const saved = await service.install({
+      organizationId: ORG,
+      packageId: 'erp-1.0.0',
+      userId: USER,
+      actor: 'admin@example.com',
+    })
+    expect(blueprintReleases.register).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        blueprintId: 'erp',
+        version: '1.0.0',
+        packageId: 'erp-1.0.0',
+        releaseDigest: DIGEST,
+      }),
+    )
+    expect(saved.releaseId).toBe('release-1')
+    expect(appRows[0].releaseId).toBe('release-1')
+  })
+
   it('安装时从既有 Blueprint 装载链取得摘要，不信任客户端摘要', async () => {
     const { service, blueprints, auditLogs } = harness()
     const saved = await service.install({

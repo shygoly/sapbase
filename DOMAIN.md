@@ -87,6 +87,7 @@
 | job_attempts | 异步任务 |
 | job_events | 异步任务 |
 | app_installations | 应用安装 |
+| blueprint_releases | 应用安装 |
 | app_installation_revisions | 应用安装 |
 | app_entitlements | 订阅权益与用量 |
 | app_usage_records | 订阅权益与用量 |
@@ -892,10 +893,12 @@ spec: apps/api/src/identity/auth-login-events.service.spec.ts
 
 ## 应用安装
 
-覆盖表：app_installations, app_installation_revisions, agent_confirmation_tokens
+覆盖表：app_installations, app_installation_revisions, agent_confirmation_tokens, blueprint_releases
 
 应用安装聚合。`app_installations` 记录某组织当前安装了哪个 Blueprint 版本；
 `app_installation_revisions` 记录安装/升级/回滚历史；`agent_confirmation_tokens` 记录写工具的一次性确认令牌。
+`blueprint_releases` 是不可变发布登记：同组织 + blueprintId + version 只允许一个摘要，
+安装通过 `releaseId` 绑定；升级/回滚登记新 release 或复用既有同摘要 release。
 
 ### 关系
 
@@ -903,6 +906,7 @@ spec: apps/api/src/identity/auth-login-events.service.spec.ts
 |---|---|---|---|---|
 | app_installations.organizationId | organizations.id | 安装归属组织 | none | 组织删除时级联 |
 | app_installations.createdById | users.id | 安装人 | none | 审计字段 |
+| app_installations.releaseId | blueprint_releases.id | 安装绑定不可变发布 | none | 存量回填 legacy release |
 | app_installation_revisions.appInstallationId | app_installations.id | 修订归属安装 | none | 安装删除时级联 |
 | app_installation_revisions.organizationId | organizations.id | 修订归属组织 | none | 与安装组织一致 |
 | agent_confirmation_tokens.organizationId | organizations.id | 令牌归属组织 | none | 必须与调用上下文一致 |
@@ -920,6 +924,18 @@ enforcement:
   - service:apps/api/src/business-apps/business-apps.service.ts#install
 db: uq_app_installations_organization_app_key
 spec: apps/api/src/business-apps/business-apps.service.spec.ts
+```
+
+```yaml invariant
+id: INV-APP-04
+tables: [blueprint_releases, app_installations]
+desc: 同组织同 blueprintId/version 只允许一个 releaseDigest；安装/升级/回滚绑定不可变 releaseId。
+trigger: BlueprintReleasesService.register() / BusinessAppsService.install()
+enforcement:
+  - service:apps/api/src/blueprint-releases/blueprint-releases.service.ts#register
+  - service:apps/api/src/business-apps/business-apps.service.ts#registerRelease
+db: none
+spec: apps/api/src/blueprint-releases/blueprint-releases.service.spec.ts
 ```
 
 ```yaml invariant

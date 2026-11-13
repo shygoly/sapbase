@@ -54,6 +54,7 @@ const DIRECT_TABLES = [
   'app_role_bindings',
   'app_brand_configs',
   'app_capabilities',
+  'blueprint_releases',
   'agent_waits',
   'agent_steps',
   'agent_runs',

@@ -4,6 +4,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module'
 import { RecordLifecycleModule } from '../record-lifecycle/record-lifecycle.module'
 import { EntitlementsModule } from '@sap/platform-core/entitlements/entitlements.module'
 import { JobsModule } from '@sap/platform-core/jobs/jobs.module'
+import { BlueprintReleasesModule } from '../blueprint-releases/blueprint-releases.module'
 import { BlueprintModule } from '../blueprint/blueprint.module'
 import { BusinessAppInstallation } from './business-app-installation.entity'
 import { AppRoleBinding } from '../app-catalog/entities/app-role-binding.entity'
@@ -28,6 +29,7 @@ import { AppPackageGuard } from './app-package.guard'
     RecordLifecycleModule,
     EntitlementsModule,
     JobsModule,
+    BlueprintReleasesModule,
   ],
   controllers: [BusinessAppsController],
   providers: [

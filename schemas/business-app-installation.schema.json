@@ -45,6 +45,7 @@
       "type": "object",
       "description": "Tenant configuration validated by the installed Blueprint."
     },
+    "releaseId": { "type": ["string", "null"], "format": "uuid" },
     "license": {
       "type": ["object", "null"],
       "additionalProperties": false,

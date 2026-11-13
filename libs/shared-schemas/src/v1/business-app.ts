@@ -41,6 +41,7 @@ export interface BusinessAppInstallation {
   status: BusinessAppStatus
   config: Record<string, unknown>
   license?: BusinessAppLicenseBinding | null
+  releaseId?: string | null
   currentRevisionId?: string | null
   createdById?: string | null
   createdAt: string
