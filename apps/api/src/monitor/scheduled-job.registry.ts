@@ -30,6 +30,12 @@ export const SCHEDULED_JOBS = [
     idempotent: true,
   },
   {
+    jobKey: 'blueprint_records.retention_scan',
+    cron: '30 4 * * *',
+    timeoutMs: 10 * 60_000,
+    idempotent: true,
+  },
+  {
     jobKey: 'audit.checkpoint_scan',
     cron: '0 2 * * *',
     timeoutMs: 10 * 60_000,

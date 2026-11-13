@@ -62,7 +62,7 @@
 - [x] 6.4b Add uninstall workflow and retention policy（uninstalling/removed + retentionUntil + cleanup + audit + tests）
 - [x] 6.5 Add backup/restore and data-compatibility checks for app upgrades（兼容检查器 + 升级前记录快照 + restore API + 测试）
 - [x] 6.6 Add audit, SLO, cost, and failure dashboards for installment and Agent runs（`/api/operations/dashboard` + Portal 页面 + 单测）
-- [ ] 6.7 Benchmark `blueprint_records`; add tenant/app partitioning and retention when metrics justify it
+- [x] 6.7 Benchmark `blueprint_records`; add tenant/app partitioning and retention when metrics justify it（基准脚本 + 租户/归档索引 + 365 天保留 cron/API + 分区阈值决策）
 
 ## 7. Documentation and truth-source updates
 - [x] 7.1a Update `docs/META_LANGUAGE.md` with Business App and app-context terms

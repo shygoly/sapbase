@@ -26,6 +26,13 @@ export const BLUEPRINT_RECORDS_DDL: string[] = [
 )`,
   `CREATE INDEX IF NOT EXISTS idx_blueprint_records_blueprint_entity_org
     ON public.blueprint_records USING btree ("blueprintId", entity, "organizationId")`,
+  `CREATE INDEX IF NOT EXISTS idx_blueprint_records_org_created
+    ON public.blueprint_records USING btree ("organizationId", "createdAt" DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_blueprint_records_org_blueprint_entity
+    ON public.blueprint_records USING btree ("organizationId", "blueprintId", entity)`,
+  `CREATE INDEX IF NOT EXISTS idx_blueprint_records_org_archived
+    ON public.blueprint_records USING btree ("organizationId", "archivedAt")
+    WHERE "archivedAt" IS NOT NULL`,
   `DO $$ BEGIN
     IF NOT EXISTS (
       SELECT 1 FROM pg_constraint WHERE conname = 'FK_5aa919422d67fd4edb69df79958'

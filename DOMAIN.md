@@ -628,7 +628,8 @@ spec: apps/api/src/ai-governance/ai-governance.service.spec.ts
 
 `blueprint_records` 增加 `archivedAt/archivedBy/archiveReason` 软归档列；`record_snapshots` 只追加
 保存 data/state/version/label；`record_operations` 保存 clone/move/reorder/archive/restore/snapshot
-的 before/after、幂等键与操作者。树元数据 `tree: { parentField, orderField }` 由编译期校验，
+的 before/after、幂等键与操作者。`blueprint_records` 保留策略只删除超过 365 天的已归档行，
+active 行永不删除；分区在行数/表大小阈值触发前不启用（见 `docs/benchmarks/blueprint-records.md`）。树元数据 `tree: { parentField, orderField }` 由编译期校验，
 运行时校验同组织/同蓝图/防环。
 
 ### 关系
