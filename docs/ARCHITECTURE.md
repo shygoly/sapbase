@@ -516,3 +516,12 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
   不允许裸对象进入模型上下文。
 - 工具审计参数递归脱敏：`sensitiveArgs` 声明键与 token/secret/password/authorization/
   apiKey/credential/cookie 等常见密钥键统一替换为 `***`，嵌套对象/数组同样处理。
+
+
+## Prompt Injection 与跨租户上下文隔离
+
+- 发布知识进入 ContextEnvelope 前按组织/用户/release 过滤；跨租户、跨用户、
+  跨 release 的条目不会进入模型上下文。
+- untrusted 内容里的伪造 `SAP_UNTRUSTED_DATA` 边界标记会被中性化，
+  只保留平台生成的一对 source/nonce 边界。
+- 负例覆盖：注入文本、伪造结束 marker、跨租户知识、未授权工具。

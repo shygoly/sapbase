@@ -52,7 +52,7 @@
 - [ ] 5.5 Add Delta validation, bounded repair, and deterministic conflict reporting
 - [ ] 5.6 Add simulation/evaluation gates before Blueprint publication
 - [ ] 5.7 Add per-task model profiles for intent, design, vision, and evaluation
-- [ ] 5.8 Add prompt-injection and cross-tenant context-leak negative tests
+- [x] 5.8 Add prompt-injection and cross-tenant context-leak negative tests（伪造边界 neutralization + knowledge 跨租户/用户/release 过滤 + 测试）
 
 ## 6. Delivery profiles and operations
 - [x] 6.1 Add entitlements, plan-to-app mapping, quotas, and usage metering（plan catalog + app_entitlements/app_usage_records + sync-plan/配额/计量 API + 安装/工具调用准入 + 测试）

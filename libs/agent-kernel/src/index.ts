@@ -73,9 +73,14 @@ export function wrapUntrustedData(input: {
   source: string
   nonce: string
 }): string {
+  // 内容里伪造的边界标记必须中性化，否则模型可能把注入文本当成新的
+  // untrusted 区块/结束边界。只替换保留标记前缀，保留原文其余部分。
+  const content = input.content
+    .replace(/<<<SAP_UNTRUSTED_DATA/g, '[[SAP_UNTRUSTED_DATA]]')
+    .replace(/<<<END_SAP_UNTRUSTED_DATA/g, '[[END_SAP_UNTRUSTED_DATA]]')
   return [
     `<<<SAP_UNTRUSTED_DATA nonce="${input.nonce}" source="${input.source}">>>`,
-    input.content,
+    content,
     `<<<END_SAP_UNTRUSTED_DATA nonce="${input.nonce}">>>`,
   ].join('\n')
 }

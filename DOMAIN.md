@@ -1413,6 +1413,18 @@ db: none
 spec: apps/api/src/agent-tools/agent-tool.registry.spec.ts
 ```
 
+```yaml invariant
+id: INV-AGENT-12
+tables: [agent_turns]
+desc: 发布知识按组织/用户/release 过滤后进入 ContextEnvelope；跨租户/跨用户/跨 release 知识不得泄漏；伪造 untrusted 边界标记必须中性化。
+trigger: AgentSessionsService.chat() / filterKnowledge() / wrapUntrustedData()
+enforcement:
+  - service:libs/agent-kernel/src/index.ts#filterKnowledge
+  - service:libs/agent-kernel/src/index.ts#wrapUntrustedData
+db: none
+spec: apps/api/src/agent-sessions/agent-sessions.service.spec.ts
+```
+
 ---
 
 ## Agent 知识与评测
