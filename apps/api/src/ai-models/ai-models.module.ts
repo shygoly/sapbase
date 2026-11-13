@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { AIModel } from './ai-model.entity'
 import { AIModelsService } from './ai-models.service'
+import { ModelGatewayService } from './model-gateway.service'
 import { AIModelsController } from './ai-models.controller'
 
 @Module({
   imports: [TypeOrmModule.forFeature([AIModel])],
-  providers: [AIModelsService],
+  providers: [AIModelsService, ModelGatewayService],
   controllers: [AIModelsController],
-  exports: [AIModelsService],
+  exports: [AIModelsService, ModelGatewayService],
 })
 export class AIModelsModule {}

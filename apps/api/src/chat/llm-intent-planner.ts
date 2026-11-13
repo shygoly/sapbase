@@ -1,4 +1,4 @@
-import { AIModelsService } from '../ai-models/ai-models.service'
+import { ModelGatewayService } from '../ai-models/model-gateway.service'
 import { loadToolCatalog, type ToolCatalog } from '../agent-tools/contracts-loader'
 import type { ChatContext, Intent, IntentParser } from './chat.types'
 
@@ -8,51 +8,37 @@ import type { ChatContext, Intent, IntentParser } from './chat.types'
  */
 export class LlmIntentPlanner implements IntentParser {
   constructor(
-    private readonly models: AIModelsService,
+    private readonly gateway: ModelGatewayService,
     private readonly catalog: ToolCatalog = loadToolCatalog(),
   ) {}
 
   async parse(input: { message: string; context: ChatContext }): Promise<Intent | null> {
     if (process.env.AGENT_LLM_ENABLED !== 'true') return null
-    const model = await this.models.findDefault()
-    if (!model?.baseUrl || !model?.model) return null
     try {
-      const response = await fetch(`${model.baseUrl.replace(/\/$/, '')}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(model.apiKey ? { Authorization: `Bearer ${model.apiKey}` } : {}),
-        },
-        body: JSON.stringify({
-          model: model.model,
-          temperature: 0,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are an intent planner. Choose exactly one tool from the provided catalog. ' +
-                'Return JSON only: {"tool":"<name>","args":{...}}. Never invent tools, never write SQL.',
-            },
-            {
-              role: 'user',
-              content: JSON.stringify({
-                message: input.message,
-                tools: this.catalog.tools.map((tool) => ({
-                  name: tool.name,
-                  description: tool.description,
-                  parameters: tool.parameters,
-                })),
-              }),
-            },
-          ],
-        }),
-        signal: AbortSignal.timeout(Number(process.env.AGENT_LLM_TIMEOUT_MS ?? 20_000)),
+      const response = await this.gateway.complete({
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are an intent planner. Choose exactly one tool from the provided catalog. ' +
+              'Return JSON only: {"tool":"<name>","args":{...}}. Never invent tools, never write SQL.',
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              message: input.message,
+              tools: this.catalog.tools.map((tool) => ({
+                name: tool.name,
+                description: tool.description,
+                parameters: tool.parameters,
+              })),
+            }),
+          },
+        ],
+        temperature: 0,
+        timeoutMs: Number(process.env.AGENT_LLM_TIMEOUT_MS ?? 20_000),
       })
-      if (!response.ok) return null
-      const payload = (await response.json()) as {
-        choices?: Array<{ message?: { content?: string } }>
-      }
-      const content = payload.choices?.[0]?.message?.content
+      const content = response.text
       if (!content) return null
       const parsed = JSON.parse(content) as { tool?: string; args?: Record<string, unknown> }
       if (!parsed.tool) return null

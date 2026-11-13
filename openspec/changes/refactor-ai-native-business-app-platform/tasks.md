@@ -45,7 +45,7 @@
 - [x] 4.10 Add negative tests for forged identity, cross-app tools, over-budget runs, and unconfirmed writes（4 类负例已覆盖）
 
 ## 5. AI-native authoring pipeline
-- [ ] 5.1 Replace direct provider calls with a provider-neutral `ModelGateway`
+- [x] 5.1 Replace direct provider calls with a provider-neutral `ModelGateway`（complete/stream + trace + SSE/降级 + llm-intent-planner 改造 + 测试）
 - [ ] 5.2 Move model credentials to secret references and record requested/resolved model metadata
 - [ ] 5.3 Add Context Compiler with dependency closure, permission filtering, and budget limits
 - [ ] 5.4 Emit `space-delta` operations only; reject final-structure bypass paths

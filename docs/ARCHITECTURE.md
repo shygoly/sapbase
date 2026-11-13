@@ -532,3 +532,12 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
   同摘要幂等返回，不同摘要拒绝替换。
 - `app_installations.releaseId` 绑定具体 release；安装/升级/回滚都先登记再绑定。
 - 存量安装由迁移回填 `trustStatus=legacy`，不影响现有安装 digest。
+
+## Model Gateway
+
+- `ModelGatewayService` 是 provider-neutral 统一入口：`complete(request)` / `stream(request)`。
+- 消费方只传 messages/预算/超时，不拼 provider URL、headers 或密钥；provider 选择仍集中在
+  `AIModelsService` adapter。
+- 返回值包含规范化 `text`、原始 `raw`、provider/model 与 trace（requestId/latency）。
+- `stream` 支持 OpenAI 兼容 SSE；不支持 SSE 的 provider 降级为一次 complete + 单 chunk。
+- `LlmIntentPlanner` 已从直接 `fetch` 改为 ModelGateway。
