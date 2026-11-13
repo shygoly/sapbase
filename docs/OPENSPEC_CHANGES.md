@@ -8,10 +8,10 @@
 | 指标 | 数量 |
 | --- | --- |
 | 进行中 | 12 |
-| 已完成未归档 | 1 |
+| 已完成未归档 | 0 |
 | 无任务/骨架 | 0 |
-| 已归档 | 72 |
-| 活跃任务 | 83/283 |
+| 已归档 | 73 |
+| 活跃任务 | 22/222 |
 
 > “完成”只表示 `tasks.md` 复选框全部勾选；归档状态以 `openspec/changes/archive/` 为准。
 
@@ -34,9 +34,7 @@
 
 ## 已完成未归档
 
-| Change | 标题 | 任务 | 规格 | 入口 | 最近更新 |
-| --- | --- | --- | --- | --- | --- |
-| [refactor-ai-native-business-app-platform](../openspec/changes/refactor-ai-native-business-app-platform/) | Refactor sapbase into an AI-native business app platform | 61/61 | 17 req / 3 文件 | [P](../openspec/changes/refactor-ai-native-business-app-platform/proposal.md) [D](../openspec/changes/refactor-ai-native-business-app-platform/design.md) [T](../openspec/changes/refactor-ai-native-business-app-platform/tasks.md) [S](../openspec/changes/refactor-ai-native-business-app-platform/specs) | 2026-11-12 |
+_暂无_
 
 ## 无任务/骨架
 
@@ -46,6 +44,7 @@ _暂无_
 
 | Change | 标题 | 任务 | 规格 | 入口 | 最近更新 |
 | --- | --- | --- | --- | --- | --- |
+| [refactor-ai-native-business-app-platform](../openspec/changes/archive/2026-11-13-refactor-ai-native-business-app-platform/) | Refactor sapbase into an AI-native business app platform | 61/61 | 17 req / 3 文件 | [P](../openspec/changes/archive/2026-11-13-refactor-ai-native-business-app-platform/proposal.md) [D](../openspec/changes/archive/2026-11-13-refactor-ai-native-business-app-platform/design.md) [T](../openspec/changes/archive/2026-11-13-refactor-ai-native-business-app-platform/tasks.md) [S](../openspec/changes/archive/2026-11-13-refactor-ai-native-business-app-platform/specs) | 2026-11-13 |
 | [add-asset-and-media-pipeline](../openspec/changes/archive/2026-11-12-add-asset-and-media-pipeline/) | 资产与媒体管道 | 67/67 | 8 req / 2 文件 | [P](../openspec/changes/archive/2026-11-12-add-asset-and-media-pipeline/proposal.md) [D](../openspec/changes/archive/2026-11-12-add-asset-and-media-pipeline/design.md) [T](../openspec/changes/archive/2026-11-12-add-asset-and-media-pipeline/tasks.md) [S](../openspec/changes/archive/2026-11-12-add-asset-and-media-pipeline/specs) | 2026-11-12 |
 | [add-bulk-import-export-framework](../openspec/changes/archive/2026-11-12-add-bulk-import-export-framework/) | 批量导入/导出框架 | 55/55 | 10 req / 1 文件 | [P](../openspec/changes/archive/2026-11-12-add-bulk-import-export-framework/proposal.md) [D](../openspec/changes/archive/2026-11-12-add-bulk-import-export-framework/design.md) [T](../openspec/changes/archive/2026-11-12-add-bulk-import-export-framework/tasks.md) [S](../openspec/changes/archive/2026-11-12-add-bulk-import-export-framework/specs) | 2026-11-12 |
 | [add-education-reference-blueprint](../openspec/changes/archive/2026-11-12-add-education-reference-blueprint/) | 教育参考蓝图（Education Reference Blueprint） | 74/74 | 12 req / 1 文件 | [P](../openspec/changes/archive/2026-11-12-add-education-reference-blueprint/proposal.md) [D](../openspec/changes/archive/2026-11-12-add-education-reference-blueprint/design.md) [T](../openspec/changes/archive/2026-11-12-add-education-reference-blueprint/tasks.md) [S](../openspec/changes/archive/2026-11-12-add-education-reference-blueprint/specs) | 2026-11-12 |
