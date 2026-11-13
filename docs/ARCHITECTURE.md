@@ -555,3 +555,10 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
   最后在 `maxTokens` / `maxNodes` 预算内按 score 降序、id 升序确定性选择。
 - 丢弃原因显式返回：`missing` / `permission` / `budget` / `cycle`，调用方不再二次猜裁剪。
 - `AgentSessionsService` 已用编译器裁剪发布知识；预算与 ContextEnvelope 共用。
+
+## Space Delta
+
+- 唯一可写的设计时增量是 `space-delta/v2` 声明层操作；最终结构
+  （manifest/IR/source/database/secrets）不可通过 Delta 直接写。
+- 验证器返回稳定错误顺序与 L1/L2/L3 安全级；冲突报告按 path/code/operations 排序。
+- 修复是有界的：默认 2 次、上限 5 次，超限返回最后一次错误，不无限重试、不静默接受。

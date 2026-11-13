@@ -542,3 +542,15 @@ Portal 页面：`/dashboard/operations`。
 - `ai_model_calls` 记录 `requestedModelId` / `resolvedModelId` / provider / model /
   credentialSource / latency / error，不保存密钥。
 - `ModelGateway.complete/stream` 均写入调用元数据；观测写入失败不影响模型结果。
+
+## Space Delta (5.4/5.5)
+
+- `POST /api/space-delta/validate` — `{ delta }`
+  - 只接受 `space-delta/v2`
+  - 路径限定 `/semantic|pages|menus|permissions|rules|flows|experience|ui`
+  - `/manifest|files|compiled|ir|source|package|database|secrets|deploy` 直接拒绝
+  - 返回稳定 errors/warnings 与 L1/L2/L3 安全级
+- `POST /api/space-delta/conflicts` — `{ deltas: [] }`
+  - 返回每个 delta 的 validation 与确定性冲突报告
+  - 冲突按 path/code/operations 稳定排序
+- `boundedRepairSpaceDelta` 最多修复 5 次（默认 2），超限返回最后一次错误，不静默接受非法 Delta。

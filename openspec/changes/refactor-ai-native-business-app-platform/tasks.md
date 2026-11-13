@@ -48,8 +48,8 @@
 - [x] 5.1 Replace direct provider calls with a provider-neutral `ModelGateway`（complete/stream + trace + SSE/降级 + llm-intent-planner 改造 + 测试）
 - [x] 5.2 Move model credentials to secret references and record requested/resolved model metadata（env/file secretRef + 响应脱敏 + ai_model_calls + trace + 测试）
 - [x] 5.3 Add Context Compiler with dependency closure, permission filtering, and budget limits（compileContext + 权限/依赖/预算/环/丢弃原因 + Agent chat 接入 + 测试）
-- [ ] 5.4 Emit `space-delta` operations only; reject final-structure bypass paths
-- [ ] 5.5 Add Delta validation, bounded repair, and deterministic conflict reporting
+- [x] 5.4 Emit `space-delta` operations only; reject final-structure bypass paths（space-delta/v2 + 声明层路径白名单 + 最终结构拒绝 + schema/API）
+- [x] 5.5 Add Delta validation, bounded repair, and deterministic conflict reporting（稳定验证/有界修复/冲突排序 + 测试）
 - [ ] 5.6 Add simulation/evaluation gates before Blueprint publication
 - [ ] 5.7 Add per-task model profiles for intent, design, vision, and evaluation
 - [x] 5.8 Add prompt-injection and cross-tenant context-leak negative tests（伪造边界 neutralization + knowledge 跨租户/用户/release 过滤 + 测试）

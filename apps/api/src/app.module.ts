@@ -53,6 +53,7 @@ import { BusinessAppsModule } from './business-apps/business-apps.module'
 import { BlueprintReleasesModule } from './blueprint-releases/blueprint-releases.module'
 import { AppCatalogModule } from './app-catalog/app-catalog.module'
 import { AppCapabilitiesModule } from './app-capabilities/app-capabilities.module'
+import { SpaceDeltaModule } from './space-delta/space-delta.module'
 import { EntitlementsModule } from '@sap/platform-core/entitlements/entitlements.module'
 import { ReleasesModule } from './releases/releases.module'
 import { DashboardModule } from './dashboard/dashboard.module'
@@ -166,6 +167,7 @@ try {
     BlueprintReleasesModule,
     AppCatalogModule,
     AppCapabilitiesModule,
+    SpaceDeltaModule,
     EntitlementsModule,
     ReleasesModule,
     AgentSessionsModule,
