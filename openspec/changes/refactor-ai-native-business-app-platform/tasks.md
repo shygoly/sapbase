@@ -1,9 +1,9 @@
 ## 1. Protocol and compatibility gates
 - [x] 1.1 Freeze `BusinessAppInstallation` fields, lifecycle, and app-aware execution context
-- [ ] 1.2 Freeze Agent session/run/step/wait/event contract and budget rules
-- [ ] 1.3 Freeze model gateway request/response/trace fields and secret-reference format
-- [ ] 1.4 Define deprecation behavior for tenant-only APIs and existing `/chat` entry points
-- [ ] 1.5 Add positive and negative fixtures for all new schemas before implementation
+- [x] 1.2 Freeze Agent session/run/step/wait/event contract and budget rules（agent-runtime schema + 协议文档 + 正负例）
+- [x] 1.3 Freeze model gateway request/response/trace fields and secret-reference format（model-gateway schema + env/file secretRef + 协议文档 + 正负例）
+- [x] 1.4 Define deprecation behavior for tenant-only APIs and existing `/chat` entry points（api-deprecation 协议 + Deprecation/Sunset/Link header interceptor + 测试）
+- [x] 1.5 Add positive and negative fixtures for all new schemas before implementation（agent-runtime/model-gateway/space-delta/business-app-installation fixtures + schema 校验测试）
 - [x] 1.6 Run `openspec validate refactor-ai-native-business-app-platform --strict`
 
 ## 2. Tenant and application foundation
@@ -56,8 +56,8 @@
 
 ## 6. Delivery profiles and operations
 - [x] 6.1 Add entitlements, plan-to-app mapping, quotas, and usage metering（plan catalog + app_entitlements/app_usage_records + sync-plan/配额/计量 API + 安装/工具调用准入 + 测试）
-- [ ] 6.2 Package shared SaaS, dedicated SaaS, and standalone profiles from one Runtime artifact
-- [ ] 6.3 Make full-system source generation an optional licensed export path
+- [x] 6.2 Package shared SaaS, dedicated SaaS, and standalone profiles from one Runtime artifact（profiles API + 同一 digest/version 不变量 + 测试）
+- [x] 6.3 Make full-system source generation an optional licensed export path（licensed source-export 端点 + 许可/生成器 fail-closed + 审计 + 测试）
 - [x] 6.4a Add installation upgrade, rollback, and suspension workflows
 - [x] 6.4b Add uninstall workflow and retention policy（uninstalling/removed + retentionUntil + cleanup + audit + tests）
 - [x] 6.5 Add backup/restore and data-compatibility checks for app upgrades（兼容检查器 + 升级前记录快照 + restore API + 测试）

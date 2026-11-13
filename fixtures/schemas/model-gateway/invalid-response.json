@@ -1,0 +1,17 @@
+{
+  "kind": "response",
+  "payload": {
+    "text": "hello",
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "modelRowId": "model-1",
+    "trace": {
+      "requestId": "66666666-6666-4666-8666-666666666666",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "resolvedModelId": "model-1",
+      "credentialSource": "plaintext-in-body",
+      "latencyMs": -1
+    }
+  }
+}

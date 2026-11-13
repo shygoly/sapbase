@@ -568,3 +568,16 @@ Portal 页面：`/dashboard/operations`。
   - 配置了不存在的模型 → fail-closed，不回退默认
 - `ModelGateway.complete/stream` 支持 `task`，按任务 profile 选模型；显式
   `model` / `modelId` 仍优先。
+
+## Delivery Profiles & Licensed Source Export (6.2/6.3)
+
+- `GET /api/blueprint-releases/:id/profiles`
+  - 返回 `shared-saas` / `dedicated-saas` / `standalone` 三种剖面
+  - 三份计划共享同一 `releaseDigest` / version / runtime requirement
+  - 默认剖面都不包含源码；standalone 是客户托管容器 + 客户数据库 + offline lease
+- `POST /api/blueprint-releases/:id/source-export`（`system:manage`）
+  - 只校验 `SOURCE_EXPORT_LICENSE_ID`（可选 `SOURCE_EXPORT_LICENSE_EXPIRES_AT`）
+  - 未许可/过期 → 403，并写 `source_export.denied` 审计
+  - 许可有效但 `SOURCE_EXPORT_GENERATOR_URL` 未配置 → 返回计划，
+    `generator.deliverable=false`，明确不会产出源码
+  - 许可与生成器都配置 → `deliverable=true`，但真实导出仍由独立授权流水线执行

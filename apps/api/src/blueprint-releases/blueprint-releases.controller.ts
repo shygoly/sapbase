@@ -4,11 +4,17 @@ import { Auth } from '../common/decorators/auth.decorator'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { OrganizationId } from '../organizations/decorators/organization-id.decorator'
 import { BlueprintReleasesService } from './blueprint-releases.service'
+import { DeploymentProfilesService } from './deployment-profiles.service'
+import { SourceExportService } from './source-export.service'
 
 @ApiTags('Blueprint Releases')
 @Controller('blueprint-releases')
 export class BlueprintReleasesController {
-  constructor(private readonly releases: BlueprintReleasesService) {}
+  constructor(
+    private readonly releases: BlueprintReleasesService,
+    private readonly profiles: DeploymentProfilesService,
+    private readonly sourceExport: SourceExportService,
+  ) {}
 
   @Get()
   @Auth()
@@ -25,6 +31,35 @@ export class BlueprintReleasesController {
   @ApiOperation({ summary: '按 id 读取 Blueprint release' })
   get(@Param('id') id: string, @OrganizationId() organizationId: string) {
     return this.releases.findById(organizationId, id)
+  }
+
+  @Get(':id/profiles')
+  @Auth()
+  @ApiOperation({ summary: '三种交付剖面：同一 Runtime artifact 的部署/授权参数' })
+  async deploymentProfiles(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    const release = await this.releases.findById(organizationId, id)
+    const plans = this.profiles.plan(release)
+    this.profiles.assertSameArtifact(plans)
+    return { releaseId: release.id, releaseDigest: release.releaseDigest, profiles: plans }
+  }
+
+  @Post(':id/source-export')
+  @Auth('system:manage')
+  @ApiOperation({ summary: '可选 licensed 源码导出：只校验许可并返回计划' })
+  async sourceExportPlan(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @CurrentUser() user?: { id?: string; userId?: string; email?: string },
+  ) {
+    const release = await this.releases.findById(organizationId, id)
+    return this.sourceExport.plan(release, {
+      organizationId,
+      actor: user?.email ?? user?.id ?? 'system:source-export',
+      requestedBy: user?.id ?? user?.userId,
+    })
   }
 
   @Post()

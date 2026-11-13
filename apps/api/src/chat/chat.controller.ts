@@ -7,11 +7,13 @@ import {
   Post,
   Request,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { ChatOrchestrator } from './chat-orchestrator'
 import { OptionalAppContextGuard } from '../business-apps/optional-app-context.guard'
+import { LegacyTenantApiDeprecationInterceptor } from '../common/deprecation/legacy-tenant-api-deprecation.interceptor'
 import type { BusinessAppExecutionContext } from '@speckit/shared-schemas'
 
 interface AuthedRequest {
@@ -32,6 +34,7 @@ interface AuthedRequest {
 @ApiTags('Chat')
 @Controller('chat')
 @UseGuards(JwtAuthGuard, OptionalAppContextGuard)
+@UseInterceptors(LegacyTenantApiDeprecationInterceptor)
 @ApiBearerAuth()
 export class ChatController {
   constructor(private readonly orchestrator: ChatOrchestrator) {}

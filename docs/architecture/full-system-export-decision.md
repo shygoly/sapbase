@@ -31,3 +31,13 @@
 | Source Export | 否 | source-export license | 源码包/仓库 + 审计记录 |
 
 参考：`docs/protocols/blueprint-delivery.md`、`docs/protocols/release.md`。
+
+
+## 实现落点（6.3）
+
+- `POST /api/blueprint-releases/:id/source-export` 校验
+  `SOURCE_EXPORT_LICENSE_ID` / `SOURCE_EXPORT_LICENSE_EXPIRES_AT`；
+  未许可或过期返回 403 并写拒绝审计。
+- `SOURCE_EXPORT_GENERATOR_URL` 未配置时只返回导出计划，
+  `generator.deliverable=false`，明确不会产出源码。
+- 生成器配置后仍需独立授权流水线；本端点不伪装已可交付源码。

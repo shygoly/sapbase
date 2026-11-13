@@ -1,0 +1,8 @@
+{
+  "protocol": "space-delta/v2",
+  "baseVersion": "rev-1",
+  "operations": [
+    { "op": "add", "path": "/semantic/entities", "value": { "name": "Customer" } },
+    { "op": "update", "path": "/ui/pages/CustomerList", "value": { "label": "客户" } }
+  ]
+}

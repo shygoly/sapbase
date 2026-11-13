@@ -9,12 +9,14 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { SemanticRuntimeService, toHttpException } from './semantic-runtime.service'
 import { AppPackageGuard } from '../business-apps/app-package.guard'
+import { LegacyTenantApiDeprecationInterceptor } from '../common/deprecation/legacy-tenant-api-deprecation.interceptor'
 
 type RuntimeUser = {
   id?: string
@@ -27,6 +29,7 @@ type RuntimeUser = {
 @ApiTags('Blueprints')
 @Controller('blueprints')
 @UseGuards(JwtAuthGuard, AppPackageGuard)
+@UseInterceptors(LegacyTenantApiDeprecationInterceptor)
 @ApiBearerAuth()
 export class SemanticRuntimeController {
   constructor(private readonly runtime: SemanticRuntimeService) {}

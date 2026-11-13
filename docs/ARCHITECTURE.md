@@ -570,3 +570,11 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
 - 任务模型 profile 通过 `AGENT_MODEL_PROFILE_<TASK>` 配置；配置缺失回退默认模型，
   配置了不存在的模型 fail-closed。
 - `ModelGateway` 接受 `task`，由 profile 解析模型；显式 `model`/`modelId` 优先。
+
+## 交付剖面与源码导出
+
+- 同一签名 Blueprint release 生成三种部署剖面：shared SaaS（共享 PG + RLS）、
+  dedicated SaaS（专用 PG/schema、平台运维）、standalone（客户托管运行时 + 离线 lease）。
+- 剖面只改变数据/运行时/授权参数，不复制业务定义，也不包含源码。
+- 源码导出是可选 licensed 路径：未配置 `SOURCE_EXPORT_LICENSE_ID` 或许可过期时
+  403；生成器未配置时只返回计划并明确不可交付。

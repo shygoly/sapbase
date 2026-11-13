@@ -1,0 +1,16 @@
+{
+  "id": "77777777-7777-4777-8777-777777777777",
+  "organizationId": "88888888-8888-4888-8888-888888888888",
+  "appKey": "CRM",
+  "displayName": "CRM",
+  "slug": "crm",
+  "blueprintId": "crm",
+  "blueprintVersion": "1.0",
+  "releaseDigest": "sha256:short",
+  "runtimeRequirement": ">=1.0.0 <2.0.0",
+  "deploymentProfile": "self-hosted",
+  "status": "installed",
+  "config": {},
+  "createdAt": "2026-11-13T00:00:00.000Z",
+  "updatedAt": "2026-11-13T00:00:00.000Z"
+}

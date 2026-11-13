@@ -1,0 +1,7 @@
+{
+  "protocol": "space-delta/v2",
+  "baseVersion": "rev-1",
+  "operations": [
+    { "op": "add", "path": "/source/src/app.ts", "value": "export {}" }
+  ]
+}

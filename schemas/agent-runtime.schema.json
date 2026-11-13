@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sapbase.local/schemas/agent-runtime.schema.json",
+  "title": "Agent Runtime Contract",
+  "description": "Agent Definition/Instance/Session/Run/Step/Wait 与预算的冻结契约（1.2）。运行时记录不带 kind；契约测试用 { kind, payload } 包装，便于正负例覆盖。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "payload"],
+  "oneOf": [
+    { "properties": { "kind": { "const": "definition" }, "payload": { "$ref": "#/$defs/definition" } } },
+    { "properties": { "kind": { "const": "instance" }, "payload": { "$ref": "#/$defs/instance" } } },
+    { "properties": { "kind": { "const": "session" }, "payload": { "$ref": "#/$defs/session" } } },
+    { "properties": { "kind": { "const": "run" }, "payload": { "$ref": "#/$defs/run" } } },
+    { "properties": { "kind": { "const": "step" }, "payload": { "$ref": "#/$defs/step" } } },
+    { "properties": { "kind": { "const": "wait" }, "payload": { "$ref": "#/$defs/wait" } } },
+    { "properties": { "kind": { "const": "event" }, "payload": { "$ref": "#/$defs/event" } } },
+    { "properties": { "kind": { "const": "budget" }, "payload": { "$ref": "#/$defs/budget" } } }
+  ],
+  "properties": {
+    "kind": {
+      "enum": ["definition", "instance", "session", "run", "step", "wait", "event", "budget"]
+    },
+    "payload": { "type": "object" }
+  },
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "timestamp": { "type": "string", "minLength": 1 },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "version", "name", "role", "status", "policy", "toolScopes"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "organizationId": { "$ref": "#/$defs/uuid" },
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9._-]{0,127}$" },
+        "version": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "role": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "instructions": { "type": ["string", "null"] },
+        "policy": { "type": "object" },
+        "toolScopes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "status": { "enum": ["draft", "published", "retired"] },
+        "createdById": { "type": ["string", "null"], "format": "uuid" }
+      }
+    },
+    "instance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "appKey", "userId", "definitionId", "profile", "status"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "organizationId": { "$ref": "#/$defs/uuid" },
+        "appKey": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "maxLength": 64 },
+        "appInstallationId": { "type": ["string", "null"], "format": "uuid" },
+        "userId": { "$ref": "#/$defs/uuid" },
+        "definitionId": { "$ref": "#/$defs/uuid" },
+        "profile": { "enum": ["piagent-runtime", "piagent-builder"] },
+        "status": { "enum": ["active", "suspended"] }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "appKey", "userId"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "organizationId": { "$ref": "#/$defs/uuid" },
+        "appKey": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "appInstallationId": { "type": ["string", "null"], "format": "uuid" },
+        "agentInstanceId": { "type": ["string", "null"], "format": "uuid" },
+        "userId": { "$ref": "#/$defs/uuid" },
+        "releaseId": { "type": ["string", "null"], "format": "uuid" },
+        "lastTurnAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxToolCalls", "maxTokens", "deadlineMs"],
+      "properties": {
+        "maxToolCalls": { "type": "integer", "minimum": 1 },
+        "maxTokens": { "type": "integer", "minimum": 1 },
+        "deadlineMs": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "status", "input", "budget", "usage"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "organizationId": { "$ref": "#/$defs/uuid" },
+        "conversationId": { "type": ["string", "null"], "format": "uuid" },
+        "agentInstanceId": { "type": ["string", "null"], "format": "uuid" },
+        "definitionId": { "type": ["string", "null"], "format": "uuid" },
+        "releaseId": { "type": ["string", "null"], "format": "uuid" },
+        "status": {
+          "enum": [
+            "queued",
+            "running",
+            "waiting_user",
+            "waiting_external",
+            "completed",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "input": { "type": "object" },
+        "output": { "type": ["object", "null"] },
+        "error": { "type": ["object", "null"] },
+        "budget": { "$ref": "#/$defs/budget" },
+        "usage": { "type": "object" },
+        "startedAt": { "type": ["string", "null"] },
+        "finishedAt": { "type": ["string", "null"] },
+        "createdById": { "type": ["string", "null"], "format": "uuid" }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "runId", "seq", "type", "status", "payload"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "organizationId": { "$ref": "#/$defs/uuid" },
+        "runId": { "$ref": "#/$defs/uuid" },
+        "seq": { "type": "integer", "minimum": 1 },
+        "type": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "status": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "payload": { "type": "object" }
+      }
+    },
+    "wait": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "runId", "kind", "status"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "organizationId": { "$ref": "#/$defs/uuid" },
+        "runId": { "$ref": "#/$defs/uuid" },
+        "kind": { "enum": ["user", "external"] },
+        "status": { "enum": ["pending", "resolved", "cancelled"] },
+        "prompt": { "type": ["string", "null"] },
+        "payload": { "type": ["object", "null"] },
+        "resolution": { "type": ["object", "null"] },
+        "resolvedAt": { "type": ["string", "null"] }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "seq", "type"],
+      "properties": {
+        "runId": { "$ref": "#/$defs/uuid" },
+        "seq": { "type": "integer", "minimum": 1 },
+        "type": {
+          "enum": [
+            "run.queued",
+            "run.running",
+            "run.waiting_user",
+            "run.waiting_external",
+            "run.completed",
+            "run.failed",
+            "run.cancelled"
+          ]
+        },
+        "payload": { "type": "object" }
+      }
+    }
+  }
+}
