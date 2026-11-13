@@ -56,6 +56,33 @@ describe('ModelGatewayService', () => {
     )
   })
 
+  it('task profile 优先于默认模型', async () => {
+    const profileModel = model({ id: 'profile-model' })
+    const models = {
+      findDefault: jest.fn(async () => model()),
+      findOne: jest.fn(),
+      generate: jest.fn(async () => ({ choices: [{ message: { content: 'ok' } }] })),
+      resolveCredential: jest.fn(async () => ({ apiKey: 'test-key', source: 'legacy-inline' })),
+    }
+    const profiles = {
+      resolve: jest.fn(async () => ({ task: 'intent', model: profileModel, source: 'task-profile', modelId: 'profile-model' })),
+    }
+    const gateway = new ModelGatewayService(
+      models as never,
+      undefined as never,
+      profiles as never,
+    )
+    await gateway.complete({
+      task: 'intent',
+      messages: [{ role: 'user', content: 'hi' }],
+    })
+    expect(profiles.resolve).toHaveBeenCalledWith('intent')
+    expect(models.generate).toHaveBeenCalledWith(
+      profileModel,
+      expect.any(Object),
+    )
+  })
+
   it('没有默认模型 → BadRequest', async () => {
     const { gateway } = setup({ row: null })
     await expect(

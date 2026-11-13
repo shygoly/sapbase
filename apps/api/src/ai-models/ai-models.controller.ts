@@ -1,16 +1,26 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common'
 import { AIModelsService } from './ai-models.service'
+import { ModelProfileService } from './model-profile.service'
 import { Auth } from '../common/decorators/auth.decorator'
 
 @Controller('ai-models')
 export class AIModelsController {
-  constructor(private readonly aiModelsService: AIModelsService) {}
+  constructor(
+    private readonly aiModelsService: AIModelsService,
+    private readonly profiles: ModelProfileService,
+  ) {}
 
   @Get()
   @Auth('system:manage')
   async findAll(): Promise<Array<Record<string, unknown>>> {
     const models = await this.aiModelsService.findAll()
     return models.map((model) => this.aiModelsService.toPublic(model))
+  }
+
+  @Get('profiles')
+  @Auth('system:manage')
+  async listProfiles() {
+    return this.profiles.list()
   }
 
   @Get('default')

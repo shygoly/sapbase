@@ -554,3 +554,17 @@ Portal 页面：`/dashboard/operations`。
   - 返回每个 delta 的 validation 与确定性冲突报告
   - 冲突按 path/code/operations 稳定排序
 - `boundedRepairSpaceDelta` 最多修复 5 次（默认 2），超限返回最后一次错误，不静默接受非法 Delta。
+
+## Blueprint Publication Gate & Model Profiles (5.6/5.7)
+
+- `POST /api/blueprints/:id/publication-gate`（`system:manage`）
+  - `{ releaseId, modelId?, requiredSuites? }`
+  - 默认必须包含 `injection` / `write` / `refusal`
+  - injection 必须 100%，写工具未确认必须 0；指定 modelId 时必须有该模型评测
+  - 缺 releaseId/评测/套件 → `ok=false`；`assertPublishable` 抛 409
+- `GET /api/ai-models/profiles`（`system:manage`）
+  - 返回 `intent` / `design` / `vision` / `evaluation` 的任务 profile 来源
+  - 配置：`AGENT_MODEL_PROFILE_INTENT|DESIGN|VISION|EVALUATION=<modelId>`
+  - 配置了不存在的模型 → fail-closed，不回退默认
+- `ModelGateway.complete/stream` 支持 `task`，按任务 profile 选模型；显式
+  `model` / `modelId` 仍优先。

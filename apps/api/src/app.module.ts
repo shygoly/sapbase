@@ -51,6 +51,7 @@ import { AsyncConsumersModule } from './async-consumers/async-consumers.module'
 import { ChatModule } from './chat/chat.module'
 import { BusinessAppsModule } from './business-apps/business-apps.module'
 import { BlueprintReleasesModule } from './blueprint-releases/blueprint-releases.module'
+import { BlueprintPublicationModule } from './blueprint-publication/blueprint-publication.module'
 import { AppCatalogModule } from './app-catalog/app-catalog.module'
 import { AppCapabilitiesModule } from './app-capabilities/app-capabilities.module'
 import { SpaceDeltaModule } from './space-delta/space-delta.module'
@@ -165,6 +166,7 @@ try {
     ChatModule,
     BusinessAppsModule,
     BlueprintReleasesModule,
+    BlueprintPublicationModule,
     AppCatalogModule,
     AppCapabilitiesModule,
     SpaceDeltaModule,

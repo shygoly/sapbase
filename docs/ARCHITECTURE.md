@@ -562,3 +562,11 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
   （manifest/IR/source/database/secrets）不可通过 Delta 直接写。
 - 验证器返回稳定错误顺序与 L1/L2/L3 安全级；冲突报告按 path/code/operations 排序。
 - 修复是有界的：默认 2 次、上限 5 次，超限返回最后一次错误，不无限重试、不静默接受。
+
+## Blueprint 发布评测门与任务模型 Profile
+
+- Blueprint 发布前必须有 release 级评测证据：injection / write / refusal；
+  injection 100%、写工具未确认 0；指定 modelId 时必须有对应评测。
+- 任务模型 profile 通过 `AGENT_MODEL_PROFILE_<TASK>` 配置；配置缺失回退默认模型，
+  配置了不存在的模型 fail-closed。
+- `ModelGateway` 接受 `task`，由 profile 解析模型；显式 `model`/`modelId` 优先。

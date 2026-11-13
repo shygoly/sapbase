@@ -36,6 +36,7 @@ export class LlmIntentPlanner implements IntentParser {
           },
         ],
         temperature: 0,
+        task: 'intent',
         timeoutMs: Number(process.env.AGENT_LLM_TIMEOUT_MS ?? 20_000),
       })
       const content = response.text

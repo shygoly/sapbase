@@ -5,6 +5,7 @@ import { Repository } from 'typeorm'
 import { AIModelsService } from './ai-models.service'
 import type { AIModel } from './ai-model.entity'
 import { AIModelCall } from './ai-model-call.entity'
+import { ModelProfileService, type ModelTask } from './model-profile.service'
 
 export interface ModelMessage {
   role: 'system' | 'user' | 'assistant'
@@ -19,6 +20,8 @@ export interface ModelRequest {
   temperature?: number
   timeoutMs?: number
   metadata?: Record<string, unknown>
+  /** 按任务 profile 选模型；显式 model/modelId 优先。 */
+  task?: ModelTask
 }
 
 export interface ModelResponse {
@@ -59,6 +62,7 @@ export class ModelGatewayService {
     @Optional()
     @InjectRepository(AIModelCall)
     private readonly calls?: Repository<AIModelCall>,
+    @Optional() private readonly profiles?: ModelProfileService,
   ) {}
 
   async complete(request: ModelRequest): Promise<ModelResponse> {
@@ -247,7 +251,11 @@ export class ModelGatewayService {
   private async resolveModel(request: ModelRequest): Promise<AIModel> {
     const model =
       request.model ??
-      (request.modelId ? await this.models.findOne(request.modelId) : await this.models.findDefault())
+      (request.modelId
+        ? await this.models.findOne(request.modelId)
+        : request.task && this.profiles
+          ? (await this.profiles.resolve(request.task)).model
+          : await this.models.findDefault())
     if (!model) {
       throw new BadRequestException('没有可用模型：请指定 modelId 或配置默认模型')
     }
