@@ -532,3 +532,13 @@ Portal 页面：`/dashboard/operations`。
   - 同组织 + blueprintId + version 只允许一个摘要；同摘要重试幂等，不同摘要返回 409
 - `app_installations.releaseId` 绑定登记记录；install/upgrade/rollback 自动登记并绑定。
 - 迁移会从存量安装回填 `trustStatus=legacy` 的 release。
+
+## Model Credentials & Call Metadata (5.2)
+
+- `ai_models.secretRef` 支持 `env:NAME` / `file:/abs/path`；只有旧模型可回退内联 `apiKey`。
+- `GET/POST/PATCH /api/ai-models` 响应不再回显 `apiKey`，只返回
+  `hasCredential` / `credentialSource`。
+- 凭据解析失败 fail-closed；不把空 key 当可用。
+- `ai_model_calls` 记录 `requestedModelId` / `resolvedModelId` / provider / model /
+  credentialSource / latency / error，不保存密钥。
+- `ModelGateway.complete/stream` 均写入调用元数据；观测写入失败不影响模型结果。

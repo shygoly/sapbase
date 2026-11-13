@@ -106,6 +106,7 @@
 | ai_module_versions | AI 模块 |
 | ai_module_tests | AI 模块 |
 | ai_models | AI 模块 |
+| ai_model_calls | AI 模块 |
 | module_registry | 模块注册 |
 | module_capabilities | 模块注册 |
 | module_configurations | 模块注册 |
@@ -1132,10 +1133,10 @@ spec: apps/api/src/semantic-runtime/semantic-runtime.service.spec.ts
 
 ## AI 模块
 
-覆盖表：ai_modules, ai_module_definitions, ai_module_reviews, ai_module_tests, ai_module_versions, ai_models
+覆盖表：ai_modules, ai_module_definitions, ai_module_reviews, ai_module_tests, ai_module_versions, ai_models, ai_model_calls
 
 AI 模块聚合。`ai_modules` 是组织内 AI 生成模块的登记；六步定义在 `ai_module_definitions`；
-评审与测试分别在 `ai_module_reviews` / `ai_module_tests`；`ai_module_versions` 存每次生成/修改/评审/发布/回滚的 DSL 快照；`ai_models` 是全局模型注册表（**全局表**，无 `organizationId`）。
+评审与测试分别在 `ai_module_reviews` / `ai_module_tests`；`ai_module_versions` 存每次生成/修改/评审/发布/回滚的 DSL 快照；`ai_models` 是全局模型注册表（**全局表**，无 `organizationId`）；凭据只存 `secretRef`（env/file），旧内联 key 仅兼容。`ai_model_calls` 记录 requested/resolved 模型、凭据来源、耗时与失败，不存密钥。
 
 ### 关系
 
@@ -1144,6 +1145,7 @@ AI 模块聚合。`ai_modules` 是组织内 AI 生成模块的登记；六步定
 | ai_modules.organizationId | organizations.id | 模块归属组织 | none | 模板模块可由平台发布 |
 | ai_modules.createdById | users.id | 创建人 | none | 审计字段 |
 | ai_modules.reviewedById | users.id | 评审人 | none | 作者 ≠ 评审人 |
+| ai_model_calls.organizationId | organizations.id | 调用归属组织 | none | 可空（全局连接测试） |
 | ai_module_definitions.aiModuleId | ai_modules.id | 六步定义归属模块 | none | 一模块一份当前定义 |
 | ai_module_versions.moduleId | ai_modules.id | 版本快照归属模块 | none | 删除模块级联清理；回滚不删除历史 |
 | ai_module_reviews.moduleId | ai_modules.id | 评审归属模块 | none | 只追加 |

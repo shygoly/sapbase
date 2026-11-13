@@ -1,7 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Optional } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import { randomUUID } from 'node:crypto'
+import { Repository } from 'typeorm'
 import { AIModelsService } from './ai-models.service'
 import type { AIModel } from './ai-model.entity'
+import { AIModelCall } from './ai-model-call.entity'
 
 export interface ModelMessage {
   role: 'system' | 'user' | 'assistant'
@@ -28,8 +31,10 @@ export interface ModelResponse {
     requestId: string
     provider: string
     model: string
-    latencyMs: number
+    resolvedModelId: string
     requestedModelId: string | null
+    credentialSource: 'secret-ref' | 'legacy-inline'
+    latencyMs: number
   }
 }
 
@@ -49,47 +54,80 @@ export interface ModelChunk {
  */
 @Injectable()
 export class ModelGatewayService {
-  constructor(private readonly models: AIModelsService) {}
+  constructor(
+    private readonly models: AIModelsService,
+    @Optional()
+    @InjectRepository(AIModelCall)
+    private readonly calls?: Repository<AIModelCall>,
+  ) {}
 
   async complete(request: ModelRequest): Promise<ModelResponse> {
     const model = await this.resolveModel(request)
+    const credential = await this.models.resolveCredential(model)
     const started = Date.now()
     const requestId = randomUUID()
-    const raw = await this.models.generate(model, {
-      system: systemPrompt(request.messages),
-      user: userPrompt(request.messages),
-      maxTokens: request.maxTokens,
-      temperature: request.temperature,
-      timeoutMs: request.timeoutMs,
-    })
-    return {
-      text: extractText(raw),
-      raw,
-      provider: model.provider,
-      model: model.model ?? '',
-      modelRowId: model.id,
-      trace: {
+    try {
+      const raw = await this.models.generate(model, {
+        system: systemPrompt(request.messages),
+        user: userPrompt(request.messages),
+        maxTokens: request.maxTokens,
+        temperature: request.temperature,
+        timeoutMs: request.timeoutMs,
+      })
+      const trace = {
         requestId,
         provider: model.provider,
         model: model.model ?? '',
-        latencyMs: Date.now() - started,
+        resolvedModelId: model.id,
         requestedModelId: request.modelId ?? model.id ?? null,
-      },
+        credentialSource: credential.source,
+        latencyMs: Date.now() - started,
+      }
+      await this.recordCall(request, model, credential.source, trace, 'success')
+      return {
+        text: extractText(raw),
+        raw,
+        provider: model.provider,
+        model: model.model ?? '',
+        modelRowId: model.id,
+        trace,
+      }
+    } catch (error) {
+      await this.recordCall(
+        request,
+        model,
+        credential.source,
+        {
+          requestId,
+          provider: model.provider,
+          model: model.model ?? '',
+          resolvedModelId: model.id,
+          requestedModelId: request.modelId ?? model.id ?? null,
+          credentialSource: credential.source,
+          latencyMs: Date.now() - started,
+        },
+        'failure',
+        error,
+      )
+      throw error
     }
   }
 
   async *stream(request: ModelRequest): AsyncIterable<ModelChunk> {
     const model = await this.resolveModel(request)
+    const credential = await this.models.resolveCredential(model)
     const started = Date.now()
     const requestId = randomUUID()
     const trace = (): ModelResponse['trace'] => ({
       requestId,
       provider: model.provider,
       model: model.model ?? '',
-      latencyMs: Date.now() - started,
+      resolvedModelId: model.id,
       requestedModelId: request.modelId ?? model.id ?? null,
+      credentialSource: credential.source,
+      latencyMs: Date.now() - started,
     })
-    if (!model.apiKey || !model.baseUrl) {
+    if (!model.baseUrl) {
       const response = await this.complete(request)
       yield { delta: response.text, done: true, trace: response.trace }
       return
@@ -122,7 +160,7 @@ export class ModelGatewayService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${model.apiKey}`,
+        Authorization: `Bearer ${credential.apiKey}`,
       },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(request.timeoutMs ?? 120_000),
@@ -165,7 +203,45 @@ export class ModelGatewayService {
     } finally {
       reader.releaseLock()
     }
+    await this.recordCall(request, model, credential.source, trace(), 'success')
     yield { delta: '', done: true, trace: trace() }
+  }
+
+  private async recordCall(
+    request: ModelRequest,
+    model: AIModel,
+    credentialSource: 'secret-ref' | 'legacy-inline',
+    trace: ModelResponse['trace'],
+    status: 'success' | 'failure',
+    error?: unknown,
+  ): Promise<void> {
+    if (!this.calls) return
+    try {
+      await this.calls.save(
+        this.calls.create({
+          organizationId:
+            typeof request.metadata?.organizationId === 'string'
+              ? request.metadata.organizationId
+              : null,
+          requestedModelId: request.modelId ?? request.model?.id ?? null,
+          resolvedModelId: model.id,
+          provider: model.provider,
+          model: model.model ?? null,
+          credentialSource,
+          status,
+          latencyMs: trace.latencyMs,
+          error: error instanceof Error ? error.message : error ? String(error) : null,
+          metadata: {
+            requestId: trace.requestId,
+            requestedModelId: trace.requestedModelId,
+            resolvedModelId: trace.resolvedModelId,
+            credentialSource,
+          },
+        }),
+      )
+    } catch {
+      // 观测写入失败不改变模型调用结果。
+    }
   }
 
   private async resolveModel(request: ModelRequest): Promise<AIModel> {

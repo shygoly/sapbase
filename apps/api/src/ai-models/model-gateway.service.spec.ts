@@ -21,6 +21,7 @@ function setup(overrides: { row?: any; raw?: unknown } = {}) {
     findDefault: jest.fn(async () => row),
     findOne: jest.fn(async () => row),
     generate: jest.fn(async () => overrides.raw ?? { choices: [{ message: { content: 'ok' } }] }),
+    resolveCredential: jest.fn(async () => ({ apiKey: 'test-key', source: 'legacy-inline' })),
   }
   return { gateway: new ModelGatewayService(models as never), models }
 }

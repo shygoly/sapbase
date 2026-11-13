@@ -175,7 +175,8 @@
         "description",
         "config",
         "lastTestedAt",
-        "isDefault"
+        "isDefault",
+        "secretRef"
       ]
     },
     "ai_module_definitions": {
@@ -2157,6 +2158,23 @@
         "layers",
         "metadata",
         "createdById"
+      ]
+    },
+    "ai_model_calls": {
+      "columns": [
+        "id",
+        "createdAt",
+        "updatedAt",
+        "organizationId",
+        "requestedModelId",
+        "resolvedModelId",
+        "provider",
+        "model",
+        "credentialSource",
+        "status",
+        "latencyMs",
+        "error",
+        "metadata"
       ]
     }
   }

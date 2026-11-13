@@ -22,8 +22,13 @@ export class AIModel extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   provider: AIModelProvider
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  /** 旧内联密钥；新配置只允许 secretRef，读取时仍兼容。 */
+  @Column({ type: 'varchar', length: 255, nullable: true, select: false })
   apiKey: string
+
+  /** 密钥引用：env:NAME / file:/abs/path；不存明文。 */
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  secretRef: string | null
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   baseUrl: string

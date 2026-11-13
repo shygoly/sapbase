@@ -25,6 +25,7 @@ import { AgentWait } from './agent-sessions/entities/agent-wait.entity'
 import { AgentToolCall } from './agent-sessions/entities/agent-tool-call.entity'
 import { AgentTurn } from './agent-sessions/entities/agent-turn.entity'
 import { AIModel } from './ai-models/ai-model.entity'
+import { AIModelCall } from './ai-models/ai-model-call.entity'
 import { AIModule } from './ai-modules/ai-module.entity'
 import { AIModuleDefinition } from './ai-modules/ai-module-definition.entity'
 import { AIModuleReview } from './ai-modules/ai-module-review.entity'
@@ -88,6 +89,7 @@ export const APP_ENTITIES = [
   ...PLATFORM_CORE_ENTITIES,
   MenuItem,
   AIModel,
+  AIModelCall,
   AIModule,
   AIModuleTest,
   AIModuleReview,

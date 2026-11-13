@@ -98,6 +98,39 @@ describe('AIModelsService provider routing', () => {
     expect(repository.save).toHaveBeenCalled()
   })
 
+  it('secretRef=env:NAME 解析凭据，不要求内联 apiKey', async () => {
+    process.env.TEST_MODEL_SECRET = 'env-secret'
+    try {
+      mockedAxios.post.mockResolvedValue({
+        data: { choices: [{ message: { content: 'ok' } }] },
+      })
+      const { service } = build()
+      const row = model({ apiKey: undefined, secretRef: 'env:TEST_MODEL_SECRET' })
+      await service.generate(row, { user: 'hello' })
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(Object),
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer env-secret' }),
+        }),
+      )
+    } finally {
+      delete process.env.TEST_MODEL_SECRET
+    }
+  })
+
+  it('secretRef 未解析到值 → fail-closed；toPublic 不回显密钥', async () => {
+    const { service } = build()
+    const row = model({ apiKey: undefined, secretRef: 'env:NOT_EXISTS_MODEL_SECRET' })
+    await expect(service.generate(row, { user: 'x' })).rejects.toThrow(/未解析到值/)
+    const publicView = service.toPublic(model())
+    expect(publicView).not.toHaveProperty('apiKey')
+    expect(publicView).toMatchObject({
+      hasCredential: true,
+      credentialSource: 'legacy-inline',
+    })
+  })
+
   it('无 API key：直接拒绝 generate', async () => {
     const { service } = build(model({ apiKey: '' }))
     await expect(service.generate(model({ apiKey: '' }), { user: 'x' })).rejects.toBeInstanceOf(

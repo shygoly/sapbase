@@ -46,7 +46,7 @@
 
 ## 5. AI-native authoring pipeline
 - [x] 5.1 Replace direct provider calls with a provider-neutral `ModelGateway`（complete/stream + trace + SSE/降级 + llm-intent-planner 改造 + 测试）
-- [ ] 5.2 Move model credentials to secret references and record requested/resolved model metadata
+- [x] 5.2 Move model credentials to secret references and record requested/resolved model metadata（env/file secretRef + 响应脱敏 + ai_model_calls + trace + 测试）
 - [ ] 5.3 Add Context Compiler with dependency closure, permission filtering, and budget limits
 - [ ] 5.4 Emit `space-delta` operations only; reject final-structure bypass paths
 - [ ] 5.5 Add Delta validation, bounded repair, and deterministic conflict reporting

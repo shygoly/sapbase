@@ -541,3 +541,10 @@ PM2 管理进程；PG/Redis 由宿主机或托管服务提供。
 - 返回值包含规范化 `text`、原始 `raw`、provider/model 与 trace（requestId/latency）。
 - `stream` 支持 OpenAI 兼容 SSE；不支持 SSE 的 provider 降级为一次 complete + 单 chunk。
 - `LlmIntentPlanner` 已从直接 `fetch` 改为 ModelGateway。
+
+## 模型凭据与调用元数据
+
+- 模型凭据只存 `secretRef`：`env:NAME` 或 `file:/abs/path`；解析失败 fail-closed。
+- 旧 `apiKey` 仅作兼容读取，API 响应永不回显。
+- `ai_model_calls` 记录 requested/resolved 模型、provider、credentialSource、耗时与错误，
+  用于追踪“请求了哪个模型、实际用了哪个模型、凭据来自哪里”。
